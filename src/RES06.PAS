@@ -63,7 +63,7 @@ var
     ClearFullScreen/ClearRect fill them directly; RES09 maps the same memory as its VideoText and
     VideoGrf planes. The EGA display pages (VideoAdapter 1) are a different memory: page 0 at
     $A000 and page 1 at $A200 (Page shl 9 + $A000; the add at 0709:0096 and 0709:00AD). In this
-    unit they are reached only through ds4A16 (SetActivePage) and ds4A18 (SetPageSegment), never
+    unit they are reached only through ActivePageSegment (SetActivePage) and FillPageSegment (SetPageSegment), never
     through the planes above. RES07 writes $A000 and $A200 directly (0464:1951, 0464:1B52). }
   TextPlane0: TTextPlane absolute $B800:$0000;
   TextPlane1: TTextPlane absolute $BA00:$0000;
@@ -93,36 +93,36 @@ begin
 end;
 { 0709:0071. Selects display page Page through the video BIOS: writes AH=5 (INT 10h set active
   display page) and AL=Page into Regs, calls Intr($10), then stores the page's segment
-  (Page shl 9 + $A000; one $200-paragraph page) in ds4A16. Called by res08_init. }
+  (Page shl 9 + $A000; one $200-paragraph page) in ActivePageSegment. Called by res08_init. }
 procedure SetActivePage(Page: Byte);
 begin
   Regs.AH := 5;
   Regs.AL := Page;
   Intr($10, Regs);
-  ds4A16 := Page shl 9 + $A000;
+  ActivePageSegment := Page shl 9 + $A000;
 end;
-{ 0709:00A0. Stores the segment of display page Page (Page shl 9 + $A000) in ds4A18: the page
+{ 0709:00A0. Stores the segment of display page Page (Page shl 9 + $A000) in FillPageSegment: the page
   the rectangle fill writes through. Called by FillPlaneRect and res08_init. }
 procedure SetPageSegment(Page: Byte);
 begin
-  ds4A18 := Page shl 9 + $A000;
+  FillPageSegment := Page shl 9 + $A000;
 end;
 { 0709:00B7. Fills a rectangle on one display page: byte columns LeftCol..RightCol and cell rows
   TopRow..BotRow (8 scanlines each), on page Page with the byte Value. It saves the current page
-  ds4A1A, points SetPageSegment(Page) at the fill page, sets the EGA registers
+  FillTextPage, points SetPageSegment(Page) at the fill page, sets the EGA registers
   (SetEgaFillRegisters, then the GC mode register to write mode 2), fills scanline by scanline
-  with FillChar(Mem[ds4A18:DestOff], RightCol - LeftCol + 1, Value) stepping DestOff by 40, then
-  restores the GC mode to 0, ds4A1A and its page segment. The Word/LongInt casts keep
+  with FillChar(Mem[FillPageSegment:DestOff], RightCol - LeftCol + 1, Value) stepping DestOff by 40, then
+  restores the GC mode to 0, FillTextPage and its page segment. The Word/LongInt casts keep
   the TopRow * 40 * 8 offset math unsigned. Called by ClearFullScreen, ClearRect and
   ClearWindow. }
 procedure FillPlaneRect(LeftCol, TopRow, RightCol, BotRow: ShortInt; Page, Value: Byte);
 var
-  SavedPage: Byte;              { ds4A1A on entry, restored before returning }
+  SavedPage: Byte;              { FillTextPage on entry, restored before returning }
   DestOff: Word;                { the page offset, +40 per scanline }
   ScanLast: Word;               { (BotRow - TopRow + 1) * 8 - 1: the last scanline index }
   Scan: Word;                   { the scanline index }
 begin
-  SavedPage := ds4A1A;
+  SavedPage := FillTextPage;
   DestOff := Word(TopRow) * 40 * 8 + LongInt(LeftCol);
   ScanLast := (BotRow - TopRow + 1) * 8 - 1;
   SetPageSegment(Page);
@@ -131,13 +131,13 @@ begin
   Port[GcData] := WriteMode2;
   for Scan := 0 to ScanLast do
   begin
-    FillChar(Mem[ds4A18:DestOff], RightCol - LeftCol + 1, Value);
+    FillChar(Mem[FillPageSegment:DestOff], RightCol - LeftCol + 1, Value);
     Inc(DestOff, $28);
   end;
   Port[GcIndex] := GcMode;
   Port[GcData] := 0;
-  ds4A1A := SavedPage;
-  SetPageSegment(ds4A1A);
+  FillTextPage := SavedPage;
+  SetPageSegment(FillTextPage);
 end;
 { 0709:017C. Loads the game's 1-bit font: DAX block 201 ($C9) of 8X8D1.DAX (177 glyphs
   of 8 bytes each) into the GameFont heap block, then frees the DAX buffer. Called once by
@@ -161,7 +161,7 @@ end;
   through UpCase into the 64-glyph text set (mod 64), else the raw byte indexes the font.
   By VideoAdapter: 0 writes the 8 font rows as byte-swapped 16-bit pixel rows to the two
   text-scanline banks (even scanlines to $B800, odd to $BA00, 4 scanlines per text row);
-  1 writes the 8 font bytes to the two EGA display pages (ds4A16/ds4A18) through the
+  1 writes the 8 font bytes to the two EGA display pages (ActivePageSegment/FillPageSegment) through the
   Sequencer Map Mask (masks from EgaPlaneMasks, colour gating); 2 builds two colour nibbles
   per font-bit pair and writes them to all four graphics banks (2 rows per text row, 4 bytes
   per column). Exits at once for out-of-range cells, a nil GameFont, or Count 0. Glyph stays
@@ -201,7 +201,7 @@ begin
     case VideoAdapter of
       0:
         begin
-          Color := ds25D5[Color];
+          Color := TextColourMap4[Color];
           DestOff := Row * 4;
           FontRow := 0;
           for Line := 0 to 3 do
@@ -240,13 +240,13 @@ begin
               Port[SeqData] := EgaPlaneMasks[3 - Bit];
               if (EgaPlaneMasks[3 - Bit] and Color) > 0 then
               begin
-                Mem[ds4A16:DestOff] := PFont(GameFont)^[Index, Line];
-                Mem[ds4A18:DestOff] := PFont(GameFont)^[Index, Line];
+                Mem[ActivePageSegment:DestOff] := PFont(GameFont)^[Index, Line];
+                Mem[FillPageSegment:DestOff] := PFont(GameFont)^[Index, Line];
               end
               else
               begin
-                Mem[ds4A16:DestOff] := 0;
-                Mem[ds4A18:DestOff] := 0;
+                Mem[ActivePageSegment:DestOff] := 0;
+                Mem[FillPageSegment:DestOff] := 0;
               end;
             end;
             Inc(DestOff, GraphStride);
@@ -348,14 +348,14 @@ var
                        or the last character of the text }
   Unused: Byte;      { never referenced; the original frame has this byte at [bp-105h] }
   { 0709:06A7. Draws Text[WordStart..WordEnd] glyph by glyph through DrawGlyph at (GlyphCol,
-    GlyphRow) in Color, waiting the Crt delay after each glyph when ds4A00 is set,
+    GlyphRow) in Color, waiting the Crt delay after each glyph when WaitAfterTextRun is set,
     advancing WordStart and GlyphCol. Nested in ShowPagedText. }
   procedure DrawTextRun;
   begin
     while WordStart <= WordEnd do
     begin
       DrawGlyph(GlyphCol, GlyphRow, Color, 1, Ord(Text[WordStart]), 1);
-      if ds4A00 <> 0 then Delay(GameSpeed * 10);
+      if WaitAfterTextRun <> 0 then Delay(GameSpeed * 10);
       Inc(WordStart);
       Inc(GlyphCol);
     end;

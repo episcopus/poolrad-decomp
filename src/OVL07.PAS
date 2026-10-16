@@ -61,13 +61,7 @@ const
   HotkeyMark = '~';              { marks the hotkey letter in a menu text (ParseHotkeys) }
   KeyReturn = #13;
   { The party's facing (PartyFacing) and the directions WallIdAt takes. }
-  DirNorth = 0;
-  DirEast = 2;
-  DirSouth = 4;
-  DirWest = 6;
   LastMapCell = $F;              { the area map is 16 x 16 cells, 0..15 }
-  StatusDead = 6;                { TCharacter.Status: dead }
-  VarNoCasting = 229;            { the game variable (+$1CA) that forbids casting here (as in ovl08, ovl15) }
 
 { ovl07:0000. DecodeOperands: reads the Count operands of the current command from the script at
   EclPC + 1 into OperandType, OperandLow and OperandHigh, and leaves EclPC on the next command.
@@ -133,45 +127,45 @@ begin
 end;
 { ovl07:01B6. InitScript: resets the script machine for a newly loaded script: clears its flags,
   sets the special view codes ($41 and 9), points EclPC at the start of the script ($9900) and
-  reads the five entry addresses of its header into ds49E3..ds49EB; clears game variable
-  VarNoCasting and some words of ds49D6, forces the wall view, and (unless ds49F8 asks to keep
+  reads the five entry addresses of its header into EclStepEntry..EclInitialEntry; clears game variable
+  VarNoCasting and some words of GameVars2, forces the wall view, and (unless SkipAreaScriptLoad asks to keep
   them, which it then clears) clears game variables $4A00..$4A1F and words $6E79..$6E82 of
-  ds49D6. }
+  GameVars2. }
 procedure InitScript;
 var
   Unused: Byte;                 { QUIRK ovl07:01B9: a byte of the frame nothing uses }
   I: Word;
 begin
-  ds84E0 := 0;
-  ds84E2 := 0;
-  ds84D2 := 0;
-  ds84D3 := 0;
-  ds6F68 := $41;
-  ds6F69 := 9;
-  ds84E5 := 1;
-  FillChar(ds84C8, 2, 0);
-  ds6F83 := 8;
+  CloseUpShown := 0;
+  PictureFrameDirty := 0;
+  CharWord6C00Zeroed := 0;
+  CharWord6B00Zeroed := 0;
+  SpecialViewCode2 := $41;
+  SpecialViewCode1 := 9;
+  SpecialViewGate := 1;
+  FillChar(PictureShownFlags, 2, 0);
+  EncounterIconSlot := 8;
   EclPC := $9900;
-  ds70C6 := 0;
+  PickerDone := 0;
   ReturnStack := nil;
   ReturnPrev := nil;
   FillChar(CompareFlags, 6, 0);
-  ds49D6^[$2E1] := $FF;
-  ds49D6^[$2D2] := 0;
-  ds49D6^[$2D3] := 0;
+  GameVars2^[$2E1] := $FF;
+  GameVars2^[$2D2] := 0;
+  GameVars2^[$2D3] := 0;
   GameVars^[VarNoCasting] := 0;
   DecodeOperands(1);
-  ds49E3 := MakeWord(OperandLow[1], OperandHigh[1]);
+  EclStepEntry := MakeWord(OperandLow[1], OperandHigh[1]);
   DecodeOperands(1);
-  ds49E5 := MakeWord(OperandLow[1], OperandHigh[1]);
+  EclSearchEntry := MakeWord(OperandLow[1], OperandHigh[1]);
   DecodeOperands(1);
-  ds49E7 := MakeWord(OperandLow[1], OperandHigh[1]);
+  EclPreCampEntry := MakeWord(OperandLow[1], OperandHigh[1]);
   DecodeOperands(1);
-  ds49E9 := MakeWord(OperandLow[1], OperandHigh[1]);
+  EclCampInterruptedEntry := MakeWord(OperandLow[1], OperandHigh[1]);
   DecodeOperands(1);
-  ds49EB := MakeWord(OperandLow[1], OperandHigh[1]);
+  EclInitialEntry := MakeWord(OperandLow[1], OperandHigh[1]);
   GameVars^[VarForceWallView] := 1;
-  if ds49F8 = 0 then
+  if SkipAreaScriptLoad = 0 then
   begin
     for I := 1 to $20 do
       VarsAt4900^[I + $49FF] := 0;
@@ -179,7 +173,7 @@ begin
       VarsAt6B00^[I + $6E79] := 0;
   end
   else
-    ds49F8 := 0;
+    SkipAreaScriptLoad := 0;
 end;
 { ovl07:0341. LoadEcl: loads block BlockId of ECL<TileSet>.DAX into EclCode (whitepaper 4.2.2):
   clears the buffer, shows 'Loading...Please Wait' on the prompt line and loads the block until
@@ -193,7 +187,7 @@ var
   Block: Pointer;
 begin
   FillChar(EclCode^, $1E00, 0);
-  ds557C := 0;
+  OpenNoPrompt := 0;
   repeat
     ClearPromptLine;
     DrawTextAt(0, $18, $F, 'Loading...Please Wait');
@@ -219,7 +213,7 @@ end;
 { ovl07:0482. OpenStepsAhead: how many cells the party can see ahead from (Col, Row) facing Dir
   (0, 2, 4, 6: north, east, south, west), counting the cells without a wall (WallIdAt 0) up to
   2. When the wall view is off (game variable VarForceWallView 0) the answer is 2, also stored
-  in word $2C1 of ds49D6. }
+  in word $2C1 of GameVars2. }
 function OpenStepsAhead(Col, Row: ShortInt; Dir: Byte): Byte;
 var
   Done: Byte;
@@ -231,7 +225,7 @@ begin
   if GameVars^[VarForceWallView] = 0 then
   begin
     OpenStepsAhead := 2;
-    ds49D6^[$2C1] := 2;
+    GameVars2^[$2C1] := 2;
   end
   else
     while (Steps < 2) and (Done = 0) do
@@ -250,13 +244,13 @@ begin
         Done := 1;
 end;
 { ovl07:0511. ShowHeadBody: loads the HEAD and BODY picture banks HeadBank and BodyBank
-  (LoadHeadBodySprites), remembers them in ds49FD and ds49FE, and shows them at column 3, row 3
-  with the body (ShowHeadBodySprites). Clears ds84E1. Called by ovl03 and ShowEncounterPicture. }
+  (LoadHeadBodySprites), remembers them in ShownHeadBank and ShownBodyBank, and shows them at column 3, row 3
+  with the body (ShowHeadBodySprites). Clears CloseUpHidden. Called by ovl03 and ShowEncounterPicture. }
 procedure ShowHeadBody(HeadBank, BodyBank: Byte);
 begin
-  ds84E1 := 0;
-  ds49FD := HeadBank;
-  ds49FE := BodyBank;
+  CloseUpHidden := 0;
+  ShownHeadBank := HeadBank;
+  ShownBodyBank := BodyBank;
   LoadHeadBodySprites(HeadBank, BodyBank);
   ShowHeadBodySprites(3, 3, 1);
 end;
@@ -264,8 +258,8 @@ end;
   SpriteBank once (Shown[0]) and shows the one for Distance (0..2 cells away, Show3DSprite
   slot Distance + 1; slot 2 outside the 3D view); when the party is next to it (Distance 0) and
   monster pictures are wanted, shows the close-up once (Shown[1]): the PIC picture PicBank when
-  word $2E1 of ds49D6 is $FF, else HEAD picture bank word $2E1 with BODY bank PicBank
-  (ShowHeadBody); ds84EA remembers word $2E1 so the same close-up is not shown twice. Redraws the area
+  word $2E1 of GameVars2 is $FF, else HEAD picture bank word $2E1 with BODY bank PicBank
+  (ShowHeadBody); LastShownPictureWord remembers word $2E1 so the same close-up is not shown twice. Redraws the area
   view first when only the sprite was shown. }
 procedure ShowEncounterPicture(SpriteBank, PicBank, Distance: Byte; var Shown: TPictureShown);
 var
@@ -286,24 +280,24 @@ begin
       end;
       LoadSpriteList('SPRIT', SpriteBank, 1, @PictureAnimation);
       Shown[0] := 1;
-      ds84E3 := 1;
+      Sprite3DLoaded := 1;
     end;
     if AreaViewKind = 1 then
       Show3DSprite(Slot, @PictureAnimation)
     else
       Show3DSprite(2, @PictureAnimation);
   end;
-  if (Shown[1] <> 0) and (ds84EA = ds49D6^[$2E1]) then
+  if (Shown[1] <> 0) and (LastShownPictureWord = GameVars2^[$2E1]) then
     Exit;
   if Distance <> 0 then
     Exit;
   if AreaViewKind <> 1 then
     Exit;
-  if (ds84E9 <> 0) and (ShowMonsterPics = 0) then
+  if (SkipCloseUpIfNoPics <> 0) and (ShowMonsterPics = 0) then
     Exit;
-  ds84EA := ds49D6^[$2E1];
-  ds84E0 := 1;
-  if ds49D6^[$2E1] = $FF then
+  LastShownPictureWord := GameVars2^[$2E1];
+  CloseUpShown := 1;
+  if GameVars2^[$2E1] = $FF then
   begin
     LoadSpriteList('PIC', PicBank, 0, @PictureAnimation);
     Shown[1] := 1;
@@ -311,9 +305,9 @@ begin
   end
   else
   begin
-    ShowHeadBody(ds49D6^[$2E1], PicBank);
+    ShowHeadBody(GameVars2^[$2E1], PicBank);
     Shown[1] := 1;
-    ds84E1 := 0;
+    CloseUpHidden := 0;
   end;
 end;
 { ovl07:06AF. MakeWord: the word whose low byte is Lo and high byte Hi (an operand's two bytes,
@@ -332,8 +326,8 @@ begin
     SixBitChar := Chr(Code + $40);
 end;
 { ovl07:06FB. MemRegion: which block a script address names: RegionGameVars ($4900..$4CFF, the
-  words of GameVars), RegionWords6B00 ($6B00..$6EFF, the words of ds49D6, overlaid by the selected
-  character's fields), RegionWords9700 ($9700..$98FF, the words of ds49DA), RegionCode
+  words of GameVars), RegionWords6B00 ($6B00..$6EFF, the words of GameVars2, overlaid by the selected
+  character's fields), RegionWords9700 ($9700..$98FF, the words of GameVars3), RegionCode
   ($9900..$B6FF, the bytes of the loaded script) or RegionSpecial (anything else, the engine
   variables ReadVmWord and WriteVmWord handle one by one). }
 function MemRegion(Addr: Word): Byte;
@@ -348,7 +342,7 @@ begin
   if (Addr >= $9900) and (Addr <= $B6FF) then
     MemRegion := RegionCode;
 end;
-{ ovl07:0756. PartyIndexOf: the 0-based position of Who in the party list (ds5D96); the length
+{ ovl07:0756. PartyIndexOf: the 0-based position of Who in the party list (PartyListHead); the length
   of the list when Who is not in it. }
 function PartyIndexOf(Who: PCharacter): Byte;
 var
@@ -356,7 +350,7 @@ var
   Member: PCharacter;
   Found: Boolean;
 begin
-  Member := PCharacter(ds5D96);
+  Member := PCharacter(PartyListHead);
   Found := False;
   Index := 0;
   while (Member <> nil) and not Found do
@@ -374,7 +368,7 @@ end;
 { ovl07:07BC. GetCharacterVar: the value of script address Addr ($6B00..$6EFF) when it names a
   field of the selected character (SelectedCharacter) or another engine value; Found is False
   (and the result undefined) for the addresses it does not handle, which ReadVmWord then reads
-  from ds49D6. The offsets are those of the script's character record, not of TCharacter.
+  from GameVars2. The offsets are those of the script's character record, not of TCharacter.
   QUIRK ovl07:095A: address $6C0D sets Found but leaves the result unassigned. }
 function GetCharacterVar(Addr: Word; var Found: Boolean): Word;
 var
@@ -397,7 +391,7 @@ begin
     $BF: GetCharacterVar := SelectedCharacter^.Money[2];
     $C1: GetCharacterVar := SelectedCharacter^.Money[3];
     $C3: GetCharacterVar := SelectedCharacter^.Money[4];
-    $D8: GetCharacterVar := SelectedCharacter^.ByteA0;
+    $D8: GetCharacterVar := SelectedCharacter^.Alignment;
     $F7: GetCharacterVar := SelectedCharacter^.XpValue;
     $F9: GetCharacterVar := SelectedCharacter^.XpPerHp;
     $100:
@@ -432,13 +426,13 @@ begin
         18..25: GetCharacterVar := 60;
       end;
     $312: GetCharacterVar := TileSet;
-    $33E: GetCharacterVar := ds49D6^[$33E];
+    $33E: GetCharacterVar := GameVars2^[$33E];
   else
     Found := False;
   end;
 end;
 { ovl07:0A74. SetCharacterVar: applies a script write of Value to address Addr ($6B00..$6EFF) to
-  the selected character's fields and engine state (WriteVmWord has already stored it in ds49D6).
+  the selected character's fields and engine state (WriteVmWord has already stored it in GameVars2).
   QUIRK ovl07:0AA3: addresses $6B20..$6B70 write the byte at Spells[Addr - $6B1F], past the 21
   spell slots into the bytes that follow. }
 procedure SetCharacterVar(Addr, Value: Word);
@@ -449,7 +443,7 @@ begin
   case Addr of
     0:
       if Value = 0 then
-        ds84D3 := 1;
+        CharWord6B00Zeroed := 1;
     $20..$70:
       begin
         Index := Addr - $1F;
@@ -477,7 +471,7 @@ begin
             SelectedCharacter^.Status := 7;
         end;
         if Value = 0 then
-          ds84D2 := 1;
+          CharWord6C00Zeroed := 1;
       end;
     $10C:
       case Value of
@@ -519,7 +513,7 @@ begin
   end;
 end;
 { ovl07:0C77. WriteVmWord: the script's store of Value at address Addr: a word of GameVars,
-  ds49D6 (then also SetCharacterVar) or ds49DA, a byte of the loaded script, or one of the engine
+  GameVars2 (then also SetCharacterVar) or GameVars3, a byte of the loaded script, or one of the engine
   variables at the special addresses (the party's position and marker, the special view codes). }
 procedure WriteVmWord(Addr, Value: Word);
 var
@@ -532,7 +526,7 @@ begin
       begin
         VarsAt4900^[Addr] := Value;
         if (Addr = $49FD) or (Addr = $49FE) then
-          ds84E8 := 1;
+          HeadBodyWritten := 1;
       end;
     RegionWords6B00:
       begin
@@ -547,9 +541,9 @@ begin
           $FB: ;
           $FC: ;
           $B1: ;
-          $3DE: ds84CC := Value;
-          $B8: ds84CE := Value;
-          $B9: ds84D0 := Value;
+          $3DE: ScriptSoundCode := Value;
+          $B8: ScriptWordB8 := Value;
+          $B9: ScriptWordB9 := Value;
         end
       else
       begin
@@ -557,13 +551,13 @@ begin
         case Addr of
           $E3:
             begin
-              ds84E6 := 1;
+              PartyMovedByScript := 1;
               PartyMapColumn := Value;
             end;
           $E4:
             begin
               PartyMapRow := Value;
-              ds84E6 := 1;
+              PartyMovedByScript := 1;
             end;
           $E5:
             begin
@@ -579,17 +573,17 @@ begin
                   Dec(Value, 4);
                 end;
               until Done = 1;
-              ds84E6 := 1;
+              PartyMovedByScript := 1;
             end;
           $F1:
             begin
-              ds6F68 := Value;
-              ds84E5 := 1;
+              SpecialViewCode2 := Value;
+              SpecialViewGate := 1;
             end;
           $F7:
             begin
-              ds6F69 := Value;
-              ds84E5 := 1;
+              SpecialViewCode1 := Value;
+              SpecialViewGate := 1;
             end;
           $10BA: ;
         end;
@@ -597,7 +591,7 @@ begin
   end;
 end;
 { ovl07:0E0C. ReadVmWord: the script's load of the word at address Addr: a word of GameVars,
-  ds49D6 (unless GetCharacterVar answers it from the selected character) or ds49DA, a byte of the
+  GameVars2 (unless GetCharacterVar answers it from the selected character) or GameVars3, a byte of the
   loaded script, or an engine variable at the special addresses. QUIRK ovl07:0EE7, 0F45: the
   addresses it does not know leave the result unassigned. }
 function ReadVmWord(Addr: Word): Word;
@@ -621,9 +615,9 @@ begin
     RegionSpecial:
       if Addr < $C04B then
         case Addr of
-          $B1: ReadVmWord := ds6F6E;
-          $FB: ReadVmWord := ds6F6A;
-          $FC: ReadVmWord := ds6F6C;
+          $B1: ReadVmWord := ScriptWordB1;
+          $FB: ReadVmWord := ScriptWordFB;
+          $FC: ReadVmWord := ScriptWordFC;
           $33D: ReadVmWord := PartyFacing;
           $35F: ;
         end
@@ -634,15 +628,15 @@ begin
           0: ReadVmWord := PartyMapColumn;
           1: ReadVmWord := PartyMapRow;
           2: ReadVmWord := PartyFacing shr 1;
-          3: ReadVmWord := ds6AB0;
-          4: ReadVmWord := ds6AB1;
+          3: ReadVmWord := PartyCellWallId;
+          4: ReadVmWord := PartyCellEventByte;
           $E: ;
         end;
       end;
   end;
 end;
 { ovl07:0F53. WriteVmString: stores Text at script address Addr, one character per word of
-  GameVars, ds49D6 or ds49DA or per byte of the script, followed by a 0; address $6B00 is the
+  GameVars, GameVars2 or GameVars3 or per byte of the script, followed by a 0; address $6B00 is the
   selected character's name instead (up to 15 characters). Nothing for the special addresses. }
 procedure WriteVmString(Addr: Word; Text: string);
 var
@@ -742,7 +736,7 @@ begin
   end;
 end;
 { ovl07:12FB. ReadVmString: copies the string stored at script address Addr (one character per
-  word of GameVars, ds49D6 or ds49DA or per byte of the script, up to a 0) into
+  word of GameVars, GameVars2 or GameVars3 or per byte of the script, up to a 0) into
   EclStrings[Index]; address $6B00 is the selected character's name. }
 procedure ReadVmString(Index: Byte; Addr: Word);
 var
@@ -896,7 +890,7 @@ begin
 end;
 { ovl07:19DB. StepPartyForward: moves the party one cell in the direction it faces (PartyFacing: 0, 2,
   4, 6) on the 16 x 16 area map, wrapping at the edges, then reads the new cell's event byte
-  (EventByteAt into ds6AB1) and the wall it faces (WallIdAt into ds6AB0). }
+  (EventByteAt into PartyCellEventByte) and the wall it faces (WallIdAt into PartyCellWallId). }
 procedure StepPartyForward;
 begin
   case PartyFacing of
@@ -921,12 +915,12 @@ begin
       else
         PartyMapColumn := LastMapCell;
   end;
-  ds6AB1 := EventByteAt(PartyMapColumn, PartyMapRow);
-  ds6AB0 := WallIdAt(PartyMapColumn, PartyMapRow, PartyFacing);
+  PartyCellEventByte := EventByteAt(PartyMapColumn, PartyMapRow);
+  PartyCellWallId := WallIdAt(PartyMapColumn, PartyMapRow, PartyFacing);
 end;
-{ ovl07:1A6F. SetupDuel: starts a duel (DuelMode 1, word $2E6 of ds49D6 := WithCopy): every party
+{ ovl07:1A6F. SetupDuel: starts a duel (DuelMode 1, word $2E6 of GameVars2 := WithCopy): every party
   member other than the selected character (by name) gets Flag10D 0; when WithCopy is nonzero,
-  loads the CPIC combat icon into slot ds6F83 and appends to the party a copy of the selected
+  loads the CPIC combat icon into slot EncounterIconSlot and appends to the party a copy of the selected
   character named 'ROLF', computer-run on the other side (Side 1, Quick 1, B84 $B2), with that
   icon, no affects and a copy of every item. }
 procedure SetupDuel(WithCopy: ShortInt);
@@ -939,9 +933,9 @@ var
   Unused: Pointer;              { QUIRK ovl07:1A72: four bytes of the frame nothing uses }
 begin
   DuelMode := 1;
-  ds49D6^[$2E6] := WithCopy;
+  GameVars2^[$2E6] := WithCopy;
   Original := SelectedCharacter;
-  Member := PCharacter(ds5D96);
+  Member := PCharacter(PartyListHead);
   while Member <> nil do
   begin
     if Member^.Name <> Original^.Name then
@@ -950,8 +944,8 @@ begin
   end;
   if WithCopy <> 0 then
   begin
-    LoadPictureSlot('CPIC', $B, ds6F83);
-    Member := PCharacter(ds5D96);
+    LoadPictureSlot('CPIC', $B, EncounterIconSlot);
+    Member := PCharacter(PartyListHead);
     while Member^.Next <> nil do
       Member := Member^.Next;
     New(Copy);
@@ -962,7 +956,7 @@ begin
     Copy^.Quick := 1;
     Copy^.Side := 1;
     Copy^.B84 := $B2;
-    Copy^.CombatIcon := ds6F83;
+    Copy^.CombatIcon := EncounterIconSlot;
     Copy^.Affects := nil;
     Copy^.Items := nil;
     Member^.Next := Copy;
@@ -1052,7 +1046,7 @@ begin
     Inc(EclPC);
   end;
 end;
-{ ovl07:1FB1. MovementRange: the highest and lowest Movement of the party members (ds5D96),
+{ ovl07:1FB1. MovementRange: the highest and lowest Movement of the party members (PartyListHead),
   each doubled by affect $27 or else halved by affect $2A (HasAffect). }
 procedure MovementRange(var Fastest, Slowest: Byte);
 var
@@ -1060,7 +1054,7 @@ var
   Affect: Pointer;
   Value: Byte;
 begin
-  Member := PCharacter(ds5D96);
+  Member := PCharacter(PartyListHead);
   Fastest := Member^.Movement;
   Slowest := Member^.Movement;
   while Member <> nil do

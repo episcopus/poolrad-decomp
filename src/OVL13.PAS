@@ -62,7 +62,7 @@ type
     Pair: array[0..1] of Byte;
   end;
   PResistView = ^TResistView;
-  { A view of the header of the 24x3 combat picture AllocatePicture makes ds6E36 point at (the
+  { A view of the header of the 24x3 combat picture AllocatePicture makes CombatPicture point at (the
     TPicture res12's CopyPictureItem reads): only the bytes-per-item word at +$11 is needed here
     to quarter it for the text adapter, the rest of the header is not read. }
   TPictureHeader = record
@@ -71,11 +71,6 @@ type
   end;
   PPictureHeader = ^TPictureHeader;
 const
-  { The two sides of a combat (POOLVARS, ovl24:0D96). }
-  SideParty = 0;
-  { The monster side (ovl05's SideMonsters and ovl10's SideEnemy): the combatants ovl13:2879 totals
-    the hit points of into ds6E2F. }
-  SideMonsters = 1;
   { The round's Movement is checked against this before it is doubled into the half-square move
     budget (ovl13:0155): a Movement below 1 or above it is set to 1, not to this value, so an
     over-fast combatant gets the slowest move (QUIRK ovl13:0161). }
@@ -92,10 +87,7 @@ const
   { The cursor margin MoveCombatCursor gets after a non-quick step (ovl13:07B9): kept nearer the
     combatant's cell than ViewCentre. }
   StepCursorMargin = 1;
-  { The map tile a body is drawn over (ovl31's TileBody); a cell with it and no combatant makes a
-    scan look for the body lying there (ovl13:1D24, 2FBE, 30AA). }
-  BodyTile = $1F;
-  { Word 882 of ds49D6^ (byte offset $6E4): added to a party member's Movement each round
+  { Word 882 of GameVars2^ (byte offset $6E4): added to a party member's Movement each round
     (ovl13:0137). ovl05 calls the same word VarAfterBattle3 and EndBattle clears it; what it
     holds during a combat is not settled. }
   VarPartyMovementBonus = 882;
@@ -106,16 +98,6 @@ const
     what 4 and 5 change is not known there. }
   HookAttackerDamage = 4;
   HookTargetDamage = 5;
-  HookGoesDown = $D;           { run when a combatant goes down (ovl13:05F1, ovl24's HookGoesDown) }
-  { TCharacter.Status (+$10C) values the death message tests (ovl13:0583, 05AC). }
-  StatusDying = 5;
-  { The status a fleeing combatant is dropped with (ovl13:0CE1; the same 3 as ovl24's StatusFled). }
-  StatusFled = 3;
-  { The status the Alt-X debug command leaves a monster with (ovl13:3C00); res12's HealCharacter and
-    ovl07 give the same 6 the name StatusDead. }
-  StatusDead = 6;
-  { The health status of a combatant still standing (TCharacter.Status 0; ovl05's StatusOkay). }
-  StatusOkay = 0;
   { The statuses that show 'is killed': the set [6, 7, 8] at ovl13:02CF (the original bytes
     c0 01 00.. at that address are bits 6, 7 and 8). Status 5 (dying) gets 'and is Dying' instead. }
   StatusKilled = [6, 7, 8];
@@ -127,36 +109,20 @@ const
   InitiativeDieSides = 6;
   InitiativePenalty = 6;       { when the round penalty word matches the side, ovl13:00D9 }
   MaxInitiative = $14;
-  { Word 715 of ds49D6^ (byte offset $596): RunCombat clears it every round (ovl08:00A2). In
-    ovl13:00C2 a combatant whose (Side + 1) shares a bit with it loses InitiativePenalty; what
-    the word is filled with is not settled (named VarCombatWord715 in ovl08). }
-  VarCombatWord715 = 715;
-  { Word 819 of ds49D6^: set to 1 with ds6DE2 when the player confirms attacking an ally
+  { Word 819 of GameVars2^: set to 1 with AllyAttackConfirmed when the player confirms attacking an ally
     (ovl13:2998); ovl10's StartBattle clears it every battle as Var2BattleWord, so its meaning is
     not settled beyond that. }
   Var2AllyAttack = 819;
-  { The two affects an enemy must not carry to take a parting shot (ovl13:0A91, 0AAB). ovl24
-    removes the same pair when a combatant goes down or panics (ovl24:0322, 0336) and ovl24_e14
-    removes them too. $4A is settled by its handler (ovl13:3A86, AffectForcedAttack); what $4B
-    changes is not (whitepaper 5.5). }
-  AffectNoPartingShot1 = $4B;
-  AffectForcedAttack = $4A;
-  { The affect the combatant an affect $4A records (ds6826) loses when the forced attack it stands
-    for does not happen or is over (ovl13:3AC7, 3B6E). It is one of the affects a combatant loses
-    when it goes down (ovl24's DeathAffects) and its handler runs among the movement hooks
-    (ovl24:02FA kind $12), so what it changes there is not settled. }
-  AffectLostWithForcedAttack = $3A;
   { The direction scan of a parting shot: the attacker's icon set plus 6 through plus 10 approach
     the target's cell (ovl13:0AC7..0AF4); the compass direction tried each step is its index mod 8. }
   PartingShotFirstOffset = 6;
   PartingShotLastOffset = 10;
-  Directions = 8;
   { CollectEnemiesInRange's range byte for "every enemy" (the $FF ovl13:0C7A passes when a flee is
     tried; range 1 is the adjacent ring). }
   AllEnemiesRange = $FF;
   { Turn undead (ovl13:116A): the d20 turning check and the d12 roll for how many undead the turn
     reaches. A cleric of level 1..8 uses its own level as the band, 9..13 use 9, any other level
-    uses 10. The table ds0447 is read by monster row times 10 plus the band. }
+    uses 10. The table TurnUndeadTable is read by monster row times 10 plus the band. }
   TurnCheckDie = 20;
   TurnCountDie = 12;
   MaxTurned = 6;
@@ -165,10 +131,8 @@ const
   TurnBand9Low = 9;
   TurnBand9High = 13;
   TurnBandOther = 10;
-  { The status a destroyed undead is left with (TCharacter.Status; in StatusKilled with 6 and 7). }
-  StatusDestroyed = 8;
   { The starting smallest type row of the turn target scan (ovl13:1351), above every row of the
-    Turn Undead table ds0447 (rows 0..10), so the first in-range undead always replaces it. }
+    Turn Undead table TurnUndeadTable (rows 0..10), so the first in-range undead always replaces it. }
   UndeadRowCeiling = 13;
   { The readied weapon takes its large-foe dice when the target is big: TCharacter.CombatSize (+$6C)
     above LargeTargetSize, or a footprint kind (bits 0..2) above LargeFootprintKind (ovl13:150D..1522). }
@@ -185,7 +149,7 @@ const
 
 { ovl13:0000. Sets up Who's turn at the start of a combat round: clears and re-arms its combat
   state Combat^ (PendingSpell 0, Cast and Use-magic allowed), refreshes it through RefreshAttacks, lets
-  the hooks change the attack byte ds681A (RunAffectHooks $12) and stores the result in the
+  the hooks change the attack byte HookedMoveOrAttacks (RunAffectHooks $12) and stores the result in the
   readied-weapon block (+$114); then, for a character still in the fight (Flag10D set), rolls its
   initiative (1d6 plus DexterityAttackAdjustment, at least 1, 6 lower when the round penalty word
   matches its side, else 0 outside 0..$14), and finally gives it this round's move budget
@@ -205,10 +169,10 @@ begin
     Pad8 := 0;
     Pad4[4] := 2;
     RefreshAttacks(Who);
-    ds681A := Who^.PadA2;
-    ds681D := False;
+    HookedMoveOrAttacks := Who^.PadA2;
+    HookRunning := False;
     RunAffectHooks(HookComputeMovement, Who);
-    Who^.AttackSlots[2] := AttacksThisRound(ds681A);
+    Who^.AttackSlots[2] := AttacksThisRound(HookedMoveOrAttacks);
     Pad4[5] := Who^.SweepAttacks;
     if Who^.Flag10D <> 0 then
     begin
@@ -218,7 +182,7 @@ begin
       { QUIRK ovl13:00C5: the original widens Side with cbw (a sign extend) and ANDs it with a
         16-bit signed word, then tests the low byte only; the casts reproduce that shape (Side is
         a Byte elsewhere: ovl09 and res12 compare it unsigned). }
-      if Byte((ShortInt(Who^.Side) + 1) and Integer(ds49D6^[VarCombatWord715])) <> 0 then
+      if Byte((ShortInt(Who^.Side) + 1) and Integer(GameVars2^[VarCombatWord715])) <> 0 then
         Dec(Initiative, InitiativePenalty);
       if (Initiative < 0) or (Initiative > MaxInitiative) then
         Initiative := 0;
@@ -230,9 +194,9 @@ begin
 end;
 { ovl13:0123. Works out how far Who may move this round: its Movement (+$11C), raised by the
   party movement word during combat, is checked against 1..$60 and doubled into half squares, and
-  the doubled value is left in ds681A and returned. The doubled value is offered to the movement
+  the doubled value is left in HookedMoveOrAttacks and returned. The doubled value is offered to the movement
   affect hooks (RunAffectHooks $12, which may still change it). Called once per character at the
-  start of each combat round (RunCombat ovl08:0063). ds681D brackets the hook run.
+  start of each combat round (RunCombat ovl08:0063). HookRunning brackets the hook run.
   QUIRK ovl13:0161: a Movement outside 1..$60 (below 1 or above MaxMovement) becomes 1, not the
   cap, so an over-fast combatant gets the slowest move (a port clamping to $60 would give it the
   fastest). }
@@ -242,14 +206,14 @@ var
 begin
   Moves := Who^.Movement;
   if Who^.Side = SideParty then
-    Moves := Moves + ds49D6^[VarPartyMovementBonus];
-  ds681D := True;
+    Moves := Moves + GameVars2^[VarPartyMovementBonus];
+  HookRunning := True;
   if (Moves < 1) or (Moves > MaxMovement) then
     Moves := 1;                  { QUIRK ovl13:0161: both extremes become 1 }
-  ds681A := Moves * 2;
+  HookedMoveOrAttacks := Moves * 2;
   RunAffectHooks(HookComputeMovement, Who);
-  ds681D := False;
-  ComputeMovement := ds681A;
+  HookRunning := False;
+  ComputeMovement := HookedMoveOrAttacks;
 end;
 { ovl13:0191. Rolls the damage of one attack of Attacker against Target: entry Index (1 or 2)
   of the readied weapon's attack triple gives the dice count and die size (RollDiceCounted) and the
@@ -369,7 +333,7 @@ begin
   begin
     if Who^.Flag10D <> 0 then
     begin
-      Enemy := CombatantRecord[ds6DE4[I]];
+      Enemy := CombatantRecord[CombatantScanList[I]];
       if (Enemy^.Combat^.B7 <> 0) and not IsHelpless(Enemy) then
       begin
         MoveCombatCursor(CombatantX(Who), CombatantY(Who), 2, 8);
@@ -426,14 +390,14 @@ begin
   MoveCombatCursor(NewX, NewY, Step, 8);
   Who^.Combat^.BF := 0;
   Who^.Combat^.B12 := 0;
-  PlaySound(ds2628);
+  PlaySound(SoundStep);
   GuardedEnemiesAttack(Who);
   if (Who^.Flag10D = 0) or IsHelpless(Who) then
     Who^.Combat^.Moves := 0;
 end;
 { ovl13:08AC: retf 6: 6 bytes of parameters; 0 bytes of locals }
 { ovl13:08B2, PartingShots. The parting shots Who provokes by leaving melee: it copies the enemies adjacent to
-  Who now (CollectEnemiesInRange(Who, 1) into ds6DE4, ovl31) into Enemies, temporarily moves Who's
+  Who now (CollectEnemiesInRange(Who, 1) into CombatantScanList, ovl31) into Enemies, temporarily moves Who's
   cell in CombatantTable to Dir's neighbour to collect the enemies adjacent there, moves it back and
   clears the copied entries that are still adjacent, so Enemies keeps the enemies Who is leaving
   behind. For each of them, still in the fight (Flag10D set) and not IsHelpless, whom AttackTargetAllowed(Who)
@@ -442,13 +406,13 @@ end;
   being drawn (BF 0) it attacks at once, otherwise only when InDirArc says Who is in the arc facing
   the scanned direction from the enemy. The enemy's unused attack slot (1, or 2 for a monster with
   Attacks 0) is marked in AttackSlots, stored in the enemy's Combat^.Pad4[4], and PerformAttack(Enemy,
-  Who, 1, nil, ds6E31) makes the attack; the enemy's remembered Combat^.Target is restored after it.
+  Who, 1, nil, CombatScratchFlag) makes the attack; the enemy's remembered Combat^.Target is restored after it.
   When the shot leaves Who still in the fight, Who's panel is redrawn. Called before the move by
   MoveCharacter (ovl08:09DF) and MoveStep (ovl09:07F2), so the shots happen as the combatant leaves.
-  Globals: ds6DE4, CombatantTable, DirStepX/DirStepY, CombatantRecord, ds6E31. }
+  Globals: CombatantScanList, CombatantTable, DirStepX/DirStepY, CombatantRecord, CombatScratchFlag. }
 procedure PartingShots(Who: PCharacter; Dir: Byte);
 var
-  Enemies: array[1..12] of Byte;   { the enemies adjacent before the move (12 is ds6DE4's size) }
+  Enemies: array[1..12] of Byte;   { the enemies adjacent before the move (12 is CombatantScanList's size) }
   Affect: Pointer;                 { scratch for HasAffect }
   Found: Byte;                     { nonzero when Enemies[I] is still adjacent after the move }
   DidAttack: Byte;                 { the enemy attacked in this scan; stops the rest of the loop }
@@ -470,7 +434,7 @@ begin
   if Count = 0 then
     Exit;
   for I := 1 to Count do
-    Enemies[I] := ds6DE4[I];
+    Enemies[I] := CombatantScanList[I];
   Inc(CombatantTable[Idx].X, DirStepX[Dir]);
   Inc(CombatantTable[Idx].Y, DirStepY[Dir]);
   CountAfter := CollectEnemiesInRange(Who, 1);
@@ -480,7 +444,7 @@ begin
   begin
     Found := 0;
     for J := 1 to CountAfter do
-      if ds6DE4[J] = Enemies[I] then
+      if CombatantScanList[J] = Enemies[I] then
         Found := 1;
     if Found <> 0 then
       Enemies[I] := 0;
@@ -493,7 +457,7 @@ begin
         Enemy := CombatantRecord[Enemies[I]];
         if not IsHelpless(Enemy) then
           if AttackTargetAllowed(Enemy, Who) then
-            if not HasAffect(Enemy, AffectNoPartingShot1, Affect) then
+            if not HasAffect(Enemy, AffectBloodDrain, Affect) then
               if not HasAffect(Enemy, AffectForcedAttack, Affect) then
                 for K := Enemy^.Combat^.IconSet + PartingShotFirstOffset
                   to Enemy^.Combat^.IconSet + PartingShotLastOffset do
@@ -513,7 +477,7 @@ begin
                         Enemy^.AttackSlots[Slot] := 1;
                       Enemy^.Combat^.Pad4[4] := Slot;
                       SavedTarget := Enemy^.Combat^.Target;
-                      PerformAttack(Enemy, Who, 1, nil, ds6E31);
+                      PerformAttack(Enemy, Who, 1, nil, CombatScratchFlag);
                       DidAttack := 1;
                       Enemy^.Combat^.Target := SavedTarget;
                       if Who^.Flag10D <> 0 then
@@ -557,14 +521,14 @@ end;
   AttackSlots[1] and seeds it from the character's Attacks (+$A1); with a ranged weapon readied
   (IsRangedWeapon and ChooseAttackItem passes) it takes the readied weapon's ItemTable attacks
   (at least 2) and remembers the aimed ammo item, else it keeps AttackSlots[1]. That attack count
-  goes to ds681A, the movement/attack affect hook $12 may change it, and AttacksThisRound turns the
+  goes to HookedMoveOrAttacks, the movement/attack affect hook $12 may change it, and AttacksThisRound turns the
   changed byte into the attack count. A ranged aim caps the count at the ammo stack's Count.
   AttackSlots[1] is overwritten with that count when Who has not attacked yet this round
   (Combat^.Pad8 = 0), or the count is below the saved count, or Who has attacked (Pad8 <> 0) and
   the count is below twice the saved count and this is not a ranged aim (Ranged); otherwise the
   saved count stays. Combat^.Pad8 is the has-attacked-this-round flag: 0 at round start and 1 once
   ResolveCombatantAttacks runs (ovl13:143A). Called after StartCombatantRound and whenever the AI
-  or the player readies an item (ovl08:0207, ovl09:0942). Globals: ds681A, ds681D, ItemTable. }
+  or the player readies an item (ovl08:0207, ovl09:0942). Globals: HookedMoveOrAttacks, HookRunning, ItemTable. }
 procedure RefreshAttacks(Who: PCharacter);
 var
   AttackCount: Byte;             { attacks the readied weapon gives this turn }
@@ -583,13 +547,13 @@ begin
     ReadyAttacks := ItemTable[Byte(Who^.SlotItems[0]^.ItemType)].Attacks;
     if ReadyAttacks < 2 then
       ReadyAttacks := 2;
-    ds681A := ReadyAttacks;
+    HookedMoveOrAttacks := ReadyAttacks;
   end
   else
-    ds681A := Who^.AttackSlots[1];
-  ds681D := False;
+    HookedMoveOrAttacks := Who^.AttackSlots[1];
+  HookRunning := False;
   RunAffectHooks(HookComputeMovement, Who);
-  AttackCount := AttacksThisRound(ds681A);
+  AttackCount := AttacksThisRound(HookedMoveOrAttacks);
   if Ranged and (Aim <> nil) then
   begin
     AmmoLimit := 1;
@@ -603,9 +567,9 @@ begin
     Who^.AttackSlots[1] := AttackCount;
 end;
 { ovl13:0E52. Turns a doubled attack budget into the round's attack count: it copies
-  DoubledAttacks, adds 1 when the combat round counter ds6DE3 is odd (combat rounds are
+  DoubledAttacks, adds 1 when the combat round counter CombatRound is odd (combat rounds are
   zero-based, so the extra unit lands on even-numbered rounds), and halves the result. Called
-  with the hook-modifiable byte ds681A (the character's Attacks, attacks per two rounds, or the
+  with the hook-modifiable byte HookedMoveOrAttacks (the character's Attacks, attacks per two rounds, or the
   readied weapon's halves); StartCombatantRound stores the result in AttackSlots[2] and
   RefreshAttacks uses it as the round's attack count. }
 function AttacksThisRound(DoubledAttacks: Byte): Byte;
@@ -613,7 +577,7 @@ var
   RoundAttacks: Byte;
 begin
   RoundAttacks := DoubledAttacks;
-  if Odd(ds6DE3) then
+  if Odd(CombatRound) then
     Inc(RoundAttacks);
   AttacksThisRound := RoundAttacks shr 1;
 end;
@@ -622,18 +586,18 @@ end;
   Target stands in melee range (DistanceToTarget = 1), it sweeps the level-0 enemies around Who.
   It collects Who's adjacent enemies (CollectEnemiesInRange), counts the level-0 ones into Extra
   (remembering where Target is in the list), and when Extra still beats Who's attack slots
-  (capped at Combat^.Pad4[5]) it shows 'sweeps', moves Target to the front of ds6DE4 and attacks
+  (capped at Combat^.Pad4[5]) it shows 'sweeps', moves Target to the front of CombatantScanList and attacks
   each level-0 enemy in turn through NoteAttackBearing/PerformAttack, spending one attack per enemy
   (AttackSlots[1] := 1 and Dec(Extra)) until Extra runs out. Returns True when the sweep
   happened, so the caller ends the turn. Called by MeleeAttack (ovl08:0D45) and the AI
-  (ovl09:0B3C). Globals: ds6DE4 (the adjacent-enemy list), ds6E31 (the done flag e12 writes),
+  (ovl09:0B3C). Globals: CombatantScanList (the adjacent-enemy list), CombatScratchFlag (the done flag e12 writes),
   CombatantRecord. }
 function SweepEnemies(Who, Target: PCharacter): Boolean;
 var
   Count: Byte;                   { enemies adjacent to Who }
   Extra: Byte;                   { level-0 enemies counted, then the attacks left }
   I: Byte;                       { walk of the adjacent-enemy list }
-  SavedIndex: Byte;              { where Target sits in ds6DE4 }
+  SavedIndex: Byte;              { where Target sits in CombatantScanList }
   Enemy: PCharacter;             { one adjacent enemy }
 begin
   SweepEnemies := False;
@@ -645,7 +609,7 @@ begin
         Extra := 0;
         for I := 1 to Count do
         begin
-          Enemy := CombatantRecord[ds6DE4[I]];
+          Enemy := CombatantRecord[CombatantScanList[I]];
           if Enemy = Target then
             SavedIndex := I;
           if Enemy^.HighestLevel = 0 then
@@ -656,20 +620,20 @@ begin
           if Extra > Who^.Combat^.Pad4[5] then
             Extra := Who^.Combat^.Pad4[5];
           ShowCharacterMessage(Who, 'sweeps', 10, 1);
-          Enemy := CombatantRecord[ds6DE4[1]];
+          Enemy := CombatantRecord[CombatantScanList[1]];
           if Enemy <> Target then
           begin
-            ds6DE4[SavedIndex] := ds6DE4[1];
-            ds6DE4[1] := CombatantIndex(Target);
+            CombatantScanList[SavedIndex] := CombatantScanList[1];
+            CombatantScanList[1] := CombatantIndex(Target);
           end;
           for I := 1 to Count do
             if Extra > 0 then
-              if CombatantRecord[ds6DE4[I]]^.HighestLevel = 0 then
+              if CombatantRecord[CombatantScanList[I]]^.HighestLevel = 0 then
               begin
-                Enemy := CombatantRecord[ds6DE4[I]];
+                Enemy := CombatantRecord[CombatantScanList[I]];
                 NoteAttackBearing(Who, Enemy);
                 Who^.AttackSlots[1] := 1;
-                PerformAttack(Who, Enemy, 0, nil, ds6E31);
+                PerformAttack(Who, Enemy, 0, nil, CombatScratchFlag);
                 Dec(Extra);
               end;
           SweepEnemies := True;
@@ -680,11 +644,11 @@ end;
 { ovl13:104E: retf 8: 8 bytes of parameters; 0 bytes of locals }
 { ovl13:1085, AttackTargetAllowed. The attack's target check: it runs the target's and the attacker's affect hooks
   and reports whether the attack may go ahead. A nil Target fails, and attacking oneself is
-  always allowed. Otherwise ds681E is cleared and RunAffectHooks kind 1 runs on Target; when no
+  always allowed. Otherwise HookVetoFlag is cleared and RunAffectHooks kind 1 runs on Target; when no
   hook rejected it, Who's remembered Combat^.Target is saved, replaced by Target and the attacker's
-  hook kind 0 runs, then the old target is put back. The result is True exactly when ds681E ended
+  hook kind 0 runs, then the old target is put back. The result is True exactly when HookVetoFlag ended
   0 (no hook vetoed). Called before an attack (ovl09 AiTurn, PartingShots, GazeCharmsTarget and ovl13's
-  e17/e21/2FD3). Globals: ds681E. }
+  e17/e21/2FD3). Globals: HookVetoFlag. }
 function AttackTargetAllowed(Who, Target: PCharacter): Boolean;
 var
   SavedTarget: PCharacter;       { Who^.Combat^.Target around the attacker's hook }
@@ -695,23 +659,23 @@ begin
       AttackTargetAllowed := True
     else
     begin
-      ds681E := 0;
+      HookVetoFlag := 0;
       RunAffectHooks(1, Target);
-      if ds681E = 0 then
+      if HookVetoFlag = 0 then
       begin
         SavedTarget := Who^.Combat^.Target;
         Who^.Combat^.Target := Target;
         RunAffectHooks(0, Who);
         Who^.Combat^.Target := SavedTarget;
       end;
-      AttackTargetAllowed := ds681E = 0;
+      AttackTargetAllowed := HookVetoFlag = 0;
     end;
 end;
 { ovl13:116A, TurnUndead. The Turn Undead action of a cleric Who: it shows 'turns undead...',
   marks Who's turn used (Combat^.Turned), then rolls how many undead the turn reaches
   (RollDice(1, 12)) and the d20 turning check. Who's cleric level (ClassLevels[0]) is mapped to a
   table band (1..8 itself, 9..13 to 9, else 10). While SelectTurnUndeadTarget hands over an undead in range and
-  the reach and the stop flag allow it, the table ds0447 gives the number to beat for that
+  the reach and the stop flag allow it, the table TurnUndeadTable gives the number to beat for that
   monster's row (Pad74[$76] times 10 plus the band); a d20 at or above its absolute value turns it.
   A positive entry forces flight (Combat^.ForcedFlight, 'is turned'); a nonpositive one destroys
   it ('Is destroyed', RemoveCombatant, Status 8, out of the fight). Each result spends one of the
@@ -720,8 +684,8 @@ end;
   and an entry of exactly 0 destroys without giving it back (QUIRK ovl13:1302: the test is
   Result < 0, though the Result comment calls every nonpositive entry destroying). When nothing was
   turned it flashes 'Nothing Happens...'. Finally it recounts the sides,
-  stores EndCombatTurn's result in ds6E31 and clears the message. Called by PlayerTurn's T case
-  (ovl08:031A) and TryTurnUndead (ovl09:0203). Globals: ds0447, ds6E31. }
+  stores EndCombatTurn's result in CombatScratchFlag and clears the message. Called by PlayerTurn's T case
+  (ovl08:031A) and TryTurnUndead (ovl09:0203). Globals: TurnUndeadTable, CombatScratchFlag. }
 procedure TurnUndead(Who: PCharacter);
 var
   Roll20: Byte;                  { the d20 turning check }
@@ -752,7 +716,7 @@ begin
   end;
   while SelectTurnUndeadTarget(Who, Selected) and (Remaining > 0) and (Stop = 0) do
   begin
-    Result := ds0447[ShortInt(Selected^.Pad74[$76]), LevelBand];
+    Result := TurnUndeadTable[ShortInt(Selected^.Pad74[$76]), LevelBand];
     if Roll20 >= Abs(Result) then
     begin
       AnyTurned := 1;
@@ -767,7 +731,7 @@ begin
       begin
         ShowCharacterMessage(Selected, 'Is destroyed', 10, 0);
         RemoveCombatant(Selected);
-        Selected^.Status := StatusDestroyed;
+        Selected^.Status := StatusGone;
         Selected^.Flag10D := 0;
       end;
       if TurnsLeft > 0 then
@@ -783,7 +747,7 @@ begin
   if AnyTurned = 0 then
     ShowFlashMessage('Nothing Happens...');
   RecountCombatSides;
-  ds6E31 := EndCombatTurn(Who);
+  CombatScratchFlag := EndCombatTurn(Who);
   ClearCharacterMessage;
 end;
 { ovl13:11D8: retf 4: 4 bytes of parameters; 0 bytes of locals }
@@ -791,10 +755,10 @@ end;
   CollectEnemiesInRange(Who, AllEnemiesRange) lists it keeps the one with the lowest signed type row
   (TCharacter.Pad74[$76], above 0) whose combat state is not already forced to flee
   (Combat^.ForcedFlight 0), clearing Selected first, and returns whether one was found. Pad74[$76]
-  is the monster row the Turn Undead table ds0447 is indexed by, so the scan picks the undead with
+  is the monster row the Turn Undead table TurnUndeadTable is indexed by, so the scan picks the undead with
   the lowest row first. QUIRK ovl13:135B: Selected is untyped, so TurnUndead passes a
   PCharacter while ovl09 TryTurnUndead passes a 1-byte Done; the routine writes a 4-byte far pointer
-  through it either way. Globals: ds6DE4 (the scan's combatant list), CombatantRecord. }
+  through it either way. Globals: CombatantScanList (the scan's combatant list), CombatantRecord. }
 function SelectTurnUndeadTarget(Who: Pointer; var Selected): Boolean;
 var
   Count: Byte;                   { enemies CollectEnemiesInRange listed }
@@ -808,7 +772,7 @@ begin
   SelectTurnUndeadTarget := False;
   for I := 1 to Count do
   begin
-    Enemy := CombatantRecord[ds6DE4[I]];
+    Enemy := CombatantRecord[CombatantScanList[I]];
     if Enemy^.Combat^.ForcedFlight = 0 then
       if ShortInt(Enemy^.Pad74[$76]) > 0 then
         if ShortInt(Enemy^.Pad74[$76]) < MinRow then
@@ -821,7 +785,7 @@ begin
 end;
 { ovl13:1406. Resolves all of one combatant's melee attacks for its turn, the work PerformAttack wraps
   (this routine covers 1406..17F6: the map's entries 14A1, 1583, 1713 and 1758 lie inside it):
-  it clears the attack-slot counters (AttackSlotRolls[1..2], ds6E2C[1..2]) and the damage, marks the
+  it clears the attack-slot counters (AttackSlotRolls[1..2], AttackSlotCounts[1..2]) and the damage, marks the
   attacker's Combat^.Pad8, then either takes the helpless auto-hit (no roll, ShowAttackResult kind 3
   passing the target's current hit points (Flag11B) plus 5 as the damage dealt and 1 as the number
   displayed, ClearAttackerAffect, both attack slots cleared) or, against a target
@@ -834,7 +798,7 @@ end;
   Done is left nonzero when the turn ends (EndCombatTurn) and zero while another attack remains.
   QUIRK ovl13:1733: the damage dealt and the number displayed are both DamageAmount (the miss at
   ovl13:1797 passes 0 for both, the helpless hit passes Flag11B + 5 and 1). Called by
-  PerformAttack (ovl13:19D6). Globals: AttackRoll, ds6E2C, DamageAmount, ds2622, ds2626. }
+  PerformAttack (ovl13:19D6). Globals: AttackRoll, AttackSlotCounts, DamageAmount, SoundNoAction, SoundAttackMissed. }
 procedure ResolveCombatantAttacks(Attacker, Target: PCharacter; AttackKind: Byte; var Done: Byte);
 var
   Item: TItemRow;                { the readied slot-0 item's row, when the large-foe dice are used }
@@ -851,18 +815,18 @@ begin
   Done := 0;
   AttackSlotRolls[1] := 0;
   AttackSlotRolls[2] := 0;
-  ds6E2C[1] := 0;
-  ds6E2C[2] := 0;
+  AttackSlotCounts[1] := 0;
+  AttackSlotCounts[2] := 0;
   Landed := 0;
   TargetDown := 0;
   DamageAmount := 0;
   Attacker^.Combat^.Pad8 := 1;
   if IsHelpless(Target) then
   begin
-    PlaySound(ds2622);
+    PlaySound(SoundNoAction);
     while Attacker^.AttackSlots[Attacker^.Combat^.Pad4[4]] = 0 do
       Dec(Attacker^.Combat^.Pad4[4]);
-    Inc(ds6E2C[Attacker^.Combat^.Pad4[4]]);
+    Inc(AttackSlotCounts[Attacker^.Combat^.Pad4[4]]);
     ShowAttackResult(Attacker, Target, 3, Target^.Flag11B + 5, 1, 1);
     ClearAttackerAffect(Attacker);
     for SlotIndex := 1 to 2 do
@@ -909,11 +873,11 @@ begin
       begin
         Dec(Attacker^.AttackSlots[SlotIndex]);
         Attacker^.Combat^.Pad4[4] := SlotIndex;
-        Inc(ds6E2C[SlotIndex]);
+        Inc(AttackSlotCounts[SlotIndex]);
         if RollToHit(Attacker, Target, NeededRoll) or IsHelpless(Target) then
         begin
           Inc(AttackSlotRolls[SlotIndex]);
-          PlaySound(ds2622);
+          PlaySound(SoundNoAction);
           Landed := 1;
           RollAttackDamage(Attacker, Target, SlotIndex);
           ShowAttackResult(Attacker, Target, HitKind, DamageAmount, DamageAmount, 1);
@@ -925,7 +889,7 @@ begin
       end;
     if Landed = 0 then
     begin
-      PlaySound(ds2626);
+      PlaySound(SoundAttackMissed);
       ShowAttackResult(Attacker, Target, HitKind, 0, 0, 0);
     end;
     Done := 1;
@@ -961,13 +925,13 @@ end;
   remembers Target in Who^.Combat^.Target, pauses, lets ShowAttackAnimation play the aimed item AimedItem
   and a BowItemKind readied item, then, when Who has any attack slot left, saves SelectedCharacter,
   makes Who the selected character and resolves the attack (AttackKind is the attack kind, Done the
-  turn-done flag), spends one round of the aimed ammo (Count drops by ds6E2C[1]; an emptied stack
-  whose ammo can be thrown is copied into a new menu line linked into ds6810, recorded in ds5D9A and
+  turn-done flag), spends one round of the aimed ammo (Count drops by AttackSlotCounts[1]; an emptied stack
+  whose ammo can be thrown is copied into a new menu line linked into PooledItems, recorded in LootListBoundary and
   removed from the inventory, else it is just removed), recomputes Who's combat values and restores
   SelectedCharacter. Ends the turn when Done is set and re-lays Who's icon when it is in view. Called
   by MeleeAttack (ovl08), AiTurn (ovl09), GuardedEnemiesAttack, PartingShots and SweepEnemies.
   QUIRK ovl13:198D: Who^.SlotItems[0] is read without a nil test. Globals: SelectedCharacter,
-  ds6810, ds5D9A, ds6E2C. }
+  PooledItems, LootListBoundary, AttackSlotCounts. }
 procedure PerformAttack(Who, Target: PCharacter; AttackKind: Byte; AimedItem: Pointer; var Done: Byte);
 const
   { Target turns to face Who only while its attack count Combat^.BF is below this (ovl13:1892). }
@@ -976,12 +940,12 @@ const
     launcher whose own missile is drawn; which item kind this is is not settled, it is read as a bow. }
   BowItemKind = $2F;
   { The AimedItem^.Affects[3] value that stops an emptied ammo stack being copied into the loot list
-    ds6810 (ovl13:1A14 compares it; what the affect means is not settled). }
+    PooledItems (ovl13:1A14 compares it; what the affect means is not settled). }
   NoLootCopyAffect = $89;
   { Milliseconds Delay lets the attack be seen (ovl13:1933). }
   AttackPause = 100;
 var
-  NewItem: PMenuLine;            { the ammo copy linked into the shop's item list ds6810 }
+  NewItem: PMenuLine;            { the ammo copy linked into the shop's item list PooledItems }
   SavedSelection: PCharacter;    { SelectedCharacter around ResolveCombatantAttacks }
   Bearing: Byte;                 { a direction from BearingTo }
 begin
@@ -1011,18 +975,18 @@ begin
     if AimedItem <> nil then
     begin
       if PItem(AimedItem)^.Count > 0 then
-        Dec(PItem(AimedItem)^.Count, ds6E2C[1]);
+        Dec(PItem(AimedItem)^.Count, AttackSlotCounts[1]);
       if PItem(AimedItem)^.Count = 0 then
       begin
         if RangedWeaponCanMelee(Who) and (PItem(AimedItem)^.Affects[3] <> NoLootCopyAffect) then
         begin
           New(NewItem);
           Move(PItem(AimedItem)^, NewItem^, SizeOf(TMenuLine));
-          NewItem^.Next := ds6810;
-          ds6810 := NewItem;
+          NewItem^.Next := PooledItems;
+          PooledItems := NewItem;
           NewItem^.Readied := False;
           RemoveInventoryItem(Who, PItem(AimedItem));
-          ds5D9A := NewItem;
+          LootListBoundary := NewItem;
         end
         else
           RemoveInventoryItem(Who, PItem(AimedItem));
@@ -1143,9 +1107,9 @@ end;
       spell's range) and the aim is accepted while the spell's area (ScanTargets with the row's +$F
       byte as the line budget) holds only the caster's enemies and the target is either not helpless or
       the row's AffectId (+$A) is not one of HelplessAffects.
-  Returns True when a target was stored, and then leaves its cell in ds6DB9/ds6DBA; False clears the
+  Returns True when a target was stored, and then leaves its cell in SpellAimX/SpellAimY; False clears the
   seven bytes of Target. AimFlag is passed to RunAimTargets as its third flag (1 for the spell rows whose
-  Pad2[6] nibble is 8..14). Globals: SelectedCharacter, ds6DB9, ds6DBA. }
+  Pad2[6] nibble is 8..14). Globals: SelectedCharacter, SpellAimX, SpellAimY. }
 function FindSpellTarget(Spell, Automatic, AimFlag: Byte; var Target: TSpellTarget): Boolean;
 var
   Chosen: Byte;                  { nonzero once a target was stored }
@@ -1185,8 +1149,8 @@ begin
           begin
             ScanTargets(CombatantX(SavedTarget), CombatantY(SavedTarget),
               SpellTable[Spell].PadB[$F], $FF, 1, CombatMap);
-            for I := 1 to ds6718[0].Val do
-              if CombatantRecord[ds6718[I].Head]^.Side <> OpposingSide(SelectedCharacter) then
+            for I := 1 to SortEntries[0].Val do
+              if CombatantRecord[SortEntries[I].Head]^.Side <> OpposingSide(SelectedCharacter) then
                 Valid := 0;
           end;
           if IsHelpless(SavedTarget) then
@@ -1208,8 +1172,8 @@ begin
   if Chosen <> 0 then
   begin
     FindSpellTarget := True;
-    ds6DB9 := Target.X;
-    ds6DBA := Target.Y;
+    SpellAimX := Target.X;
+    SpellAimY := Target.Y;
   end
   else
   begin
@@ -1217,37 +1181,38 @@ begin
     FillChar(Target, 7, 0);
   end;
 end;
-{ ovl13:20C3, SelectSpellTargets. The spell window RunCombat sets ds6B84 to (ovl08:0088): it fills the target
-  list ds6C91 for the spell Spell (1-based, count ds6C94) and leaves the chosen target's cell in
-  ds6DB9/ds6DBA. The spell row's byte +6 (Pad2[6]) switches:
-    - nibble 0: the caster itself is the only target (ds6C95 := SelectedCharacter);
+{ ovl13:20C3, SelectSpellTargets. The spell window RunCombat sets SpellPickerPointer to (ovl08:0088): it fills the target
+  list SpellTargets for the spell Spell (1-based, count SpellTargetCount) and leaves the chosen target's cell in
+  SpellAimX/SpellAimY. The spell row's byte +6 (Pad2[6]) switches:
+    - nibble 0: the caster itself is the only target (FirstSpellTarget := SelectedCharacter);
     - nibble $F: FindSpellTarget aims (AimFlag 0); an aim on some combatant (Combat^.Target set) is
       used alone, an empty one scans the spell's area (ScanTargets, line budget (Pad2[6] and $F) shr 4,
-      which is always 0 here: QUIRK ovl13:2198) and copies every found combatant into ds6C91;
+      which is always 0 here: QUIRK ovl13:2198) and copies every found combatant into SpellTargets;
     - nibble 8..14: FindSpellTarget aims (AimFlag 1) and the spell's area (line budget Pad2[6] and 7)
-      always fills ds6C91;
+      always fills SpellTargets;
     - any other nibble: up to (Pad2[6] and 3) + 1 aiming passes collect that many distinct targets;
       a target already in the list only flashes 'Already been targeted' when Automatic is 0.
-  Done is set to 0 when nothing was collected (or an aim was refused). ds6820 is set to 1 once the
-  area scan filled the list. Globals: SelectedCharacter, ds6C91, ds6C94, ds6DB9, ds6DBA, ds6820. }
+  Done is set to 0 when nothing was collected (or an aim was refused). SpellAppliedToArea is set to 1 once the
+  area scan filled the list. Globals: SelectedCharacter, SpellTargets, SpellTargetCount, SpellAimX, SpellAimY,
+  SpellAppliedToArea. }
 procedure SelectSpellTargets(Spell, Automatic: Byte; var Done: Byte);
 var
   TargetsLeft: Byte;             { the aiming passes the default branch still gets }
   Count: Byte;                   { the number of targets collected }
   J: Byte;                       { walk of the targets collected so far }
   Target: TSpellTarget;          { one aim FindSpellTarget hands over }
-  Duplicate: Byte;               { nonzero when Target is already in ds6C91 }
+  Duplicate: Byte;               { nonzero when Target is already in SpellTargets }
 begin
   Done := 1;
-  ds6C94 := 0;
-  ds6820 := 0;
-  ds6DB9 := CombatantX(SelectedCharacter);
-  ds6DBA := CombatantY(SelectedCharacter);
+  SpellTargetCount := 0;
+  SpellAppliedToArea := 0;
+  SpellAimX := CombatantX(SelectedCharacter);
+  SpellAimY := CombatantY(SelectedCharacter);
   case SpellTable[Spell].Pad2[6] and $F of
     0:
       begin
-        ds6C95 := SelectedCharacter;
-        ds6C94 := 1;
+        FirstSpellTarget := SelectedCharacter;
+        SpellTargetCount := 1;
       end;
     $F:
       begin
@@ -1255,20 +1220,20 @@ begin
         begin
           if SelectedCharacter^.Combat^.Target <> nil then
           begin
-            ds6C95 := SelectedCharacter^.Combat^.Target;
-            ds6C94 := 1;
+            FirstSpellTarget := SelectedCharacter^.Combat^.Target;
+            SpellTargetCount := 1;
           end
           else
           begin
             { QUIRK ovl13:2198: the line budget (Pad2[6] and $F) shr 4 is always 0 here, because
               this branch is taken only when the low nibble is $F; an area spell aimed at nothing
               with Combat^.Target nil scans only the centre cell. }
-            ScanTargets(ds6DB9, ds6DBA,
+            ScanTargets(SpellAimX, SpellAimY,
               (SpellTable[Spell].Pad2[6] and $F) shr 4, $FF, 1, CombatMap);
-            for Count := 1 to ds6718[0].Val do
-              ds6C91[Count] := CombatantRecord[ds6718[Count].Head];
-            ds6C94 := ds6718[0].Val;
-            ds6820 := 1;
+            for Count := 1 to SortEntries[0].Val do
+              SpellTargets[Count] := CombatantRecord[SortEntries[Count].Head];
+            SpellTargetCount := SortEntries[0].Val;
+            SpellAppliedToArea := 1;
           end;
         end
         else
@@ -1278,11 +1243,11 @@ begin
       begin
         if FindSpellTarget(Spell, Automatic, 1, Target) then
         begin
-          ScanTargets(ds6DB9, ds6DBA, SpellTable[Spell].Pad2[6] and 7, $FF, 1, CombatMap);
-          for Count := 1 to ds6718[0].Val do
-            ds6C91[Count] := CombatantRecord[ds6718[Count].Head];
-          ds6C94 := ds6718[0].Val;
-          ds6820 := 1;
+          ScanTargets(SpellAimX, SpellAimY, SpellTable[Spell].Pad2[6] and 7, $FF, 1, CombatMap);
+          for Count := 1 to SortEntries[0].Val do
+            SpellTargets[Count] := CombatantRecord[SortEntries[Count].Head];
+          SpellTargetCount := SortEntries[0].Val;
+          SpellAppliedToArea := 1;
         end
         else
           Done := 0;
@@ -1297,24 +1262,24 @@ begin
         begin
           Duplicate := 0;
           for J := 1 to Count do
-            if ds6C91[J] = Target.Who then
+            if SpellTargets[J] = Target.Who then
               Duplicate := 1;
           if Duplicate = 0 then
           begin
             Inc(Count);
-            ds6C91[Count] := Target.Who;
+            SpellTargets[Count] := Target.Who;
             Dec(TargetsLeft);
           end
           else if Automatic = 0 then
             ShowFlashMessage('Already been targeted')
           else
             Dec(TargetsLeft);
-          RedrawMapCell(CombatantX(ds6C91[Count]), CombatantY(ds6C91[Count]));
+          RedrawMapCell(CombatantX(SpellTargets[Count]), CombatantY(SpellTargets[Count]));
         end
         else
           Dec(TargetsLeft);
       end;
-      ds6C94 := Count;
+      SpellTargetCount := Count;
       if Count = 0 then
         Done := 0;
     end;
@@ -1454,12 +1419,12 @@ end;
   kind (the missile sprite of the bearing from Who to Target for most kinds, a 2x2 combat icon or
   two rows of another picture for the rest) and draws it at Who's cell, then animates it along the
   line between the two combatants (WalkCombatLine), with a launch and an impact sound. Called by
-  PerformAttack for the aimed item and for a readied bow. Globals: ds6E36 (the combat picture whose
-  bytes-per-item word is read), VideoAdapter, ds2620 and ds262C (the two sounds). QUIRK ovl13:26DD:
+  PerformAttack for the aimed item and for a readied bow. Globals: CombatPicture (the combat picture whose
+  bytes-per-item word is read), VideoAdapter, SoundAttackLeaves and SoundAttackArrives (the two sounds). QUIRK ovl13:26DD:
   PixelBytes is worked out and never read. }
 procedure ShowAttackAnimation(Who, Target: PCharacter; Item: PItem);
 const
-  { The first of the three directional missile pictures of the picture table ds5E5A (ovl13:26D1):
+  { The first of the three directional missile pictures of the picture table PictureSlots (ovl13:26D1):
     an even bearing uses this slot plus Bearing mod 4, its half selected by Bearing div 4; an odd
     bearing uses the next slot, one half and a mirror for the westward directions. }
   MissilePicBase = 13;
@@ -1492,7 +1457,7 @@ begin
   Frames := MissileFrames;
   Mode := MissileMode;
   PicIndex := MissilePicBase;
-  PixelBytes := PPictureHeader(ds6E36)^.ByteSize;
+  PixelBytes := PPictureHeader(CombatPicture)^.ByteSize;
   if VideoAdapter = 1 then
     PixelBytes := PixelBytes div 4;
   case Item^.ItemType of
@@ -1529,30 +1494,30 @@ begin
     end;
   end;
   SetSoundDriverIdle(0);
-  PlaySound(ds2620);
+  PlaySound(SoundAttackLeaves);
   WalkCombatLine(CombatantX(Who), CombatantY(Who), CombatantX(Target), CombatantY(Target),
     Frames, Mode);
-  PlaySound(ds262C);
+  PlaySound(SoundAttackArrives);
   SetSoundDriverIdle(10);
 end;
 { ovl13:2879. Works out the monster side's remaining hit points as a percentage and stores it in the
-  morale byte ds6E2F, the value CheckMorale reads for a monster's second morale test: it walks the
-  battle's character list ds5D96 and, for every combatant on the monster side (Side = SideMonsters),
+  morale byte SecondMoraleByte, the value CheckMorale reads for a monster's second morale test: it walks the
+  battle's character list PartyListHead and, for every combatant on the monster side (Side = SideMonsters),
   adds its maximum hit points (HpMax, +$32) and, when it is still in the fight (Flag10D set), its
   current hit points (Flag11B, +$11B). A monster whose Flag10D is clear keeps its maximum counted
   while its current hit points fall out of the sum, so damage lowers the percentage. The result is
   20 * current div maximum * 5 (0 when the monster side has no maximum hit points at all, which
-  leaves ds6E2F unchanged). Called by StartBattle (ovl10:1E31, before the first round) and
-  EndCombatRound (ovl08:0880, every round). Globals: ds5D96 (read), ds6E2F (written). }
+  leaves SecondMoraleByte unchanged). Called by StartBattle (ovl10:1E31, before the first round) and
+  EndCombatRound (ovl08:0880, every round). Globals: PartyListHead (read), SecondMoraleByte (written). }
 procedure UpdateMonsterMorale;
 var
   TotalMaxHp: Word;              { [bp-2] the monster side's total maximum hit points }
   TotalCurrentHp: Word;          { [bp-4] their total current hit points (the Flag10D combatants) }
-  Who: PCharacter;               { [bp-8] the combatant walked in ds5D96 }
+  Who: PCharacter;               { [bp-8] the combatant walked in PartyListHead }
 begin
   TotalMaxHp := 0;
   TotalCurrentHp := 0;
-  Who := PCharacter(ds5D96);
+  Who := PCharacter(PartyListHead);
   while Who <> nil do
   begin
     if Who^.Side = SideMonsters then
@@ -1564,22 +1529,22 @@ begin
     Who := Who^.Next;
   end;
   if TotalMaxHp > 0 then
-    ds6E2F := 20 * TotalCurrentHp div TotalMaxHp * 5;
+    SecondMoraleByte := 20 * TotalCurrentHp div TotalMaxHp * 5;
 end;
 { ovl13:2908. Returns half of the largest round Movement (ComputeMovement div 2) among the combatants
   on the side opposing Who that are still in the fight (Flag10D set), and 0 when there is none: it
-  walks the battle's character list ds5D96 and keeps the highest value. TryFlee compares the result
+  walks the battle's character list PartyListHead and keeps the highest value. TryFlee compares the result
   with half of Who's own round Movement to decide whether Who outruns every enemy (Other < Moves
   gets away; level with it needs a coin) and CheckMorale panics Who when the result is at most half
-  of Who's own Movement. Globals: ds5D96 (read). }
+  of Who's own Movement. Globals: PartyListHead (read). }
 function FastestEnemyMovement(Who: Pointer): Byte;
 var
   Best: Byte;                    { [bp-2] the largest half-movement found }
   Moves: Byte;                   { [bp-3] the current combatant's half-movement }
-  Member: PCharacter;            { [bp-7] the combatant walked in ds5D96 }
+  Member: PCharacter;            { [bp-7] the combatant walked in PartyListHead }
 begin
   Best := 0;
-  Member := PCharacter(ds5D96);
+  Member := PCharacter(PartyListHead);
   while Member <> nil do
   begin
     if OpposingSide(Who) = Member^.Side then
@@ -1596,13 +1561,13 @@ end;
 { ovl13:2998. Tells whether an attack on Target may go ahead: it is allowed without asking when Target
   is on the side opposing Who (OpposingSide) or is run by the computer (Quick), otherwise the player
   is asked 'Attack Ally: ' (AskYesNo) and that answer decides. On a yes it also turns the fight into
-  a brawl: ds6DE2 and word 819 of ds49D6^ are set, every party member the computer runs (StatusOkay,
+  a brawl: AllyAttackConfirmed and word 819 of GameVars2^ are set, every party member the computer runs (StatusOkay,
   B84 above $7F) is moved to the monster side (Side 1) and loses its remembered target, and the side
   counts are recomputed (RecountCombatSides). Called by MeleeAttack (ovl08:0D45) and ResolveAimedAttack.
-  Globals: ds6DE2, ds49D6 and ds5D96 (read and written). }
+  Globals: AllyAttackConfirmed, GameVars2 and PartyListHead (read and written). }
 function ConfirmAttackTarget(Who, Target: PCharacter): Boolean;
 var
-  Member: PCharacter;            { [bp-5] the combatant walked in ds5D96 }
+  Member: PCharacter;            { [bp-5] the combatant walked in PartyListHead }
 begin
   if (OpposingSide(Target) = Who^.Side) or (Who^.Quick <> 0) then
     ConfirmAttackTarget := True
@@ -1613,9 +1578,9 @@ begin
     else
     begin
       ConfirmAttackTarget := True;
-      ds6DE2 := 1;
-      ds49D6^[Var2AllyAttack] := 1;
-      Member := PCharacter(ds5D96);
+      AllyAttackConfirmed := 1;
+      GameVars2^[Var2AllyAttack] := 1;
+      Member := PCharacter(PartyListHead);
       while Member <> nil do
       begin
         if (Member^.Status = StatusOkay) and (Member^.B84 > $7F) then
@@ -1725,11 +1690,11 @@ end;
   existing Target passes AttackTargetAllowed and, for a ranged weapon with Automatic set,
   ChooseAttackItem finds usable ammo that can melee any adjacent enemy; with no target, AimFlag 0
   makes the aim illegal. It builds the prompt 'Center Exit', prefixed 'Target ' when legal, and reads
-  a key under the title '(Use Cursor keys) ' (ReadPromptChoice, ds6E31): Enter or 'T' confirms (the
+  a key under the title '(Use Cursor keys) ' (ReadPromptChoice, CombatScratchFlag): Enter or 'T' confirms (the
   cell and Target go into Aim and, when Automatic, ResolveAimedAttack resolves the attack, else Done
   is set; a failed aim redraws the cell and clears Aim), H/I/M/Q/P/O/K/G set Dir 0..7, #0 or 'E'
   cancels, 'C' centres the cursor (Dir 8) and any other key clears Dir. Called by the aim wrapper e17.
-  Globals: CombatMap, BodyCount, BodyTable, CombatantRecord, CombatTiles, DirStepX, DirStepY, ds6E31. }
+  Globals: CombatMap, BodyCount, BodyTable, CombatantRecord, CombatTiles, DirStepX, DirStepY, CombatScratchFlag. }
 procedure RunAimCursor(Who, Target: PCharacter; Range, Automatic, AimFlag: Byte; var Done: Byte; var Aim: TSpellTarget);
 var
   AimText: string[40];           { [bp-$29] the prompt text 'Center Exit' / 'Target Center Exit' }
@@ -1810,7 +1775,7 @@ begin
     AimText := 'Center Exit';
     if Valid then
       AimText := 'Target ' + AimText;
-    Key := ReadPromptChoice('(Use Cursor keys) ', AimText, $D, $A, $F, 1, 0, ds6E31);
+    Key := ReadPromptChoice('(Use Cursor keys) ', AimText, $D, $A, $F, 1, 0, CombatScratchFlag);
     case Key of
       #13, 'T':
         begin
@@ -1869,10 +1834,10 @@ end;
   cursor) then redraws the target's cell and steps to the next. When it finally ends and Automatic is
   set it clears the range line. Called by PlayerTurn (ovl08:0310, Range $FF, Automatic 1) and
   FindSpellTarget (Range from SpellAreaSize, Automatic 0). Globals: ItemTable, CombatantTable,
-  CombatantRecord, ds6718 (the scan table ListAimTargets copies into Targets). }
+  CombatantRecord, SortEntries (the scan table ListAimTargets copies into Targets). }
 procedure RunAimTargets(Who: PCharacter; Range, Automatic, AimFlag: Byte; var Done: Byte; var Aim);
 var
-  Targets: array[1..72] of TSortRec;  { ds6718's records: a combatant index and its walk distance }
+  Targets: array[1..72] of TSortRec;  { SortEntries's records: a combatant index and its walk distance }
   AimRange: Byte;                { the effective attack range this aim uses }
   Count: Byte;                   { the targets in Targets }
   Index: Byte;                   { the target the cursor is on }
@@ -1884,16 +1849,16 @@ var
   Key: Char;                     { the key ShowAimPrompt returned }
 
   { ovl13:32E6. Lists the targets Who can reach: ScanTargets over the whole map ($7F steps, every
-    direction, Who's own footprint kind) into ds6718 and copies ds6718[1..Count] into Targets. The
+    direction, Who's own footprint kind) into SortEntries and copies SortEntries[1..Count] into Targets. The
     count goes into the enclosing Count. Called with Who by e17. }
   procedure ListAimTargets(Who: PCharacter);
   var
     I: Byte;                     { the copy index }
   begin
     ScanTargets(CombatantX(Who), CombatantY(Who), $7F, $FF, CombatantKind(Who), CombatMap);
-    Count := ds6718[0].Val;
+    Count := SortEntries[0].Val;
     for I := 1 to Count do
-      Targets[I] := ds6718[I];
+      Targets[I] := SortEntries[I];
   end;
 
   { ovl13:3389. Steps the aim cursor through Targets by Delta and returns the target there: with
@@ -2000,16 +1965,16 @@ end;
   Found and the second pass has not been taken, it lists the enemies CollectEnemiesInRange(Who,
   Range) holds and, up to AimSearchTries times, picks one at random (RollDice); a pick is accepted
   when ThroughWalls and CombatMap^.Head6 are both set or AttackTargetAllowed allows it, and then
-  Who^.Combat^.Target takes it; a refused pick is zeroed in ds6DE4 and the pass goes on only while
+  Who^.Combat^.Target takes it; a refused pick is zeroed in CombatantScanList and the pass goes on only while
   another entry is left. The first pass leaves CombatMap^.Head6 as it is, the second opens it when
   ForgetTarget is 0, so it can see through a blocking tile; Head6 is cleared again at the end.
   Returns whether a target was set. Called by FindSpellTarget (aim, ForgetTarget 1) and ovl09
-  QuickTurn, MoveStep and AiTurn. Globals: ds6DE4 (the scan list), CombatantRecord, CombatMap (Head6). }
+  QuickTurn, MoveStep and AiTurn. Globals: CombatantScanList (the scan list), CombatantRecord, CombatMap (Head6). }
 function ChooseCombatTarget(Who: PCharacter; Range, ThroughWalls, ForgetTarget: Byte): Boolean;
 var
   Count: Byte;                   { enemies the scan listed }
   Attempts: Byte;                { random picks left in this pass }
-  Index: Byte;                   { the picked entry in ds6DE4 }
+  Index: Byte;                   { the picked entry in CombatantScanList }
   Retry: Boolean;                { the second (open-gate) pass was taken }
   Found: Boolean;                { a target was accepted }
   Searched: Boolean;             { the open-gate pass already ran }
@@ -2035,9 +2000,9 @@ begin
     begin
       Dec(Attempts);
       Index := RollDice(1, Count);
-      if ds6DE4[Index] > 0 then
+      if CombatantScanList[Index] > 0 then
       begin
-        Target := CombatantRecord[ds6DE4[Index]];
+        Target := CombatantRecord[CombatantScanList[Index]];
         if ((ThroughWalls <> 0) and (CombatMap^.Head6 <> 0)) or
            AttackTargetAllowed(Who, Target) then
         begin
@@ -2046,9 +2011,9 @@ begin
         end
         else
         begin
-          ds6DE4[Index] := 0;
+          CombatantScanList[Index] := 0;
           for Index := 1 to Count do
-            if ds6DE4[Index] > 0 then
+            if CombatantScanList[Index] > 0 then
               Found := True;
           if Found then
             Found := False
@@ -2097,17 +2062,17 @@ end;
   called from behind (attack kind 1) and the turn ends through EndCombatTurn; the affect is removed
   from Who when the attack left the combatant out of the fight. Otherwise the combatant loses affect
   $3A, and (mode 0 only) the affect's removal flag is cleared and it is removed from Who, which runs
-  this handler again with mode 1 and so does not recurse. Globals: ds6826 (the recorded combatant),
+  this handler again with mode 1 and so does not recurse. Globals: HandlerCombatant (the recorded combatant),
   CombatantRecord. }
 procedure ForcedAttack(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   Done: Byte;                    { [bp-1] the turn-done flag PerformAttack fills in }
   Unused: Byte;                  { QUIRK ovl13:3A89: declared but never read; it pads the frame }
 begin
-  ds6826 := CombatantRecord[Affect^.Data];
-  if (Mode <> 0) or (Who^.Flag10D = 0) or (ds6826^.Flag10D = 0) then
+  HandlerCombatant := CombatantRecord[Affect^.Data];
+  if (Mode <> 0) or (Who^.Flag10D = 0) or (HandlerCombatant^.Flag10D = 0) then
   begin
-    RemoveAffect(ds6826, AffectLostWithForcedAttack, nil);
+    RemoveAffect(HandlerCombatant, AffectHeldFast, nil);
     if Mode = 0 then
     begin
       Affect^.Flag := 0;
@@ -2120,9 +2085,9 @@ begin
     Who^.AttackSlots[2] := 0;
     Who^.WeaponAttacks[1] := 3;
     Who^.WeaponDamage[1] := 4;
-    PerformAttack(Who, ds6826, 1, nil, Done);
+    PerformAttack(Who, HandlerCombatant, 1, nil, Done);
     Done := EndCombatTurn(Who);
-    if ds6826^.Flag10D = 0 then
+    if HandlerCombatant^.Flag10D = 0 then
       RemoveAffect(Who, AffectForcedAttack, Affect);
   end;
 end;
@@ -2130,25 +2095,25 @@ end;
   HandleCombatKey, which shows 'That doesn''t work' when this returns False): it acts only when the
   program was started with the STING argument (ParamStr(1) = 'STING', the same argument res04's
   ReadGameKey uses to turn on DebugMode), the developers' 'the gods intervene'. It returns True,
-  flashes 'The Gods intervene!', then walks the battle character list ds5D96 and, for every monster
+  flashes 'The Gods intervene!', then walks the battle character list PartyListHead and, for every monster
   it holds (Side = SideMonsters), takes it out of the fight (Flag10D 0), leaves it dead (Status
   StatusDead) and clears its combat-map cell (CombatantTable[CombatantIndex(Who)].Kind 0);
   EndCombatTurn then runs for EVERY combatant of the list, party members included, because the call
   sits outside the monster test, and its result is never read (QUIRK ovl13:3C29). The cursor is
   finally centred on the centre of the 7x7 view (CombatMap^.ViewX + ViewCentre, ViewY +
   ViewCentre, margin $FF so the view does not scroll, no step). Globals:
-  ds5D96, CombatMap, CombatantTable. }
+  PartyListHead, CombatMap, CombatantTable. }
 function GodsIntervene: Boolean;
 var
   Done: Byte;                    { QUIRK ovl13:3C29: EndCombatTurn's result, never read }
-  Who: PCharacter;               { the battle character list walked (ds5D96) }
+  Who: PCharacter;               { the battle character list walked (PartyListHead) }
 begin
   GodsIntervene := False;
   if ParamStr(1) <> 'STING' then
     Exit;
   GodsIntervene := True;
   ShowFlashMessage('The Gods intervene!');
-  Who := PCharacter(ds5D96);
+  Who := PCharacter(PartyListHead);
   while Who <> nil do
   begin
     if Who^.Side = SideMonsters then

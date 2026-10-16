@@ -40,18 +40,13 @@ const
   ActionCast = 1;
   ActionMemorize = 2;
   ActionScribe = 3;
-  VarNoCasting = 229;           { the game variable (+$1CA) that forbids casting here (as in ovl08) }
-  LastSpellSlot = 20;            { TCharacter.Spells is 0..20 }
   { Bit 7 of a memorized spell (Spells) or of a scroll's spell byte (TMenuLine.Affects): the spell
     is being memorized or scribed and only becomes real through the rest; the low bits are the
     spell number. }
   Pending = $80;
-  SpellMask = $7F;
   ScrollSpells = 3;              { a scroll holds up to three spells (TMenuLine.Affects[1..3]) }
   SpellLevels = 3;               { spell levels 1..3 of SpellSlots }
-  ClassCleric = 0;               { the rows of SpellSlots, TSpellEntry.SpellClass }
-  ClassMage = 1;
-  LastSpell = $38;               { SpellTable and SpellNames hold spells 1..$38 }
+  SpellBookMage = 1;
   { The rest a study needs (StudyRestMinutes): 4 hours, 6 when a spell is above level 2, plus 15
     minutes per spell level. }
   BaseRestHours = 4;
@@ -69,8 +64,6 @@ const
   No = 'N';
   KeyNone = #0;                  { leaves a menu, as 'E' (Exit) does }
   KeyEnter = #13;
-  ViewModeCamp = 2;              { the view mode (ds49F3) while the party camps }
-  MaxGameSpeed = 9;              { GameSpeed runs 0 (fastest) .. 9 (slowest) }
   NoChoice = $FFFF;              { the list position ChooseSpellFromList starts from }
   { Spell lists of ChooseSpellFromList (its first argument) as the camp uses them: 0 the memorized spells to
     cast, 1 the spells to memorize, 3 the scroll spells to scribe, 5 and 6 the spells being
@@ -83,7 +76,6 @@ const
   { The Display list (DisplaySpellEffects): NewMenuList's 46-byte lines (Text, Flag29, Next of
     TMenuLine, as ovl25 allocates them), the member heading flag, the window ChooseFromList shows
     them in (the full text window, as the Loot window of ovl05) and its colours. }
-  MenuLineBytes = $2E;
   HeadingLine = 1;               { Flag29 of a member's name line: a heading ChooseFromList skips }
   PlainLine = 0;
   ListLeft = 1;
@@ -100,15 +92,9 @@ const
   { The affects the Display names without a spell (the literals of ovl15:0FBC); every other named
     affect is a spell affect looked up in SpellTable (AffectId, byte +$A). }
   AffectStudyingManual = 4;
-  AffectTrainingManual = 7;
   AffectFeatherFall = $1B;
-  AffectHelpless = $1F;
   AffectPrayer = $23;
-  AffectCauseDisease = $2C;
-  AffectMummyDisease = $32;
   AffectRepulsed = $36;
-  AffectPoisoned = $37;
-  AffectRegenerating = $3B;
   AffectFireResistance = $3D;
   AffectInvisible = $47;
   AffectCamouflaged = $48;
@@ -183,14 +169,14 @@ begin
     Item := Item^.Next;
   end;
 end;
-{ ovl15:0214. Cancels the memorizing and scribing of every member of the party list (ds5D96);
+{ ovl15:0214. Cancels the memorizing and scribing of every member of the party list (PartyListHead);
   MakeCamp runs it when the camp opens and when it closes, so only a study finished by RestParty
   survives the camp. }
 procedure CancelPartyStudy;
 var
   Who: PCharacter;
 begin
-  Who := PCharacter(ds5D96);
+  Who := PCharacter(PartyListHead);
   while Who <> nil do
   begin
     CancelMemorizing(Who);
@@ -244,7 +230,7 @@ begin
 end;
 { ovl15:04A1. The Cast command: when MayUseMagic allows it, repeatedly lists SelectedCharacter's memorized
   spells (ChooseSpellFromList) and casts the chosen one in a cleared text window (CastChosenSpell), until the list
-  is left; 'has no spells memorized' when there is none. Clears ds6DB5 first and redraws the screen
+  is left; 'has no spells memorized' when there is none. Clears PickedSpellCharacter first and redraws the screen
   (RedrawView) when something was shown. The camp's Magic menu and ovl14's wilderness keys. }
 procedure CastSpells;
 var
@@ -253,7 +239,7 @@ var
 begin
   Redraw := 0;
   Choice := NoChoice;
-  ds6DB5 := nil;
+  PickedSpellCharacter := nil;
   if MayUseMagic(ActionCast) then
     repeat
       Spell := ChooseSpellFromList(ListMemorized, 1, Choice, Listed);
@@ -286,7 +272,7 @@ var
   Any: Boolean;
 begin
   Any := False;
-  for SpellClass := ClassCleric to ClassMage do
+  for SpellClass := ClassCleric to SpellBookMage do
   begin
     HasClass[SpellClass] := False;
     for SpellLevel := 1 to SpellLevels do
@@ -305,12 +291,12 @@ begin
   begin
     ShowCharacterMessage(SelectedCharacter, 'can memorize:', MessageColor, 0);
     Row := 3;
-    for SpellClass := ClassCleric to ClassMage do
+    for SpellClass := ClassCleric to SpellBookMage do
       if HasClass[SpellClass] then
       begin
         case SpellClass of
           ClassCleric: Line := '    Cleric Spells:';
-          ClassMage: Line := 'Magic-User Spells:';
+          SpellBookMage: Line := 'Magic-User Spells:';
         end;
         DrawTextAt(1, Row + $11, TextColor, Line);
         Col := $13;
@@ -334,7 +320,7 @@ var
   MaxMinutes, Minutes, Unused: Word;
 begin
   MaxMinutes := 0;
-  Who := PCharacter(ds5D96);
+  Who := PCharacter(PartyListHead);
   while Who <> nil do
   begin
     Minutes := StudyRestMinutes(Who);
@@ -514,7 +500,7 @@ begin
   end;
   if Redraw <> 0 then RedrawView;
 end;
-{ ovl15:0FBC. The camp's Display command: lists every party member (the party list ds5D96, linked
+{ ovl15:0FBC. The camp's Display command: lists every party member (the party list PartyListHead, linked
   by Next) as a heading line followed by one line per affect on the member that the game can name,
   or ' <No Spell Effects>' when it names none, then a blank line, and shows the list in the full
   text window titled 'Display' with ChooseFromList (heading colour 11, lines 10, highlight 15,
@@ -523,7 +509,7 @@ end;
   (SpellNames), or 'Funky--n' (ByteToText writes the number) when no spell has it; fourteen
   other affects have fixed names (the Affect* constants); any other affect is left out. The
   list begins with a blank line (line 0, where the highlight starts: Choice 0), so the first
-  member's name is line 1. Reads: ds5D96, SpellTable, SpellNames.
+  member's name is line 1. Reads: PartyListHead, SpellTable, SpellNames.
   Side effects: the heap (the lines, freed by FreeMenuList), the screen, the key pressed is ignored.
   QUIRK ovl15:0FBC: the local Unused ([bp-$14]) is never read or written; the frame needs its
   byte (Count is at [bp-$13], Found at [bp-$15]). }
@@ -561,7 +547,7 @@ begin
   Last^.Flag29 := PlainLine;
   Last^.Text := ' ';
   Last^.Next := nil;
-  Who := PCharacter(ds5D96);
+  Who := PCharacter(PartyListHead);
   while Who <> nil do
   begin
     Count := 0;
@@ -653,14 +639,14 @@ begin
       end;
   end;
 end;
-{ ovl15:14A9. Moves SelectedCharacter one place up the party list (ds5D96, linked by Next): it
+{ ovl15:14A9. Moves SelectedCharacter one place up the party list (PartyListHead, linked by Next): it
   changes places with the member before it, and the first member goes to the end of the list. The
   Party Order menu's G key once a character is picked. }
 procedure MoveMemberUp;
 var
   Before, Who, After: PCharacter;
 begin
-  Who := PCharacter(ds5D96);
+  Who := PCharacter(PartyListHead);
   Before := nil;
   if Who = SelectedCharacter then
   begin
@@ -673,9 +659,9 @@ begin
       Who := Who^.Next;
     end;
   After := SelectedCharacter^.Next;
-  if PCharacter(ds5D96) = SelectedCharacter then
+  if PCharacter(PartyListHead) = SelectedCharacter then
   begin
-    if After <> nil then PCharacter(ds5D96) := After;
+    if After <> nil then PCharacter(PartyListHead) := After;
     Who^.Next := SelectedCharacter;
     SelectedCharacter^.Next := nil;
   end
@@ -683,8 +669,8 @@ begin
   begin
     Who^.Next := After;
     SelectedCharacter^.Next := Who;
-    if (Who = PCharacter(ds5D96)) or (Before = nil) then
-      PCharacter(ds5D96) := SelectedCharacter
+    if (Who = PCharacter(PartyListHead)) or (Before = nil) then
+      PCharacter(PartyListHead) := SelectedCharacter
     else
       Before^.Next := SelectedCharacter;
   end;
@@ -695,20 +681,20 @@ procedure MoveMemberDown;
 var
   Before, After: PCharacter;
 begin
-  Before := PCharacter(ds5D96);
+  Before := PCharacter(PartyListHead);
   if Before <> SelectedCharacter then
     while Before^.Next <> SelectedCharacter do Before := Before^.Next;
   After := SelectedCharacter^.Next;
   if After = nil then
   begin
-    SelectedCharacter^.Next := PCharacter(ds5D96);
-    PCharacter(ds5D96) := SelectedCharacter;
+    SelectedCharacter^.Next := PCharacter(PartyListHead);
+    PCharacter(PartyListHead) := SelectedCharacter;
     Before^.Next := After;
   end
   else
   begin
     SelectedCharacter^.Next := After^.Next;
-    if PCharacter(ds5D96) = SelectedCharacter then PCharacter(ds5D96) := After;
+    if PCharacter(PartyListHead) = SelectedCharacter then PCharacter(PartyListHead) := After;
     if Before <> SelectedCharacter then Before^.Next := After;
     After^.Next := SelectedCharacter;
   end;
@@ -761,7 +747,7 @@ end;
   cleared; on No 'Breathes A sigh of relief'. }
 procedure DropPartyMember;
 begin
-  if (SelectedCharacter^.Next = nil) and (SelectedCharacter = PCharacter(ds5D96)) then
+  if (SelectedCharacter^.Next = nil) and (SelectedCharacter = PCharacter(PartyListHead)) then
   begin
     if AskYesNo('quit TO DOS: ', AskColor, WordColor, HotColor) = Yes then
     begin
@@ -880,8 +866,8 @@ var
   Key: Char;
   ViewFlag, ExtKey: Byte;
 begin
-  SavedMode := ds49F3;
-  ds49F3 := ViewModeCamp;
+  SavedMode := ViewMode;
+  ViewMode := ViewModeCamp;
   RestHealCounter := 0;
   FillChar(RestTime, SizeOf(RestTime), 0);
   RedrawView;
@@ -912,8 +898,8 @@ begin
       end;
   end;
   CancelPartyStudy;
-  ds6DB5 := nil;
-  ds49F3 := SavedMode;
+  PickedSpellCharacter := nil;
+  ViewMode := SavedMode;
   DrawLocationLine;
   ClearCharacterMessage;
   ClearPromptLine;

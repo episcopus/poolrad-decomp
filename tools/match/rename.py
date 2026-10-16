@@ -163,7 +163,13 @@ def main(argv=None) -> int:
     a = ap.parse_args(argv)
     if a.apply:
         n = 0
+        pool = (match.SRC / "POOLVARS.PAS")
+        declared = pool.read_text() if pool.exists() else ""
         for r in tomllib.loads(LOG.read_text()).get("rename", []) if LOG.exists() else []:
+            # A global's old name that POOLVARS still declares is a storage cell of the DGROUP layout (the
+            # renamed object is an `absolute` view of it, playbook 50), not a stale use: leave it.
+            if re.search(r"^  %s\s*:" % re.escape(r["old"]), declared, re.M | re.I):
+                continue
             n += rename_sources(r["old"], r["new"])
         print("rename: %d stale use(s) of old names replaced in src/" % n)
         return 0

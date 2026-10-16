@@ -24,43 +24,28 @@ implementation
 uses RES06, RES09, RES12, OVL06, OVL07, OVL16, OVL19, OVL21, OVL22, OVL24, OVL25;
 
 const
-  { Words of ds49D6^ (the second game word block) this unit reads or writes. }
+  { Words of GameVars2^ (the second game word block) this unit reads or writes. }
   VarBattleOutcome = 711;       { EndBattle sets 0, $80 when the party is destroyed, $81 when it fled (ovl05:06B1) }
   VarRemovedCount = 712;        { combatants RemoveBattleCombatants removed whose Flag10D is not 1 (ovl05:11FA) }
   VarNoItemLoot = 739;          { 1: the defeated monsters' items are not looted (ovl05:00FB) }
   { Nonzero: a duel gives 100 experience per level of the selected character (ovl05:000D), and a
     non-duel battle counts every player-run member as standing (ovl05:058D). Cleared by EndBattle. }
   VarFixedXpBattle = 742;
-  VarPartySize = 830;           { the members; RemoveSelectedCharacter decrements it when it removes a counted one }
   VarAfterBattle1 = 880;        { three words EndBattle clears (ovl05:163C..1652); meaning unknown }
   VarAfterBattle2 = 881;
   VarAfterBattle3 = 882;
   BattleOutcomeDestroyed = $80;
   BattleOutcomeFled = $81;
-  { TCharacter.Status values. }
-  StatusOkay = 0;
-  StatusDead = 1;
-  StatusFled = 3;               { left the battle: back to okay when the party survives }
-  StatusUnconscious = 4;        { what Bandage gives (whitepaper 5.5) }
-  StatusDying = 5;              { becomes unconscious when the battle ends }
   { TCharacter.Side values. }
-  SideParty = 0;
-  SideMonsters = 1;
-  ComputerRun = $80;            { TCharacter.B84 from $80 up: a member the player does not run (a hireling) }
   ShareMask = 7;                { the bits of HirelingShare that are the share }
   ExtraCombatant = 1;           { TCombatant.NoBody: a combatant that is not a real party member }
   { TCharacter.ClassMask values of AwardExperience: the four single classes whose prime requisite
     above PrimeRequisiteBonus gives 10% more experience. }
-  ClassCleric = 0;
-  ClassFighter = 2;
-  ClassMagicUser = 5;
-  ClassThief = 6;
   PrimeRequisiteBonus = 15;
   { The two memorized spells that add Detect to the treasure menu [I]: the cleric's and the
     magic-user's Detect Magic in the order of the Gold Box spell list. }
   SpellClericDetectMagic = 5;
   SpellMageDetectMagic = $B;
-  LastSpellSlot = 20;           { TCharacter.Spells is 0..20 }
   LastMoneyKind = 6;            { TPartyMoney and TCharacter.Money are 0..6 }
   { The experience value of each kind of pooled money (ComputeBattleExperience). }
   CopperPerXp = 200;
@@ -73,7 +58,6 @@ const
   XpPerLevel = 100;             { a fixed-experience duel }
   MaxWorthlessItems = 8;        { items of no value taken from monsters before they are left behind }
   WorthlessItemChance = 3;      { a worthless item is taken when 1d10 is at most this }
-  ItemListSize = $3F;           { SizeOf(TMenuLine): FreeMem sizes }
   CombatStateSize = $16;        { the size of a character's combat state (TCharacter.Combat) }
   AnswerNo = 1;                 { AskMenu returns the 0-based word of '~Yes ~No' }
   KeyEnter = #13;
@@ -83,9 +67,9 @@ const
   In a duel with VarFixedXpBattle set, Xp is 100 per level (HighestLevel) of SelectedCharacter.
   Otherwise every monster (Side 1) that did not flee adds its money to PooledMoney, its XpValue plus
   HpB1 times XpPerHp to the total, and, unless VarNoItemLoot is 1, its items as clones to the loot
-  list ds6810 (FormatItemLine first): every item with a Value, but worthless items only while fewer
+  list PooledItems (FormatItemLine first): every item with a Value, but worthless items only while fewer
   than 8 items were taken and with a 1d10 of 3 or less. Then the pooled money adds its value
-  (copper / 200 ... jewels * 2200) and each looted item before ds5D9A adds 400 per point of Plus.
+  (copper / 200 ... jewels * 2200) and each looted item before LootListBoundary adds 400 per point of Plus.
   Xp is the total divided by the party size (VarPartySize) less NoExperienceCount. Sets
   MonstersLooted when a monster was looted. QUIRK ovl05:002B: the level product is an Integer
   multiplication extended to LongInt. }
@@ -98,12 +82,12 @@ var
   Item: PMenuLine;
   Taken: Byte;
 begin
-  if (DuelMode <> 0) and (ds49D6^[VarFixedXpBattle] <> 0) then
+  if (DuelMode <> 0) and (GameVars2^[VarFixedXpBattle] <> 0) then
     Xp := SelectedCharacter^.HighestLevel * XpPerLevel
   else
   begin
     Total := 0;
-    Who := PCharacter(ds5D96);
+    Who := PCharacter(PartyListHead);
     Taken := 0;
     while Who <> nil do
     begin
@@ -114,29 +98,29 @@ begin
         for Kind := 0 to LastMoneyKind do
           Inc(PooledMoney[Kind], Who^.Money[Kind]);
         Total := Who^.XpValue + Total + Who^.XpPerHp * Who^.HpB1;
-        if ds49D6^[VarNoItemLoot] <> 1 then
+        if GameVars2^[VarNoItemLoot] <> 1 then
           while Item <> nil do
           begin
             if (Item^.Value > 0) or
               ((Taken < MaxWorthlessItems) and (RollDice(1, 10) <= WorthlessItemChance)) then
             begin
               Inc(Taken);
-              if ds6810 = nil then
+              if PooledItems = nil then
               begin
-                New(ds6810);
+                New(PooledItems);
                 FormatItemLine(LongInt(Who), Item, 0, 0, 0, 0);
-                ds6810^ := Item^;
-                ds6810^.Readied := False;
-                ds6810^.Next := nil;
+                PooledItems^ := Item^;
+                PooledItems^.Readied := False;
+                PooledItems^.Next := nil;
               end
               else
               begin
-                Entry := ds6810;
-                New(ds6810);
+                Entry := PooledItems;
+                New(PooledItems);
                 FormatItemLine(LongInt(Who), Item, 0, 0, 0, 0);
-                ds6810^ := Item^;
-                ds6810^.Readied := False;
-                ds6810^.Next := Entry;
+                PooledItems^ := Item^;
+                PooledItems^.Readied := False;
+                PooledItems^.Next := Entry;
               end;
             end;
             Item := Item^.Next;
@@ -151,18 +135,18 @@ begin
     Inc(Total, PooledMoney[4] * XpPerPlatinum);
     Inc(Total, PooledMoney[5] * XpPerGem);
     Inc(Total, PooledMoney[6] * XpPerJewel);
-    Entry := ds6810;
-    while (Entry <> nil) and (Entry <> ds5D9A) do
+    Entry := PooledItems;
+    while (Entry <> nil) and (Entry <> LootListBoundary) do
     begin
       if Entry^.Plus > 0 then
         Inc(Total, Entry^.Plus * XpPerPlus);
       Entry := Entry^.Next;
     end;
-    Xp := Total div (ds49D6^[VarPartySize] - NoExperienceCount);
+    Xp := Total div (GameVars2^[VarPartySize] - NoExperienceCount);
   end;
 end;
 
-{ ovl05:0355. Adds Xp to the Experience of every member of the party list (ds5D96) that has Flag10D
+{ ovl05:0355. Adds Xp to the Experience of every member of the party list (PartyListHead) that has Flag10D
   set and is not dead: 10% more for a cleric, fighter, magic-user or thief whose prime requisite
   (Wisdom, Strength, Intelligence, Dexterity) is above 15, half for the two-class combinations and
   a third for the three-class ones (ClassMask 8, 10..14, 16 and 9, 15). }
@@ -171,10 +155,10 @@ var
   Who: PCharacter;
   Gain: LongInt;
 begin
-  Who := PCharacter(ds5D96);
+  Who := PCharacter(PartyListHead);
   while Who <> nil do
   begin
-    if (Who^.Flag10D <> 0) and (Who^.Status <> StatusDead) then
+    if (Who^.Flag10D <> 0) and (Who^.Status <> StatusAnimated) then
     begin
       Gain := Xp;
       case Who^.ClassMask of
@@ -191,7 +175,7 @@ begin
   end;
 end;
 
-{ ovl05:04C9. Decides how the battle ended and applies it to the party list (ds5D96); the walks stop
+{ ovl05:04C9. Decides how the battle ended and applies it to the party list (PartyListHead); the walks stop
   at the first extra combatant (TCombatant.NoBody = 1). PartyFled is set when a member has fled
   (Status 3). In a battle (not DuelMode): PartyDestroyed stays 1 unless a player-run member (Side 0,
   B84 below $80) is okay, dead or fled (or VarFixedXpBattle is 1); BattleWon is set and PartyFled
@@ -211,7 +195,7 @@ begin
   NoExperienceCount := 0;
   PartyDestroyed := 1;
   PartyFled := 0;
-  Who := PCharacter(ds5D96);
+  Who := PCharacter(PartyListHead);
   while (Who <> nil) and (Who^.Combat^.NoBody <> ExtraCombatant) do
   begin
     if Who^.Status = StatusFled then
@@ -221,20 +205,20 @@ begin
   if DuelMode <> 0 then
     PartyDestroyed := 0;
   BattleWon := 0;
-  Who := PCharacter(ds5D96);
+  Who := PCharacter(PartyListHead);
   if DuelMode = 0 then
   begin
     while (Who <> nil) and (Who^.Combat^.NoBody <> ExtraCombatant) do
     begin
-      if ((Who^.Status = StatusFled) or (Who^.Status = StatusDead) or (Who^.Status = StatusOkay) or
-        (ds49D6^[VarFixedXpBattle] = 1)) and (Who^.Side = SideParty) and (Who^.B84 < ComputerRun) then
+      if ((Who^.Status = StatusFled) or (Who^.Status = StatusAnimated) or (Who^.Status = StatusOkay) or
+        (GameVars2^[VarFixedXpBattle] = 1)) and (Who^.Side = SideParty) and (Who^.B84 < ComputerRun) then
         PartyDestroyed := 0;
-      if (Who^.Status = StatusDead) or (Who^.Status = StatusOkay) then
+      if (Who^.Status = StatusAnimated) or (Who^.Status = StatusOkay) then
       begin
         BattleWon := 1;
         PartyFled := 0;
       end;
-      if (Who^.Flag10D = 0) or (Who^.Status = StatusDead) then
+      if (Who^.Flag10D = 0) or (Who^.Status = StatusAnimated) then
         Inc(NoExperienceCount);
       Who := Who^.Next;
     end;
@@ -243,7 +227,7 @@ begin
       ComputeBattleExperience(BattleExperience);
       AwardExperience(BattleExperience);
     end;
-    Who := PCharacter(ds5D96);
+    Who := PCharacter(PartyListHead);
     if PartyDestroyed = 0 then
     begin
       while (Who <> nil) and (Who^.Combat^.NoBody <> ExtraCombatant) do
@@ -267,7 +251,7 @@ begin
         end
         else
         begin
-          ds49D6^[VarBattleOutcome] := BattleOutcomeFled;
+          GameVars2^[VarBattleOutcome] := BattleOutcomeFled;
           if Who^.Status = StatusFled then
           begin
             Who^.Status := StatusOkay;
@@ -284,7 +268,7 @@ begin
     end
     else
     begin
-      Who := PCharacter(ds5D96);
+      Who := PCharacter(PartyListHead);
       Stop := False;
       while (Who <> nil) and not Stop do
       begin
@@ -297,12 +281,12 @@ begin
           Stop := True;
         Who := Who^.Next;
       end;
-      ds49D6^[VarPartySize] := 0;
+      GameVars2^[VarPartySize] := 0;
     end;
   end
   else
   begin
-    Who := PCharacter(ds5D96);
+    Who := PCharacter(PartyListHead);
     while Who <> nil do
     begin
       if (Who^.Flag10D = 1) and (Who^.Status = StatusOkay) and (Who^.Side <> SideMonsters) then
@@ -313,10 +297,10 @@ begin
       end;
       Who := Who^.Next;
     end;
-    Who := PCharacter(ds5D96);
+    Who := PCharacter(PartyListHead);
     while Who <> nil do
     begin
-      if (Who^.Status = StatusOkay) or (Who^.Status = StatusDead) then
+      if (Who^.Status = StatusOkay) or (Who^.Status = StatusAnimated) then
         Who^.Flag10D := 1;
       if Who^.Status = StatusDying then
         Who^.Status := StatusUnconscious;
@@ -368,7 +352,7 @@ begin
   Key := ReadPromptChoice(Title, 'press <enter>/<return> to continue', 15, 15, 15, 1, 0, ExtKey);
 end;
 
-{ ovl05:0B14. Draws the 'Loot' window, prepares every entry of the loot list ds6810 for display
+{ ovl05:0B14. Draws the 'Loot' window, prepares every entry of the loot list PooledItems for display
   (FormatItemLine) and lets the player pick one (ChooseFromList, 'Items: ' with a 'Take' button).
   Key is the key of the choice, Item the chosen entry; Selected and Choice carry the list
   position between calls. }
@@ -381,18 +365,18 @@ var
 begin
   Redraw := 1;
   DrawWindow(1, 1, $26, $16, 0, $F, 'Loot');
-  Entry := ds6810;
+  Entry := PooledItems;
   while Entry <> nil do
   begin
     FormatItemLine(0, Entry, 0, 0, 0, 0);
     Entry := Entry^.Next;
   end;
-  List := ds6810;
+  List := PooledItems;
   Key := ChooseFromList('Items: ', 'Take', 13, 10, 15, 1, 4, $26, $16, List, 1, Redraw, Choice, Selected);
   Item := Selected;
 end;
 
-{ ovl05:0C06. Lets the player take items from the loot list ds6810 until another key than Take or
+{ ovl05:0C06. Lets the player take items from the loot list PooledItems until another key than Take or
   Enter is pressed or the list is empty: the chosen item goes to SelectedCharacter
   (AddInventoryItem) and, unless the character is overloaded, is unlinked from the loot and freed.
   Redraws the screen (RedrawView) at the end. }
@@ -407,7 +391,7 @@ var
   Overloaded: Byte;
 begin
   Chosen := nil;
-  Selected := ds6810;
+  Selected := PooledItems;
   Choice := 0;
   repeat
     ChooseLootItem(Key, Chosen, Selected, Choice);
@@ -419,9 +403,9 @@ begin
       AddInventoryItem(Chosen, Overloaded);
       if Overloaded = 0 then
       begin
-        Prev := ds6810;
+        Prev := PooledItems;
         if Prev = Chosen then
-          ds6810 := Chosen^.Next
+          PooledItems := Chosen^.Next
         else
         begin
           while Prev^.Next <> Chosen do
@@ -431,7 +415,7 @@ begin
         Chosen^.Next := nil;
         if Chosen <> nil then
           FreeMem(Chosen, ItemListSize);
-        if ds6810 = nil then
+        if PooledItems = nil then
           Done := True;
       end;
     end;
@@ -579,14 +563,14 @@ var
   Who: PCharacter;
   NextWho: PCharacter;
 begin
-  ds49D6^[VarRemovedCount] := 0;
-  Who := PCharacter(ds5D96);
+  GameVars2^[VarRemovedCount] := 0;
+  Who := PCharacter(PartyListHead);
   while Who <> nil do
   begin
     if (Who^.Combat^.NoBody = ExtraCombatant) or (Who^.Side = SideMonsters) then
     begin
       if Who^.Flag10D <> 1 then
-        Inc(ds49D6^[VarRemovedCount]);
+        Inc(GameVars2^[VarRemovedCount]);
       NextWho := Who^.Next;
       SelectedCharacter := Who;
       RemoveSelectedCharacter(Who^.Combat^.NoBody = ExtraCombatant, True);
@@ -602,7 +586,7 @@ begin
       Who := Who^.Next;
     end;
   end;
-  SelectedCharacter := PCharacter(ds5D96);
+  SelectedCharacter := PCharacter(PartyListHead);
 end;
 
 { ovl05:12E8. The hirelings' share: every okay member the player does not run (B84 $80 and up) has
@@ -624,7 +608,7 @@ var
   Key: Char;
 begin
   Taken := False;
-  Who := PCharacter(ds5D96);
+  Who := PCharacter(PartyListHead);
   HirelingShares := 0;
   TotalShares := 0;
   while Who <> nil do
@@ -649,7 +633,7 @@ begin
   if Taken then
   begin
     DrawWindow(1, 1, $26, $16, 0, $F, '');
-    Who := PCharacter(ds5D96);
+    Who := PCharacter(PartyListHead);
     Row := 0;
     while Who <> nil do
     begin
@@ -665,19 +649,19 @@ begin
 end;
 
 { ovl05:1527 (e1). The end of a battle: clears VarBattleOutcome and MonstersLooted, sets the view
-  mode ds49F3 to 6, settles the outcome and removes the monsters. While the party lives (or in a
+  mode ViewMode to 6, settles the outcome and removes the monsters. While the party lives (or in a
   duel) the hirelings take their share, the result is shown, the treasure menu runs and the loot
-  left in ds6810 is freed. A destroyed party gets VarBattleOutcome $80, 'The END!' and 'The monsters
-  rejoice for the party has been destroyed'. Then sets ds4A00 and clears VarAfterBattle1..3,
+  left in PooledItems is freed. A destroyed party gets VarBattleOutcome $80, 'The END!' and 'The monsters
+  rejoice for the party has been destroyed'. Then sets WaitAfterTextRun and clears VarAfterBattle1..3,
   VarNoItemLoot and VarFixedXpBattle. }
 procedure EndBattle;
 var
   Entry: PMenuLine;
   Doomed: PMenuLine;
 begin
-  ds49D6^[VarBattleOutcome] := 0;
+  GameVars2^[VarBattleOutcome] := 0;
   MonstersLooted := 0;
-  ds49F3 := 6;
+  ViewMode := 6;
   SettleBattleOutcome;
   RemoveBattleCombatants;
   if (PartyDestroyed = 0) or (DuelMode <> 0) then
@@ -685,30 +669,30 @@ begin
     TakeHirelingShares;
     ShowBattleResult(BattleExperience);
     TreasureMenu;
-    Entry := ds6810;
+    Entry := PooledItems;
     while Entry <> nil do
     begin
       Doomed := Entry;
       Entry := Entry^.Next;
       FreeMem(Doomed, ItemListSize);
     end;
-    ds6810 := nil;
+    PooledItems := nil;
   end
   else
   begin
-    ds49D6^[VarBattleOutcome] := BattleOutcomeDestroyed;
+    GameVars2^[VarBattleOutcome] := BattleOutcomeDestroyed;
     DrawWindow(1, 1, $26, $16, 0, $F, 'The END!');
     GlyphCol := 2;
     GlyphRow := 6;
     ShowPagedText(2, 5, $25, $16, $A, 1, 'The monsters rejoice for the party has been destroyed');
     ShowMessageLine($D, 'Press any key to continue');
   end;
-  ds4A00 := 1;
-  ds49D6^[VarAfterBattle1] := 0;
-  ds49D6^[VarAfterBattle2] := 0;
-  ds49D6^[VarAfterBattle3] := 0;
-  ds49D6^[VarNoItemLoot] := 0;
-  ds49D6^[VarFixedXpBattle] := 0;
+  WaitAfterTextRun := 1;
+  GameVars2^[VarAfterBattle1] := 0;
+  GameVars2^[VarAfterBattle2] := 0;
+  GameVars2^[VarAfterBattle3] := 0;
+  GameVars2^[VarNoItemLoot] := 0;
+  GameVars2^[VarFixedXpBattle] := 0;
 end;
 
 { ovl05:1671. The unit's initialisation part is empty (push bp; mov bp, sp; pop bp; retf). }

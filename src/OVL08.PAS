@@ -24,9 +24,6 @@ procedure SetQuickCombat(Who: PCharacter);
 implementation
 uses RES04, RES07, RES09, RES12, OVL09, OVL10, OVL13, OVL19, OVL20, OVL22, OVL24, OVL25, OVL31, Crt;
 const
-  StatusBandaged = 4;     { the Status BandageDying gives a dying character }
-  StatusDying = 5;        { the Status of a dying character: it bleeds one round per EndCombatRound }
-  StatusBledOut = 6;      { the Status after more than LastDyingRound rounds (Raise Dead's StatusGone) }
   LastDyingRound = 9;
   NoInitiative = 0;       { PickNextCombatant: no character is left to act this round }
   InitiativeLast = 1;     { Delay: act after everyone else }
@@ -46,35 +43,30 @@ const
   KeyLeft = 'K';
   KeyHome = 'G';
   CombatNodeSize = $13;   { FreeMem size of a DS:6DBB list record }
-  CombatMapSize = $4E9;   { FreeMem size of the CombatMap block }
-  ViewModeCombat = 5;     { ds49F3 while a combat is running (ovl08:0080) }
-  MaxGameSpeed = 9;
-  VarNoCasting = 229;     { the game variable (+$1CA) that hides Cast in the combat menu }
-  VarCombatWord715 = 715; { a word of ds49D6^ RunCombat clears every round (+$596); meaning unknown }
   MenuColors = $F;        { the last ReadPromptChoice/AskYesNo argument of every menu here }
 
 { ovl08:0000. Frees the combat data after the last round: the DS:6DBB list of $13-byte records,
-  the CombatMap block, and the picture DS:6E36 (ReleasePicture). Then ovl31_e3, and DS:6B84 becomes
+  the CombatMap block, and the picture DS:6E36 (ReleasePicture). Then RestorePaletteColours0And8, and DS:6B84 becomes
   @ChooseSpellTargets. Called once by RunCombat. The word local is unused; it is there so the frame matches. }
 procedure EndCombat;
 var
   Next: PCombatNode;
   Unused: Word;
 begin
-  while ds6DBB <> nil do
+  while CloudList <> nil do
   begin
-    Next := ds6DBB^.Next;
-    FreeMem(ds6DBB, CombatNodeSize);
-    ds6DBB := Next;
+    Next := CloudList^.Next;
+    FreeMem(CloudList, CombatNodeSize);
+    CloudList := Next;
   end;
   FreeMem(CombatMap, CombatMapSize);
   CombatMap := nil;
-  ReleasePicture(ds6E36);
-  ovl31_e3;
-  ds6B84 := @ChooseSpellTargets;
+  ReleasePicture(CombatPicture);
+  RestorePaletteColours0And8;
+  SpellPickerPointer := @ChooseSpellTargets;
 end;
 { ovl08:007A. The combat loop. Sets the view mode and DS:6B84 := @SelectSpellTargets, runs StartBattle,
-  then rounds until one side's count (ds6814 or ds6815) is zero or EndCombatRound says so.
+  then rounds until one side's count (PartySideCount or EnemySideCount) is zero or EndCombatRound says so.
   Each round calls RecountCombatSides, StartCombatantRound for every combatant on the party list, then turns in
   initiative order (PickNextCombatant, CombatTurn). EndCombat frees the combat data. The byte
   local is unused; it is there so the frame matches. Called by RunAreaEventCommand. }
@@ -84,22 +76,22 @@ var
   Who: PCharacter;
   Unused: Byte;
 begin
-  ds49F3 := ViewModeCombat;
-  ds6B84 := @SelectSpellTargets;
+  ViewMode := ViewModeCombat;
+  SpellPickerPointer := @SelectSpellTargets;
   StartBattle;
   Done := 0;
-  if (ds6814 = 0) or (ds6815 = 0) then
+  if (PartySideCount = 0) or (EnemySideCount = 0) then
     Done := 1;
   while Done = 0 do
   begin
     RecountCombatSides;
-    Who := PCharacter(ds5D96);
+    Who := PCharacter(PartyListHead);
     while Who <> nil do
     begin
       StartCombatantRound(Who);
       Who := Who^.Next;
     end;
-    ds49D6^[VarCombatWord715] := 0;
+    GameVars2^[VarCombatWord715] := 0;
     PickNextCombatant(Who);
     while Who <> nil do
     begin
@@ -110,7 +102,7 @@ begin
   end;
   EndCombat;
 end;
-{ ovl08:0131. Picks the character who acts next: of the party list (ds5D96, which holds every
+{ ovl08:0131. Picks the character who acts next: of the party list (PartyListHead, which holds every
   combatant) the one with the highest positive Combat^.Initiative; each candidate rolls 1d100
   (RollDice) and among equal initiatives the higher roll wins. Best is nil when nobody has an
   initiative above 0 any more, which ends the round in RunCombat. }
@@ -124,7 +116,7 @@ var
 begin
   BestInit := 0;
   BestRoll := 0;
-  Who := PCharacter(ds5D96);
+  Who := PCharacter(PartyListHead);
   while Who <> nil do
   begin
     Roll := RollDice(1, 100);
@@ -173,7 +165,8 @@ end;
   turn. Otherwise the CombatMenu key is carried out until Done: M Move (MoveCharacter), V View
   (ViewSelectedCharacter), A Aim (RunAimTargets), U Use (RunItemMenu), C Cast (CastCombatSpell), T Turn (TurnUndead), Q
   Quick (SetQuickCombat, the computer finishes the turn), D Done (EndTurnMenu), Space takes
-  every character with B84 below $80 out of quick combat, and the Alt keys: Alt-M toggles Magic On/Off (ds6E30), Alt-Q makes
+  every character with B84 below $80 out of quick combat, and the Alt keys: Alt-M toggles Magic On/Off
+  (MagicToggleOn), Alt-Q makes
   everybody quick, Alt-X asks GodsIntervene. After each command that does not end the turn the
   character is shown again. Done is the turn-ended flag the commands set. }
 procedure PlayerTurn(Who: PCharacter);
@@ -232,15 +225,15 @@ begin
           'D': EndTurnMenu(Who, Done);
           KeyAltM:
           begin
-            ds6E30 := not ds6E30;
-            if ds6E30 then
+            MagicToggleOn := not MagicToggleOn;
+            if MagicToggleOn then
               ShowFlashMessage('Magic On')
             else
               ShowFlashMessage('Magic Off');
           end;
           ' ':
           begin
-            Member := PCharacter(ds5D96);
+            Member := PCharacter(PartyListHead);
             while Member <> nil do
             begin
               if Member^.B84 < $80 then Member^.Quick := 0;
@@ -250,7 +243,7 @@ begin
           KeyQuickAll:
           begin
             Who^.Combat^.Initiative := InitiativeQuickAll;
-            Member := PCharacter(ds5D96);
+            Member := PCharacter(PartyListHead);
             while Member <> nil do
             begin
               SetQuickCombat(Member);
@@ -309,12 +302,12 @@ begin
     if (Flag <> 0) and not (Cmd in [KeyQuickAll, KeyAltR, KeyAltX, KeyAltM]) then Cmd := #0;
   until Cmd in [KeyQuickAll, KeyAltR, ' ', KeyAltX, KeyAltM, 'A', 'C', 'D', 'M', 'Q', 'T', 'U', 'V'];
 end;
-{ ovl08:0880. The end of a combat round: AdvanceGameClock(1, 1), the round counter ds6DE3, UpdateMonsterMorale,
+{ ovl08:0880. The end of a combat round: AdvanceGameClock(1, 1), the round counter CombatRound, UpdateMonsterMorale,
   then for each character the RunAffectHooks hook $13 and ApplyCloudTile; a dying character (StatusDying)
-  bleeds one more round and after LastDyingRound rounds is StatusBledOut. Warns Your Teammate is
+  bleeds one more round and after LastDyingRound rounds is StatusDead. Warns Your Teammate is
   Dying while a party member can be bandaged, redraws the map around the CombatMap view position
-  (MoveCombatCursor), and sets Done when one side is empty (ds6814 or ds6815 zero). When only the
-  enemies are gone and ds49F4 is 0 it asks Continue Battle: and Y clears Done again. Index is
+  (MoveCombatCursor), and sets Done when one side is empty (PartySideCount or EnemySideCount zero). When only the
+  enemies are gone and SuppressContinuePrompt is 0 it asks Continue Battle: and Y clears Done again. Index is
   counted but never used. }
 procedure EndCombatRound(var Done: Byte);
 var
@@ -323,9 +316,9 @@ var
   Index: Byte;
 begin
   AdvanceGameClock(1, 1);
-  Inc(ds6DE3);
+  Inc(CombatRound);
   UpdateMonsterMorale;
-  Who := PCharacter(ds5D96);
+  Who := PCharacter(PartyListHead);
   Index := 1;
   while Who <> nil do
   begin
@@ -334,7 +327,7 @@ begin
     if Who^.Status = StatusDying then
     begin
       Inc(Who^.Combat^.DyingRounds);
-      if Who^.Combat^.DyingRounds > LastDyingRound then Who^.Status := StatusBledOut;
+      if Who^.Combat^.DyingRounds > LastDyingRound then Who^.Status := StatusDead;
     end;
     Inc(Index);
     Who := Who^.Next;
@@ -342,8 +335,8 @@ begin
   if BandageDying(0) <> 0 then ShowFlashMessage('Your Teammate is Dying');
   RecountCombatSides;
   MoveCombatCursor(CombatMap^.ViewX + 3, CombatMap^.ViewY + 3, $FF, 8);
-  if (ds6814 = 0) or (ds6815 = 0) then Done := 1;
-  if (ds6814 > 0) and (ds6815 = 0) and (ds49F4 = 0) then
+  if (PartySideCount = 0) or (EnemySideCount = 0) then Done := 1;
+  if (PartySideCount > 0) and (EnemySideCount = 0) and (SuppressContinuePrompt = 0) then
     if AskYesNo('Continue Battle:', $D, $A, MenuColors) = 'Y' then Done := 0;
 end;
 { ovl08:09DF. The Move command: while Who has more than one half-move left the prompt Move/Attack,
@@ -377,7 +370,7 @@ begin
   begin
     ClearWindow($18, $18, $27, $18);
     Key := ReadPromptChoice('Move/Attack, Move Left = ' + ByteToText(Who^.Combat^.Moves shr 1) + ' ', '',
-      $A, $A, MenuColors, 1, 0, ds6E31);
+      $A, $A, MenuColors, 1, 0, CombatScratchFlag);
     case Key of
       #0:
       begin
@@ -467,7 +460,7 @@ begin
   Key := ' ';
   while not (Key in [#0, 'E']) and (Done = 0) do
   begin
-    Key := ReadPromptChoice('', Menu, $D, $A, MenuColors, 0, 0, ds6E31);
+    Key := ReadPromptChoice('', Menu, $D, $A, MenuColors, 0, 0, CombatScratchFlag);
     case Key of
       'G': Done := GuardTurn(Who);
       'D':
@@ -487,14 +480,14 @@ begin
 end;
 { ovl08:0FFF. Returns 1 when a party character (Side 0) is dying (StatusDying) and may be
   bandaged (Combat^.NoBody 0), else 0. With DoIt nonzero the first one found is bandaged: Status
-  StatusBandaged, the bleeding count reset and the message is bandaged (ShowCharacterMessage). }
+  StatusUnconscious, the bleeding count reset and the message is bandaged (ShowCharacterMessage). }
 function BandageDying(DoIt: Byte): Byte;
 var
   Who: PCharacter;
   Found: Byte;
 begin
   Found := 0;
-  Who := PCharacter(ds5D96);
+  Who := PCharacter(PartyListHead);
   while Who <> nil do
   begin
     if (Who^.Combat^.NoBody = 0) and (Who^.Side = 0) and (Who^.Status = StatusDying) then
@@ -502,7 +495,7 @@ begin
       Found := 1;
       if DoIt <> 0 then
       begin
-        Who^.Status := StatusBandaged;
+        Who^.Status := StatusUnconscious;
         Who^.Combat^.DyingRounds := 0;
         ShowCharacterMessage(Who, 'is bandaged', 10, 1);
         DoIt := 0;
@@ -528,7 +521,7 @@ begin
     if GameSpeed < MaxGameSpeed then Menu := Menu + 'Slower ';
     if GameSpeed > 0 then Menu := Menu + 'Faster ';
     Menu := Menu + 'Exit';
-    Key := ReadPromptChoice(Title, Menu, $D, $A, MenuColors, 0, 0, ds6E31);
+    Key := ReadPromptChoice(Title, Menu, $D, $A, MenuColors, 0, 0, CombatScratchFlag);
     case Key of
       'S': Inc(GameSpeed);
       'F': Dec(GameSpeed);

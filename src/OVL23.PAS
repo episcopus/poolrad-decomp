@@ -17,12 +17,7 @@ implementation
 const
   { Indices of TCharacter.ClassLevels: cleric 0 (Turn in combat, whitepaper 5.5), fighter 2
     (whitepaper 5.8, 5.19); magic-user 5 and thief 6 [I] from the tables they select here. }
-  ClassCleric = 0;
-  ClassFighter = 2;
-  ClassMage = 5;
-  ClassThief = 6;
   LastClass = 7;
-  LastSpell = $38;              { SpellTable and KnownSpells hold spells 1..$38 }
   LastSpellLevel = 3;           { cleric and magic-user spell levels 1..3 }
   ClericSpell = 0;              { TSpellEntry.SpellClass of a cleric spell, the cleric row of SpellSlots }
   MageSpell = 1;                { the magic-user row of TCharacter.SpellSlots }
@@ -76,7 +71,7 @@ begin
               if (SpellClass = ClericSpell) and (Character^.SpellSlots[ClericSpell, Level] > 0) then
                 Character^.KnownSpells[Spell] := 1;
         end;
-      ClassMage:
+      ClassMagicUser:
         if ClassLevel > FirstSpellLevel then
           for SpellLevel := 1 to LastSpellLevel do
             Character^.SpellSlots[MageSpell, SpellLevel] := MageSlotTable[ClassLevel, SpellLevel];

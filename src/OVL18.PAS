@@ -56,34 +56,34 @@ end;
   number from DS:4713 and its lines from the code's literal pool. }
 procedure ShowEndingNarrative;
 begin
-  Str(TileSet, ds4713);
-  ds4712 := ds49F3;
-  ds49F3 := 7;
-  ds470E := nil;
+  Str(TileSet, FinalPictureNumber);
+  SavedViewMode := ViewMode;
+  ViewMode := 7;
+  FinalPictureBank := nil;
   ClearRect(1, $11, $26, $16);
   DrawTextAt(1, $11, $A, 'Mortally wounded, the dragon roars!');
   DrawTextAt(1, $12, $A, 'The spirit of Tyranthraxus flares up');
   DrawTextAt(1, $13, $A, 'from the dragon''s body.');
   RedrawView;
-  LoadPicture('FINAL' + ds4713, 1, 0, 0, ds470E);
-  DrawPictureItemClipped(0, 0, 0, 0, ds470E, DrawBuf);
+  LoadPicture('FINAL' + FinalPictureNumber, 1, 0, 0, FinalPictureBank);
+  DrawPictureItemClipped(0, 0, 0, 0, FinalPictureBank, DrawBuf);
   AnimateFinalPicture(3, 5, 2, (10 - GameSpeed) * 5 div 2);
-  LoadPicture('FINAL' + ds4713, 3, 0, 0, ds470E);
-  DrawPictureItemClipped(0, 0, 0, 0, ds470E, DrawBuf);
-  if ds49D6^[830] > 1 then
+  LoadPicture('FINAL' + FinalPictureNumber, 3, 0, 0, FinalPictureBank);
+  DrawPictureItemClipped(0, 0, 0, 0, FinalPictureBank, DrawBuf);
+  if GameVars2^[830] > 1 then
   begin
-    LoadPicture('FINAL' + ds4713, 4, 0, 0, ds470E);
-    DrawPictureItemClipped(0, $B, 0, 0, ds470E, DrawBuf);
+    LoadPicture('FINAL' + FinalPictureNumber, 4, 0, 0, FinalPictureBank);
+    DrawPictureItemClipped(0, $B, 0, 0, FinalPictureBank, DrawBuf);
   end;
-  if ds49D6^[830] > 2 then
+  if GameVars2^[830] > 2 then
   begin
-    LoadPicture('FINAL' + ds4713, 5, 0, 0, ds470E);
-    DrawPictureItemClipped($D, 9, 0, 0, ds470E, DrawBuf);
+    LoadPicture('FINAL' + FinalPictureNumber, 5, 0, 0, FinalPictureBank);
+    DrawPictureItemClipped($D, 9, 0, 0, FinalPictureBank, DrawBuf);
   end;
-  if ds49D6^[830] > 3 then
+  if GameVars2^[830] > 3 then
   begin
-    LoadPicture('FINAL' + ds4713, 6, 0, 0, ds470E);
-    DrawPictureItemClipped(0, 9, 0, 0, ds470E, DrawBuf);
+    LoadPicture('FINAL' + FinalPictureNumber, 6, 0, 0, FinalPictureBank);
+    DrawPictureItemClipped(0, 9, 0, 0, FinalPictureBank, DrawBuf);
   end;
   ClearRect(1, $11, $26, $16);
   DrawTextAt(1, $11, $A, '"Fools, you have but slain the body');
@@ -102,12 +102,12 @@ begin
   DelayByGameSpeed;
   DelayByGameSpeed;
   DelayByGameSpeed;
-  ds49F3 := ds4712;
+  ViewMode := SavedViewMode;
   RedrawView;
 end;
 { ovl18:06B3. Animates the doors of the area view (Flag 1) or clears them (flag 0): it draws the
   doors of the two block-code tables DS:0900 and DS:090B through RemapPictureColours (bit 7 of a code
-  selects the second SQRPACI bank ds5E56, otherwise ds5E52), stepping the area view through
+  selects the second SQRPACI bank SqrPaciBank2, otherwise SqrPaciBank1), stepping the area view through
   DS:094D/DS:095F and stepping the display, then clears the doors. Called by ovl03:31B4 and
   ovl17:1602. }
 procedure AnimateAreaDoors(Flag: Byte);
@@ -122,29 +122,31 @@ begin
     for DoorRow := 0 to 8 do
     begin
       for DoorCol := 0 to $A do
-        if ds0900[DoorCol] > $7F then
-          RemapPictureColours(@ds091D, @ds092D, ds0900[DoorCol] and $7F, 1, Pointer(ds5E56))
+        if DoorBlockCodesFirst[DoorCol] > $7F then
+          RemapPictureColours(@DoorRemapFrom, @DoorRemapToFirst, DoorBlockCodesFirst[DoorCol] and $7F, 1,
+            Pointer(SqrPaciBank2))
         else
-          RemapPictureColours(@ds091D, @ds092D, ds0900[DoorCol], 1, Pointer(ds5E52));
+          RemapPictureColours(@DoorRemapFrom, @DoorRemapToFirst, DoorBlockCodesFirst[DoorCol], 1, Pointer(SqrPaciBank1));
       for DoorCol := 0 to $11 do
-        if ds090B[DoorCol] > $7F then
-          RemapPictureColours(@ds091D, @ds093D, ds090B[DoorCol] and $7F, 1, Pointer(ds5E56))
+        if DoorBlockCodesSecond[DoorCol] > $7F then
+          RemapPictureColours(@DoorRemapFrom, @DoorRemapToSecond, DoorBlockCodesSecond[DoorCol] and $7F, 1,
+            Pointer(SqrPaciBank2))
         else
-          RemapPictureColours(@ds091D, @ds093D, ds090B[DoorCol], 1, Pointer(ds5E52));
-      DrawAreaView(ds094D[DoorRow], ds095F[DoorRow]);
+          RemapPictureColours(@DoorRemapFrom, @DoorRemapToSecond, DoorBlockCodesSecond[DoorCol], 1, Pointer(SqrPaciBank1));
+      DrawAreaView(DoorViewColumns[DoorRow], DoorViewRows[DoorRow]);
       FlushPictureChanges;
     end;
   end;
   for DoorCol := 0 to $A do
-    if ds0900[DoorCol] > $7F then
-      RemapPictureColours(@ds091D, @ds092D, ds0900[DoorCol] and $7F, 0, Pointer(ds5E56))
+    if DoorBlockCodesFirst[DoorCol] > $7F then
+      RemapPictureColours(@DoorRemapFrom, @DoorRemapToFirst, DoorBlockCodesFirst[DoorCol] and $7F, 0, Pointer(SqrPaciBank2))
     else
-      RemapPictureColours(@ds091D, @ds092D, ds0900[DoorCol], 0, Pointer(ds5E52));
+      RemapPictureColours(@DoorRemapFrom, @DoorRemapToFirst, DoorBlockCodesFirst[DoorCol], 0, Pointer(SqrPaciBank1));
   for DoorCol := 0 to $11 do
-    if ds090B[DoorCol] > $7F then
-      RemapPictureColours(@ds091D, @ds093D, ds090B[DoorCol] and $7F, 0, Pointer(ds5E56))
+    if DoorBlockCodesSecond[DoorCol] > $7F then
+      RemapPictureColours(@DoorRemapFrom, @DoorRemapToSecond, DoorBlockCodesSecond[DoorCol] and $7F, 0, Pointer(SqrPaciBank2))
     else
-      RemapPictureColours(@ds091D, @ds093D, ds090B[DoorCol], 0, Pointer(ds5E52));
+      RemapPictureColours(@DoorRemapFrom, @DoorRemapToSecond, DoorBlockCodesSecond[DoorCol], 0, Pointer(SqrPaciBank1));
   if Flag <> 0 then
   begin
     DrawAreaView($17, $19);

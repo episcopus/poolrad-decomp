@@ -31,7 +31,7 @@ const
   TopClockDigit = 6;        { the top digit of the clock (years); its carry ages the party instead of carrying }
   RestTextColour = 10;      { EGA colour of the rest time }
   RestSelectedColour = 15;  { EGA colour of the field the player is changing }
-  TimedAffectFlagCount = $48; { the 72 TimedAffectFlags entries, one per party member (ds471E is the same
+  TimedAffectFlagCount = $48; { the 72 TimedAffectFlags entries, one per party member (TimedAffectFlagsFrom0 is the same
                                 bytes from index 1; the FillChar at ovl20:0000 and ovl20:0CE5 marks them) }
   TimedAffectDue = 1;         { the value that FillChar stores: every member's timed affects are due }
   FirstPartyIndex = 1;      { RestStudyCountdowns is indexed from 1 by the party traversal }
@@ -78,10 +78,8 @@ const
   LastScrollSpellSlot = 3;
   RestStepsPerHour = 12; { ovl20:0BBE advances RestHours every twelve five-minute steps }
   RestHealCheckInterval = $120; { ovl20:0877 waits this many five-minute rest steps }
-  ViewModeCamp = 2;          { ds49F3 while the party camps (MakeCamp sets it, ovl15:1E6F) }
-  VarPartySize = 830;        { party member count, a word of the ds49D6 block (whitepaper 5.5) }
-  VarRestInterruptSteps = $2D2;  { ds49D6 word: rest steps between checks (ovl07:0160 clears it) }
-  VarRestInterruptChance = $2D3; { ds49D6 word: percent chance per check, 1d100 (ovl07:0160 clears it) }
+  VarRestInterruptSteps = $2D2;  { GameVars2 word: rest steps between checks (ovl07:0160 clears it) }
+  VarRestInterruptChance = $2D3; { GameVars2 word: percent chance per check, 1d100 (ovl07:0160 clears it) }
   MaxAffectStep = 10;        { ovl20:0097 spends elapsed affect time in passes of at most ten units }
   { The first of the seven game-clock words AdvanceGameClock advances, as a VarsAt4900 VM word address:
     the words at 49C6h..49CCh, that is GameVars^[198..204] (whitepaper 5.22.1). }
@@ -90,12 +88,13 @@ const
 { ovl20:0000. Spends elapsed game time on the party's timed affects. AdvanceGameClock calls it with the Amount
   and Index just added to the game clock. Those units are scaled down to the smallest digit (each higher
   digit multiplied by ClockRadix), then spent in passes of at most MaxAffectStep. Outside camp every
-  member is marked due (FillChar of ds471E, the same 72 bytes as TimedAffectFlags from index 1; a port
+  member is marked due (FillChar of TimedAffectFlagsFrom0, the same 72 bytes as TimedAffectFlags from index 1; a port
   should use TimedAffectFlags). In camp it returns at once when no TimedAffectFlags entry is set. A
   marked member's flag is cleared, then each affect loses the pass or is removed through RemoveAffect
   when its duration does not outlast the pass. Duration 0 is permanent and is left. The flag is set
-  again while a timed affect remains. Reads ds49F3, ds49D6 word VarPartySize, ClockRadix and the party
-  list ds5D96; changes TimedAffectFlags, ds471E and the affect lists. QUIRK ovl20:0118: NextAffect is loaded from
+  again while a timed affect remains. Reads ViewMode, GameVars2 word VarPartySize, ClockRadix and the party
+  list PartyListHead; changes TimedAffectFlags, TimedAffectFlagsFrom0 and the affect lists. QUIRK ovl20:0118:
+  NextAffect is loaded from
   the list head before the empty-list test, so a nil list reads through nil and the value is discarded. }
 procedure AdvanceAffectDurations(Amount: Byte; Index: ShortInt);
 var
@@ -111,8 +110,8 @@ var
   NextAffect: PAffect;          { the node after the affect RemoveAffect is about to unlink }
   TargetAffect: PAffect;        { the affect this pass is shortening or removing }
 begin
-  if ds49F3 <> ViewModeCamp then
-    FillChar(ds471E, TimedAffectFlagCount, TimedAffectDue)
+  if ViewMode <> ViewModeCamp then
+    FillChar(TimedAffectFlagsFrom0, TimedAffectFlagCount, TimedAffectDue)
   else
   begin
     HasTimedAffect := 0;
@@ -121,7 +120,7 @@ begin
       if TimedAffectFlags[PartyIndex] <> 0 then
         HasTimedAffect := 1;
       Inc(PartyIndex);
-    until (HasTimedAffect <> 0) or (PartyIndex > ds49D6^[VarPartySize]);
+    until (HasTimedAffect <> 0) or (PartyIndex > GameVars2^[VarPartySize]);
     if HasTimedAffect = 0 then
       Exit;
   end;
@@ -141,7 +140,7 @@ begin
     else
       AffectTimeStep := ScaledAmount;
     PartyIndex := FirstPartyIndex;
-    Who := PCharacter(ds5D96);
+    Who := PCharacter(PartyListHead);
     while Who <> nil do
     begin
       if TimedAffectFlags[PartyIndex] <> 0 then
@@ -220,7 +219,7 @@ begin
       end
       else
       begin
-        Who := PCharacter(ds5D96);
+        Who := PCharacter(PartyListHead);
         while Who <> nil do
         begin
           Inc(Who^.Age);
@@ -425,7 +424,7 @@ begin
   if RestHealCounter >= RestHealCheckInterval then
   begin
     Healed := False;
-    Who := PCharacter(ds5D96);
+    Who := PCharacter(PartyListHead);
     while Who <> nil do
     begin
       { RestHealAmount hit points; flag 0, so HealCharacter skips a member with affect $32 (ovl24:175D) }
@@ -522,7 +521,7 @@ var
   UnusedFrameByte: Byte; { QUIRK ovl20:0B0A: reserved frame byte at [bp-8], never accessed }
 begin
   PartyIndex := FirstPartyIndex;
-  Who := PCharacter(ds5D96);
+  Who := PCharacter(PartyListHead);
   while Who <> nil do
   begin
     Dec(RestStudyCountdowns[PartyIndex]);
@@ -557,7 +556,7 @@ begin
   begin
     State := 0;
     PartyIndex := FirstPartyIndex;
-    Who := PCharacter(ds5D96);
+    Who := PCharacter(PartyListHead);
     while Who <> nil do
     begin
       if ShortInt(Who^.RestHours) > 0 then
@@ -578,12 +577,12 @@ begin
   end;
 end;
 { ovl20:0C9A: rest countdown and interruptions. RestParty (ovl15:077A) calls this with no parameters and
-  uses the byte result to decide whether the camp ends. It reads RestTime, the party list, the ds49D6 game
-  words and RestInterruptCounter, and changes RestStudyCountdowns, ds471E and RestWindowActive. Each
+  uses the byte result to decide whether the camp ends. It reads RestTime, the party list, the GameVars2 game
+  words and RestInterruptCounter, and changes RestStudyCountdowns, TimedAffectFlagsFrom0 and RestWindowActive. Each
   five-minute step spends rest time, advances the game clock, runs the rest's healing and study, and may
-  trigger a random interruption: while ds49D6 word VarRestInterruptSteps is nonzero it counts the rest
+  trigger a random interruption: while GameVars2 word VarRestInterruptSteps is nonzero it counts the rest
   steps in RestInterruptCounter; at that threshold the counter resets and a 1d100 RollDice no greater than
-  ds49D6 word VarRestInterruptChance interrupts. It draws the rest line and messages, asks whether to stop
+  GameVars2 word VarRestInterruptChance interrupts. It draws the rest line and messages, asks whether to stop
   when a key is pending, and clears its window on exit. Result 1 means interrupted. }
 function RunRestPeriod: Byte;
 var
@@ -598,14 +597,14 @@ begin
   RunRestPeriod := 0;
   Unused := 0;
   PartyIndex := FirstPartyIndex;
-  Who := PCharacter(ds5D96);
+  Who := PCharacter(PartyListHead);
   while Who <> nil do
   begin
     RestStudyCountdowns[PartyIndex] := 0;
     Inc(PartyIndex);
     Who := Who^.Next;
   end;
-  FillChar(ds471E, TimedAffectFlagCount, TimedAffectDue);
+  FillChar(TimedAffectFlagsFrom0, TimedAffectFlagCount, TimedAffectDue);
   RestCycleCounter := 0;
   DisplayCounter := 0;
   ClearRect(RestWindowLeft, RestWindowTop, RestWindowRight, RestWindowBottom);
@@ -637,13 +636,13 @@ begin
       CheckRestHealing;
       AdvanceRestStudies;
       AdvanceRestHour(RestCycleCounter);
-      if ds49D6^[VarRestInterruptSteps] > 0 then
+      if GameVars2^[VarRestInterruptSteps] > 0 then
       begin
         Inc(RestInterruptCounter);
-        if RestInterruptCounter >= ds49D6^[VarRestInterruptSteps] then
+        if RestInterruptCounter >= GameVars2^[VarRestInterruptSteps] then
         begin
           RestInterruptCounter := 0;
-          if RollDice(RestInterruptDice, RestInterruptSides) <= ds49D6^[VarRestInterruptChance] then
+          if RollDice(RestInterruptDice, RestInterruptSides) <= GameVars2^[VarRestInterruptChance] then
           begin
             ClearCharacterMessage;
             ShowRestTime(0);

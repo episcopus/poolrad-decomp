@@ -33,9 +33,8 @@ const
   GroundTile = $17;             { the tile a wilderness map starts filled with (ovl10:11C8) }
   GroundPicture = $16;          { CombatTiles[GroundTile].Picture: the scatterers only change such cells }
   { The tile ids the feature tiles are counted from (ovl10:0E39); the same id is the tile a body
-    leaves on the map (TileBody in ovl31). }
+    leaves on the map (BodyTile in ovl31). }
   FeatureBase = $1F;
-  TileBody = $1F;
   { BlockTerrainFlags bits, named for what the builders of this unit do with them. }
   FlagPlain = 1;                { tested by no routine of this unit }
   FlagMany2ATiles = 2;          { ScatterTerrainFeatures: tiles $2A..$2D on 45 of 255 rolls }
@@ -57,34 +56,22 @@ const
   GridLastRow = 5;              { and 6 cells high }
   CombatantClearLoopLast = $FF; { QUIRK ovl10:0872: clear loop reaches 255, though the party has 72 combatants }
   LaterRingLastCellCount = 11;  { later placement rings contain 12 cells (ovl10:0802) }
-  DirNone = 8;                  { the direction with no step: ProbeStep looks at the cell itself }
   FacingOffsetRight = 1;       { placement-search offsets relative to the current facing }
   FacingOffsetBack = 2;
   FacingOffsetLeft = 3;
-  DirNorth = 0;                 { the area map directions PassageKind takes (DirStepX/DirStepY steps) }
-  DirEast = 2;
-  DirWest = 6;
   MapEdge = 15;                 { the 16x16 area map's last column and row }
   { What PassageKind and WallSideKind answer for a side of an area map cell. }
   SideOpen = 0;
   SideWall = 1;
   SideDoor = 3;
   CostBlocked = $FF;            { a CombatTiles cost no combatant may stand on }
-  CombatRecordSize = $16;       { the bytes PrepareCombatants allocates for TCharacter.Combat }
-  CombatMapSize = $4E9;         { the bytes of CombatMap^: the 7-byte header and 25 rows of 50 tiles }
   AreaViewDungeon = 1;          { AreaViewKind of the 3D wall view: the battle is fought in a dungeon }
   MoraleMask = $7F;             { low seven bits of B84 carry the computer's morale value (ovl09:10D7) }
-  ComputerRunFlag = $80;        { high bit of B84: the computer runs the character }
   MaxComputerMorale = $66;      { CheckMorale zeroes thresholds above this (ovl09:0431) }
-  SideParty = 0;
-  SideEnemy = 1;
-  ViewModeCombat = 5;           { ds49F3 during combat (ovl31) }
   HookBattleStart = 8;          { the RunAffectHooks kind StartBattle runs for every character }
-  { Words of ds49D6^ (the second game word block) this unit reads or writes. }
+  { Words of GameVars2^ (the second game word block) this unit reads or writes. }
   Var2SideDistance = 705;       { area map steps between the two sides' placement origins (ovl10:1A44) }
-  Var2Morale = 710;             { at most 100 (StartBattle); B84 morale source for computer-run members [I] }
   Var2BattleWord = 819;         { cleared when a battle starts; meaning unknown }
-  VarPartySize = 830;           { the members (ovl05); later list entries get NoBody }
   { A word of GameVars^: while it is $FF, Flag3DTiles is replaced by FlagPlain (ovl10:0B75);
     DrawAreaView draws area blocks 8 and 9 while it is above 253 (GateVarBlock8Count in ovl27). }
   VarBlock8Gate = 435;
@@ -662,19 +649,19 @@ begin
     BuildWildernessMap;
 end;
 
-{ ovl10:12E1. Walks the party list (ds5D96) and readies each character for the battle: calls
+{ ovl10:12E1. Walks the party list (PartyListHead) and readies each character for the battle: calls
   RecalcCombatValues on it, allocates and zeroes its Combat record, sets NoBody for list entries past
   game word VarPartySize, gives it the icon set FacingCombatDir of the party facing (turned half
   round, + 4 mod 8, for side 1), and marks a party-side NoBody member computer-run when B84's
   low-seven-bit morale is 0 or above MaxComputerMorale. It then stores Var2Morale plus
-  ComputerRunFlag in B84; Var2Morale is the morale source [I] (ovl09:10D7 reads B84 as morale). }
+  ComputerRun in B84; Var2Morale is the morale source [I] (ovl09:10D7 reads B84 as morale). }
 procedure PrepareCombatants;
 var
   Who: PCharacter;
   Count: Byte;
   Morale: Byte;
 begin
-  Who := PCharacter(ds5D96);
+  Who := PCharacter(PartyListHead);
   Count := 0;
   while Who <> nil do
   begin
@@ -682,13 +669,13 @@ begin
     Inc(Count);
     GetMem(Who^.Combat, CombatRecordSize);
     FillChar(Who^.Combat^, CombatRecordSize, 0);
-    if Count > ds49D6^[VarPartySize] then Who^.Combat^.NoBody := 1;
+    if Count > GameVars2^[VarPartySize] then Who^.Combat^.NoBody := 1;
     Who^.Combat^.IconSet := FacingCombatDir[PartyFacing shr 1];
-    if Who^.Side = SideEnemy then Who^.Combat^.IconSet := (Who^.Combat^.IconSet + 4) mod 8;
+    if Who^.Side = SideMonsters then Who^.Combat^.IconSet := (Who^.Combat^.IconSet + 4) mod 8;
     Morale := Who^.B84 and MoraleMask;
     if (Who^.Side = SideParty) and (Who^.Combat^.NoBody = 1) and
        ((Morale = 0) or (Morale > MaxComputerMorale)) then
-      Who^.B84 := ds49D6^[Var2Morale] + ComputerRunFlag;
+      Who^.B84 := GameVars2^[Var2Morale] + ComputerRun;
     Who := Who^.Next;
   end;
 end;
@@ -864,11 +851,11 @@ end;
 { ovl10:19F5. Puts every character of the party list on the combat map. It clears CombatantTable,
   sets the two sides' grids: side 0 at the origin facing the party facing (PartyFacing), side 1
   Var2SideDistance area map steps ahead facing back; the first ring of a side holds half its
-  combatants (ds6814/ds6815, rounded up); each of the 4 groups of a side's PlacementCells is the
+  combatants (PartySideCount/EnemySideCount, rounded up); each of the 4 groups of a side's PlacementCells is the
   shape PlacementShapes of the side's facing (group 1: shape 4). Then every character becomes
   combatant Index (CombatantRecord, CombatantTable Unk2 and Kind from CombatSize) and gets a cell
   from FindStartCell. A placed character with Flag10D 0 is taken off again and, outside a duel and
-  unless NoBody, leaves a body (TileBody, BodyTable). One that finds no cell and has NoBody is cut
+  unless NoBody, leaves a body (BodyTile, BodyTable). One that finds no cell and has NoBody is cut
   out of the list through RemoveSelectedCharacter; the list ends after the last character kept. }
 procedure PlaceAllCombatants;
 var
@@ -889,12 +876,12 @@ begin
   SideOriginCol[SideParty] := 0;
   SideOriginRow[SideParty] := 0;
   SideFacing[SideParty] := PartyFacing shr 1;
-  SideOriginCol[SideEnemy] := SideOriginCol[SideParty] + DirStepX[PartyFacing] * ds49D6^[Var2SideDistance];
-  SideOriginRow[SideEnemy] := SideOriginRow[SideParty] + DirStepY[PartyFacing] * ds49D6^[Var2SideDistance];
-  SideFacing[SideEnemy] := ((PartyFacing + 4) mod 8) shr 1;
-  for PlacingSide := SideParty to SideEnemy do
-    FirstRingCells[PlacingSide] := (ds6814Sides[PlacingSide] + 1) shr 1;
-  for PlacingSide := SideParty to SideEnemy do
+  SideOriginCol[SideMonsters] := SideOriginCol[SideParty] + DirStepX[PartyFacing] * GameVars2^[Var2SideDistance];
+  SideOriginRow[SideMonsters] := SideOriginRow[SideParty] + DirStepY[PartyFacing] * GameVars2^[Var2SideDistance];
+  SideFacing[SideMonsters] := ((PartyFacing + 4) mod 8) shr 1;
+  for PlacingSide := SideParty to SideMonsters do
+    FirstRingCells[PlacingSide] := (SideCounts[PlacingSide] + 1) shr 1;
+  for PlacingSide := SideParty to SideMonsters do
     for Group := 0 to 3 do
     begin
       if Group = 1 then
@@ -910,8 +897,8 @@ begin
     end;
   Index := 1;
   CombatantTable[0].Kind := 1;
-  Prev := PCharacter(ds5D96);
-  Who := PCharacter(ds5D96);
+  Prev := PCharacter(PartyListHead);
+  Who := PCharacter(PartyListHead);
   while Who <> nil do
   begin
     DiscardWaitingKey;
@@ -931,7 +918,7 @@ begin
           Row := CombatantTable[Index].Y;
           Inc(BodyCount);
           BodyTable[BodyCount].Tile := CombatMap^.Cells[Row, Col];
-          CombatMap^.Cells[Row, Col] := TileBody;
+          CombatMap^.Cells[Row, Col] := BodyTile;
           BodyTable[BodyCount].Who := Who;
           BodyTable[BodyCount].X := Col;
           BodyTable[BodyCount].Y := Row;
@@ -967,10 +954,10 @@ end;
 
 { ovl10:1E31 (entry 1, called by RunCombat). Starts a battle: frees the picture animation and the
   HEAD/BODY sprites, then sets HeadBankIndex and BodyBankIndex to $FF (no sprite loaded). It prints
-  'A battle begins...' on row 24, resets the round state (ds6E30, ds6DE3, AttackRoll, the bodies,
-  the lists ds6DBB and ds5D9A, game word Var2BattleWord), caps Var2Morale at 100, creates the map,
+  'A battle begins...' on row 24, resets the round state (MagicToggleOn, CombatRound, AttackRoll, the bodies,
+  the lists CloudList and LootListBoundary, game word Var2BattleWord), caps Var2Morale at 100, creates the map,
   discards waiting keys, prepares combatants, discards waiting keys again, places them, and discards
-  waiting keys once more. It allocates ds6E36, centres the view on the first party character, calls
+  waiting keys once more. It allocates CombatPicture, centres the view on the first party character, calls
   DrawCombatScreen, runs HookBattleStart for each character, calls UpdateMonsterMorale and enters ViewModeCombat. }
 procedure StartBattle;
 var
@@ -978,40 +965,40 @@ var
   Who: PCharacter;
 begin
   FreeSpriteList(@PictureAnimation);
-  ReleasePicture(ds6B01);
-  ReleasePicture(ds6B06);
+  ReleasePicture(HeadSpriteBank);
+  ReleasePicture(BodySpriteBank);
   HeadBankIndex := $FF;
   BodyBankIndex := $FF;
   ClearPromptLine;
   DelayByGameSpeed;
   DrawTextAt(0, $18, $A, 'A battle begins...');
-  ds6E30 := False;
-  ds6DE3 := 0;
+  MagicToggleOn := False;
+  CombatRound := 0;
   AttackRoll := 0;
   BodyCount := 0;
-  ds6DBB := nil;
-  ds5D9A := nil;
+  CloudList := nil;
+  LootListBoundary := nil;
   FillChar(BodyTable, SizeOf(BodyTable), 0);
-  ds49D6^[Var2BattleWord] := 0;
-  if ds49D6^[Var2Morale] > 100 then ds49D6^[Var2Morale] := 100;
+  GameVars2^[Var2BattleWord] := 0;
+  if GameVars2^[Var2Morale] > 100 then GameVars2^[Var2Morale] := 100;
   CreateCombatMap;
   DiscardWaitingKey;
   PrepareCombatants;
   DiscardWaitingKey;
   PlaceAllCombatants;
   DiscardWaitingKey;
-  AllocatePicture($18, 3, 4, 1, ds6E36);
-  CombatMap^.ViewX := CombatantX(PCharacter(ds5D96)) - 3;
-  CombatMap^.ViewY := CombatantY(PCharacter(ds5D96)) - 3;
+  AllocatePicture($18, 3, 4, 1, CombatPicture);
+  CombatMap^.ViewX := CombatantX(PCharacter(PartyListHead)) - 3;
+  CombatMap^.ViewY := CombatantY(PCharacter(PartyListHead)) - 3;
   DrawCombatScreen;
-  Who := PCharacter(ds5D96);
+  Who := PCharacter(PartyListHead);
   while Who <> nil do
   begin
     RunAffectHooks(HookBattleStart, Who);
     Who := Who^.Next;
   end;
   UpdateMonsterMorale;
-  ds49F3 := ViewModeCombat;
+  ViewMode := ViewModeCombat;
 end;
 
 begin

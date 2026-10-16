@@ -14,6 +14,7 @@ Every playbook has the same parts: **Inputs**, **Steps**, **Done when**, **Hand-
 | 40-sessions.md | Verifier | P2 to P5 |
 | 50-rebuild.md | Verifier | P5 |
 | 60-design-doc.md | Documentarian | all |
+| 65-consistency.md | Documentarian / Decompiler | P6 |
 | 70-review.md | Reviewer | P4 to P6 |
 | 90-orchestrate.md | Orchestrator | all |
 

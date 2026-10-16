@@ -70,13 +70,14 @@ end;
   for it (RedrawView, view types 3 and 4). The kind is AreaViewKind, or 1 whenever the
   game variable VarForceWallView is set. Kind 1 draws the 3D wall view: it asks GeoLoad for
   the event byte of the party cell (EventByteAt; bit 7 says the cell is interior), picks the wall id
-  table entry ds0C26[VarWallIndexInside] or ds0C26[VarWallIndexOutside] accordingly, refreshes
-  descriptors 2 to 4 from the special view codes ds6F69 and ds6F68 while ds84E5 is set, hands all
+  table entry WallViewIdTable[VarWallIndexInside] or WallViewIdTable[VarWallIndexOutside] accordingly, refreshes
+  descriptors 2 to 4 from the special view codes SpecialViewCode1 and SpecialViewCode2 while SpecialViewGate is set, hands all
   four descriptors to SetWallDescriptors, clears WallMapMode when VarShowWallOverlays asks, and lets DrawWallView draw
   the rest. Kinds 2 to 4 draw the 5x5 map window (DrawAreaView) around the party position minus 2,
   clamped to columns 0..39 and rows 0..31, then DrawPartyMarker. Reads: AreaViewKind, GameVars^,
-  PartyMapColumn, PartyMapRow, PartyFacing, ds6F68, ds6F69, ds84E5, ds0C26, MapBaseX. Changes: ds6A60 to ds6A63,
-  ds6AB1, WallMapMode. Side effect: the view on the screen.
+  PartyMapColumn, PartyMapRow, PartyFacing, SpecialViewCode2, SpecialViewCode1, SpecialViewGate, WallViewIdTable,
+  MapBaseX. Changes: WallDescriptor1 to WallDescriptor4,
+  PartyCellEventByte, WallMapMode. Side effect: the view on the screen.
   QUIRK ovl26:018C: the three helpers below are nested functions of this routine: the caller
   pushes its frame as their static link (push bp at ovl26:01D7, 01E3, 01EF), which is why they
   carry 4 parameter bytes and live in the code right before this routine. }
@@ -86,9 +87,9 @@ var
   WindowTop: ShortInt;      { the map window top row (0 to 31) }
   ViewKind: Byte;           { AreaViewKind, or 1 when VarForceWallView forces the wall view }
 
-  { ovl26:00C7. Purpose unknown beyond the mapping: turns the special view code (ds6F69) into wall
-    view descriptor 2 (ds6A61): codes 8 and $41 give 0, anything else $0F. This unit only reads
-    ds6F69; whitepaper 5.2.1 records who sets it together with ds84E5. The descriptors reach the
+  { ovl26:00C7. Purpose unknown beyond the mapping: turns the special view code (SpecialViewCode1) into wall
+    view descriptor 2 (WallDescriptor2): codes 8 and $41 give 0, anything else $0F. This unit only reads
+    SpecialViewCode1; whitepaper 5.2.1 records who sets it together with SpecialViewGate. The descriptors reach the
     screen through DrawWallDescriptors; what the values select is still open. }
   function WallDesc2FromCode(SpecialCode: Byte): Byte;
   begin
@@ -101,8 +102,8 @@ var
     end;
   end;
 
-  { ovl26:00FB. Purpose unknown beyond the mapping: turns the special view code (ds6F69) into wall
-    view descriptor 3 (ds6A62): code 8 gives 8, anything else 7. This unit only reads ds6F69. }
+  { ovl26:00FB. Purpose unknown beyond the mapping: turns the special view code (SpecialViewCode1) into wall
+    view descriptor 3 (WallDescriptor3): code 8 gives 8, anything else 7. This unit only reads SpecialViewCode1. }
   function WallDesc3FromCode(SpecialCode: Byte): Byte;
   begin
     case SpecialCode of
@@ -114,9 +115,9 @@ var
     end;
   end;
 
-  { ovl26:012F. Purpose unknown beyond the mapping: turns the special view code (ds6F68) into wall
-    view descriptor 4 (ds6A63): code $0B gives 8, code 6 gives 1, anything else 6. This unit only
-    reads ds6F68; whitepaper 5.2.1 records who sets it together with ds84E5. }
+  { ovl26:012F. Purpose unknown beyond the mapping: turns the special view code (SpecialViewCode2) into wall
+    view descriptor 4 (WallDescriptor4): code $0B gives 8, code 6 gives 1, anything else 6. This unit only
+    reads SpecialViewCode2; whitepaper 5.2.1 records who sets it together with SpecialViewGate. }
   function WallDesc4FromCode(SpecialCode: Byte): Byte;
   begin
     case SpecialCode of
@@ -135,18 +136,18 @@ begin
   case ViewKind of
     1:
       begin
-        ds6AB1 := EventByteAt(PartyMapColumn, PartyMapRow);
-        if ds6AB1 > InteriorBit then
-          ds6A60 := ds0C26[GameVars^[VarWallIndexInside]]
+        PartyCellEventByte := EventByteAt(PartyMapColumn, PartyMapRow);
+        if PartyCellEventByte > InteriorBit then
+          WallDescriptor1 := WallViewIdTable[GameVars^[VarWallIndexInside]]
         else
-          ds6A60 := ds0C26[GameVars^[VarWallIndexOutside]];
-        if ds84E5 <> 0 then
+          WallDescriptor1 := WallViewIdTable[GameVars^[VarWallIndexOutside]];
+        if SpecialViewGate <> 0 then
         begin
-          ds6A61 := WallDesc2FromCode(ds6F69);
-          ds6A62 := WallDesc3FromCode(ds6F69);
-          ds6A63 := WallDesc4FromCode(ds6F68);
+          WallDescriptor2 := WallDesc2FromCode(SpecialViewCode1);
+          WallDescriptor3 := WallDesc3FromCode(SpecialViewCode1);
+          WallDescriptor4 := WallDesc4FromCode(SpecialViewCode2);
         end;
-        SetWallDescriptors(ds6A60, ds6A61, ds6A62, ds6A63);
+        SetWallDescriptors(WallDescriptor1, WallDescriptor2, WallDescriptor3, WallDescriptor4);
         if GameVars^[VarShowWallOverlays] <> 0 then WallMapMode := 0;
         DrawWallView(PartyMapColumn, PartyMapRow, PartyFacing);
       end;

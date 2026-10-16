@@ -6,14 +6,14 @@ unit OVL31;
   in the window. ScrollViewTo and MoveCombatCursor scroll the window and move the cursor,
   RedrawGround/RedrawMapCell/DrawCursorAt repaint cells, SetCombatantIcon turns a combatant,
   PlaceCombatant and RemoveCombatant put one on the map and take it off (leaving a body,
-  BodyTable). Everything that changes the map runs only in view mode 5 (ds49F3). }
+  BodyTable). Everything that changes the map runs only in view mode 5 (ViewMode). }
 {$A-,O+,F+,S-,R-,G-,I-,L-}
 interface
 uses POOLVARS;
 function FootprintCell(Kind, Index: Byte; var DX, DY: ShortInt): Boolean;
 procedure UpdateViewPositions;
-procedure ovl31_e2;
-procedure ovl31_e3;
+procedure SwapPaletteColours0And8;
+procedure RestorePaletteColours0And8;
 procedure DrawCursorAt(CellX, CellY: ShortInt);
 procedure RedrawMapCell(CellX, CellY: ShortInt);
 procedure RebuildOccupancy;
@@ -45,15 +45,11 @@ const
   CellStep = 3;                 { a cell is 3 picture units wide and high (DrawCellPicture) }
   FootprintCells = 3;           { footprint cells are numbered 0..3 }
   CursorIcon = $19;             { the DrawIcon picture of the cursor (ovl31:0236) }
-  DirNone = 8;                  { the direction with no step (DirStepX[8] = DirStepY[8] = 0) }
   CentreMargin = 3;             { how far from the centre a cell may be before the view scrolls }
   NoReach = $FF;                { ScrollViewTo's Margin that always scrolls and redraws }
-  ViewModeCombat = 5;           { ds49F3 during combat (RemoveCombatant, PlaceCombatant) }
   KindMask = $7F;               { TCharacter.CombatSize bits that are the footprint kind }
   CostBlocked = $FF;            { a CombatTiles cost no combatant may stand on }
   FirstProbeTile = $17;         { the tile ProbeStep answers before any cell is looked at }
-  TileKept = $1E;               { a tile that is never replaced by a body and always wins ProbeStep }
-  TileBody = $1F;               { the tile a body leaves on the map }
   MaxBodies = 8;                { BodyTable holds 8 records }
   { SetSoundDriverIdle (the sound unit) is called with 0 before RemoveCombatant's work and with 10 after;
     what the two values select is not known. }
@@ -87,10 +83,11 @@ begin
   end;
 end;
 
-{ ovl31:00E3. Purpose unknown: when VideoAdapter is 1 it calls SetPaletteRegister(0, 8) and then
-  SetPaletteRegister(8, 0); ovl31_e3 makes the calls (0, 0) and (8, 8). Called by EditCharacterIcon, ovl19 and
+{ ovl31:00E3. when VideoAdapter is 1 it calls SetPaletteRegister(0, 8) and then
+  SetPaletteRegister(8, 0); RestorePaletteColours0And8 makes the calls (0, 0) and (8, 8). Called by EditCharacterIcon,
+  ovl19 and
   DrawCombatScreen. }
-procedure ovl31_e2;
+procedure SwapPaletteColours0And8;
 begin
   case VideoAdapter of
     1:
@@ -101,9 +98,9 @@ begin
   end;
 end;
 
-{ ovl31:0105. Purpose unknown: when VideoAdapter is 1 it calls SetPaletteRegister(0, 0) and then
-  SetPaletteRegister(8, 8), the counterpart of ovl31_e2. Called by ovl08, ovl16 and ViewSelectedCharacter. }
-procedure ovl31_e3;
+{ ovl31:0105. when VideoAdapter is 1 it calls SetPaletteRegister(0, 0) and then
+  SetPaletteRegister(8, 8), the counterpart of SwapPaletteColours0And8. Called by ovl08, ovl16 and ViewSelectedCharacter. }
+procedure RestorePaletteColours0And8;
 begin
   case VideoAdapter of
     1:
@@ -417,7 +414,7 @@ end;
 { ovl31:0CB9. Looks at the cells combatant Who's footprint would cover after one step in direction
   Dir (DirNone: where it stands): Occupant is another combatant on one of them (0 for none; the
   last one found), Tile the tile that decides the step: 0 when any cell is off the map or tile 0,
-  else TileKept when any cell has it, else the cell tile with the largest CombatTiles cost (from
+  else CloudTile when any cell has it, else the cell tile with the largest CombatTiles cost (from
   cost 1 up; FirstProbeTile when no cell exists). Called by PlaceCombatant and ovl08, ovl10, ovl24. }
 procedure ProbeStep(Who: PCharacter; Dir: Byte; var Occupant, Tile: Byte);
 var
@@ -440,8 +437,8 @@ begin
       if CellWho > 0 then Occupant := CellWho;
       if (CellTile = 0) or (Tile = 0) then
         Tile := 0
-      else if (CellTile = TileKept) or (Tile = TileKept) then
-        Tile := TileKept
+      else if (CellTile = CloudTile) or (Tile = CloudTile) then
+        Tile := CloudTile
       else if CombatTiles[CellTile].Cost >= BestCost then
       begin
         BestCost := CombatTiles[CellTile].Cost;
@@ -451,13 +448,13 @@ begin
 end;
 
 { ovl31:0E11. Takes combatant Who off the combat map (it dies or leaves). Outside view mode 5 it only
-  makes the PlaySound(ds261E) call and waits (DelayByGameSpeed). In combat it does nothing when Who
+  makes the PlaySound(SoundCombatantDies) call and waits (DelayByGameSpeed). In combat it does nothing when Who
   already has a body record; otherwise it brings Who into view, erases it, draws DyingPicture on
   each of its cells, and unless Who^.Combat^.NoBody is set adds a body record (BodyTable: who, cell,
-  the tile under it) and puts TileBody on its cell (a TileKept cell stays). Then the res03 call and
+  the tile under it) and puts BodyTile on its cell (a CloudTile cell stays). Then the res03 call and
   the wait, the ground is redrawn, its Kind is cleared, CellOccupant rebuilt, the view redrawn round
   its centre and four bytes of its combat record cleared. SetSoundDriverIdle brackets the whole.
-  QUIRK ovl31:0E41: the search for an existing body record tests BodyTable[ds70C7] (the sprite list
+  QUIRK ovl31:0E41: the search for an existing body record tests BodyTable[SharedLoopIndex] (the sprite list
   loop counter of FreeSpriteList) every time, not BodyTable[I]; I only counts to 9.
   QUIRK ovl31:0E69: the early exit skips the closing SetSoundDriverIdle(10).
   QUIRK ovl31:0E14: the frame holds two bytes no code uses (Spare). }
@@ -468,15 +465,15 @@ var
   Spare: array[0..1] of Byte;
 begin
   SetSoundDriverIdle(BeforeRemoval);
-  if ds49F3 <> ViewModeCombat then
+  if ViewMode <> ViewModeCombat then
   begin
-    PlaySound(ds261E);
+    PlaySound(SoundCombatantDies);
     DelayByGameSpeed;
   end
   else
   begin
     I := 1;
-    while (I < MaxBodies + 1) and (BodyTable[ds70C7].Who <> Who) do
+    while (I < MaxBodies + 1) and (BodyTable[SharedLoopIndex].Who <> Who) do
       Inc(I);
     if I < MaxBodies + 1 then Exit;
     Index := CombatantIndex(Who);
@@ -494,13 +491,13 @@ begin
     begin
       Inc(BodyCount);
       BodyTable[BodyCount].Tile := CombatMap^.Cells[CellY, CellX];
-      if CombatMap^.Cells[CellY, CellX] <> TileKept then
-        CombatMap^.Cells[CellY, CellX] := TileBody;
+      if CombatMap^.Cells[CellY, CellX] <> CloudTile then
+        CombatMap^.Cells[CellY, CellX] := BodyTile;
       BodyTable[BodyCount].Who := Who;
       BodyTable[BodyCount].X := CellX;
       BodyTable[BodyCount].Y := CellY;
     end;
-    PlaySound(ds261E);
+    PlaySound(SoundCombatantDies);
     DelayByGameSpeed;
     RedrawGround(0, 0, Index);
     CombatantTable[CombatantIndex(Who)].Kind := 0;
@@ -517,7 +514,7 @@ end;
 { ovl31:10A7. Puts combatant Who on map cell (CellX, CellY) with the footprint kind of its record
   (CombatSize and KindMask) and returns True, or clears its Kind again and returns False when
   ProbeStep finds another combatant there, tile 0 or a CostBlocked tile. With Restore set and no
-  NoBody flag it takes back its body records (the tile under the body, unless TileBody, becomes the
+  NoBody flag it takes back its body records (the tile under the body, unless BodyTile, becomes the
   one restored; the records are cleared) and, when no other body lies on (CellX, CellY), puts that tile on
   the cell. CellOccupant is rebuilt on success. Outside view mode 5 it only returns True.
   Called by ovl08, ovl22, ovl24. }
@@ -526,7 +523,7 @@ var
   Index, I, Occupant, Tile: Byte;
   BodyThere: Boolean;
 begin
-  if ds49F3 = ViewModeCombat then
+  if ViewMode = ViewModeCombat then
   begin
     PlaceCombatant := False;
     Index := CombatantIndex(Who);
@@ -545,7 +542,7 @@ begin
           for I := 1 to BodyCount do
             if BodyTable[I].Who = Who then
             begin
-              if BodyTable[I].Tile <> TileBody then
+              if BodyTable[I].Tile <> BodyTile then
                 Tile := BodyTable[I].Tile;
               FillChar(BodyTable[I], SizeOf(TBody), 0);
             end;

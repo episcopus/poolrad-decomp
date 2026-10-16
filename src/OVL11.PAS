@@ -4,7 +4,7 @@ unit OVL11;
   main heap blocks, sets up the screen buffers (through AllocatePicture), fills the three 200-entry
   cell address tables, initialises the screen and game globals, then builds the save game file path
   and reads its data file (OpenGameFile, Reset/Seek/BlockRead/Close) before handing over to
-  InitSpellHandlers (which fills the spell cast handler table) and ovl12_e1 (the training and
+  InitSpellHandlers (which fills the spell cast handler table) and InitAffectHandlers (the training and
   rewards unit). }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
@@ -15,7 +15,7 @@ uses POOLVARS, RES03, RES05, RES06, RES07, OVL12, OVL22, OVL25, OVL32, OVL34;
 const
   { The loader fills three tables of 200 cells (indices 0..$C7, ovl11:0130..024D). }
   LastCell = $C7;
-  { A text row is 40 characters (the 16-bit wide multiply of ds5050, ovl11:018E). }
+  { A text row is 40 characters (the 16-bit wide multiply of CellRowOffsets, ovl11:018E). }
   CellsPerRow = $28;
   { The two text scanline video segments and the four graphics planes the cell tables address
     (whitepaper 5.11). }
@@ -39,130 +39,130 @@ const
   through LoadPictureSlot, builds the game file name from the InsertDiskPrompts name table plus the character in
   DS:547D (OpenGameFile opens it), reads one $810-byte block (Reset/Seek/BlockRead/Close,
   ovl11:05A9..05E5), restores the path, randomises the seed (System.Randomize, ovl11:0602) and
-  calls InitSpellHandlers and ovl12_e1.
+  calls InitSpellHandlers and InitAffectHandlers.
   Reads and changes: the globals listed in POOLVARS.PAS (their comments name the write).
   Side effects: the heap, the screen (DrawTextAt, LoadPictureSlot, Load8x8Bank) and the disk (the file
   read). The loop counter is the global DS:465C, reused by the three fill loops. }
 procedure StartGame;
 begin
   New(GameVars);
-  New(ds49D6);
-  New(ds49DA);
+  New(GameVars2);
+  New(GameVars3);
   New(EclCode);
   New(GameFont);
   New(WallTiles);
-  New(ds6A5C);
+  New(GeoBlock);
   AllocatePicture(8, 1, 1, 0, TileBuf);
   AllocatePicture($A8, $15, 1, 0, DrawBuf);
-  AllocatePicture($18, 3, 1, 0, ds4A24);
-  FillChar(ds4A28, $A8, 0);
-  FillChar(ds4AD0, $150, 0);
-  FillChar(ds4C20, $150, $FF);
-  FillChar(ds4D70, $150, 0);
-  for ds465C := 0 to LastCell do
+  AllocatePicture($18, 3, 1, 0, ScreenSaveBuffer);
+  FillChar(RowDirtyFlags, $A8, 0);
+  FillChar(RowFirstChangedCol, $150, 0);
+  FillChar(RowFirstChangedOfs, $150, $FF);
+  FillChar(RowLastChangedOfs, $150, 0);
+  for LoaderLoopIndex := 0 to LastCell do
   begin
-    if Odd(ds465C) then
-      ds4EC0[ds465C] := TextSegOdd + (ds465C div 2) * 5
+    if Odd(LoaderLoopIndex) then
+      CellTextSegments[LoaderLoopIndex] := TextSegOdd + (LoaderLoopIndex div 2) * 5
     else
-      ds4EC0[ds465C] := TextSegEven + (ds465C div 2) * 5;
-    ds5050[ds465C] := ds465C * CellsPerRow;
-    case ds465C mod 4 of
-      0: ds51E0[ds465C] := (ds465C div 4) * $A + Plane1;
-      1: ds51E0[ds465C] := (ds465C div 4) * $A + Plane2;
-      2: ds51E0[ds465C] := (ds465C div 4) * $A + Plane3;
-      3: ds51E0[ds465C] := (ds465C div 4) * $A + Plane4;
+      CellTextSegments[LoaderLoopIndex] := TextSegEven + (LoaderLoopIndex div 2) * 5;
+    CellRowOffsets[LoaderLoopIndex] := LoaderLoopIndex * CellsPerRow;
+    case LoaderLoopIndex mod 4 of
+      0: CellPlaneSegments[LoaderLoopIndex] := (LoaderLoopIndex div 4) * $A + Plane1;
+      1: CellPlaneSegments[LoaderLoopIndex] := (LoaderLoopIndex div 4) * $A + Plane2;
+      2: CellPlaneSegments[LoaderLoopIndex] := (LoaderLoopIndex div 4) * $A + Plane3;
+      3: CellPlaneSegments[LoaderLoopIndex] := (LoaderLoopIndex div 4) * $A + Plane4;
     end;
   end;
   FillChar(TileBanks, $14, 0);
-  FillChar(ds5E52, 8, 0);
+  FillChar(SqrPaciBank1, 8, 0);
   FillChar(GameVars^, $800, 0);
-  FillChar(ds49D6^, $800, 0);
-  FillChar(ds49DA^, $400, 0);
+  FillChar(GameVars2^, $800, 0);
+  FillChar(GameVars3^, $400, 0);
   FillChar(EclCode^, $1E00, 0);
-  FillChar(ds5E5A, $D0, 0);
-  for ds465C := 1 to 2 do
+  FillChar(PictureSlots, $D0, 0);
+  for LoaderLoopIndex := 1 to 2 do
   begin
-    ds6AFB[ds465C].Kind := $FF;
-    ds6AFB[ds465C].Addr := nil;
+    LoadSlots[LoaderLoopIndex].Kind := $FF;
+    LoadSlots[LoaderLoopIndex].Addr := nil;
   end;
   FillChar(PictureAnimation, $42, 0);
-  ds6810 := nil;
+  PooledItems := nil;
   FillChar(PartyMapColumn, 5, 0);
   PartyMapColumn := $F;
   PartyMapRow := 1;
   PartyFacing := 6;
-  FillChar(ds6DDE, 3, 1);
-  ds6AB2 := 0;
-  ds6AB4 := 1;
-  for ds465C := 2 to 3 do
+  FillChar(DoorMenuFlags, 3, 1);
+  UnreadWord6AB2 := 0;
+  UnreadWord6AB4 := 1;
+  for LoaderLoopIndex := 2 to 3 do
   begin
-    ds6AAEWords[ds465C].A := $FFFF;
-    ds6AAEWords[ds465C].B := $FFFF;
+    WallSetSlotPairs[LoaderLoopIndex].A := $FFFF;
+    WallSetSlotPairs[LoaderLoopIndex].B := $FFFF;
   end;
   ShowPortraits := 1;
   ShowMonsterPics := 1;
   DebugMode := False;
-  ds4A00 := 1;
-  ds49F8 := 0;
+  WaitAfterTextRun := 1;
+  SkipAreaScriptLoad := 0;
   RestInterruptCounter := 0;
-  ds5D96 := 0;
+  PartyListHead := 0;
   SelectedCharacter := nil;
   EclPC := $9900;
   GameSpeed := 1;
-  ds49F4 := 0;
+  SuppressContinuePrompt := 0;
   TileSet := 1;
-  ds5377 := 1;
-  ds547A := 1;
-  ds5378 := 1;
+  SavedTileSet := 1;
+  UnreadWord547A := 1;
+  UnreadWord5378 := 1;
   WallMapMode := 0;
-  ds49F9 := 1;
+  PreviousAreaViewKind := 1;
   AreaViewKind := 1;
-  ds49D6^[830] := 0;
+  GameVars2^[830] := 0;
   MarkerFrame := 0;
   ListMenuTop := 1;
   DuelMode := 0;
   RestWindowActive := 0;
-  ds84DD := 0;
-  ds84DE := 0;
-  ds84DF := 0;
-  ds84E0 := 0;
+  SavedWord714Low := 0;
+  GlyphRunInBox := 0;
+  GlyphRunPending := 0;
+  CloseUpShown := 0;
   PartyDestroyed := 0;
-  ds5370 := 1;
-  ds84E3 := 0;
-  ds557C := 0;
-  ds6B0A := '';
-  ds6B1C := $FF;
-  ds557D := False;
-  ds6F69 := $E8;
-  ds6F68 := $DB;
-  ds84E9 := 0;
+  ClipChecksEnabled := 1;
+  Sprite3DLoaded := 0;
+  OpenNoPrompt := 0;
+  LastSpriteFile := '';
+  LastSpriteBank := $FF;
+  HeapErrorStop := False;
+  SpecialViewCode1 := $E8;
+  SpecialViewCode2 := $DB;
+  SkipCloseUpIfNoPics := 0;
   SoundDriverIdle := 0;
   SetSoundDriverIdle(100);
   { A string assignment to a string[40] truncates to 40 (the compiler uses System_StrLCopy); this
     saves the current path DS:547C into DS:4661. }
-  ds4661 := GameDir;
+  GameDirBackup := GameDir;
   GameDir := '';
   LoadGameFont;
   ClearPromptLine;
   DrawTextAt(0, $18, $A, 'Loading...Please Wait');
   Load8x8Bank($CA, 4);
   Load8x8Bank($CB, 0);
-  LoadPicture('sqrpaci', 1, 0, 0, ds5E52);
-  LoadPicture('sqrpaci', 2, 0, 0, ds5E56);
-  for ds465C := 0 to $B do
-    LoadPictureSlot('COMSPR', ds465C, ds465C + $D);
+  LoadPicture('sqrpaci', 1, 0, 0, SqrPaciBank1);
+  LoadPicture('sqrpaci', 2, 0, 0, SqrPaciBank2);
+  for LoaderLoopIndex := 0 to $B do
+    LoadPictureSlot('COMSPR', LoaderLoopIndex, LoaderLoopIndex + $D);
   LoadPictureSlot('COMSPR', $19, $19);
-  ds4660 := OpenGameFile('ITEMS', InsertDiskPrompts[TileSet] + Chr(ds547D) + ':', 0, ds468C);
-  Reset(ds468C, 1);
-  Seek(ds468C, 2);
-  BlockRead(ds468C, ds5582, LoadBlockSize, ds5E1E);
-  Close(ds468C);
+  LoaderOpenResult := OpenGameFile('ITEMS', InsertDiskPrompts[TileSet] + Chr(DiskDriveLetter) + ':', 0, LoaderFile);
+  Reset(LoaderFile, 1);
+  Seek(LoaderFile, 2);
+  BlockRead(LoaderFile, ItemTable, LoadBlockSize, LoaderReadCount);
+  Close(LoaderFile);
   { restore the path saved above }
-  GameDir := ds4661;
+  GameDir := GameDirBackup;
   ClearPromptLine;
   Randomize;
   InitSpellHandlers;
-  ovl12_e1;
+  InitAffectHandlers;
 end;
 
 { ovl11:0615. The unit's initialisation part is empty: the compiler emits only `55 89 E5 5D CB`

@@ -34,39 +34,70 @@ except ImportError:  # pragma: no cover
 SYSTEM_NAMED = {
     0x0000: ("System_init", "[V] sets DS=DGROUP; installs INT vectors"),
     0x00E9: ("System_Halt", "[V] teardown / exit path; clears ExitProc"),
-    0x023F: ("System_rtl_023F", "[I] external callee; classify later"),
+    0x023F: ("System_GetMem", "[I] 0AF8:023F takes a size word, allocates through System_HeapAllocate and returns DX:AX; heap overflow is run error 203; New(P) and GetMem compile to a call here (whitepaper 5.x, ovl11 probes)"),
     0x0254: ("System_FreeMem", "[I] far ptr+size; calls heap helper; retf 6"),
     0x04A2: ("System_IOResult", "[V] xchg InOutRes at DS:4426, return old"),
     0x04A9: ("System_CheckInOutRes", "[V] non-zero InOutRes -> error path"),
     0x0B0B: ("System_StrCopy", "[V] Pascal string copy; retf 4"),
     0x0B25: ("System_StrLCopy", "[V] Pascal string copy with max length; retf 0Ah"),
-    0x0B57: ("System_rtl_0B57", "[I] string helper family"),
+    0x0B57: ("System_Copy", "[I] 0AF8:0B57 copies Count characters from Index of a string into a result string, both clamped (Copy)"),
     0x0B98: ("System_StrConcat", "[V] Pascal string concatenate; retf 4"),
-    0x1366: ("System_Str_Format", "[I] builds Pascal string with padding/spaces"),
+    0x1366: ("System_StrLong", "[I] 0AF8:1366 builds a string from a LongInt through System_LongToDecimal, padded to the width and clamped to the string size (Str(L:Width, S))"),
     0x13E2: ("System_Assign", "[V] fills FileRec (magic D7B0) from path string"),
     0x1410: ("System_Reset", "[V] INT 21h AH=3Dh open existing; FileRec"),
     0x1491: ("System_Close", "[V] INT 21h AH=3Eh close; FileRec"),
     0x14FB: ("System_BlockRead", "[V] INT 21h AH=3Fh; FileRec + count"),
     0x1502: ("System_BlockWrite", "[V] INT 21h AH=40h twin of BlockRead"),
-    0x1563: ("System_rtl_1563", "[I] file I/O helper; INT 21h"),
+    0x1563: ("System_Seek", "[I] 0AF8:1563 multiplies the record number by RecSize and moves the file pointer with INT 21h AX=4200h (Seek)"),
     0x1685: ("System_Move", "[V] Move(src,dst,count); direction by offsets only (0AF8:1696); rep movsb wraps offsets; DF left set on the backward path (fuzzed on branch track-c-hybrid)"),
     0x16A8: ("System_FillChar", "[V] FillChar(dst,count,value); rep stosb wraps DI; clears DF"),
     0x11C0: ("System_Random", "[V] Random(range): step 0AF8:120F, then hi16(RandSeed) mod range; range 0 steps and returns 0"),
     0x16BC: ("System_ParamStr", "[V] ParamStr(n) into a string temporary: `ParamStr(1)` compiles to a call here (make match UNIT=res04); uses INT 21h AH=30h for the program name"),
     0x0C10: ("System_StrCompare", "[V] compares two Pascal strings, result in the flags: `ParamStr(1) = 'STING'` compiles to a call here (make match UNIT=res04)"),
     0x0DC0: ("System_SetIn", "[V] byte in a 32-byte set constant, result in ZF: `x in [0, 1]` compiles to a call here (make match UNIT=res04)"),
+    0x00E2: ("System_RunError", "[I] 0AF8:00E2 pops the caller's address as ErrorAddr and falls into the Halt path with the code in AX; every checked error (203, 204, 201, 202, 205, 207, 200) jumps here; called by the Overlay unit"),
+    0x029C: ("System_MemAvail", "[I] 0AF8:029C sums the free blocks of the FreeList plus the gap HeapEnd-HeapPtr, in bytes (MemAvail); res08_init calls it"),
+    0x04F7: ("System_AssignText", "[I] 0AF8:04F7 fills a TextRec (Mode $D7B0 closed, BufSize $80, buffer at +$74, OpenFunc 060E) and copies the name up to 79 characters (Assign for a Text file)"),
+    0x0567: ("System_ResetText", "[I] 0AF8:0567 sets mode $D7B1 (input) and runs System_OpenText (Reset of a Text file)"),
+    0x056C: ("System_RewriteText", "[I] 0AF8:056C sets mode $D7B2 (output) and runs System_OpenText (Rewrite of a Text file)"),
+    0x05C1: ("System_CloseText", "[I] 0AF8:05C1 flushes an output Text file through its InOutFunc and calls its CloseFunc; error 103 when it is not open (Close of a Text file); Halt closes Input and Output with it"),
+    0x081C: ("System_ReadLn", "[I] 0AF8:081C reads bytes until CR (and skips LF) or Ctrl-Z, then flushes (ReadLn of a Text file; res08_init and ReadSavedCharacterList)"),
+    0x084A: ("System_WriteLn", "[I] 0AF8:084A writes CR and LF to a Text file and flushes (WriteLn)"),
+    0x0898: ("System_ReadChar", "[I] 0AF8:0898 returns the next byte of a Text file in AL (Read(F, Ch)); res08_init reads CfgChar with it"),
+    0x08E1: ("System_ReadString", "[I] 0AF8:08E1 reads up to the maximum length of a string variable until CR or Ctrl-Z (Read(F, S))"),
+    0x0919: ("System_WriteString", "[I] 0AF8:0919 writes a string padded to the width (Write(F, S:Width))"),
+    0x09AF: ("System_WriteLong", "[I] 0AF8:09AF converts a LongInt with System_LongToDecimal and writes it padded to the width (Write(F, L:Width))"),
+    0x0A3F: ("System_CopyBlock", "[I] 0AF8:0A3F copies CX bytes from one far pointer to another with rep movsb, no overlap handling (record and array assignment); six callers in the game"),
+    0x0A5B: ("System_LongMul", "[I] 0AF8:0A5B multiplies two 32-bit values (DX:AX by CX:BX) into DX:AX (LongInt multiply, no overflow check)"),
+    0x0C3B: ("System_CharToString", "[I] 0AF8:0C3B stores length 1 and the character in a string (Char to String conversion, four callers)"),
+    0x0CBC: ("System_Delete", "[I] 0AF8:0CBC removes Count characters from Index of a string using two Copy temporaries, nothing when Count is 0 or less (Delete)"),
+    0x0D12: ("System_SetFromBytes", "[I] 0AF8:0D12 builds a 32-byte set from BH zero bytes, BL data bytes and zero padding (a set constructor with constant bytes; ShowPagedText)"),
+    0x13B1: ("System_ValLong", "[I] 0AF8:13B1 skips leading blanks, converts a string with System_ParseNumber and stores the failing position or 0 in Code (Val(S, L, Code)); ReadAmount and ReadNumber"),
+    0x1593: ("System_FileSize", "[I] 0AF8:1593 returns the file length in records: size from System_FileSizeAndPos divided by RecSize (FileSize); LoadDaxBlock"),
+    0x182A: ("System_UpCase", "[I] 0AF8:182A converts a to z to upper case and leaves other characters (UpCase)"),
 }
 
 CRT_NAMED = {
     0x0000: ("Crt_init", "[V] INT 10h video probe (smoke)"),
     0x02FD: ("Crt_KeyPressed", "[V] `KeyPressed` compiles to a call here (make match UNIT=res04)"),
     0x030F: ("Crt_ReadKey", "[V] `ReadKey` compiles to a call here (make match UNIT=res04)"),
+    0x029C: ("Crt_Delay", "[I] 0A40:029C waits the number of milliseconds passed by looping on the BIOS tick at 40:0 with a calibrated count (Delay); ShowTitleScreen and combat call it"),
+}
+
+# Borland Dos unit (res13, 0A32), named the same way.
+DOS_NAMED: dict[int, tuple[str, str]] = {
+    0x000B: ("Dos_Intr", "[I] 0A32:000B loads every register from the Registers record, fakes the interrupt frame with the vector of IntNo and stores the results (Intr(IntNo, Regs)); the game calls it for INT 10h video and INT 21h"),
+    0x00A2: ("Dos_GetTime", "[I] 0A32:00A2 INT 21h AH=2Ch then hour, minute, second and hundredths through the var parameters (GetTime); TimeInHundredths and GameClock call it"),
 }
 
 # Borland Overlay unit (res14, 0AA2). Its routines get names from the far-call graph.
 # 042B:00A4 used to be named Overlay_init here; it is the init of game unit res08
 # (WHITEPAPER 2.2), so it is no longer in this table.
-OVERLAY_NAMED: dict[int, tuple[str, str]] = {}
+OVERLAY_NAMED: dict[int, tuple[str, str]] = {
+    0x0012: ("Overlay_OvrInit", "[I] 0AA2:0012 opens the overlay file named by the argument (current directory, then the program's directory, then the PATH), checks its overlay header and sets OvrDosHandle (OvrInit); res08_init calls it"),
+    0x01A3: ("Overlay_OvrSetBuf", "[I] 0AA2:01A3 sets the overlay buffer size in paragraphs from a LongInt, checks it against the heap and moves HeapOrg, HeapPtr and FreeList above it (OvrSetBuf); res08_init"),
+    0x01F2: ("Overlay_OvrGetBuf", "[I] 0AA2:01F2 returns the overlay buffer size in bytes as a LongInt (OvrGetBuf); res08_init"),
+}
 
 # Runtime units (WHITEPAPER 2.2, make tp-compare): id -> (name, load-image segment, evidence).
 # Dos and Overlay have no initialisation part, so they are not in the init chain.
@@ -315,7 +346,7 @@ def main(argv: list[str]) -> int:
                 continue
         ext = [c for c in callers if owner(ranges, c)[0] != uid]
         hand = (uid == "res00" and off in SYSTEM_NAMED) or (uid == "res01" and off in CRT_NAMED) \
-            or (uid == "res14" and off in OVERLAY_NAMED)
+            or (uid == "res13" and off in DOS_NAMED) or (uid == "res14" and off in OVERLAY_NAMED)
         if not ext and not hand:
             continue
 
@@ -323,6 +354,8 @@ def main(argv: list[str]) -> int:
             name, note = SYSTEM_NAMED[off]
         elif uid == "res01" and off in CRT_NAMED:
             name, note = CRT_NAMED[off]
+        elif uid == "res13" and off in DOS_NAMED:
+            name, note = DOS_NAMED[off]
         elif uid == "res14" and off in OVERLAY_NAMED:
             name, note = OVERLAY_NAMED[off]
         elif uid == "res00":
@@ -352,6 +385,9 @@ def main(argv: list[str]) -> int:
     for off, (name, note) in CRT_NAMED.items():
         rid = "0A40:%04X" % off
         sym = patch_routine(sym, rid, name, note, "hand-verified Crt entry")
+    for off, (name, note) in DOS_NAMED.items():
+        rid = "0A32:%04X" % off
+        sym = patch_routine(sym, rid, name, note, "hand-verified Dos entry")
     for off, (name, note) in OVERLAY_NAMED.items():
         rid = "0AA2:%04X" % off
         sym = patch_routine(sym, rid, name, note, "hand-verified Overlay entry")

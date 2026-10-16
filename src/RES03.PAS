@@ -12,23 +12,23 @@ procedure WaitHundredths(Hundredths: Word);
 procedure PlaySound(Sound: Word);
 procedure SilenceSound;
 procedure SetSoundDriverIdle(Idle: Word);
-procedure res03_fn_09E3;
-procedure res03_fn_0A27;
-procedure res03_fn_0AD3;
-procedure res03_fn_0C8F;
-procedure res03_fn_0DB1;
-procedure res03_fn_0DCC;
-procedure res03_fn_0DEB;
-procedure res03_fn_0E06;
-procedure res03_fn_0F5B;
-procedure res03_fn_1091;
-procedure res03_fn_1221;
+procedure TuneData09E3;
+procedure TuneData0A27;
+procedure TuneData0AD3;
+procedure TuneData0C8F;
+procedure TuneData0DB1;
+procedure TuneData0DCC;
+procedure TuneData0DEB;
+procedure TuneData0E06;
+procedure TuneData0F5B;
+procedure TuneData1091;
+procedure TuneData1221;
 procedure StartSoundTimer;
 procedure StopSoundTimer;
-procedure res03_fn_1477;
-procedure res03_fn_14EC;
-procedure res03_fn_157A;
-procedure res03_fn_160B;
+procedure SpeakerStep;
+procedure TandyStep;
+procedure StepVoice;
+procedure RunStream;
 procedure SetSpeakerTune(Tune: Word);
 procedure SetTandyTune(Tune: Word);
 procedure SetSoundOutput(Enabled: Word);
@@ -144,39 +144,39 @@ begin
 end;
 
 { 08AE:09E3: frame not read }
-{@stub} procedure res03_fn_09E3; begin end;
+{@stub} procedure TuneData09E3; begin end;
 { 08AE:0A27: frame not read }
-{@stub} procedure res03_fn_0A27; begin end;
+{@stub} procedure TuneData0A27; begin end;
 { 08AE:0AD3: frame not read }
-{@stub} procedure res03_fn_0AD3; begin end;
+{@stub} procedure TuneData0AD3; begin end;
 { 08AE:0C8F: frame not read }
-{@stub} procedure res03_fn_0C8F; begin end;
+{@stub} procedure TuneData0C8F; begin end;
 { 08AE:0DB1: frame not read }
-{@stub} procedure res03_fn_0DB1; begin end;
+{@stub} procedure TuneData0DB1; begin end;
 { 08AE:0DCC: frame not read }
-{@stub} procedure res03_fn_0DCC; begin end;
+{@stub} procedure TuneData0DCC; begin end;
 { 08AE:0DEB: frame not read }
-{@stub} procedure res03_fn_0DEB; begin end;
+{@stub} procedure TuneData0DEB; begin end;
 { 08AE:0E06: frame not read }
-{@stub} procedure res03_fn_0E06; begin end;
+{@stub} procedure TuneData0E06; begin end;
 { 08AE:0F5B: frame not read }
-{@stub} procedure res03_fn_0F5B; begin end;
+{@stub} procedure TuneData0F5B; begin end;
 { 08AE:1091: frame not read }
-{@stub} procedure res03_fn_1091; begin end;
+{@stub} procedure TuneData1091; begin end;
 { 08AE:1221: frame not read }
-{@stub} procedure res03_fn_1221; begin end;
+{@stub} procedure TuneData1221; begin end;
 { 08AE:137C: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure StartSoundTimer; begin end;
 { 08AE:13B1: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure StopSoundTimer; begin end;
 { 08AE:1477: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure res03_fn_1477; begin end;
+{@stub} procedure SpeakerStep; begin end;
 { 08AE:14EC: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure res03_fn_14EC; begin end;
+{@stub} procedure TandyStep; begin end;
 { 08AE:157A: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure res03_fn_157A; begin end;
+{@stub} procedure StepVoice; begin end;
 { 08AE:160B: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure res03_fn_160B; begin end;
+{@stub} procedure RunStream; begin end;
 { 08AE:1742: retf 2: 2 bytes of parameters; 0 bytes of locals }
 {@stub} procedure SetSpeakerTune(Tune: Word); begin end;
 { 08AE:17AE: retf 2: 2 bytes of parameters; 0 bytes of locals }

@@ -39,20 +39,20 @@ var
   ValI: Byte;                     { Val of record I }
   Swap: TSortRec;                 { the swap buffer }
 begin
-  if ds6718[0].Val <= 1 then
+  if SortEntries[0].Val <= 1 then
     Exit;
-  for I := 1 to ds6718[0].Val - 1 do
+  for I := 1 to SortEntries[0].Val - 1 do
   begin
-    for J := I + 1 to ds6718[0].Val do
+    for J := I + 1 to SortEntries[0].Val do
     begin
-      ValI := ds6718[I].Val;
-      ValJ := ds6718[J].Val;
-      if (ds6718[J].Key < ds6718[I].Key) or
-         ((ds6718[J].Key = ds6718[I].Key) and (ValJ < ValI) and ((ValJ mod 2) <= (ValI mod 2))) then
+      ValI := SortEntries[I].Val;
+      ValJ := SortEntries[J].Val;
+      if (SortEntries[J].Key < SortEntries[I].Key) or
+         ((SortEntries[J].Key = SortEntries[I].Key) and (ValJ < ValI) and ((ValJ mod 2) <= (ValI mod 2))) then
       begin
-        Swap := ds6718[I];
-        ds6718[I] := ds6718[J];
-        ds6718[J] := Swap;
+        Swap := SortEntries[I];
+        SortEntries[I] := SortEntries[J];
+        SortEntries[J] := Swap;
       end;
     end;
   end;
@@ -89,9 +89,9 @@ end;
 { ovl30:02CC. Steps a Bresenham line: with Line^ it returns whether it moved. When DX > DY it
   walks X towards X2 (and, while D1 >= 0, Y towards Y2 by SY), else it walks Y towards Y2 (and,
   while D1 >= 0, X towards X2 by SX); the smaller axis moves on the sign of D1 and First advances
-  by 2 or 3, and the direction taken picks the Pattern byte from the 3x3 table ds25C0 at
+  by 2 or 3, and the direction taken picks the Pattern byte from the 3x3 table LinePatternTable at
   3*(StepY+1) + (StepX+1). Pattern is written on every call, even when the line is already at its
-  end point and the routine returns False (StepX and StepY stay 0, giving ds25C0[1, 1]).
+  end point and the routine returns False (StepX and StepY stay 0, giving LinePatternTable[1, 1]).
   Called by CastLineBeam, WalkLine and WalkCombatLine. }
 function StepLine(Line: PLineState): Boolean;
 var
@@ -144,7 +144,7 @@ begin
         StepLine := True;
       end;
     end;
-    Pattern := ds25C0[StepY + 1, StepX + 1];
+    Pattern := LinePatternTable[StepY + 1, StepX + 1];
   end;
 end;
 { ovl30:0422. Walks a Bresenham line from (X1, Y1) towards (Ex, Ey) over the Map rows and
@@ -168,17 +168,17 @@ begin
   Line.Y2 := Ey;
   SetupLine(@Line);
   Bound.X1 := 0;
-  Bound.Y1 := ds2745[Map^[Y1].Cells[X1]].BoundY;
+  Bound.Y1 := WalkTileTable[Map^[Y1].Cells[X1]].BoundY;
   if Line.DX > Line.DY then
     Bound.X2 := Line.DX
   else
     Bound.X2 := Line.DY;
-  Bound.Y2 := ds2745[Map^[Y1].Cells[X1]].BoundY;
+  Bound.Y2 := WalkTileTable[Map^[Y1].Cells[X1]].BoundY;
   SetupLine(@Bound);
   Flag := False;
   repeat
     if ((Map^[0].Head[6] = 0) and
-        (ds2745[Map^[Line.Y].Cells[Line.X]].BlockY > Bound.Y)) or
+        (WalkTileTable[Map^[Line.Y].Cells[Line.X]].BlockY > Bound.Y)) or
        (Line.First > Limit) then
     begin
       Ex := Line.X;
@@ -268,7 +268,7 @@ begin
     end
     else
       CandX[J] := -1;
-  ds6718[0].Val := 0;
+  SortEntries[0].Val := 0;
   for I := 1 to CombatantTable[0].Kind do
     if CombatantTable[I].Kind > 0 then
     begin
@@ -304,16 +304,16 @@ begin
               end;
       if Found then
       begin
-        Inc(ds6718[0].Val);
-        ds6718[ds6718[0].Val].Head := I;
-        ds6718[ds6718[0].Val].Key := Best;
+        Inc(SortEntries[0].Val);
+        SortEntries[SortEntries[0].Val].Head := I;
+        SortEntries[SortEntries[0].Val].Key := Best;
         L2 := 0;
         if Dir < 8 then
           L2 := Dir
         else
           while not InDirArc(CandX[BestJ], CandY[BestJ], TargX[BestK], TargY[BestK], L2) do
             Inc(L2);
-        ds6718[ds6718[0].Val].Val := L2;
+        SortEntries[SortEntries[0].Val].Val := L2;
       end;
     end;
   SortTable;

@@ -28,9 +28,6 @@ procedure PayGold(Amount: LongInt; Who: PCharacter);
 implementation
 
 const
-  CombatRecordSize = $16;   { FreeMem size of TCharacter.Combat (TCombatant) }
-  ItemListSize = $3F;       { FreeMem size of one item of TCharacter.Items (TMenuLine) }
-  AffectSize = 9;           { FreeMem size of one affect of TCharacter.Affects (TAffect) }
   CharacterSize = $11D;     { FreeMem size of a whole TCharacter }
   MenuLeft = 1;             { the function menu window, drawn by DrawWindow in RunCharacterMenu }
   MenuTop = 1;
@@ -40,15 +37,15 @@ const
   HotKeyColour = $F;        { white: the function name's first (hotkey) letter }
   NameColour = $A;          { green: the rest of the function name }
   ChoiceTitleColour = $D;   { the ReadPromptChoice title colour of the menu }
-  { ds49D6^ word 680: the set of classes this training hall trains, a mask over the ds05DE class
+  { GameVars2^ word 680: the set of classes this training hall trains, a mask over the ClassTrainingBits class
     bits (only its low byte is tested). RunCharacterMenu offers Train (slot 3) while it is nonzero,
-    or while the STING cheat ds470C is set; TrainCharacter needs it to share a bit with the
+    or while the STING cheat StingCheat is set; TrainCharacter needs it to share a bit with the
     character's classes and with a trainable class, else 'We don't train that class here'. Who
     writes it is not found yet [I]. }
   TrainableClassesWord = 680;
   GoldInCopper = 200;       { one gold piece is 200 copper (CoinCopperValues[GoldCoin]) }
   { the column of each ability's minimum and maximum in a 16-byte row of the per-race limits
-    ds3DA3 (ModifyCharacter, CreateCharacter): the Strength columns +0/+2/+4 are RaceStrengthMax and
+    RaceAbilityLimits (ModifyCharacter, CreateCharacter): the Strength columns +0/+2/+4 are RaceStrengthMax and
     RaceStrengthPercent, and Intelligence .. Charisma take the columns +6/+7 .. +14/+15. }
   IntMinOffset = 6;
   IntMaxOffset = 7;
@@ -60,7 +57,6 @@ const
   ConMaxOffset = 13;
   ChaMinOffset = 14;
   ChaMaxOffset = 15;
-  ExceptionalStrength = 18; { a Strength above this uses the exceptional percentile; 18 itself rolls one }
 
 type
   { The five coin kinds, in the order of CoinCopperValues (copper 0 .. platinum 4). The money routine
@@ -147,7 +143,7 @@ end;
 { ovl16:0161. The main menu of the character-creation / training hall (called by ovl03:2E10). It
   draws the window (DrawWindow) and, when a character is selected, its roster (DrawPartyRoster) and
   the eleven function names of the menu at DS:0619 (the first letter in white, the rest in green,
-  DrawTextAt). The eleven slots, in the order of the hotkey line ds05F0 'C D M T V A R L S B E J',
+  DrawTextAt). The eleven slots, in the order of the hotkey line CharacterMenuHotkeys 'C D M T V A R L S B E J',
   hold the texts at DS:0619: SlotCreate 0 'Create New Character', SlotDrop 1 'Drop Character',
   SlotModify 2 'Modify Character', SlotTrain 3 'Train Character', SlotView 4 'View Character',
   SlotAdd 5 'Add Character to Party', SlotRemove 6 'Remove Character from Party', SlotLoad 7
@@ -156,15 +152,15 @@ end;
   (CreateCharacter), D drop (DropCharacter), M modify (ModifyCharacter), T train (TrainCharacter),
   V view (ViewSelectedCharacter), A add (AddSavedCharacters), R remove (SaveCharacter then
   RemoveSelectedCharacter), L load (LoadGame), S save (SaveGame), B BEGIN Adventuring (it needs a
-  non-empty party, ds5D96, and stores the view mode Mode 4 in ds49F3 before it leaves), E exit
+  non-empty party, PartyListHead, and stores the view mode Mode 4 in ViewMode before it leaves), E exit
   (AskYesNo, then save and QuitGame), J the STING cheat. An extended key G or O selects another
   party member (UpdateSelectedCharacter); every other key (all except E and S) clears the heap
-  retry gate ds557D, and E and S leave it alone: the E path's SaveGame retry loop reads ds557D to
-  end the retry (POOLVARS). Mode (4) is the value stored in the view mode ds49F3 on B. Local at
+  retry gate HeapErrorStop, and E and S leave it alone: the E path's SaveGame retry loop reads HeapErrorStop to
+  end the retry (POOLVARS). Mode (4) is the value stored in the view mode ViewMode on B. Local at
   [bp-5] is unused; the frame needs its 9 bytes. }
 procedure RunCharacterMenu;
 const
-  { The eleven slots of the menu at ds0619, in the order of the hotkey line ds05F0
+  { The eleven slots of the menu at CharacterMenuSlots, in the order of the hotkey line CharacterMenuHotkeys
     'C D M T V A R L S B E J' (the slot text is listed in the routine comment above). }
   SlotCreate = 0;
   SlotDrop = 1;
@@ -190,8 +186,8 @@ begin
   TileSet := 3;
   Mode := 4;
   Show := 1;
-  ds470C := 0;
-  ds49F3 := 0;
+  StingCheat := 0;
+  ViewMode := 0;
   while True do
   begin
     if Show <> 0 then
@@ -200,38 +196,39 @@ begin
       if SelectedCharacter <> nil then
       begin
         DrawPartyRoster(SelectedCharacter);
-        ds0619[SlotDrop].Present := 1;
-        ds0619[SlotModify].Present := 1;
-        if (ds49D6^[TrainableClassesWord] > 0) or (ds470C <> 0) then
-          ds0619[SlotTrain].Present := 1;
-        ds0619[SlotView].Present := 1;
-        ds0619[SlotRemove].Present := 1;
-        ds0619[SlotLoad].Present := 0;
-        ds0619[SlotSave].Present := 1;
-        ds0619[SlotBegin].Present := 1;
+        CharacterMenuSlots[SlotDrop].Present := 1;
+        CharacterMenuSlots[SlotModify].Present := 1;
+        if (GameVars2^[TrainableClassesWord] > 0) or (StingCheat <> 0) then
+          CharacterMenuSlots[SlotTrain].Present := 1;
+        CharacterMenuSlots[SlotView].Present := 1;
+        CharacterMenuSlots[SlotRemove].Present := 1;
+        CharacterMenuSlots[SlotLoad].Present := 0;
+        CharacterMenuSlots[SlotSave].Present := 1;
+        CharacterMenuSlots[SlotBegin].Present := 1;
       end
       else
       begin
-        ds0619[SlotDrop].Present := 0;
-        ds0619[SlotModify].Present := 0;
-        ds0619[SlotTrain].Present := 0;
-        ds0619[SlotView].Present := 0;
-        ds0619[SlotRemove].Present := 0;
-        ds0619[SlotLoad].Present := 1;
-        ds0619[SlotSave].Present := 0;
-        ds0619[SlotBegin].Present := 0;
+        CharacterMenuSlots[SlotDrop].Present := 0;
+        CharacterMenuSlots[SlotModify].Present := 0;
+        CharacterMenuSlots[SlotTrain].Present := 0;
+        CharacterMenuSlots[SlotView].Present := 0;
+        CharacterMenuSlots[SlotRemove].Present := 0;
+        CharacterMenuSlots[SlotLoad].Present := 1;
+        CharacterMenuSlots[SlotSave].Present := 0;
+        CharacterMenuSlots[SlotBegin].Present := 0;
       end;
       Row := 0;
       for I := 0 to 10 do
-        if ds0619[I].Present <> 0 then
+        if CharacterMenuSlots[I].Present <> 0 then
         begin
-          DrawTextAt(2, Row + MenuFirstRow, HotKeyColour, ds0619[I].Name[1]);
-          DrawTextAt(3, Row + MenuFirstRow, NameColour, Copy(ds0619[I].Name, 2, Length(ds0619[I].Name) - 1));
+          DrawTextAt(2, Row + MenuFirstRow, HotKeyColour, CharacterMenuSlots[I].Name[1]);
+          DrawTextAt(3, Row + MenuFirstRow, NameColour, Copy(CharacterMenuSlots[I].Name, 2,
+            Length(CharacterMenuSlots[I].Name) - 1));
           Inc(Row);
         end;
       Show := 0;
     end;
-    Key := ReadPromptChoice('Choose a function ', ds05F0, ChoiceTitleColour, 0, 0, 1, 0, ExtKey);
+    Key := ReadPromptChoice('Choose a function ', CharacterMenuHotkeys, ChoiceTitleColour, 0, 0, 1, 0, ExtKey);
     ClearPromptLine;
     if ExtKey <> 0 then
     begin
@@ -244,62 +241,62 @@ begin
     else
     begin
       if not (Key in ['E', 'S']) then
-        ds557D := False;
+        HeapErrorStop := False;
       case Key of
         'C':
-          if ds0619[SlotCreate].Present <> 0 then
+          if CharacterMenuSlots[SlotCreate].Present <> 0 then
             CreateCharacter;
         'D':
-          if ds0619[SlotDrop].Present <> 0 then
+          if CharacterMenuSlots[SlotDrop].Present <> 0 then
             DropCharacter;
         'M':
-          if ds0619[SlotModify].Present <> 0 then
+          if CharacterMenuSlots[SlotModify].Present <> 0 then
             ModifyCharacter;
         'T':
-          if ds0619[SlotTrain].Present <> 0 then
+          if CharacterMenuSlots[SlotTrain].Present <> 0 then
             TrainCharacter;
         'V':
-          if ds0619[SlotView].Present <> 0 then
+          if CharacterMenuSlots[SlotView].Present <> 0 then
             ViewSelectedCharacter(Done);
         'A':
-          if ds0619[SlotAdd].Present <> 0 then
+          if CharacterMenuSlots[SlotAdd].Present <> 0 then
             AddSavedCharacters;
         'R':
-          if ds0619[SlotRemove].Present <> 0 then
+          if CharacterMenuSlots[SlotRemove].Present <> 0 then
             if SelectedCharacter <> nil then
             begin
               SaveCharacter(SelectedCharacter, '');
               RemoveSelectedCharacter(False, True);
             end;
         'L':
-          if ds0619[SlotLoad].Present <> 0 then
+          if CharacterMenuSlots[SlotLoad].Present <> 0 then
           begin
             LoadGame;
-            if ds49F3 <> 0 then
+            if ViewMode <> 0 then
             begin
-              ds49F8 := 1;
+              SkipAreaScriptLoad := 1;
               Exit;
             end;
           end;
         'S':
-          if ds0619[SlotSave].Present <> 0 then
-            if ds5D96 <> 0 then
+          if CharacterMenuSlots[SlotSave].Present <> 0 then
+            if PartyListHead <> 0 then
               SaveGame;
         'B':
-          if ds0619[SlotBegin].Present <> 0 then
-            if ds5D96 <> 0 then
+          if CharacterMenuSlots[SlotBegin].Present <> 0 then
+            if PartyListHead <> 0 then
             begin
-              ds49F3 := Mode;
+              ViewMode := Mode;
               ClearPromptLine;
               Exit;
             end;
         'E':
-          if ds0619[SlotExit].Present <> 0 then
+          if CharacterMenuSlots[SlotExit].Present <> 0 then
           begin
             Key := AskYesNo('Quit to DOS ', $E, $A, $F);
             if Key = 'Y' then
             begin
-              while (not ds557D) and (ds5D96 <> 0) do
+              while (not HeapErrorStop) and (PartyListHead <> 0) do
                 SaveGame;
               QuitGame;
             end;
@@ -307,7 +304,7 @@ begin
         'J':
           if ParamStr(1) = 'STING' then
           begin
-            ds470C := 1;
+            StingCheat := 1;
             ShowFlashMessage('I Understand, master...');
           end;
       end;
@@ -317,7 +314,7 @@ begin
 end;
 { ovl16:056C. The C (Create) function of the training hall, called by RunCharacterMenu (ovl16:0161). It
   builds a new party member and saves it. The record is allocated (GetMem and FillChar, 285 bytes)
-  with its starting values: the six figure colour pairs from ds3CF5, magic resistance 50, THAC0 40,
+  with its starting values: the six figure colour pairs from FigureColourSlots, magic resistance 50, THAC0 40,
   Flag10D set (it takes part in combat and earns experience), picture banks 1 and 1 and a random BAB.
   Four list menus follow in the window (1,2)..($26,$16), each a ChooseFromList with the title line
   'Pick Race', 'Pick Gender', 'Pick Class' or 'Pick Alignment' and the choices indented by two
@@ -328,12 +325,12 @@ end;
     (Duration 0, Data $FF, Flag 0): Dwarf $5A $61 $1A $2F, Gnome $61 $12 $2F $30, Halfling $5A $61,
     Elf $6B, Half-Elf $7C, Human none.
   - Gender: Male or Female (SexNames), stored as the zero-based choice in B9E.
-  - Class: the row of the race in ds3E17 lists the classes it may pick; the chosen ClassMask gets
+  - Class: the row of the race in RaceClassChoices lists the classes it may pick; the chosen ClassMask gets
     level 1 in each class it combines (ClassLevels, a multi-class mask such as 8 Cleric/Fighter sets
     several), then ComputeThiefSkills for a thief, THAC0 (the highest ClassThac0Table entry), the
-    item-usage ClassBits (ds05D6) and ComputeSavingThrows.
-  - Alignment: the row of the class in ds3FE7 lists the alignments it may pick (ByteA0).
-  The age comes next: the roll of the race and class entry in ds3E5B (a single class) or, for a
+    item-usage ClassBits (ClassItemBits) and ComputeSavingThrows.
+  - Alignment: the row of the class in ClassAlignmentChoices lists the alignments it may pick (Alignment).
+  The age comes next: the roll of the race and class entry in StartingAgeTable (a single class) or, for a
   multi-class, the maximum of one class's entry (Base + Sides * Count, not a roll). The class whose
   entry is used is not simply the first of the combined classes in the order cleric, fighter,
   magic-user: it is the Cleric entry for masks 8, 9, $B and $C, the Fighter entry for $E, and the
@@ -341,11 +338,11 @@ end;
   give Fighter for $D and Cleric for $F).
   Then, until the player answers Y to 'Keep this character? ', it makes the character the
   SelectedCharacter, shows the sheet and rolls each ability score: the best of six RollDice(3, 6),
-  raised or lowered by the race's age brackets (ds3F31), clamped to the race's limits for the gender
-  (ds3DA3) and raised to the class minimum (ds3F81); an 18 Strength of a fighter gets a random
+  raised or lowered by the race's age brackets (RaceAgeBrackets), clamped to the race's limits for the gender
+  (RaceAbilityLimits) and raised to the class minimum (ClassAbilityMinimums); an 18 Strength of a fighter gets a random
   percentile up to the race's limit (StrengthPercent), a cleric multi-class gets at least 13 Wisdom.
   The class loop then sets the first spell slots (cleric, magic-user), makes the character know the
-  first-level cleric spells (SpellTable) or four magic-user spells, rolls the starting gold (ds4263
+  first-level cleric spells (SpellTable) or four magic-user spells, rolls the starting gold (StartingGoldDice
   dice, ten times their total shared by the classes) and the hit points (RollHitPoints, the
   constitution adjustment and the class count; HpB1 keeps the roll per class) and shows the combat
   numbers and the money. The name is asked ('Character name: ', repeated until it is not empty), the
@@ -369,12 +366,6 @@ const
   HumanRace = 7;                { RaceNames[7] }
   MenuRaceLines = 7;            { NewMenuList's count: the title line and the six races }
   MenuGenderLines = 3;          { the title line and two genders }
-  RaceDwarf = 1;                { RaceNames: Dwarf, Elf, Gnome, Half-Elf, Halfling, Half-Orc, Human }
-  RaceElf = 2;
-  RaceGnome = 3;
-  RaceHalfElf = 4;
-  RaceHalfling = 5;
-  RaceHalfOrc = 6;              { not on the menu; its adjustments are in the dead racial roll code }
   FirstRaceLine = 1;
   LastMenuRace = 5;             { menu lines 1..5 are the races 1..5 }
   HumanMenuLine = 6;            { menu line 6 is Human, stored as race 7 }
@@ -405,17 +396,12 @@ const
   AffectTargetHookB = $30;
   AffectNewAffectElf = $6B;
   AffectNewAffectHalfElf = $7C;
-  PermanentDuration = 0;
   DataFF = $FF;
-  NoRemoveHandler = 0;
   FighterFigure = 1;            { Figure[0] for the Dwarf, Gnome and Halfling }
   OtherFigure = 2;              { Figure[0] for the others }
   { The class numbers (ClassLevels index, ClassNames order) and the multi-class ClassMask values. }
-  ClericClass = 0;
-  FighterClass = 2;
   RangerClass = 4;
   MageClass = 5;
-  ThiefClass = 6;
   ClassTypeCount = 8;
   ClericFighter = 8;
   ClericFighterMage = 9;
@@ -426,7 +412,7 @@ const
   FighterThief = $E;
   FighterMageThief = $F;
   MageThief = $10;
-  { The age brackets of ds3F31 (columns of a race's row). }
+  { The age brackets of RaceAgeBrackets (columns of a race's row). }
   YoungAdultAge = 0;
   MiddleAge = 1;
   OldAge = 2;
@@ -480,7 +466,7 @@ begin
   with NewCharacter^ do
   begin
     for I := 1 to StartFigureCount do
-      Figure[I] := ds3CF5[I] + (ds3CF5[I] + 8) * 16;
+      Figure[I] := FigureColourSlots[I] + (FigureColourSlots[I] + 8) * 16;
     ResistBase := StartResist;
     Thac0 := StartThac0;
     Status := 0;
@@ -577,14 +563,14 @@ begin
   until Key = KeyEnter;
   NewCharacter^.B9E := Choice - 1;
   FreeMenuList(MenuList);
-  ChoiceCount := ds3E17[NewCharacter^.Race, 0];
+  ChoiceCount := RaceClassChoices[NewCharacter^.Race, 0];
   NewMenuList(ChoiceCount + 1, MenuList);
   MenuList^.Flag29 := 1;
   MenuList^.Text := 'Pick Class';
   for I := 1 to ChoiceCount do
   begin
     PickedLine := GetMenuLine(I, MenuList);
-    PickedLine^.Text := '  ' + ClassNames[ds3E17[NewCharacter^.Race, I]];
+    PickedLine^.Text := '  ' + ClassNames[RaceClassChoices[NewCharacter^.Race, I]];
   end;
   PickedLine := MenuList;
   Choice := 1;
@@ -597,59 +583,59 @@ begin
   until Key = KeyEnter;
   with NewCharacter^ do
   begin
-    ClassMask := ds3E17[Race, Choice];
+    ClassMask := RaceClassChoices[Race, Choice];
     HighestLevel := 1;
     case ClassMask of
       0..7: ClassLevels[ClassMask] := 1;
       ClericFighter:
         begin
-          ClassLevels[ClericClass] := 1;
-          ClassLevels[FighterClass] := 1;
+          ClassLevels[ClassCleric] := 1;
+          ClassLevels[ClassFighter] := 1;
         end;
       ClericFighterMage:
         begin
-          ClassLevels[ClericClass] := 1;
-          ClassLevels[FighterClass] := 1;
+          ClassLevels[ClassCleric] := 1;
+          ClassLevels[ClassFighter] := 1;
           ClassLevels[MageClass] := 1;
         end;
       ClericRanger:
         begin
-          ClassLevels[ClericClass] := 1;
+          ClassLevels[ClassCleric] := 1;
           ClassLevels[RangerClass] := 1;
         end;
       ClericMage:
         begin
-          ClassLevels[ClericClass] := 1;
+          ClassLevels[ClassCleric] := 1;
           ClassLevels[MageClass] := 1;
         end;
       ClericThief:
         begin
-          ClassLevels[ClericClass] := 1;
-          ClassLevels[ThiefClass] := 1;
+          ClassLevels[ClassCleric] := 1;
+          ClassLevels[ClassThief] := 1;
         end;
       FighterMage:
         begin
-          ClassLevels[FighterClass] := 1;
+          ClassLevels[ClassFighter] := 1;
           ClassLevels[MageClass] := 1;
         end;
       FighterThief:
         begin
-          ClassLevels[FighterClass] := 1;
-          ClassLevels[ThiefClass] := 1;
+          ClassLevels[ClassFighter] := 1;
+          ClassLevels[ClassThief] := 1;
         end;
       FighterMageThief:
         begin
-          ClassLevels[FighterClass] := 1;
+          ClassLevels[ClassFighter] := 1;
           ClassLevels[MageClass] := 1;
-          ClassLevels[ThiefClass] := 1;
+          ClassLevels[ClassThief] := 1;
         end;
       MageThief:
         begin
           ClassLevels[MageClass] := 1;
-          ClassLevels[ThiefClass] := 1;
+          ClassLevels[ClassThief] := 1;
         end;
     end;
-    if ClassLevels[ThiefClass] > 0 then
+    if ClassLevels[ClassThief] > 0 then
       ComputeThiefSkills(NewCharacter);
     ClassBits := 0;
     Thac0 := 0;
@@ -658,19 +644,19 @@ begin
       begin
         if ClassThac0Table[ClassIndex, ClassLevels[ClassIndex]] > Thac0 then
           Thac0 := ClassThac0Table[ClassIndex, ClassLevels[ClassIndex]];
-        Inc(ClassBits, ds05D6[ClassIndex]);
+        Inc(ClassBits, ClassItemBits[ClassIndex]);
       end;
   end;
   ComputeSavingThrows(NewCharacter);
   FreeMenuList(MenuList);
-  ChoiceCount := ds3FE7[NewCharacter^.ClassMask, 0];
+  ChoiceCount := ClassAlignmentChoices[NewCharacter^.ClassMask, 0];
   NewMenuList(ChoiceCount + 1, MenuList);
   MenuList^.Flag29 := 1;
   MenuList^.Text := 'Pick Alignment';
   for I := 1 to ChoiceCount do
   begin
     PickedLine := GetMenuLine(I, MenuList);
-    PickedLine^.Text := '  ' + AlignmentNames[ds3FE7[NewCharacter^.ClassMask, I]];
+    PickedLine^.Text := '  ' + AlignmentNames[ClassAlignmentChoices[NewCharacter^.ClassMask, I]];
   end;
   PickedLine := MenuList;
   Choice := 1;
@@ -681,38 +667,38 @@ begin
       MenuTopRow, MenuRightCol, MenuBottomRow, MenuList, WithExit, Redraw, Choice, PickedLine);
     if Key = KeyEscape then Exit;
   until Key = KeyEnter;
-  NewCharacter^.ByteA0 := ds3FE7[NewCharacter^.ClassMask, Choice];
+  NewCharacter^.Alignment := ClassAlignmentChoices[NewCharacter^.ClassMask, Choice];
   FreeMenuList(MenuList);
   if NewCharacter^.ClassMask <= 7 then
-    with ds3E5B[NewCharacter^.Race, NewCharacter^.ClassMask] do
+    with StartingAgeTable[NewCharacter^.Race, NewCharacter^.ClassMask] do
       NewCharacter^.Age := RollDice(Count, Sides) + Base
   else
     with NewCharacter^ do
       case ClassMask of
         ClericFighter:
-          Age := ds3E5B[Race, ClericClass].Base
-            + ds3E5B[Race, ClericClass].Sides * ds3E5B[Race, ClericClass].Count;
+          Age := StartingAgeTable[Race, ClassCleric].Base
+            + StartingAgeTable[Race, ClassCleric].Sides * StartingAgeTable[Race, ClassCleric].Count;
         ClericFighterMage:
-          Age := ds3E5B[Race, ClericClass].Base
-            + ds3E5B[Race, ClericClass].Sides * ds3E5B[Race, ClericClass].Count;
+          Age := StartingAgeTable[Race, ClassCleric].Base
+            + StartingAgeTable[Race, ClassCleric].Sides * StartingAgeTable[Race, ClassCleric].Count;
         ClericMage:
-          Age := ds3E5B[Race, ClericClass].Base
-            + ds3E5B[Race, ClericClass].Sides * ds3E5B[Race, ClericClass].Count;
+          Age := StartingAgeTable[Race, ClassCleric].Base
+            + StartingAgeTable[Race, ClassCleric].Sides * StartingAgeTable[Race, ClassCleric].Count;
         ClericThief:
-          Age := ds3E5B[Race, ClericClass].Base
-            + ds3E5B[Race, ClericClass].Sides * ds3E5B[Race, ClericClass].Count;
+          Age := StartingAgeTable[Race, ClassCleric].Base
+            + StartingAgeTable[Race, ClassCleric].Sides * StartingAgeTable[Race, ClassCleric].Count;
         FighterMage:
-          Age := ds3E5B[Race, MageClass].Base
-            + ds3E5B[Race, MageClass].Sides * ds3E5B[Race, MageClass].Count;
+          Age := StartingAgeTable[Race, MageClass].Base
+            + StartingAgeTable[Race, MageClass].Sides * StartingAgeTable[Race, MageClass].Count;
         FighterThief:
-          Age := ds3E5B[Race, FighterClass].Base
-            + ds3E5B[Race, FighterClass].Sides * ds3E5B[Race, FighterClass].Count;
+          Age := StartingAgeTable[Race, ClassFighter].Base
+            + StartingAgeTable[Race, ClassFighter].Sides * StartingAgeTable[Race, ClassFighter].Count;
         FighterMageThief:
-          Age := ds3E5B[Race, MageClass].Base
-            + ds3E5B[Race, MageClass].Sides * ds3E5B[Race, MageClass].Count;
+          Age := StartingAgeTable[Race, MageClass].Base
+            + StartingAgeTable[Race, MageClass].Sides * StartingAgeTable[Race, MageClass].Count;
         MageThief:
-          Age := ds3E5B[Race, MageClass].Base
-            + ds3E5B[Race, MageClass].Sides * ds3E5B[Race, MageClass].Count;
+          Age := StartingAgeTable[Race, MageClass].Base
+            + StartingAgeTable[Race, MageClass].Sides * StartingAgeTable[Race, MageClass].Count;
       end;
   SavedSelection := SelectedCharacter;
   SelectedCharacter := NewCharacter;
@@ -755,21 +741,21 @@ begin
         case AbilityIndex of
           StrengthIndex:
             begin
-              if (Scores[AbilityIndex] > 0) and (ds3F31[Race, YoungAdultAge] < Age) then
+              if (Scores[AbilityIndex] > 0) and (RaceAgeBrackets[Race, YoungAdultAge] < Age) then
                 Inc(Scores[AbilityIndex]);
-              if (Scores[AbilityIndex] > 0) and (ds3F31[Race, MiddleAge] < Age) then
+              if (Scores[AbilityIndex] > 0) and (RaceAgeBrackets[Race, MiddleAge] < Age) then
                 Dec(Scores[AbilityIndex]);
-              if (Scores[AbilityIndex] > 0) and (ds3F31[Race, OldAge] < Age) then
+              if (Scores[AbilityIndex] > 0) and (RaceAgeBrackets[Race, OldAge] < Age) then
                 Dec(Scores[AbilityIndex], 2);
-              if (Scores[AbilityIndex] > 0) and (ds3F31[Race, VenerableAge] < Age) then
+              if (Scores[AbilityIndex] > 0) and (RaceAgeBrackets[Race, VenerableAge] < Age) then
                 Dec(Scores[AbilityIndex]);
-              if Scores[AbilityIndex] < ds3DA3[Race, B9E] then
-                Scores[AbilityIndex] := ds3DA3[Race, B9E];
+              if Scores[AbilityIndex] < RaceAbilityLimits[Race, B9E] then
+                Scores[AbilityIndex] := RaceAbilityLimits[Race, B9E];
               if Scores[AbilityIndex] > RaceStrengthMax[Race, B9E] then
                 Scores[AbilityIndex] := RaceStrengthMax[Race, B9E];
-              if Scores[AbilityIndex] < ds3F81[ClassMask, AbilityIndex] then
-                Scores[AbilityIndex] := ds3F81[ClassMask, AbilityIndex];
-              if (Scores[StrengthIndex] = ExceptionalStrength) and (ClassLevels[FighterClass] > 0) then
+              if Scores[AbilityIndex] < ClassAbilityMinimums[ClassMask, AbilityIndex] then
+                Scores[AbilityIndex] := ClassAbilityMinimums[ClassMask, AbilityIndex];
+              if (Scores[StrengthIndex] = ExceptionalStrength) and (ClassLevels[ClassFighter] > 0) then
               begin
                 StrengthPercent := Random(ExceptionalStrengthRoll) + 1;
                 if RaceStrengthPercent[Race, B9E] < StrengthPercent then
@@ -778,72 +764,72 @@ begin
             end;
           IntelligenceIndex:
             begin
-              if ds3F31[Race, MiddleAge] < Age then
+              if RaceAgeBrackets[Race, MiddleAge] < Age then
                 Inc(Scores[AbilityIndex]);
-              if ds3F31[Race, VenerableAge] < Age then
+              if RaceAgeBrackets[Race, VenerableAge] < Age then
                 Inc(Scores[AbilityIndex]);
-              if Scores[AbilityIndex] < ds3DA3[Race, IntMinOffset] then
-                Scores[AbilityIndex] := ds3DA3[Race, IntMinOffset];
-              if Scores[AbilityIndex] > ds3DA3[Race, IntMaxOffset] then
-                Scores[AbilityIndex] := ds3DA3[Race, IntMaxOffset];
-              if Scores[AbilityIndex] < ds3F81[ClassMask, AbilityIndex] then
-                Scores[AbilityIndex] := ds3F81[ClassMask, AbilityIndex];
+              if Scores[AbilityIndex] < RaceAbilityLimits[Race, IntMinOffset] then
+                Scores[AbilityIndex] := RaceAbilityLimits[Race, IntMinOffset];
+              if Scores[AbilityIndex] > RaceAbilityLimits[Race, IntMaxOffset] then
+                Scores[AbilityIndex] := RaceAbilityLimits[Race, IntMaxOffset];
+              if Scores[AbilityIndex] < ClassAbilityMinimums[ClassMask, AbilityIndex] then
+                Scores[AbilityIndex] := ClassAbilityMinimums[ClassMask, AbilityIndex];
             end;
           WisdomIndex:
             begin
-              if ds3F31[Race, YoungAdultAge] >= Age then
+              if RaceAgeBrackets[Race, YoungAdultAge] >= Age then
                 Dec(Scores[AbilityIndex]);
-              if ds3F31[Race, MiddleAge] < Age then
+              if RaceAgeBrackets[Race, MiddleAge] < Age then
                 Inc(Scores[AbilityIndex]);
-              if ds3F31[Race, OldAge] < Age then
+              if RaceAgeBrackets[Race, OldAge] < Age then
                 Inc(Scores[AbilityIndex]);
-              if ds3F31[Race, VenerableAge] < Age then
+              if RaceAgeBrackets[Race, VenerableAge] < Age then
                 Inc(Scores[AbilityIndex]);
-              if Scores[AbilityIndex] < ds3DA3[Race, WisMinOffset] then
-                Scores[AbilityIndex] := ds3DA3[Race, WisMinOffset];
-              if Scores[AbilityIndex] > ds3DA3[Race, WisMaxOffset] then
-                Scores[AbilityIndex] := ds3DA3[Race, WisMaxOffset];
-              if Scores[AbilityIndex] < ds3F81[ClassMask, AbilityIndex] then
-                Scores[AbilityIndex] := ds3F81[ClassMask, AbilityIndex];
+              if Scores[AbilityIndex] < RaceAbilityLimits[Race, WisMinOffset] then
+                Scores[AbilityIndex] := RaceAbilityLimits[Race, WisMinOffset];
+              if Scores[AbilityIndex] > RaceAbilityLimits[Race, WisMaxOffset] then
+                Scores[AbilityIndex] := RaceAbilityLimits[Race, WisMaxOffset];
+              if Scores[AbilityIndex] < ClassAbilityMinimums[ClassMask, AbilityIndex] then
+                Scores[AbilityIndex] := ClassAbilityMinimums[ClassMask, AbilityIndex];
               if (Scores[AbilityIndex] < MinClericWisdom) and (ClassMask in [ClericFighter..ClericThief]) then
                 Scores[AbilityIndex] := MinClericWisdom;
             end;
           DexterityIndex:
             begin
-              if ds3F31[Race, OldAge] < Age then
+              if RaceAgeBrackets[Race, OldAge] < Age then
                 Dec(Scores[AbilityIndex], 2);
-              if ds3F31[Race, VenerableAge] < Age then
+              if RaceAgeBrackets[Race, VenerableAge] < Age then
                 Dec(Scores[AbilityIndex]);
-              if Scores[AbilityIndex] < ds3DA3[Race, DexMinOffset] then
-                Scores[AbilityIndex] := ds3DA3[Race, DexMinOffset];
-              if Scores[AbilityIndex] > ds3DA3[Race, DexMaxOffset] then
-                Scores[AbilityIndex] := ds3DA3[Race, DexMaxOffset];
-              if Scores[AbilityIndex] < ds3F81[ClassMask, AbilityIndex] then
-                Scores[AbilityIndex] := ds3F81[ClassMask, AbilityIndex];
+              if Scores[AbilityIndex] < RaceAbilityLimits[Race, DexMinOffset] then
+                Scores[AbilityIndex] := RaceAbilityLimits[Race, DexMinOffset];
+              if Scores[AbilityIndex] > RaceAbilityLimits[Race, DexMaxOffset] then
+                Scores[AbilityIndex] := RaceAbilityLimits[Race, DexMaxOffset];
+              if Scores[AbilityIndex] < ClassAbilityMinimums[ClassMask, AbilityIndex] then
+                Scores[AbilityIndex] := ClassAbilityMinimums[ClassMask, AbilityIndex];
             end;
           ConstitutionIndex:
             begin
-              if ds3F31[Race, MiddleAge] < Age then
+              if RaceAgeBrackets[Race, MiddleAge] < Age then
                 Dec(Scores[AbilityIndex]);
-              if ds3F31[Race, OldAge] < Age then
+              if RaceAgeBrackets[Race, OldAge] < Age then
                 Dec(Scores[AbilityIndex]);
-              if ds3F31[Race, VenerableAge] < Age then
+              if RaceAgeBrackets[Race, VenerableAge] < Age then
                 Dec(Scores[AbilityIndex]);
-              if Scores[AbilityIndex] < ds3DA3[Race, ConMinOffset] then
-                Scores[AbilityIndex] := ds3DA3[Race, ConMinOffset];
-              if Scores[AbilityIndex] > ds3DA3[Race, ConMaxOffset] then
-                Scores[AbilityIndex] := ds3DA3[Race, ConMaxOffset];
-              if Scores[AbilityIndex] < ds3F81[ClassMask, AbilityIndex] then
-                Scores[AbilityIndex] := ds3F81[ClassMask, AbilityIndex];
+              if Scores[AbilityIndex] < RaceAbilityLimits[Race, ConMinOffset] then
+                Scores[AbilityIndex] := RaceAbilityLimits[Race, ConMinOffset];
+              if Scores[AbilityIndex] > RaceAbilityLimits[Race, ConMaxOffset] then
+                Scores[AbilityIndex] := RaceAbilityLimits[Race, ConMaxOffset];
+              if Scores[AbilityIndex] < ClassAbilityMinimums[ClassMask, AbilityIndex] then
+                Scores[AbilityIndex] := ClassAbilityMinimums[ClassMask, AbilityIndex];
             end;
           CharismaIndex:
             begin
-              if Scores[AbilityIndex] < ds3DA3[Race, ChaMinOffset] then
-                Scores[AbilityIndex] := ds3DA3[Race, ChaMinOffset];
-              if Scores[AbilityIndex] > ds3DA3[Race, ChaMaxOffset] then
-                Scores[AbilityIndex] := ds3DA3[Race, ChaMaxOffset];
-              if Scores[AbilityIndex] < ds3F81[ClassMask, AbilityIndex] then
-                Scores[AbilityIndex] := ds3F81[ClassMask, AbilityIndex];
+              if Scores[AbilityIndex] < RaceAbilityLimits[Race, ChaMinOffset] then
+                Scores[AbilityIndex] := RaceAbilityLimits[Race, ChaMinOffset];
+              if Scores[AbilityIndex] > RaceAbilityLimits[Race, ChaMaxOffset] then
+                Scores[AbilityIndex] := RaceAbilityLimits[Race, ChaMaxOffset];
+              if Scores[AbilityIndex] < ClassAbilityMinimums[ClassMask, AbilityIndex] then
+                Scores[AbilityIndex] := ClassAbilityMinimums[ClassMask, AbilityIndex];
             end;
         end;
       ShowAbilityScore(AbilityIndex, False);
@@ -862,13 +848,13 @@ begin
         if ClassLevels[ClassIndex] > 0 then
         begin
           case ClassIndex of
-            ClericClass: SpellSlots[0, 1] := 1;
+            ClassCleric: SpellSlots[0, 1] := 1;
             MageClass: SpellSlots[1, 1] := 1;
           end;
-          Inc(GoldDiceTotal, RollDice(ds4263[ClassIndex, 0], ds4263[ClassIndex, 1]));
+          Inc(GoldDiceTotal, RollDice(StartingGoldDice[ClassIndex, 0], StartingGoldDice[ClassIndex, 1]));
           Inc(ClassTotal);
           case ClassIndex of
-            ClericClass:
+            ClassCleric:
               begin
                 AddWisdomBonusSpells(NewCharacter);
                 for I := 1 to SpellCount do
@@ -951,7 +937,7 @@ end;
   FlashMessageLine), else draws the character sheet and lets the player raise or lower the six
   ability scores and the hit points. The arrow keys move the cursor (Down/Up through Strength
   ..Charisma and the hit-point line) and adjust the value under it (Right raises, Left lowers); a
-  value is held between the per-race limits (ds3DA3) and the per-class minimum (ds3F81), a Wisdom
+  value is held between the per-race limits (RaceAbilityLimits) and the per-class minimum (ClassAbilityMinimums), a Wisdom
   change recomputes the cleric bonus spells (AddWisdomBonusSpells), and a hit-point change is
   bounded by fn_3FB3 (floor) and fn_408C (ceiling). 'K' (Keep) accepts the changes and leaves, 'E'
   (Exit, or Escape) restores the saved abilities. The nested ShowStat (ovl16:2033) redraws the
@@ -981,7 +967,6 @@ const
   { the hit-point line the cursor's last step shows (DrawHitPoints of res12) }
   HitPointColumn = 4;
   HitPointRow = $12;
-  FighterClass = 2;             { only a fighter raises the Strength percentile }
 var
   SavedScores: array[0..5] of Byte;   { [bp-6..bp-1]: the scores as they were on entry }
   SavedStrengthPercent: Byte;         { [bp-7]: the exceptional Strength on entry }
@@ -1053,31 +1038,31 @@ begin
                   Dec(StrengthPercent);
                   Inc(Scores[Stat]);
                 end
-                else if (Scores[Stat] < ds3DA3[Race, B9E])
-                     or (Scores[Stat] < ds3F81[ClassMask, 0]) then
-                  Scores[Stat] := ds3DA3[Race, B9E];
+                else if (Scores[Stat] < RaceAbilityLimits[Race, B9E])
+                     or (Scores[Stat] < ClassAbilityMinimums[ClassMask, 0]) then
+                  Scores[Stat] := RaceAbilityLimits[Race, B9E];
               1:
-                if (Scores[Stat] < ds3DA3[Race, IntMinOffset])
-                   or (Scores[Stat] < ds3F81[ClassMask, 1]) then
-                  Scores[Stat] := ds3DA3[Race, IntMinOffset];
+                if (Scores[Stat] < RaceAbilityLimits[Race, IntMinOffset])
+                   or (Scores[Stat] < ClassAbilityMinimums[ClassMask, 1]) then
+                  Scores[Stat] := RaceAbilityLimits[Race, IntMinOffset];
               2:
                 begin
-                  if (Scores[Stat] < ds3DA3[Race, WisMinOffset])
-                     or (Scores[Stat] < ds3F81[ClassMask, 2]) then
-                    Scores[Stat] := ds3DA3[Race, WisMinOffset];
+                  if (Scores[Stat] < RaceAbilityLimits[Race, WisMinOffset])
+                     or (Scores[Stat] < ClassAbilityMinimums[ClassMask, 2]) then
+                    Scores[Stat] := RaceAbilityLimits[Race, WisMinOffset];
                   if SpellSlots[0, 1] > 0 then
                     SpellSlots[0, 1] := 1;
                   AddWisdomBonusSpells(SelectedCharacter);
                 end;
               3:
-                if (Scores[Stat] < ds3DA3[Race, DexMinOffset])
-                   or (Scores[Stat] < ds3F81[ClassMask, 3]) then
-                  Scores[Stat] := ds3DA3[Race, DexMinOffset];
+                if (Scores[Stat] < RaceAbilityLimits[Race, DexMinOffset])
+                   or (Scores[Stat] < ClassAbilityMinimums[ClassMask, 3]) then
+                  Scores[Stat] := RaceAbilityLimits[Race, DexMinOffset];
               4:
                 begin
-                  if (Scores[Stat] < ds3DA3[Race, ConMinOffset])
-                     or (Scores[Stat] < ds3F81[ClassMask, 4]) then
-                    Scores[Stat] := ds3DA3[Race, ConMinOffset];
+                  if (Scores[Stat] < RaceAbilityLimits[Race, ConMinOffset])
+                     or (Scores[Stat] < ClassAbilityMinimums[ClassMask, 4]) then
+                    Scores[Stat] := RaceAbilityLimits[Race, ConMinOffset];
                   if MaxHitPoints(SelectedCharacter) < HpMax then
                     HpMax := MaxHitPoints(SelectedCharacter);
                   Flag11B := HpMax;
@@ -1086,9 +1071,9 @@ begin
                   StatIndex := 4;
                 end;
               5:
-                if (Scores[Stat] < ds3DA3[Race, ChaMinOffset])
-                   or (Scores[Stat] < ds3F81[ClassMask, 5]) then
-                  Scores[Stat] := ds3DA3[Race, ChaMinOffset];
+                if (Scores[Stat] < RaceAbilityLimits[Race, ChaMinOffset])
+                   or (Scores[Stat] < ClassAbilityMinimums[ClassMask, 5]) then
+                  Scores[Stat] := RaceAbilityLimits[Race, ChaMinOffset];
             end;
           end
         else
@@ -1110,29 +1095,29 @@ begin
                 if Scores[Stat] > RaceStrengthMax[Race, B9E] then
                 begin
                   if (Scores[Stat] > ExceptionalStrength)
-                     and (ClassLevels[FighterClass] > 0)
+                     and (ClassLevels[ClassFighter] > 0)
                      and (RaceStrengthPercent[Race, B9E] > StrengthPercent) then
                     Inc(StrengthPercent);
                   Scores[Stat] := RaceStrengthMax[Race, B9E];
                 end;
               1:
-                if Scores[Stat] > ds3DA3[Race, IntMaxOffset] then
-                  Scores[Stat] := ds3DA3[Race, IntMaxOffset];
+                if Scores[Stat] > RaceAbilityLimits[Race, IntMaxOffset] then
+                  Scores[Stat] := RaceAbilityLimits[Race, IntMaxOffset];
               2:
                 begin
-                  if Scores[Stat] > ds3DA3[Race, WisMaxOffset] then
-                    Scores[Stat] := ds3DA3[Race, WisMaxOffset];
+                  if Scores[Stat] > RaceAbilityLimits[Race, WisMaxOffset] then
+                    Scores[Stat] := RaceAbilityLimits[Race, WisMaxOffset];
                   if SpellSlots[0, 1] > 0 then
                     SpellSlots[0, 1] := 1;
                   AddWisdomBonusSpells(SelectedCharacter);
                 end;
               3:
-                if Scores[Stat] > ds3DA3[Race, DexMaxOffset] then
-                  Scores[Stat] := ds3DA3[Race, DexMaxOffset];
+                if Scores[Stat] > RaceAbilityLimits[Race, DexMaxOffset] then
+                  Scores[Stat] := RaceAbilityLimits[Race, DexMaxOffset];
               4:
                 begin
-                  if Scores[Stat] > ds3DA3[Race, ConMaxOffset] then
-                    Scores[Stat] := ds3DA3[Race, ConMaxOffset];
+                  if Scores[Stat] > RaceAbilityLimits[Race, ConMaxOffset] then
+                    Scores[Stat] := RaceAbilityLimits[Race, ConMaxOffset];
                   if MinHitPoints(SelectedCharacter) > HpMax then
                     HpMax := MinHitPoints(SelectedCharacter);
                   Flag11B := HpMax;
@@ -1141,8 +1126,8 @@ begin
                   StatIndex := 4;
                 end;
               5:
-                if Scores[Stat] > ds3DA3[Race, ChaMaxOffset] then
-                  Scores[Stat] := ds3DA3[Race, ChaMaxOffset];
+                if Scores[Stat] > RaceAbilityLimits[Race, ChaMaxOffset] then
+                  Scores[Stat] := RaceAbilityLimits[Race, ChaMaxOffset];
             end;
           end
           else
@@ -1176,15 +1161,15 @@ begin
   end;
 end;
 { ovl16:29AE. The Train (T) function of the training hall, dispatched by RunCharacterMenu
-  (ovl16:0161) when SlotTrain (ds0619[3]) is present. It refuses an unconscious character (Status
+  (ovl16:0161) when SlotTrain (CharacterMenuSlots[3]) is present. It refuses an unconscious character (Status
   at +$10C not 0, 'we only train conscious people') and one with less than 1000 gold
-  (CharacterMoneyValueInGold, 'Training costs 1000 gp.'), unless the STING cheat ds470C is
-  set (the J key, ovl16:0306). For each class with a level it adds that class's bit (ds05DE)
+  (CharacterMoneyValueInGold, 'Training costs 1000 gp.'), unless the STING cheat StingCheat is
+  set (the J key, ovl16:0306). For each class with a level it adds that class's bit (ClassTrainingBits)
   and, unless the race has reached the level cap IsMaxClassLevel (res12:2F57) inlines for
-  that class, marks the class trainable when Experience has reached ds409B[class, level+1]
+  that class, marks the class trainable when Experience has reached ExperienceTable[class, level+1]
   and that threshold is above 0 (0 means the class has no further level). Experience already
-  at ds409B[class, level+2] is cut to one below it, so one visit raises one level. Unless
-  ds470C is set, the hall's word ds49D6^[TrainableClassesWord] (680) must share a bit with the
+  at ExperienceTable[class, level+2] is cut to one below it, so one visit raises one level. Unless
+  StingCheat is set, the hall's word GameVars2^[TrainableClassesWord] (680) must share a bit with the
   character's classes and with a trainable class; only its low byte is tested. The window
   then lists the levels the character will become, AskYesNo confirms, PayGold takes the
   1000 gold, each trainable class rises by one and RecalcClassStats rebuilds the derived
@@ -1197,7 +1182,7 @@ end;
   gained are RollHitPoints of the trained classes, shared across every class with a level,
   with a floor of 1, added to HpB1 (+$B1) and, after the constitution adjustment, to HpMax;
   Flag11B (the current hit points) keeps the same gap below HpMax. No parameters. Globals:
-  SelectedCharacter, ds470C, ds05DE, ds409B, ds49D6, ClassNames. Side effects: the function
+  SelectedCharacter, StingCheat, ClassTrainingBits, ExperienceTable, GameVars2, ClassNames. Side effects: the function
   window, the flash line, the character's experience, levels, spells, hit points and money.
   QUIRK ovl16:2CDA: the first refusal's Exit is followed by a jump the compiler keeps, the
   skip of the else branch, which nothing reaches.
@@ -1218,26 +1203,17 @@ const
   NameRow = 4;                  { DrawCharacterName's row; the first class line is the next }
   FirstBecomeRow = 5;
   NameCol = 4;                  { DrawCharacterName's column; its mode argument is 0 }
-  ClericClass = 0;              { ClassLevels index; a half-elf cleric caps at 5 }
-  FighterClass = 2;             { the class the racial level caps apply to }
   MageClass = 5;                { a rise here asks for a new spell }
   { TCharacter.Pad74 index of the drained-level state the class rise restores (the routine comment). }
-  DrainedLevels = $74;          { the count of levels DrainLevels (ovl12:2122) drained }
-  LostHitPoints = $75;          { the hit points lost with them (CastRestoration, ovl22) }
   SpellListToChoose = 4;        { ChooseSpellFromList's 'to choose from' list (ovl19:299C) }
   SpellDisplayMode = 4;         { the display mode the call pushes; ovl22 reads it }
   NoSpellChoice = $FFFF;        { negative, so ChooseSpellFromList opens the spell window }
   Strength17 = 17;              { the strength that raises a race's fighter cap by one }
   Strength18 = 18;              { a gnome fighter's cap looks at strength below 18 }
-  RaceDwarf = 1;                { RaceNames: Dwarf, Elf, Gnome, Half-Elf, Halfling (DS:0F03) }
-  RaceElf = 2;
-  RaceGnome = 3;
-  RaceHalfElf = 4;
-  RaceHalfling = 5;
 var
   AtLimit: Byte;                { [bp-1]: the class is at its racial level limit }
   NewExperience: LongInt;       { [bp-5]: the experience the training leaves the character at }
-  ClassXp: LongInt;             { [bp-9]: a class's ds409B threshold }
+  ClassXp: LongInt;             { [bp-9]: a class's ExperienceTable threshold }
   TrainableBits: Byte;          { [bp-0xa]: the class bits with enough experience to train }
   ClassBitMask: Byte;           { [bp-0xb]: the class bits of every class with a level above 0 }
   AllowedBits: Byte;            { [bp-0xc]: the class bits the training may raise }
@@ -1249,18 +1225,18 @@ var
   ConBonus: Integer;            { [bp-0x15]: ConstitutionHitPointAdjustment, sign-extended }
   Row: Byte;                    { [bp-0x16]: the text row of the becoming list }
   SavedMageLevel: ShortInt;     { [bp-0x17]: ClassLevels[5] before the rise }
-  Level: ShortInt;              { [bp-0x18]: ClassLevels[I]; Succ of it indexes ds409B }
+  Level: ShortInt;              { [bp-0x18]: ClassLevels[I]; Succ of it indexes ExperienceTable }
   ChosenSpell: Byte;            { [bp-0x19]: the spell ChooseSpellFromList returned }
   Choice: Word;                 { [bp-0x1b]: ChooseSpellFromList's choice }
   Listed: Byte;                 { [bp-0x1c]: ChooseSpellFromList's listed flag }
   Spare: Byte;                  { [bp-0x1d]: the original frame reserves this byte, never read }
 begin
-  if (SelectedCharacter^.Status <> 0) and (ds470C = 0) then
+  if (SelectedCharacter^.Status <> 0) and (StingCheat = 0) then
   begin
     FlashMessageLine('we only train conscious people', MessageColour);
     Exit;
   end;
-  if (CharacterMoneyValueInGold(SelectedCharacter) < TrainCost) and (ds470C = 0) then
+  if (CharacterMoneyValueInGold(SelectedCharacter) < TrainCost) and (StingCheat = 0) then
   begin
     FlashMessageLine('Training costs 1000 gp.', MessageColour);
     Exit;
@@ -1273,64 +1249,64 @@ begin
     for I := 0 to 7 do
       if ClassLevels[I] > 0 then
       begin
-        Inc(ClassBitMask, ds05DE[I]);
+        Inc(ClassBitMask, ClassTrainingBits[I]);
         AtLimit := 0;
         Level := ClassLevels[I];
         case Race of
           RaceDwarf:
-            if I = FighterClass then
+            if I = ClassFighter then
               if ((Level = 8) and (Strength = Strength17)) or
                  ((Level = 7) and (Strength < Strength17)) then
                 AtLimit := 1;
           RaceElf:
-            if I = FighterClass then
+            if I = ClassFighter then
               if (Level = 7) or ((Level = 6) and (Strength = Strength17))
                  or ((Level = 5) and (Strength < Strength17)) then
                 AtLimit := 1;
           RaceGnome:
-            if I = FighterClass then
+            if I = ClassFighter then
               if (Level = 6) or ((Level = 5) and (Strength < Strength18)) then
                 AtLimit := 1;
           RaceHalfElf:
-            if (I = ClericClass) and (Level = 5) then
+            if (I = ClassCleric) and (Level = 5) then
               AtLimit := 1
-            else if I = FighterClass then
+            else if I = ClassFighter then
               if (Level = 8) or ((Level = 7) and (Strength = Strength17))
                  or ((Level = 6) and (Strength < Strength17)) then
                 AtLimit := 1;
           RaceHalfling:
-            if I = FighterClass then
+            if I = ClassFighter then
               if (Level = 6) or ((Level = 5) and (Strength = Strength17))
                  or ((Level = 4) and (Strength < Strength17)) then
                 AtLimit := 1;
         end;
         if AtLimit = 0 then
-          if (ds409B[I, Succ(Level)] <= Experience) or (ds470C <> 0) then
-            if ds409B[I, Succ(Level)] > 0 then
+          if (ExperienceTable[I, Succ(Level)] <= Experience) or (StingCheat <> 0) then
+            if ExperienceTable[I, Succ(Level)] > 0 then
             begin
-              Inc(TrainableBits, ds05DE[I]);
-              ClassXp := ds409B[I, Succ(Succ(Level))];
+              Inc(TrainableBits, ClassTrainingBits[I]);
+              ClassXp := ExperienceTable[I, Succ(Succ(Level))];
               if (ClassXp > 0) and (Experience >= ClassXp) and (ClassXp > NewExperience) then
                 NewExperience := ClassXp - 1;
             end;
       end;
     if NewExperience > 0 then
       Experience := NewExperience;
-    if ds470C = 0 then
+    if StingCheat = 0 then
     begin
-      if Byte(ds49D6^[TrainableClassesWord] and ClassBitMask) = 0 then
+      if Byte(GameVars2^[TrainableClassesWord] and ClassBitMask) = 0 then
       begin
         FlashMessageLine('We don''t train that class here', MessageColour);
         Exit;
       end
-      else if Byte(ds49D6^[TrainableClassesWord] and TrainableBits) = 0 then
+      else if Byte(GameVars2^[TrainableClassesWord] and TrainableBits) = 0 then
       begin
         FlashMessageLine('Not Enough Experience', MessageColour);
         Exit;
       end;
     end;
-    if ds470C = 0 then
-      AllowedBits := Byte(ds49D6^[TrainableClassesWord] and TrainableBits)
+    if StingCheat = 0 then
+      AllowedBits := Byte(GameVars2^[TrainableClassesWord] and TrainableBits)
     else
       AllowedBits := TrainableBits;
     ClearWindow(MenuLeft, MenuTop, MenuRight, MenuBottom);
@@ -1338,7 +1314,7 @@ begin
     DrawCharacterName(SelectedCharacter, NameCol, Row, 0);
     DrawTextAt(Length(Name) + 4, Row, BecomeTextColour, ' will become:');
     for I := 0 to 7 do
-      if (ClassLevels[I] > 0) and ((ds05DE[I] and AllowedBits) > 0) then
+      if (ClassLevels[I] > 0) and ((ClassTrainingBits[I] and AllowedBits) > 0) then
       begin
         Inc(Row);
         if Row = FirstBecomeRow then
@@ -1352,7 +1328,7 @@ begin
       PromptHotColour) <> 'Y' then
       Exit;
     ShowFlashMessage('Congratulations...');
-    if ds470C = 0 then
+    if StingCheat = 0 then
       PayGold(TrainCost, SelectedCharacter);
     TrainedCount := 0;
     SavedMageLevel := ClassLevels[MageClass];
@@ -1360,7 +1336,7 @@ begin
       if ClassLevels[I] > 0 then
       begin
         Inc(TrainedCount);
-        if (ds05DE[I] and AllowedBits) > 0 then
+        if (ClassTrainingBits[I] and AllowedBits) > 0 then
         begin
           Inc(ClassLevels[I]);
           { the rise also restores one level DrainLevels (ovl12:2122) took: give back that
@@ -1403,7 +1379,7 @@ end;
   character's record (GetMem, LoadCharacterFile) and, when its menu line does not already start with
   '*', prefixes '* ' and tries to put it in the party. A character already in the party (same Name and
   BAB, +$AB) is refused; a player-run member (B84 below $80) is refused once six are in the party, and
-  a computer-run member (B84 $80 and up, a hireling) once the party size ds49D6^[VarPartySize] is
+  a computer-run member (B84 $80 and up, a hireling) once the party size GameVars2^[VarPartySize] is
   eight. A refused record is freed (FreeMem); the party records themselves are freed elsewhere. The
   menu repeats until E, Escape or a full party. The edited list is written back
   (RewriteSavedCharacterList, ovl17) and freed (FreeMenuList, ovl25). No parameters; side effects: the
@@ -1412,8 +1388,6 @@ end;
   never assigns (whatever the previous frame left there). }
 procedure AddSavedCharacters;
 const
-  VarPartySize = 830;           { the party member count, a word of the ds49D6 game variable block }
-  ComputerRun = $80;            { high bit of B84: the computer runs the member (hireling) }
   MaxPlayerMembers = 6;         { the menu stops once six player-run members are in the party }
   MaxPartySize = 8;             { the menu stops once the party holds eight members }
   KeyEnter = #13;               { ChooseFromList returns Enter, or the chosen word's letter }
@@ -1446,15 +1420,15 @@ begin
         LoadCharacterFile(Selected^.Text, NewChar, 0, 1);
         Selected^.Text := '* ' + Selected^.Text;
         Count := 0;
-        if PCharacter(ds5D96) = nil then
+        if PCharacter(PartyListHead) = nil then
         begin
-          ds49D6^[VarPartySize] := 0;
+          GameVars2^[VarPartySize] := 0;
           AddPartyMember(NewChar);
           BuildCharacterIcon(True);
         end
         else
         begin
-          Who := PCharacter(ds5D96);
+          Who := PCharacter(PartyListHead);
           while (Who <> nil)
                 and ((Who^.Name <> NewChar^.Name) or (Who^.BAB <> NewChar^.BAB)) do
           begin
@@ -1465,7 +1439,7 @@ begin
           if (Who = nil)
              and (((NewChar^.B84 < ComputerRun) and (Count < MaxPlayerMembers))
                   or ((NewChar^.B84 > ComputerRun - 1)
-                      and (ds49D6^[VarPartySize] < MaxPartySize))) then
+                      and (GameVars2^[VarPartySize] < MaxPartySize))) then
           begin
             AddPartyMember(NewChar);
             BuildCharacterIcon(True);
@@ -1477,26 +1451,24 @@ begin
         end;
       end;
   until (Key = KeyExit) or (Key = #0) or (Count > MaxPlayerMembers - 1)
-    or (ds49D6^[VarPartySize] > MaxPartySize - 1);
+    or (GameVars2^[VarPartySize] > MaxPartySize - 1);
   RewriteSavedCharacterList(List);
   FreeMenuList(List);
 end;
-{ ovl16:3291. Removes a character from the party list (the head is ds5D96, linked by TCharacter.Next
+{ ovl16:3291. Removes a character from the party list (the head is PartyListHead, linked by TCharacter.Next
   at +$104) and frees its record. It walks the list from the head to the member before
   SelectedCharacter (or finds SelectedCharacter itself at the head). When Uncounted is false (the
-  member counted in the party size), it lowers the party size ds49D6^[VarPartySize]; an extra combatant
+  member counted in the party size), it lowers the party size GameVars2^[VarPartySize]; an extra combatant
   passes Uncounted true and leaves the count alone. FreePicture frees the member's combat icon picture
   slot (CombatIcon, +$BF) first. The head is replaced by its Next; a middle member is unlinked from its
   predecessor, and SelectedCharacter becomes the member that took its place (its successor at the head,
   its predecessor otherwise). Called on drop, load, battle removal and party reorder. }
 procedure RemoveSelectedCharacter(Uncounted, FreePicture: Boolean);
-const
-  VarPartySize = 830;   { the party member count, a word of the ds49D6 game variable block }
 var
   Cur: PCharacter;      { [bp-4]: the list node examined; the predecessor when the member is found }
 begin
-  if PCharacter(ds5D96) = nil then Exit;
-  Cur := PCharacter(ds5D96);
+  if PCharacter(PartyListHead) = nil then Exit;
+  Cur := PCharacter(PartyListHead);
   if Cur <> SelectedCharacter then
   begin
     while (Cur^.Next <> SelectedCharacter) and (Cur^.Next <> nil) do
@@ -1509,19 +1481,19 @@ begin
       FreeCharacter(SelectedCharacter);
       SelectedCharacter := Cur;
       if not Uncounted then
-        Dec(ds49D6^[VarPartySize]);
+        Dec(GameVars2^[VarPartySize]);
     end;
   end
   else
   begin
     if FreePicture then
       FreePictureSlot(SelectedCharacter^.CombatIcon);
-    PCharacter(ds5D96) := SelectedCharacter^.Next;
+    PCharacter(PartyListHead) := SelectedCharacter^.Next;
     Cur := SelectedCharacter^.Next;
     FreeCharacter(SelectedCharacter);
     SelectedCharacter := Cur;
     if not Uncounted then
-      Dec(ds49D6^[VarPartySize]);
+      Dec(GameVars2^[VarPartySize]);
   end;
 end;
 { ovl16:33E7. The head/body step of character creation (the "Head Body Keep" prompt of the create
@@ -1579,7 +1551,7 @@ end;
   SelectedCharacter in place: the CHEAD and CBODY picture blocks (CHeadBlock, CBodyBlock), the icon
   size (Figure[0]: 1 small, 2 large) and the six colour pairs (Figure[1..6], low nibble colour 1,
   high nibble colour 2) that BuildCharacterIcon (ovl17:0482) and CopyPictureSlot turn into the
-  character's combat icon (the picture slot CombatIcon of the table ds5E5A).
+  character's combat icon (the picture slot CombatIcon of the table PictureSlots).
   It draws the editor window, then the icon as it was on entry (icon cell row 2, caption 'old') and
   the working icon (cell row 4, caption 'new'), each with the caption 'ready   action' below it (the
   two halves DrawIconCell draws, the identical and the mirrored picture). The working icon lives in
@@ -1596,7 +1568,8 @@ end;
   first reloads the ICON pictures 0 and 1 into slots 11 and 12 (the slots it used as scratch).
   Globals: reads and changes SelectedCharacter^ (CHeadBlock, CBodyBlock, CombatIcon, Figure) and the
   prompt lines IconEditorPrompts (the word 'xxxx' of line 3 becomes 'Hair' or 'Face'); reads AreaViewKind.
-  ovl31_e2 and ovl31_e3 bracket the editor (palette register calls when VideoAdapter is 1, purpose
+  SwapPaletteColours0And8 and RestorePaletteColours0And8 bracket the editor (palette register calls when VideoAdapter
+  is 1, purpose
   unknown).
   QUIRK ovl16:39F9: ReadPromptChoice is called with ExtKeys 0, so ExtKey is always 0 and the `if
   ExtKey = 0` guard never skips the key dispatch. QUIRK ovl16:3987: the size prompt names the size
@@ -1623,7 +1596,7 @@ const
   ColourWordColumn = 13;          { ... which starts at this column ... }
   ColourWordLength = 4;           { ... and is this long ('Hair' or 'Face') }
   { The pictures. }
-  WorkSlot = $C;                  { scratch picture slot of ds5E5A the editor draws the working icon from }
+  WorkSlot = $C;                  { scratch picture slot of PictureSlots the editor draws the working icon from }
   ReloadedSlot = $B;              { slot 11: BuildCharacterIcon's scratch slot, reloaded with ICON picture 0 }
   OldCellRow = 2;                 { the icon cell of the icon as it was on entry }
   NewCellRow = 4;                 { the icon cell of the working icon }
@@ -1694,7 +1667,7 @@ var
   PartKey: Char;                      { [bp-0x1b]: the picture chosen in StateParts (KeyHead or KeyWeapon) }
 
   { ovl16:34DF (nested). Draws one cell of the editor: it fills the cell (FillPictureRect, 12 cells
-    wide and 24 pixel rows tall, from the palette at @ds260A into DrawBuf) and draws the two mirrored
+    wide and 24 pixel rows tall, from the palette at @FillRectPalette into DrawBuf) and draws the two mirrored
     halves of the icon (DrawIcon) at columns CellCol and CellCol + 3, row CellRow. On the text-only
     adapter (VideoAdapter 0) the fill uses colour 3 (the icon's ground) and only the head pictures
     (index $C, WorkSlot) are drawn; on the other adapters the fill uses colour 0 and the body pictures
@@ -1713,11 +1686,11 @@ var
   begin
     if VideoAdapter = 0 then
       FillPictureRect(CellCol * IconColsPerCell, CellRow * CellHeightRows, CellWidthCells,
-        CellHeightRows, GroundColour, @ds260A, DrawBuf)
+        CellHeightRows, GroundColour, @FillRectPalette, DrawBuf)
     else
     begin
       FillPictureRect(CellCol * IconColsPerCell, CellRow * CellHeightRows, CellWidthCells,
-        CellHeightRows, 0, @ds260A, DrawBuf);
+        CellHeightRows, 0, @FillRectPalette, DrawBuf);
       DrawIcon(CellCol, CellRow, IconSet, 0, BodyPicIndex);
       DrawIcon(CellCol + SecondHalfCol, CellRow, IconSet, 1, BodyPicIndex);
     end;
@@ -1732,7 +1705,7 @@ var
     from Source into Dest. ByteSize (the word at +$11) gives the tile size; on the EGA adapter
     (VideoAdapter 1) the pixel buffer holds a quarter of that. When Recolor is set the copied
     destination icon is recoloured with the selected character's six colour pairs (Figure[1..6]
-    through ds3CF5), exactly the recolouring BuildCharacterIcon (ovl17:0482) applies. The editor
+    through FigureColourSlots), exactly the recolouring BuildCharacterIcon (ovl17:0482) applies. The editor
     calls it with the character's CombatIcon as Source and WorkSlot as Dest (and the other way round
     at the end, without recolouring). It reads nothing of the editor's own variables. }
   procedure CopyPictureSlot(Source, Dest, Recolor: Byte);
@@ -1743,15 +1716,15 @@ var
     MapTo: array[0..15] of Byte;      { [bp-0x22..bp-0x13]: the destination colour of each source colour }
     PixelBytes: Word;                 { [bp-0x24]: the pixel-buffer size copied }
   begin
-    PixelBytes := PMemPic(ds5E5A[Dest].FirstPic)^.ByteSize;
+    PixelBytes := PMemPic(PictureSlots[Dest].FirstPic)^.ByteSize;
     if VideoAdapter = 1 then
       PixelBytes := PixelBytes shr 1 shr 1;
-    Move(PMemPic(ds5E5A[Source].FirstPic)^.Tail, PMemPic(ds5E5A[Dest].FirstPic)^.Tail,
-      PMemPic(ds5E5A[Dest].FirstPic)^.ByteSize);
-    Move(PMemPic(ds5E5A[Source].SecondPic)^.Tail, PMemPic(ds5E5A[Dest].SecondPic)^.Tail,
-      PMemPic(ds5E5A[Dest].SecondPic)^.ByteSize);
-    Move(PMemPic(ds5E5A[Source].FirstPic)^.Pixels^, PMemPic(ds5E5A[Dest].FirstPic)^.Pixels^, PixelBytes);
-    Move(PMemPic(ds5E5A[Source].SecondPic)^.Pixels^, PMemPic(ds5E5A[Dest].SecondPic)^.Pixels^, PixelBytes);
+    Move(PMemPic(PictureSlots[Source].FirstPic)^.Tail, PMemPic(PictureSlots[Dest].FirstPic)^.Tail,
+      PMemPic(PictureSlots[Dest].FirstPic)^.ByteSize);
+    Move(PMemPic(PictureSlots[Source].SecondPic)^.Tail, PMemPic(PictureSlots[Dest].SecondPic)^.Tail,
+      PMemPic(PictureSlots[Dest].SecondPic)^.ByteSize);
+    Move(PMemPic(PictureSlots[Source].FirstPic)^.Pixels^, PMemPic(PictureSlots[Dest].FirstPic)^.Pixels^, PixelBytes);
+    Move(PMemPic(PictureSlots[Source].SecondPic)^.Pixels^, PMemPic(PictureSlots[Dest].SecondPic)^.Pixels^, PixelBytes);
     if Recolor <> 0 then
       with SelectedCharacter^ do
       begin
@@ -1762,17 +1735,17 @@ var
         end;
         for I := 1 to 6 do
         begin
-          MapTo[ds3CF5[I]] := Figure[I] and $0F;
-          MapTo[ds3CF5[I] + 8] := (Figure[I] and $F0) shr 4;
+          MapTo[FigureColourSlots[I]] := Figure[I] and $0F;
+          MapTo[FigureColourSlots[I] + 8] := (Figure[I] and $F0) shr 4;
         end;
-        RemapPictureColours(@MapFrom, @MapTo, 0, 0, ds5E5A[Dest].FirstPic);
-        RemapPictureColours(@MapFrom, @MapTo, 0, 0, ds5E5A[Dest].SecondPic);
+        RemapPictureColours(@MapFrom, @MapTo, 0, 0, PictureSlots[Dest].FirstPic);
+        RemapPictureColours(@MapFrom, @MapTo, 0, 0, PictureSlots[Dest].SecondPic);
       end;
   end;
 
 begin
   DrawWindow(WindowLeft, WindowTop, WindowRight, WindowBottom, 0, 0, '');
-  ovl31_e2;
+  SwapPaletteColours0And8;
   repeat
     BuildCharacterIcon(False);
     with SelectedCharacter^ do
@@ -2002,7 +1975,7 @@ begin
     end;
     Key := AskYesNo('Is this icon ok? ', PromptTitleColour, PromptWordColour, PromptHotColour);
   until Key = KeyYes;
-  ovl31_e3;
+  RestorePaletteColours0And8;
 end;
 { ovl16:3F31. The constitution hit-point adjustment shared by the hit-point floor MinHitPoints and
   the ceiling MaxHitPoints of ModifyCharacter (ovl16:209F). It sums ConstitutionHitPointTable[Constitution] over the
@@ -2123,7 +2096,7 @@ begin
 end;
 { ovl16:4235. Rolls the hit points a level gains for the classes in ClassBits: over the eight classes
    it adds, for each class the character has a level in (ClassLevels, +$96, signed, above 0) whose
-   bit is in ClassBits (ds05DE, one bit per class), a roll of ClassHitDiceCount[I] dice of
+   bit is in ClassBits (ClassTrainingBits, one bit per class), a roll of ClassHitDiceCount[I] dice of
    ClassHitDieSides[I] sides (RollDice, ovl24:0DE3), where a class at level 1 rolls at least two
    thirds of its hit die (the first-level minimum). The caller divides the sum by the number of
    classes with a level. Called by the training hall (ovl16:29AE, whitepaper 5.8) and the
@@ -2136,7 +2109,7 @@ var
 begin
   Sum := 0;
   for I := 0 to 7 do
-    if (Who^.ClassLevels[I] > 0) and ((ds05DE[I] and ClassBits) > 0) then
+    if (Who^.ClassLevels[I] > 0) and ((ClassTrainingBits[I] and ClassBits) > 0) then
     begin
       ClassRoll := RollDice(ClassHitDiceCount[I], ClassHitDieSides[I]);
       if Who^.ClassLevels[I] = 1 then

@@ -5,7 +5,7 @@ unit RES08;
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 implementation
-uses Dos, Overlay, POOLVARS, RES03, RES04, RES05, RES06, RES07;
+uses Dos, Overlay, Crt, POOLVARS, RES03, RES04, RES05, RES06, RES07;
 
 { 042B:00A4. Starts the game: initialises res05, then the overlay manager on GAME.OVR; probes
   pool.cfg (retrying with 'Please insert startup disk.' until it opens) and parses POOL.CFG:
@@ -28,7 +28,7 @@ begin
     end;
   until CfgProbeResult = 0;
   Close(CfgProbe);
-  ds84F0 := 0;
+  CheckBreak := False;
   Assign(CfgText, 'POOL.CFG');
   Reset(CfgText);
   if IOResult <> 0 then
@@ -40,16 +40,16 @@ begin
   Regs.AH := $0F;
   Intr($10, Regs);
   SavedVideoMode := Regs.AL;
-  ds4A1D := SavedVideoMode;
+  PreviousVideoMode := SavedVideoMode;
   case CfgChar of
     'E':
       begin
         VideoAdapter := 1;
         SetVideoMode($0D);
-        ds4A1B := 0;
-        ds4A1A := 0;
-        SetActivePage(ds4A1B);
-        SetPageSegment(ds4A1A);
+        TextPage := 0;
+        FillTextPage := 0;
+        SetActivePage(TextPage);
+        SetPageSegment(FillTextPage);
       end;
     'T':
       begin
@@ -73,7 +73,7 @@ begin
       ' more bytes.');
     Halt;
   end;
-  if ds43DC <> 0 then
+  if OvrResult <> 0 then
   begin
     RestoreVideoMode;
     WriteLn(Output, 'Overlay error, program abort!');
@@ -98,8 +98,8 @@ begin
   SaveDir := SaveDir;
   ReadLn(CfgText, CfgChar);
   if CfgChar = 'F' then
-    ds49D1 := 1
+    CfgFlagF := 1
   else
-    ds49D1 := 0;
+    CfgFlagF := 0;
   Close(CfgText);
 end.

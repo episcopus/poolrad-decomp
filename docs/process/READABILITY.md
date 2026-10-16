@@ -8,7 +8,7 @@ Names and comments never change the code: `make match` proves a renamed, comment
 
 - **The decompiler** makes every routine readable before committing it (playbook 30, step 3): it names the routine, its parameters, its locals and the globals it uses as far as the evidence goes, comments it, and replaces magic numbers by named constants. `make check` refuses a unit with a decompiled routine that breaks a checkable rule (below), so nothing reaches `main` unnamed or uncommented.
 - **The reviewer** judges what no tool can (playbook 70): whether each name and comment is true, specific and backed by evidence.
-- **Phase 6** then only harmonises names across units (the same thing called the same everywhere) once the whole game is known; it is not where naming happens.
+- **Phase 6** then only harmonises names across units (the same thing called the same everywhere, a shared constant defined once in `src/POOLVARS.PAS`) once the whole game is known; it is not where naming happens (playbook 65).
 
 ## Names
 

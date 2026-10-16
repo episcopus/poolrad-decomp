@@ -11,7 +11,7 @@ implementation
 uses Crt, POOLVARS, RES04, RES06, RES07, RES09;
 
 const
-  Green = $0A;                { EGA text colour of the credit names }
+  LightGreen = $0A;                { EGA text colour of the credit names }
   LightCyan = $0B;            { EGA text colour of most credit lines }
   Yellow = $0E;               { EGA text colour of the headers }
 
@@ -32,17 +32,17 @@ begin
   FlushKeyboard;
 end;
 { ovl01:0206. Shows the credits screen: two empty windows (DrawWindow) and some thirty
-  name and role lines in green, cyan and yellow (DrawTextAt), then waits for a key or a
+  name and role lines in LightGreen, cyan and yellow (DrawTextAt), then waits for a key or a
   timeout (WaitKeyOrTimeout). Called by the title sequence (ShowTitleScreen). }
 procedure ShowCredits;
 begin
   DrawWindow(1, 1, $26, 3, 0, 0, '');
   DrawWindow(1, 5, $26, $17, 0, 0, '');
-  DrawTextAt(5, 1, Green, 'scenario created by:');
+  DrawTextAt(5, 1, LightGreen, 'scenario created by:');
   DrawTextAt($1A, 1, Yellow, 'tsr, inc.');
-  DrawTextAt($0F, 2, Green, 'jim ward');
-  DrawTextAt(2, 3, Green, 'david cook,steve winter,mike breault');
-  DrawTextAt(1, 5, Green, 'game created by:');
+  DrawTextAt($0F, 2, LightGreen, 'jim ward');
+  DrawTextAt(2, 3, LightGreen, 'david cook,steve winter,mike breault');
+  DrawTextAt(1, 5, LightGreen, 'game created by:');
   DrawTextAt($12, 5, Yellow, 'ssi special projects');
   DrawTextAt($0E, 6, LightCyan, 'version 1.3');
   DrawTextAt(2, 7, Yellow, 'programming:');
@@ -76,7 +76,7 @@ end;
 { ovl01:0627. Shows the title sequence: backs up GameDir (into a String40, so a directory of
   more than 40 characters comes back cut: StrLCopy limit $28 at ovl01:0647) and clears it, loads
   the title picture (LoadPicture) and shows it (ShowPicture), waits (WaitKeyOrTimeout), then,
-  when the F flag (ds49D1) is set, reloads, reshows, frees the title picture (ReleasePicture) and
+  when the F flag (CfgFlagF) is set, reloads, reshows, frees the title picture (ReleasePicture) and
   waits for a key or a deadline (GameClock ticks, 500 after the start). On EGA each pass of
   that wait adds Random(4) to the running sum Total (ovl01:0721..0726); when the sum passes 50000
   the palette animation runs (SetPaletteRegister with Delay) and the sum starts again from 0
@@ -101,7 +101,7 @@ begin
   LoadPicture('title', 1, 0, 0, Pic);
   ShowPicture(0, 0, Pic);
   WaitKeyOrTimeout(5);
-  if ds49D1 = 0 then
+  if CfgFlagF = 0 then
     GameDir := DirBackup
   else
   begin

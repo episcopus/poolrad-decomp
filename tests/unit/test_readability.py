@@ -17,13 +17,20 @@ import rename  # noqa: E402
 def _provisional_routine(tree):
     """First routine that still has its provisional map name. The fixture used to hard-code
     res09_fn_0000, which vanished when res09 was decompiled and renamed (dec-2, res09), so
-    the name is picked from the registry copy instead; the tests stay valid until the last
-    provisional routine is renamed."""
+    the name is picked from the registry copy instead (a fixture routine is added once the last
+    provisional routine of the registry has been renamed)."""
     sym = tomllib.loads((tree / "symbols.toml").read_text()).get("routine", [])
     for r in sym:
         if "_fn_" in r.get("name", ""):
             return r["name"], r["addr"]
-    raise AssertionError("no provisional routine left for the rename fixture")
+    # Phase 6 named every routine of the game; the fixture then adds one provisional routine to its copy
+    # of the registry (match accepts any resNN_fn_XXXX name), so the tests no longer depend on leftovers.
+    entry = ('\n[[routine]]\nid = "03F1:7FF0"\nunit = "res09"\naddr = "03F1:7FF0"\nsize = 16\n'
+             'name = "res09_fn_7FF0"\nsignature = ""\nc_name = "res09_fn_7FF0"\nlevel = "none"\n'
+             'justification = ""\nnotes = "fixture"\nevidence = []\n')
+    with (tree / "symbols.toml").open("a") as f:
+        f.write(entry)
+    return "res09_fn_7FF0", "03F1:7FF0"
 
 
 def _unit(routine):

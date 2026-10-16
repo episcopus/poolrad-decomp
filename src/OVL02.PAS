@@ -9,11 +9,11 @@ implementation
 uses POOLVARS, RES04, RES06, RES09;
 
 const
-  WheelEntryCount = 13;      { code wheel records in the table at ds0002 }
+  WheelEntryCount = 13;      { code wheel records in the table at CodeWheelRecords }
   MaxAttempts = 3;           { wrong code words before the game ends }
   RuneCharBase = $40;        { the rune glyphs are characters: index + $40 in the game font }
   NoFourthRune = $FF;        { the fourth rune index of a record that has none }
-  Green = 10;                { EGA colour: the prompt text }
+  LightGreen = 10;                { EGA colour: the prompt text }
   LightRed = 12;             { EGA colour: the path pattern line }
   Yellow = 14;               { EGA colour: the failure message }
 
@@ -24,7 +24,7 @@ const
   (DrawTextAt), flushes the keyboard and asks for the code word (ReadInputLine, the line reader
   of res06). A matching answer (the record CodeWord) leaves the routine at once; a wrong one shows
   the failure message (FlashMessageLine), and the third wrong answer ends the program through
-  QuitGame. Reads: ds0002 (the wheel records), Random. Globals: none besides those. Side effect:
+  QuitGame. Reads: CodeWheelRecords (the wheel records), Random. Globals: none besides those. Side effect:
   the screen; on the third failure the program halts. }
 procedure CheckCodeWheel;
 var
@@ -36,21 +36,21 @@ begin
   begin
     Question := Random(WheelEntryCount);
     DrawWindow(1, 1, $26, $16, 0, 0, '');
-    DrawTextAt(1, 1, Green, 'USE THE TRANSLATION WHEEL TO DECIPHER');
-    DrawTextAt(1, 2, Green, 'THE CODE WORD.');
-    DrawTextAt(1, 5, Green, 'MATCH THE ESPRUAR RUNE (OUTER RING)');
-    DrawGlyph(8, 6, $0C, 1, ds0002[Question].OuterRune + RuneCharBase, 0);
-    DrawGlyph(9, 6, $0C, 1, ds0002[Question].InnerRune + RuneCharBase, 0);
-    DrawTextAt(1, 8, Green, 'WITH THE DETHEK RUNE (INNER RING)');
-    DrawGlyph(8, 9, $0C, 1, ds0002[Question].ThirdRune + RuneCharBase, 0);
-    if ds0002[Question].FourthRune <> NoFourthRune then
-      DrawGlyph(9, 9, $0C, 1, ds0002[Question].FourthRune + RuneCharBase, 0);
-    DrawTextAt(1, $0B, Green, 'AND READ THE CODE WORD UNDER THE PATH:');
-    DrawTextAt(1, $0D, LightRed, '     ' + ds0002[Question].Path);
-    DrawTextAt(1, $0E, Green, 'READ FROM THE INSIDE TO THE OUTSIDE.');
+    DrawTextAt(1, 1, LightGreen, 'USE THE TRANSLATION WHEEL TO DECIPHER');
+    DrawTextAt(1, 2, LightGreen, 'THE CODE WORD.');
+    DrawTextAt(1, 5, LightGreen, 'MATCH THE ESPRUAR RUNE (OUTER RING)');
+    DrawGlyph(8, 6, $0C, 1, CodeWheelRecords[Question].OuterRune + RuneCharBase, 0);
+    DrawGlyph(9, 6, $0C, 1, CodeWheelRecords[Question].InnerRune + RuneCharBase, 0);
+    DrawTextAt(1, 8, LightGreen, 'WITH THE DETHEK RUNE (INNER RING)');
+    DrawGlyph(8, 9, $0C, 1, CodeWheelRecords[Question].ThirdRune + RuneCharBase, 0);
+    if CodeWheelRecords[Question].FourthRune <> NoFourthRune then
+      DrawGlyph(9, 9, $0C, 1, CodeWheelRecords[Question].FourthRune + RuneCharBase, 0);
+    DrawTextAt(1, $0B, LightGreen, 'AND READ THE CODE WORD UNDER THE PATH:');
+    DrawTextAt(1, $0D, LightRed, '     ' + CodeWheelRecords[Question].Path);
+    DrawTextAt(1, $0E, LightGreen, 'READ FROM THE INSIDE TO THE OUTSIDE.');
     FlushKeyboard;
     Answer := ReadInputLine('INPUT THE CODE WORD: ', 13, 6);
-    if Answer = ds0002[Question].CodeWord then
+    if Answer = CodeWheelRecords[Question].CodeWord then
       Exit;
     FlashMessageLine('Sorry, that''s incorrect.', Yellow);
   end;

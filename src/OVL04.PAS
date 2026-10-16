@@ -26,15 +26,8 @@ const
   { Affect numbers (the ids HasAffect and RemoveAffect look for in a character's affect list). }
   AffectBlind = $21;            { Cure Blindness checks and removes it (ovl04:0262) }
   AffectCurse = $24;            { Remove Curse accepts it as a reason to cast (ovl04:08A0) }
-  AffectPoison = $37;           { Neutralize Poison checks it; Raise Dead also removes it }
   AffectRemovedAtNeutralizePoison2 = $16; { purpose unknown; removed with $37 (ovl04:07F1) }
   AffectRemovedAtNeutralizePoison3 = $0F; { purpose unknown; removed with $37 (ovl04:0807) }
-  AffectRemovedAtRaiseDead = $20;         { purpose unknown; removed before $37 (ovl04:05B8) }
-  { Status values of TCharacter.Status. }
-  StatusOkay = 0;
-  StatusDead = 1;               { Raise Dead accepts 1 and 6 (ovl04:0539) }
-  StatusGone = 6;
-  StatusStoned = 7;             { Stone to Flesh (ovl04:093D) }
   { Prices in gold pieces (the second argument of ChargeForCure). }
   PriceCureBlindness = 1000;
   PriceCureDisease = 1000;
@@ -48,7 +41,6 @@ const
   DiseaseCount = 6;             { entries of DiseaseAffects }
   { The constitution rules of Raise Dead (ovl04:0652..0710). }
   BonusConstitution = 14;       { from 14 up the lost constitution can cost hit points }
-  FighterClass = 2;             { index in ClassLevels with the larger bonus }
   HighConstitution = 15;        { above it a non-fighter class counts twice }
   FighterOnlyConstitution = 17; { from 17 up only a fighter level loses the hit points }
   LastClass = 7;
@@ -175,7 +167,7 @@ end;
 
 { ovl04:02ED. Cure Disease: the character is diseased when it has one of the six
   DiseaseAffects; otherwise asks first. Charges PriceCureDisease and removes all six, with
-  ds681F set while it does. }
+  RemovingAffects set while it does. }
 procedure CureDisease;
 var
   Affect: Pointer;
@@ -195,9 +187,9 @@ begin
     Answer := ChargeForCure('Cure Disease', PriceCureDisease);
     if Answer = Yes then
     begin
-      ds681F := 1;
+      RemovingAffects := 1;
       for I := 1 to DiseaseCount do RemoveAffect(SelectedCharacter, DiseaseAffects[I], nil);
-      ds681F := 0;
+      RemovingAffects := 0;
     end;
   end;
 end;
@@ -241,9 +233,9 @@ begin
   end;
 end;
 
-{ ovl04:0510. Raise Dead: the character is dead when Status is StatusDead or StatusGone; otherwise it
-  asks first. Charges PriceRaiseDead; only a dead character is raised: AffectRemovedAtRaiseDead and
-  AffectPoison are removed, Status becomes StatusOkay, Flag10D becomes 1 (battle participant eligible
+{ ovl04:0510. Raise Dead: the character is dead when Status is StatusAnimated (1) or StatusDead (6) (ovl04:0539); otherwise it
+  asks first. Charges PriceRaiseDead; only a dead character is raised: AffectAnimateDead and
+  AffectPoisoned are removed, Status becomes StatusOkay, Flag10D becomes 1 (battle participant eligible
   for experience, ovl05:0355), and Flag11B becomes 1. Flag11B is the current hit points [I], so this
   restores one hit point [I] (ovl24:175D). Constitution is reduced by one before the constitution
   thresholds are tested; from 14 up the hit points above HpB1 are divided by the bonus over all class
@@ -265,7 +257,7 @@ begin
   Dead := False;
   Unused := '';
   Answer := Yes;
-  if (Who^.Status = StatusGone) or (Who^.Status = StatusDead) then Dead := True;
+  if (Who^.Status = StatusDead) or (Who^.Status = StatusAnimated) then Dead := True;
   if not Dead then Answer := AskCastAnyway('is not dead.');
   if Answer = Yes then
   begin
@@ -273,10 +265,10 @@ begin
     if Answer = Yes then
       if Dead then
       begin
-        ds681F := 1;
-        RemoveAffect(Who, AffectRemovedAtRaiseDead, nil);
-        RemoveAffect(Who, AffectPoison, nil);
-        ds681F := 0;
+        RemovingAffects := 1;
+        RemoveAffect(Who, AffectAnimateDead, nil);
+        RemoveAffect(Who, AffectPoisoned, nil);
+        RemovingAffects := 0;
         Who^.Flag11B := 1;
         Who^.Status := StatusOkay;
         Who^.Flag10D := 1;
@@ -290,22 +282,22 @@ begin
         begin
           for I := 0 to LastClass do
             if Who^.ClassLevels[I] > 0 then
-              if I = FighterClass then
+              if I = ClassFighter then
                 Inc(Bonus, (Who^.Constitution - BonusConstitution) * Who^.ClassLevels[I])
               else if Who^.Constitution > HighConstitution then
                 Inc(Bonus, Who^.ClassLevels[I] * 2)
               else
                 Inc(Bonus, Who^.ClassLevels[I]);
           if Bonus > 0 then HpLoss := HpLoss div Bonus;
-          if (Who^.Constitution < FighterOnlyConstitution) or (Who^.ClassLevels[FighterClass] > 0) then
+          if (Who^.Constitution < FighterOnlyConstitution) or (Who^.ClassLevels[ClassFighter] > 0) then
             Dec(Who^.HpMax, HpLoss);
         end;
       end;
   end;
 end;
 
-{ ovl04:0751. Neutralize Poison: asks first when the character has no AffectPoison; charges
-  PriceNeutralizePoison and removes AffectPoison plus values $16 and $0F (their meanings are unknown). }
+{ ovl04:0751. Neutralize Poison: asks first when the character has no AffectPoisoned; charges
+  PriceNeutralizePoison and removes AffectPoisoned plus values $16 and $0F (their meanings are unknown). }
 procedure NeutralizePoison;
 var
   Affect: Pointer;
@@ -316,25 +308,25 @@ begin
   Poisoned := False;
   Unused := '';
   Answer := Yes;
-  if HasAffect(SelectedCharacter, AffectPoison, Affect) then Poisoned := True;
+  if HasAffect(SelectedCharacter, AffectPoisoned, Affect) then Poisoned := True;
   if not Poisoned then Answer := AskCastAnyway('is not poisoned.');
   if Answer = Yes then
   begin
     Answer := ChargeForCure('Neutralize Poison', PriceNeutralizePoison);
     if Answer = Yes then
     begin
-      ds681F := 1;
-      RemoveAffect(SelectedCharacter, AffectPoison, nil);
+      RemovingAffects := 1;
+      RemoveAffect(SelectedCharacter, AffectPoisoned, nil);
       RemoveAffect(SelectedCharacter, AffectRemovedAtNeutralizePoison2, nil);
       RemoveAffect(SelectedCharacter, AffectRemovedAtNeutralizePoison3, nil);
-      ds681F := 0;
+      RemovingAffects := 0;
     end;
   end;
 end;
 
 { ovl04:083A. Remove Curse: the character needs it when one of its items is cursed or it has
   AffectCurse; otherwise asks first. Charges PriceRemoveCurse and hands the character to
-  CastRemoveCurse through ds6C95. }
+  CastRemoveCurse through FirstSpellTarget. }
 procedure RemoveCurse;
 var
   Cursed: Boolean;
@@ -359,7 +351,7 @@ begin
     Answer := ChargeForCure('Remove Curse', PriceRemoveCurse);
     if Answer = Yes then
     begin
-      ds6C95 := SelectedCharacter;
+      FirstSpellTarget := SelectedCharacter;
       CastRemoveCurse;
     end;
   end;
@@ -463,7 +455,7 @@ end;
   ovl04:0F02 is not in the menu text. ReadPromptChoice can return scan letters for extended keys, but
   the physical key that yields B is unknown. Exit with money in the pool asks "Do you want to go back
   and retrieve your money?" ('~Yes ~No') and leaves on No (AskMenu returns position 1); Yes keeps the
-  money in the Temple. On entry it sets ds49F3 to 1, redraws the view and character, clears PooledMoney
+  money in the Temple. On entry it sets ViewMode to 1, redraws the view and character, clears PooledMoney
   and sets MoneyInPool to 0. }
 procedure VisitTemple;
 var
@@ -476,7 +468,7 @@ var
   LeaveAnswer: Byte;      { the choice in the "retrieve your money" question }
   Appraised: Byte;        { set by Appraise (AppraiseGems); nonzero redraws the view }
 begin
-  ds49F3 := 1;
+  ViewMode := 1;
   RedrawView;
   DrawPartyRoster(SelectedCharacter);
   FillChar(PooledMoney, SizeOf(PooledMoney), 0);

@@ -190,9 +190,6 @@ end;
   SpellMenuSpells[Count] keeps the spell number (pending bit cleared) of the line added. Called by BuildSpellList
   and AddItemSpells. }
 procedure AddSpellMenuLine(Spell: Byte);
-const
-  MenuLineBytes = $2E;            { a menu line node: Text, Flag29 and Next, the used part of TMenuLine }
-  SpellMask = $7F;                { the low seven bits of a spell byte hold the spell number }
 var
   Line: PMenuLine;
   Count: ShortInt;                { ShortInt, not Byte: indexing SpellMenuSpells and the level compare
@@ -303,7 +300,6 @@ end;
   Called by ovl19:299C ChooseSpellFromList. }
 function BuildSpellList(Kind: Byte): Byte;
 const
-  SpellMask = $7F;                { the low seven bits of a spell byte hold the spell number }
   PendingSpell = $80;             { the pending bit above the spell number }
 var
   I: Byte;
@@ -359,7 +355,7 @@ begin
   SpellAreaSize := Area;
 end;
 { ovl22:07D6. The duration (in ApplyAffect's time unit) of the affect a spell leaves. Spell is the
-  spell number (the cast handlers pass ds681B). A few spells are rolled for instead of read from the
+  spell number (the cast handlers pass CastingSpell). A few spells are rolled for instead of read from the
   table: spell 40 Cause Disease is 1d6*10, spells 57 and 61 are 5d4, spell 59 is 1d4*10+40, spell 63 is
   2d10*10 in combat (view mode 5) else (1d10+10)*10, and spell 67 is a flat $5A0. Every other value
   uses the SpellTable row's duration base (byte +4) plus its per-level byte (byte +5) times the caster
@@ -368,14 +364,13 @@ end;
 function SpellAffectDuration(Spell: Byte): Word;
 const
   { The few spells whose affect time is rolled for instead of read from SpellTable, by spell number
-    (ds681B); the values are spell numbers, not affect ids. }
+    (CastingSpell); the values are spell numbers, not affect ids. }
   CauseDisease = $28;              { spell 40: 1d6 * 10 }
   MonsterHaste = $39;              { spell 57: 5d4 }
   MonsterStrength = $3B;           { spell 59: 1d4 * 10 + 40 }
   MonsterParalyze = $3D;           { spell 61: 5d4 }
   MonsterInvisibility = $3F;       { spell 63: 2d10 * 10 in combat, else (1d10 + 10) * 10 }
   MonsterReadMagic = $43;          { spell 67: a flat $5A0 }
-  CombatViewMode = 5;              { ds49F3 during combat (whitepaper 5.5) }
   Scale = 10;
 var
   Value: Word;
@@ -388,7 +383,7 @@ begin
     MonsterStrength:
       Value := RollDice(1, 4) * Scale + 40;
     MonsterInvisibility:
-      if ds49F3 = CombatViewMode then
+      if ViewMode = ViewModeCombat then
         Value := RollDice(2, 10) * Scale
       else
         Value := (RollDice(1, 10) + Scale) * Scale;
@@ -399,7 +394,7 @@ begin
   end;
   SpellAffectDuration := Value;
 end;
-{ ovl22:08C3. Applies the chosen spell Spell to every target in ds6C91[1..ds6C94] (the list the
+{ ovl22:08C3. Applies the chosen spell Spell to every target in SpellTargets[1..SpellTargetCount] (the list the
   picker ChooseSpellTargets filled). It first sets the global DamageKind (Kind when the spell deals Damage,
   else 0) and returns at once with no targets. For each non-nil target: it rolls the spell's own
   saving throw (SpellTable row byte +8 nonzero, the save kind in +9) into Saved, and, when the
@@ -412,29 +407,29 @@ end;
 procedure ApplySpellToTargets(Spell, CasterLevel, Flag, Damage, Kind: Byte; Message: String40);
 var
   Level: Byte;                    { the caster level used as ApplyAffect's Data }
-  I: Byte;                        { the target index, 1..ds6C94 }
-  Target: PCharacter;             { the target ds6C91[I] the spell is applied to }
+  I: Byte;                        { the target index, 1..SpellTargetCount }
+  Target: PCharacter;             { the target SpellTargets[I] the spell is applied to }
   Saved: Boolean;                 { whether the target saved against the spell }
 begin
   if Damage = 0 then
     DamageKind := 0
   else
     DamageKind := Kind;
-  if ds6C94 = 0 then
+  if SpellTargetCount = 0 then
     Exit;
   if CasterLevel = 0 then
     Level := SpellCasterLevel(Spell)
   else
     Level := CasterLevel;
-  for I := 1 to ds6C94 do
-    if ds6C91[I] <> nil then
+  for I := 1 to SpellTargetCount do
+    if SpellTargets[I] <> nil then
     begin
-      Target := ds6C91[I];
+      Target := SpellTargets[I];
       if SpellTable[Spell].Pad2[8] = 0 then
         Saved := False
       else
         Saved := SavingThrow(Target, SpellTable[Spell].Pad2[9], 0);
-      if SpellTable[ds681B].Pad2[2] = $FF then
+      if SpellTable[CastingSpell].Pad2[2] = $FF then
       begin
         RecalcCombatValues(Target);
         RunAffectHooks($0B, Target);
@@ -453,11 +448,11 @@ begin
   DamageKind := 0;
 end;
 { ovl22:0A91. Picks the targets of a spell being cast and reports through Done whether the cast should
-  go ahead. It defaults the picker's chosen character ds6DB5 to the selected character, sets the
-  target count ds6C94 to 1 and the first target ds6C95 to the selected character, and Done to 1, then
+  go ahead. It defaults the picker's chosen character PickedSpellCharacter to the selected character, sets the
+  target count SpellTargetCount to 1 and the first target FirstSpellTarget to the selected character, and Done to 1, then
   switches on the spell's target mode (SpellTable row byte +7): mode 1 keeps only the caster; mode 2
-  asks 'Cast Spell on whom' (SelectPartyMember picks into ds6DB5) and keeps the pick, or clears Done and
-  the list when none was picked; mode 4 adds every character of the party list ds5D96, walking Next
+  asks 'Cast Spell on whom' (SelectPartyMember picks into PickedSpellCharacter) and keeps the pick, or clears Done and
+  the list when none was picked; mode 4 adds every character of the party list PartyListHead, walking Next
   (+$104), to the list; any other mode clears Done. The second byte parameter is unused (QUIRK
   ovl22:0A91: the original frame reserves it). Called as the DS:6B84 combat callback (ovl08 EndCombat
   stores @ChooseSpellTargets). }
@@ -467,33 +462,33 @@ var
     frame and the string temporary below it land where the original put them. }
   Spare: PCharacter;
 begin
-  if ds6DB5 = nil then
-    ds6DB5 := SelectedCharacter;
-  ds6C95 := SelectedCharacter;
-  ds6C94 := 1;
+  if PickedSpellCharacter = nil then
+    PickedSpellCharacter := SelectedCharacter;
+  FirstSpellTarget := SelectedCharacter;
+  SpellTargetCount := 1;
   Done := 1;
   case SpellTable[Spell].Pad2[7] of
     1: ;
     2:
     begin
       RedrawView;
-      SelectPartyMember('Cast Spell on whom', 1, ds6DB5);
-      if ds6DB5 = nil then
+      SelectPartyMember('Cast Spell on whom', 1, PickedSpellCharacter);
+      if PickedSpellCharacter = nil then
       begin
-        ds6C95 := nil;
-        ds6C94 := 0;
+        FirstSpellTarget := nil;
+        SpellTargetCount := 0;
         Done := 0;
       end
       else
-        ds6C95 := ds6DB5;
+        FirstSpellTarget := PickedSpellCharacter;
     end;
     4:
       begin
-        ds6C91[ds6C94] := PCharacter(ds5D96);
-        while ds6C91[ds6C94]^.Next <> nil do
+        SpellTargets[SpellTargetCount] := PCharacter(PartyListHead);
+        while SpellTargets[SpellTargetCount]^.Next <> nil do
         begin
-          ds6C91[ds6C94 + 1] := ds6C91[ds6C94]^.Next;
-          Inc(ds6C94);
+          SpellTargets[SpellTargetCount + 1] := SpellTargets[SpellTargetCount]^.Next;
+          Inc(SpellTargetCount);
         end;
       end;
   else
@@ -508,15 +503,15 @@ end;
   the camp the player is asked to lose it, in the wilds to use the item that holds it. Then the
   target picker stored in DS:6B84 (SpellTargetPicker) fills Done; when it picked nothing the
   player may try again ('Abort Spell? ' in combat, or directly in quick combat) or the cast is
-  given up. On a cast the caster is animated (DrawCombatIcon, faced towards the aim point ds6DB9/
-  ds6DBA through InDirArc, a sound and a WalkCombatLine line) and the spell's handler
-  SpellHandlers[Spell] runs with ds681B set. ClearCharacterMessage clears the prompt afterwards. Called
+  given up. On a cast the caster is animated (DrawCombatIcon, faced towards the aim point SpellAimX/
+  SpellAimY through InDirArc, a sound and a WalkCombatLine line) and the spell's handler
+  SpellHandlers[Spell] runs with CastingSpell set. ClearCharacterMessage clears the prompt afterwards. Called
   by the combat and camp cast paths (ovl08:031A, ovl09:000F, ovl05:0ECD, ovl13:2432, ovl15:04A1,
-  ovl19:1BD7). Globals: SelectedCharacter, ds49F3, ItemAffectUse, ds6DB9/ds6DBA, ds681B, ds6820 and the
+  ovl19:1BD7). Globals: SelectedCharacter, ViewMode, ItemAffectUse, SpellAimX/SpellAimY, CastingSpell,
+  SpellAppliedToArea and the
   SpellHandlers table. }
 procedure CastChosenSpell(Spell, Quick, Announce: Byte; var Done: Byte);
 const
-  CombatViewMode = 5;             { ds49F3 while a combat runs (whitepaper 5.5) }
   Fireball = $2F;                 { the two spells whose cast has its own sound }
   LightningBolt = $33;
   AimStep = 4;                    { the line WalkCombatLine walks for the cast animation }
@@ -533,7 +528,7 @@ var
 begin
   Caster := SelectedCharacter;
   OK := True;
-  if (ds49F3 <> CombatViewMode) and (SpellTable[Spell].Pad2[7] = 0) then
+  if (ViewMode <> ViewModeCombat) and (SpellTable[Spell].Pad2[7] = 0) then
   begin
     if not ItemAffectUse then
     begin
@@ -560,23 +555,23 @@ begin
     if Done <> 0 then
     begin
       OK := False;
-      if ds49F3 = CombatViewMode then
+      if ViewMode = ViewModeCombat then
       begin
         DrawCombatIcon(AnimationKind);
         CasterX := CombatantX(Caster);
         CasterY := CombatantY(Caster);
         Dir := 0;
-        while not InDirArc(CasterX, CasterY, ds6DB9, ds6DBA, Dir) do
+        while not InDirArc(CasterX, CasterY, SpellAimX, SpellAimY, Dir) do
           Inc(Dir);
         SetCombatantIcon(Caster, Dir, 1, 0);
         SetSoundDriverIdle(0);
         case Spell of
-          Fireball: PlaySound(ds262A);
-          LightningBolt: PlaySound(ds2624);
+          Fireball: PlaySound(SoundFireball);
+          LightningBolt: PlaySound(SoundLightningBolt);
         else
-          PlaySound(ds2618);
+          PlaySound(SoundSpellDefault);
         end;
-        WalkCombatLine(CasterX, CasterY, ds6DB9, ds6DBA, AimStep, AimWidth);
+        WalkCombatLine(CasterX, CasterY, SpellAimX, SpellAimY, AimStep, AimWidth);
         SetSoundDriverIdle($A);
         if IsCombatantInView(Caster, 0) then
         begin
@@ -587,14 +582,14 @@ begin
       ClearAttackerAffect(Caster);
       if not ItemAffectUse then
         ForgetSpell(Spell);
-      ds681B := Spell;
-      SpellHandlers[ds681B];
-      ds681B := 0;
-      ds6820 := 0;
+      CastingSpell := Spell;
+      SpellHandlers[CastingSpell];
+      CastingSpell := 0;
+      SpellAppliedToArea := 0;
     end
     else
     begin
-      if ds49F3 <> CombatViewMode then
+      if ViewMode <> ViewModeCombat then
         OK := False
       else if (Quick <> 0) or (AskYesNo('Abort Spell? ', $E, $A, $F) = 'Y') then
       begin
@@ -606,85 +601,85 @@ begin
     end;
   end;
   ClearCharacterMessage;
-  if ds49F3 = CombatViewMode then
+  if ViewMode = ViewModeCombat then
     ClearWindow(0, $17, $27, $17);
 end;
-{ ovl22:0F4F. Applies the current spell ds681B to the chosen targets (ds6C91[1..ds6C94]) but keeps
+{ ovl22:0F4F. Applies the current spell CastingSpell to the chosen targets (SpellTargets[1..SpellTargetCount]) but keeps
   only those on Side: a target whose TCharacter.Side differs is dropped (set nil) and, for spell 1
   (Bless) in combat, a target the spell's area already reaches (CollectEnemiesInRange nonzero) is dropped
-  too. Sets ds6820 and calls ApplySpellToTargets with Message and no damage or affect of its own.
+  too. Sets SpellAppliedToArea and calls ApplySpellToTargets with Message and no damage or affect of its own.
   Called by the cast handlers of spells 1 and 2 (Bless and Curse). }
 procedure ApplySpellToSide(Side: Byte; Message: String40);
 var
-  I: Byte;                        { the target index, 1..ds6C94 }
+  I: Byte;                        { the target index, 1..SpellTargetCount }
 begin
-  ds6820 := 1;
-  for I := 1 to ds6C94 do
-    if (ds6C91[I]^.Side <> Side) or
-       ((ds681B = 1) and (ds49F3 = 5) and (CollectEnemiesInRange(ds6C91[I], 1) > 0)) then
-      ds6C91[I] := nil;
-  ApplySpellToTargets(ds681B, 0, 0, 0, 0, Message);
+  SpellAppliedToArea := 1;
+  for I := 1 to SpellTargetCount do
+    if (SpellTargets[I]^.Side <> Side) or
+       ((CastingSpell = 1) and (ViewMode = 5) and (CollectEnemiesInRange(SpellTargets[I], 1) > 0)) then
+      SpellTargets[I] := nil;
+  ApplySpellToTargets(CastingSpell, 0, 0, 0, 0, Message);
 end;
-{ ovl22:100F (e11). Cast handler of spell 1, Bless: applies the current spell ds681B to the party
+{ ovl22:100F (e11). Cast handler of spell 1, Bless: applies the current spell CastingSpell to the party
   side of the selected character (SelectedCharacter^.Side) with the message 'is Blessed'. One of the
   per-spell handlers in SpellHandlers (SpellHandlers[1], filled by InitSpellHandlers). }
 procedure CastBless;
 begin
   ApplySpellToSide(SelectedCharacter^.Side, 'is Blessed');
 end;
-{ ovl22:1040 (e12). Cast handler of spell 2, Curse: applies the current spell ds681B to the side
+{ ovl22:1040 (e12). Cast handler of spell 2, Curse: applies the current spell CastingSpell to the side
   opposite the selected character (OpposingSide returns 1 for side 0, else 0) with the message
   'is Cursed'. One of the per-spell handlers in SpellHandlers (SpellHandlers[2]). }
 procedure CastCurse;
 begin
   ApplySpellToSide(OpposingSide(SelectedCharacter), 'is Cursed');
 end;
-{ ovl22:106B (e13). Cast handler of spell 3, Cure Light Wounds: when a target was chosen (ds6C94
-  nonzero) it rolls 1d8 (RollDice) and heals the first target ds6C95 through HealCharacter (flag 0),
+{ ovl22:106B (e13). Cast handler of spell 3, Cure Light Wounds: when a target was chosen (SpellTargetCount
+  nonzero) it rolls 1d8 (RollDice) and heals the first target FirstSpellTarget through HealCharacter (flag 0),
   then reports through ShowHealResult whether the target is fully or partially healed. One of the
   per-spell handlers in SpellHandlers (SpellHandlers[3], filled by InitSpellHandlers). }
 procedure CastCureLightWounds;
 begin
-  if ds6C94 = 0 then
+  if SpellTargetCount = 0 then
     Exit;
-  if HealCharacter(ds6C95, RollDice(1, 8), 0) then
-    ShowHealResult(ds6C95);
+  if HealCharacter(FirstSpellTarget, RollDice(1, 8), 0) then
+    ShowHealResult(FirstSpellTarget);
 end;
-{ ovl22:10A7 (e14). Cast handler of spell 4, Cause Light Wounds: applies the current spell ds681B
+{ ovl22:10A7 (e14). Cast handler of spell 4, Cause Light Wounds: applies the current spell CastingSpell
   to the chosen targets with 1d8 damage of kind 8 and no message (ApplySpellToTargets; the dice go
   through RollDiceCounted, which also records their count in LastDiceCount). One of the per-spell handlers
   in SpellHandlers (SpellHandlers[4], filled by InitSpellHandlers). }
 procedure CastCauseLightWounds;
 begin
-  ApplySpellToTargets(ds681B, 0, 0, RollDiceCounted(1, 8), 8, '');
+  ApplySpellToTargets(CastingSpell, 0, 0, RollDiceCounted(1, 8), 8, '');
 end;
 { ovl22:10E9 (e15). Cast handler of the detection spells, spells 5 and 11 (Detect Magic), 18 (Read
-  Magic), 22 (Find Traps) and 29 (Detect Invisibility): applies the current spell ds681B to the
+  Magic), 22 (Find Traps) and 29 (Detect Invisibility): applies the current spell CastingSpell to the
   chosen targets with the message 'is affected' and no damage of its own (ApplySpellToTargets; the
   spell's own AffectId does the work). One of the per-spell handlers in SpellHandlers
   (SpellHandlers[5], [11], [18], [22] and [29]; the table is filled by InitSpellHandlers). }
 procedure CastDetectionSpell;
 begin
-  ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is affected');
+  ApplySpellToTargets(CastingSpell, 0, 0, 0, 0, 'is affected');
 end;
 { ovl22:1123 (e16). Cast handler of the protection spells, spells 6 and 16 (Protection From Evil) and
-  7 and 17 (Protection From Good): applies the current spell ds681B to the chosen targets with the
+  7 and 17 (Protection From Good): applies the current spell CastingSpell to the chosen targets with the
   message 'is protected' and no damage of its own (ApplySpellToTargets; the spell's own AffectId does
   the work). One of the per-spell handlers in SpellHandlers (SpellHandlers[6], [7], [16] and [17];
   filled by InitSpellHandlers). }
 procedure CastProtection;
 begin
-  ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is protected');
+  ApplySpellToTargets(CastingSpell, 0, 0, 0, 0, 'is protected');
 end;
-{ ovl22:1162 (e17). Cast handler of spell 8, Resist Cold: applies the current spell ds681B to the
+{ ovl22:1162 (e17). Cast handler of spell 8, Resist Cold: applies the current spell CastingSpell to the
   chosen targets with the message 'is cold-resistant' and no damage of its own (ApplySpellToTargets;
   the spell's own AffectId does the work). One of the per-spell handlers in SpellHandlers
   (SpellHandlers[8], filled by InitSpellHandlers). }
 procedure CastResistCold;
 begin
-  ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is cold-resistant');
+  ApplySpellToTargets(CastingSpell, 0, 0, 0, 0, 'is cold-resistant');
 end;
-{ ovl22:1190 (e18). Cast handler of spell 9, Burning Hands: deals SpellCasterLevel(ds681B) (the caster
+{ ovl22:1190 (e18). Cast handler of spell 9, Burning Hands: deals SpellCasterLevel(CastingSpell) (the caster
   level) damage of kind DamageKindFire to the chosen targets with no message (ApplySpellToTargets;
   DealDamage classifies kind 9 as fire, ovl24:1389). One of the per-spell handlers in SpellHandlers
   (SpellHandlers[9], filled by InitSpellHandlers). }
@@ -694,15 +689,15 @@ const
     DamageKind and $F7 = 1, ovl24:1389). }
   DamageKindFire = 9;
 begin
-  ApplySpellToTargets(ds681B, 0, 0, SpellCasterLevel(ds681B), DamageKindFire, '');
+  ApplySpellToTargets(CastingSpell, 0, 0, SpellCasterLevel(CastingSpell), DamageKindFire, '');
 end;
 { ovl22:11DD (e19). Cast handler of spell 10, Charm Person: it first refuses a target that is not a
   person, i.e. one whose CreatureType is above 1 or whose combat footprint kind (CombatSize, bits 0..6)
-  is above 1, showing 'is unaffected' (ShowCharacterMessage). Otherwise it applies the current spell ds681B
-  to the targets with the charm affect's data (the caster level SpellCasterLevel(ds681B) plus the
+  is above 1, showing 'is unaffected' (ShowCharacterMessage). Otherwise it applies the current spell CastingSpell
+  to the targets with the charm affect's data (the caster level SpellCasterLevel(CastingSpell) plus the
   caster's Side in bit 7, so the charmed creature joins that side) and runs the affect through
   CallAffectHandler ($0B, the charm affect id). One of the per-spell handlers in SpellHandlers
-  (SpellHandlers[10], filled by InitSpellHandlers). Reads ds6C95 (the first chosen target), SelectedCharacter;
+  (SpellHandlers[10], filled by InitSpellHandlers). Reads FirstSpellTarget (the first chosen target), SelectedCharacter;
   changes the affect list of the target through CallAffectHandler. }
 procedure CastCharmPerson;
 const
@@ -713,36 +708,34 @@ const
   SideScale = 128;
   { Charm Person's side effect: the affect handler runs when the affect is removed (Flag 1). }
   RunHandlerOnRemoval = 1;
-  ModeApply = 0;                  { CallAffectHandler's mode: apply (not remove) the affect }
   MessageColour = $A;             { the colour ShowCharacterMessage shows the message in }
   TimedMessage = 1;               { nonzero: ShowCharacterMessage delays by the game speed and clears it }
 var
   Affect: Pointer;                { the charm affect HasAffect finds on the target }
-  Target: PCharacter;             { the first chosen target ds6C95, tested and charmed }
+  Target: PCharacter;             { the first chosen target FirstSpellTarget, tested and charmed }
 begin
-  Target := ds6C95;
+  Target := FirstSpellTarget;
   if (Target^.CreatureType > CharmableType) or (Target^.CombatSize > CharmableSize) then
     ShowCharacterMessage(Target, 'is unaffected', MessageColour, TimedMessage)
   else
   begin
-    ApplySpellToTargets(ds681B,
-      SpellCasterLevel(ds681B) + ShortInt(SelectedCharacter^.Side) * SideScale, RunHandlerOnRemoval, 0, 0,
+    ApplySpellToTargets(CastingSpell,
+      SpellCasterLevel(CastingSpell) + ShortInt(SelectedCharacter^.Side) * SideScale, RunHandlerOnRemoval, 0, 0,
       'is charmed');
     if HasAffect(Target, CharmAffect, Affect) then
-      CallAffectHandler(CharmAffect, ds6C95, PAffect(Affect), ModeApply);
+      CallAffectHandler(CharmAffect, FirstSpellTarget, PAffect(Affect), ModeApply);
   end;
 end;
-{ ovl22:12A5 (e20). Cast handler of spell 12, Enlarge: gives the first chosen target ds6C95 the
-  strength 18 (ExceptionalStrength) with the percentile for the caster level (SpellCasterLevel(ds681B):
+{ ovl22:12A5 (e20). Cast handler of spell 12, Enlarge: gives the first chosen target FirstSpellTarget the
+  strength 18 (ExceptionalStrength) with the percentile for the caster level (SpellCasterLevel(CastingSpell):
   0 at level 1 up to 100 at level 6), through RaiseStrength, and shows 'is stronger' when the
   strength actually rose; it then adds the strength affect (id $0C, ovl24's AffectStrength1) with
   the spell's duration, RaiseStrength's earlier-strength code and flag 1 (on removal it restores the
   old strength, ovl24:AddAffect). The level and percentile go through the shared working globals
-  ds4844/ds4845. One of the per-spell handlers in SpellHandlers (SpellHandlers[12], filled by
+  SpellWorkByteA/SpellWorkByteB. One of the per-spell handlers in SpellHandlers (SpellHandlers[12], filled by
   InitSpellHandlers). }
 procedure CastEnlarge;
 const
-  ExceptionalStrength = 18;       { strength 18, whose RaiseStrength takes a percentile (ovl24) }
   StrengthAffect = $0C;           { the strength affect id AddAffect keeps the earlier strength in }
   { The exceptional-strength percentile Enlarge grants by caster level 1..6. }
   PercentLevel1 = 0;
@@ -756,23 +749,23 @@ const
 var
   Code: Byte;                     { RaiseStrength's earlier-strength code, passed to AddAffect as Data }
 begin
-  ds4844 := ExceptionalStrength;
-  case SpellCasterLevel(ds681B) of
-    1: ds4845 := PercentLevel1;
-    2: ds4845 := PercentLevel2;
-    3: ds4845 := PercentLevel3;
-    4: ds4845 := PercentLevel4;
-    5: ds4845 := PercentLevel5;
-    6: ds4845 := PercentLevel6;
+  SpellWorkByteA := ExceptionalStrength;
+  case SpellCasterLevel(CastingSpell) of
+    1: SpellWorkByteB := PercentLevel1;
+    2: SpellWorkByteB := PercentLevel2;
+    3: SpellWorkByteB := PercentLevel3;
+    4: SpellWorkByteB := PercentLevel4;
+    5: SpellWorkByteB := PercentLevel5;
+    6: SpellWorkByteB := PercentLevel6;
   end;
-  if RaiseStrength(ds6C95, ds4844, ds4845, Code) then
-    ShowCharacterMessage(ds6C95, 'is stronger', MessageColour, TimedMessage);
-  AddAffect(ds6C95, StrengthAffect, SpellAffectDuration(ds681B), Code, 1);
+  if RaiseStrength(FirstSpellTarget, SpellWorkByteA, SpellWorkByteB, Code) then
+    ShowCharacterMessage(FirstSpellTarget, 'is stronger', MessageColour, TimedMessage);
+  AddAffect(FirstSpellTarget, StrengthAffect, SpellAffectDuration(CastingSpell), Code, 1);
 end;
 { ovl22:136E (e21). Cast handler of spell 13, Reduce (SpellHandlers[13]; InitSpellHandlers fills the table,
   whitepaper 5.22.2): when targets were chosen, a target that fails its saving throw (SavingThrow kind 4,
   a spell) loses the strength affect $0C that Enlarge adds (CureAffect) and is told 'has been reduced'.
-  A target that saves, or that carries no strength affect, is left alone. Reads ds6C94 and ds6C95. }
+  A target that saves, or that carries no strength affect, is left alone. Reads SpellTargetCount and FirstSpellTarget. }
 procedure CastReduce;
 const
   SaveKind = 4;                   { SavingThrow's kind for a spell (whitepaper 5.22.2) }
@@ -780,16 +773,16 @@ const
   MessageColour = $A;             { the colour ShowCharacterMessage shows the message in }
   TimedMessage = 1;               { nonzero: ShowCharacterMessage delays by the game speed and clears it }
 begin
-  if ds6C94 > 0 then
-    if not SavingThrow(ds6C95, SaveKind, 0) then
-      if CureAffect(ds6C95, StrengthAffect) then
-        ShowCharacterMessage(ds6C95, 'has been reduced', MessageColour, TimedMessage);
+  if SpellTargetCount > 0 then
+    if not SavingThrow(FirstSpellTarget, SaveKind, 0) then
+      if CureAffect(FirstSpellTarget, StrengthAffect) then
+        ShowCharacterMessage(FirstSpellTarget, 'has been reduced', MessageColour, TimedMessage);
 end;
 { ovl22:13D8 (e22). Cast handler of spell 14, Friends (SpellHandlers[14]; InitSpellHandlers fills the table,
-  whitepaper 5.22.2): raises the chosen target ds6C95's Charisma by 2d4, capped at 25 ($19), and calls
+  whitepaper 5.22.2): raises the chosen target FirstSpellTarget's Charisma by 2d4, capped at 25 ($19), and calls
   ApplySpellToTargets with the pre-roll Charisma as the affect's Data and the restore flag set, so the
   affect's handler puts the old Charisma back when the affect ends; the message is 'is friendly'.
-  Reads ds6C95 and ds681B. }
+  Reads FirstSpellTarget and CastingSpell. }
 procedure CastFriends;
 const
   DiceCount = 2;                  { 2d4 Charisma points (the AD&D Friends spell) }
@@ -801,39 +794,39 @@ const
 var
   OldCharisma: Byte;              { the target's Charisma before the roll, the affect's Data }
 begin
-  OldCharisma := ds6C95^.Charisma;
-  Inc(ds6C95^.Charisma, RollDice(DiceCount, DiceSides));
-  if ds6C95^.Charisma > CharismaCap then
-    ds6C95^.Charisma := CharismaCap;
-  ApplySpellToTargets(ds681B, OldCharisma, RestoreOnRemoval, 0, 0, 'is friendly');
+  OldCharisma := FirstSpellTarget^.Charisma;
+  Inc(FirstSpellTarget^.Charisma, RollDice(DiceCount, DiceSides));
+  if FirstSpellTarget^.Charisma > CharismaCap then
+    FirstSpellTarget^.Charisma := CharismaCap;
+  ApplySpellToTargets(CastingSpell, OldCharisma, RestoreOnRemoval, 0, 0, 'is friendly');
 end;
 { ovl22:1439 (e23). Cast handler of spell 15, Magic Missile (SpellHandlers[15]; InitSpellHandlers fills the
   table, whitepaper 5.22.2): the caster level from SpellCasterLevel gives one missile per two levels, so
   it deals RollDiceCounted(Level div 2, 4) (a d4 per missile, its count kept in LastDiceCount) plus Level div 2
-  (one point per missile) to the chosen targets, with no message. Reads ds681B. }
+  (one point per missile) to the chosen targets, with no message. Reads CastingSpell. }
 procedure CastMagicMissile;
 const
   LevelsPerMissile = 2;           { one magic missile per two caster levels }
   MissileSides = 4;               { each missile does 1d4, plus 1 per missile }
   DamageKind = 8;                 { DealDamage's kind for the missiles (as Cause Light Wounds, ovl22:10A7) }
 var
-  Level: Byte;                    { the caster level, SpellCasterLevel(ds681B) }
+  Level: Byte;                    { the caster level, SpellCasterLevel(CastingSpell) }
 begin
-  Level := SpellCasterLevel(ds681B);
-  ApplySpellToTargets(ds681B, 0, 0,
+  Level := SpellCasterLevel(CastingSpell);
+  ApplySpellToTargets(CastingSpell, 0, 0,
     RollDiceCounted(Level div LevelsPerMissile, MissileSides) + Level div LevelsPerMissile,
     DamageKind, '');
 end;
 { ovl22:1499 (e24). Cast handler of spell 19, Shield (SpellHandlers[19]; InitSpellHandlers fills the table,
-  whitepaper 5.22.2): applies the current spell ds681B (its own affect does the work) to the chosen
-  targets with the message 'is shielded', no damage or flag of its own. Reads ds681B. }
+  whitepaper 5.22.2): applies the current spell CastingSpell (its own affect does the work) to the chosen
+  targets with the message 'is shielded', no damage or flag of its own. Reads CastingSpell. }
 procedure CastShield;
 begin
-  ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is shielded');
+  ApplySpellToTargets(CastingSpell, 0, 0, 0, 0, 'is shielded');
 end;
 { ovl22:14C7 (e25). Cast handler of spell 20, Shocking Grasp (SpellHandlers[20]; InitSpellHandlers fills the
   table, whitepaper 5.22.2): deals the caster level from SpellCasterLevel plus 1d8 (RollDiceCounted, count
-  kept in LastDiceCount) of electrical damage to the chosen targets, with no message. Reads ds681B. }
+  kept in LastDiceCount) of electrical damage to the chosen targets, with no message. Reads CastingSpell. }
 procedure CastShockingGrasp;
 const
   DiceSides = 8;                  { 1d8 plus one point per caster level (the AD&D Shocking Grasp) }
@@ -842,23 +835,23 @@ begin
   { QUIRK ovl22:14D7: TP 6.0 evaluates the right operand of `+` first when both are calls, so the
     original's SpellCasterLevel-before-RollDiceCounted order needs the sum written with the level on the
     right; the add is commutative and the bytes match only this way. }
-  ApplySpellToTargets(ds681B, 0, 0,
-    RollDiceCounted(1, DiceSides) + SpellCasterLevel(ds681B), DamageKindElectric, '');
+  ApplySpellToTargets(CastingSpell, 0, 0,
+    RollDiceCounted(1, DiceSides) + SpellCasterLevel(CastingSpell), DamageKindElectric, '');
 end;
 { ovl22:151B (e26). Cast handler of spell 21, Sleep (SpellHandlers[21]; InitSpellHandlers fills the table,
-  whitepaper 5.22.2): sets ds6820 and rolls the 4d4 pool ds4844. For every chosen target ds6C91[I] it
-  charges a cost in ds4845 by the target's HighestLevel (+$73, a monster's hit dice) and level 5's Race
+  whitepaper 5.22.2): sets SpellAppliedToArea and rolls the 4d4 pool SpellWorkByteA. For every chosen target SpellTargets[I] it
+  charges a cost in SpellWorkByteB by the target's HighestLevel (+$73, a monster's hit dice) and level 5's Race
   (+$2E). A target is slept (the cost comes off the pool) only when it is not Animated (Status <> 1,
   an undead), does not already carry the sleep affect $35 (HasAffect) and the pool still covers its
-  cost; otherwise it is dropped (ds6C91[I] := nil). ApplySpellToTargets then applies the spell's own
-  affect to the survivors with 'falls asleep'. Reads ds6C94, ds681B; changes ds6820, ds4844, ds4845
+  cost; otherwise it is dropped (SpellTargets[I] := nil). ApplySpellToTargets then applies the spell's own
+  affect to the survivors with 'falls asleep'. Reads SpellTargetCount, CastingSpell; changes SpellAppliedToArea,
+  SpellWorkByteA, SpellWorkByteB
   and the target list. }
 procedure CastSleep;
 const
   SleepAffect = $35;              { the affect that marks a target already asleep }
   PoolDiceCount = 4;              { the 4d4 pool of hit dice Sleep can affect }
   PoolDiceSides = 4;
-  StatusAnimated = 1;             { TCharacter.Status 1: Animated, the undead (StatusNames); Sleep refuses it }
   { The pool cost of one target, by its HighestLevel (a monster's hit dice), the AD&D Sleep table. }
   CostLevel0 = 1;
   CostLevel2 = 2;
@@ -867,46 +860,46 @@ const
   CostLevel5Small = $A;           { a level-5 monster (Race 0, a hit-dice creature) costs 10 }
   CostLevel5Large = $14;          { any other level-5 or higher creature costs 20 }
 var
-  I: Byte;                        { the target index, 1..ds6C94 }
+  I: Byte;                        { the target index, 1..SpellTargetCount }
   Affect: Pointer;                { HasAffect's out pointer, the target's sleep affect }
 begin
-  ds6820 := 1;
-  ds4844 := RollDice(PoolDiceCount, PoolDiceSides);
-  for I := 1 to ds6C94 do
+  SpellAppliedToArea := 1;
+  SpellWorkByteA := RollDice(PoolDiceCount, PoolDiceSides);
+  for I := 1 to SpellTargetCount do
   begin
-    case ds6C91[I]^.HighestLevel of
-      0..1: ds4845 := CostLevel0;
-      2: ds4845 := CostLevel2;
-      3: ds4845 := CostLevel3;
-      4: ds4845 := CostLevel4;
+    case SpellTargets[I]^.HighestLevel of
+      0..1: SpellWorkByteB := CostLevel0;
+      2: SpellWorkByteB := CostLevel2;
+      3: SpellWorkByteB := CostLevel3;
+      4: SpellWorkByteB := CostLevel4;
       5:
-        if ds6C91[I]^.Race = 0 then
-          ds4845 := CostLevel5Small
+        if SpellTargets[I]^.Race = 0 then
+          SpellWorkByteB := CostLevel5Small
         else
-          ds4845 := CostLevel5Large;
+          SpellWorkByteB := CostLevel5Large;
     else
-      ds4845 := CostLevel5Large;
+      SpellWorkByteB := CostLevel5Large;
     end;
     { QUIRK ovl22:15FE: the guard is written positive on purpose; the equivalent negative
       `(Status = Animated) or HasAffect(...) or (pool < cost)` then-drop-else-Dec form compiles with
       the two branches laid out the other way round (probe PRB26.PAS) and does not match. }
-    if (ds6C91[I]^.Status <> StatusAnimated) and not HasAffect(ds6C91[I], SleepAffect, Affect) and
-       (ds4844 >= ds4845) then
-      Dec(ds4844, ds4845)
+    if (SpellTargets[I]^.Status <> StatusAnimated) and not HasAffect(SpellTargets[I], SleepAffect, Affect) and
+       (SpellWorkByteA >= SpellWorkByteB) then
+      Dec(SpellWorkByteA, SpellWorkByteB)
     else
-      ds6C91[I] := nil;
+      SpellTargets[I] := nil;
   end;
-  ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'falls asleep');
+  ApplySpellToTargets(CastingSpell, 0, 0, 0, 0, 'falls asleep');
 end;
 { ovl22:1658. Cast handler of spell 23, Hold Person (entry 27: InitSpellHandlers maps DS:6B84+23*4 to overlay
-  stub 0096:00A7; SpellNames[23] is 'Hold Person' at DS:2C98): for every chosen target ds6C91[I]
+  stub 0096:00A7; SpellNames[23] is 'Hold Person' at DS:2C98): for every chosen target SpellTargets[I]
   it rolls a saving throw whose bonus shrinks as more targets were picked (one target -3, or -2 when
   the spell is Hold Person itself, two targets -1, three or four none), drawing a beam from the caster
-  to every target but the first (SetSoundDriverIdle, PlaySound(ds2618), the cast animation
+  to every target but the first (SetSoundDriverIdle, PlaySound(SoundSpellDefault), the cast animation
   DrawCombatIcon($12) and the WalkCombatLine line), and applies the spell's own affect with the message
   'is held' through ApplyAffect. A target that is not a person (CreatureType above 1 or CombatSize
   above 1, as CastCharmPerson tests) is treated as having saved, and a nil target is skipped. Reads
-  ds6C94, ds6C91, ds681B and SelectedCharacter. }
+  SpellTargetCount, SpellTargets, CastingSpell and SelectedCharacter. }
 procedure CastHoldPerson;
 const
   HoldPerson = $17;               { the spell whose lone target saves at -2 instead of -3 (spell 23) }
@@ -922,69 +915,68 @@ const
   AimStep = 4;                    { the line WalkCombatLine walks for the cast animation }
   AimWidth = $1E;
 var
-  Target: PCharacter;             { ds6C91[I], the target this pass applies the spell to }
+  Target: PCharacter;             { SpellTargets[I], the target this pass applies the spell to }
   Saved: Boolean;                 { whether the target saved (or is not a person) }
-  I: Byte;                        { the target index, ds6C94 downto 1 }
+  I: Byte;                        { the target index, SpellTargetCount downto 1 }
   SaveBonus: ShortInt;            { the saving-throw bonus for this many targets }
 begin
-  case ds6C94 of
+  case SpellTargetCount of
     1:
-      if ds681B = HoldPerson then
+      if CastingSpell = HoldPerson then
         SaveBonus := HoldPersonBonus
       else
         SaveBonus := OneTargetBonus;
     2: SaveBonus := TwoTargetsBonus;
     3, 4: SaveBonus := ThreeOrFourBonus;
   end;
-  for I := ds6C94 downto 1 do
-    if ds6C91[I] <> nil then
+  for I := SpellTargetCount downto 1 do
+    if SpellTargets[I] <> nil then
     begin
-      Target := ds6C91[I];
-      if I < ds6C94 then
+      Target := SpellTargets[I];
+      if I < SpellTargetCount then
       begin
         SetSoundDriverIdle(0);
-        PlaySound(ds2618);
+        PlaySound(SoundSpellDefault);
         DrawCombatIcon(AnimationKind);
         WalkCombatLine(CombatantX(SelectedCharacter), CombatantY(SelectedCharacter),
           CombatantX(Target), CombatantY(Target), AimStep, AimWidth);
         SetSoundDriverIdle($A);
       end;
-      Saved := SavingThrow(Target, SpellTable[ds681B].Pad2[9], SaveBonus);
+      Saved := SavingThrow(Target, SpellTable[CastingSpell].Pad2[9], SaveBonus);
       if (Target^.CreatureType > FriendlyType) or (Target^.CombatSize > FriendlySize) then
         Saved := True;
-      ApplyAffect(Target, SpellTable[ds681B].AffectId, SpellAffectDuration(ds681B),
-        SpellCasterLevel(ds681B), 0, SpellTable[ds681B].Pad2[8], Saved, 'is held');
+      ApplyAffect(Target, SpellTable[CastingSpell].AffectId, SpellAffectDuration(CastingSpell),
+        SpellCasterLevel(CastingSpell), 0, SpellTable[CastingSpell].Pad2[8], Saved, 'is held');
     end;
 end;
 { ovl22:17E9. Cast handler of spell 24, Resist Fire (entry 28: InitSpellHandlers maps DS:6B84+24*4 to overlay
-  stub 0096:00AC; SpellNames[24] is 'Resist Fire' at DS:2CC1): applies the current spell ds681B to the
+  stub 0096:00AC; SpellNames[24] is 'Resist Fire' at DS:2CC1): applies the current spell CastingSpell to the
   chosen targets with the message 'is fire resistant' and no damage or flag of its own
   (ApplySpellToTargets; the spell's own affect does the work). One of the per-spell handlers in
   SpellHandlers (whitepaper 5.22.2). }
 procedure CastResistFire;
 begin
-  ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is fire resistant');
+  ApplySpellToTargets(CastingSpell, 0, 0, 0, 0, 'is fire resistant');
 end;
 { ovl22:1822. Cast handler of spell 25, Silence, 15' Radius (entry 29: InitSpellHandlers maps DS:6B84+25*4 to
   overlay stub 0096:00B1; SpellNames[25] is "Silence, 15' Radius" at DS:2CEA): applies the current spell
-  ds681B to the chosen targets with the message 'is silenced' and no damage or flag of its own
+  CastingSpell to the chosen targets with the message 'is silenced' and no damage or flag of its own
   (ApplySpellToTargets; the spell's own affect does the work). One of the per-spell handlers in
   SpellHandlers (whitepaper 5.22.2). }
 procedure CastSilence;
 begin
-  ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is silenced');
+  ApplySpellToTargets(CastingSpell, 0, 0, 0, 0, 'is silenced');
 end;
 { ovl22:185B. Cast handler of spell 26, Slow Poison (entry 30: InitSpellHandlers maps DS:6B84+26*4 to overlay
-  stub 0096:00B6; SpellNames[26] is 'Slow Poison' at DS:2D13). It needs the first chosen target ds6C95
+  stub 0096:00B6; SpellNames[26] is 'Slow Poison' at DS:2D13). It needs the first chosen target FirstSpellTarget
   to not be Animated (Status is not 1, an undead) and to carry the Poisoned affect $37 (HasAffect);
-  anything else is dropped (ds6C95 := nil) and the cast does nothing. A poisoned target at 0 hit
+  anything else is dropped (FirstSpellTarget := nil) and the cast does nothing. A poisoned target at 0 hit
   points is brought back to 1 (Flag11B), the spell's own affect is applied to the targets
   ('is affected'), the revival affect's removal handler is run (CallAffectHandler($4E), which heals
   an unconscious character, ovl24 AffectRevival) and the poison-slowing affect $0F is added for $A
-  units. Reads ds6C95 and ds681B. }
+  units. Reads FirstSpellTarget and CastingSpell. }
 procedure CastSlowPoison;
 const
-  StatusAnimated = 1;             { TCharacter.Status 1: Animated, the undead (StatusNames); Slow Poison refuses it }
   PoisonedAffect = $37;           { the Poisoned affect the target must carry (ovl15 names $37 Poisoned) }
   { The revival affect whose removal handler heals an unconscious character (ovl24 AffectRevival). }
   RevivalAffect = $4E;
@@ -994,124 +986,120 @@ const
   SlowPoisonData = $FF;           { the affect's data byte }
   RunHandlerOnRemoval = 1;        { Flag: the affect's handler runs when the affect is removed }
   FullCasterLevel = $FF;          { ApplySpellToTargets uses this caster level instead of SpellCasterLevel }
-  ModeRemove = 1;                 { CallAffectHandler's mode: run the handler as if removing the affect }
 var
   Affect: Pointer;                { HasAffect's out pointer, the target's Poisoned affect }
-  Target: PCharacter;             { ds6C95, the first chosen target }
+  Target: PCharacter;             { FirstSpellTarget, the first chosen target }
 begin
-  Target := ds6C95;
+  Target := FirstSpellTarget;
   if Target^.Status = StatusAnimated then
   begin
-    ds6C95 := nil;
+    FirstSpellTarget := nil;
     Exit;
   end;
   if HasAffect(Target, PoisonedAffect, Affect) then
   begin
     if Target^.Flag11B = 0 then
       Target^.Flag11B := ReviveHitPoints;
-    ApplySpellToTargets(ds681B, FullCasterLevel, RunHandlerOnRemoval, 0, 0, 'is affected');
+    ApplySpellToTargets(CastingSpell, FullCasterLevel, RunHandlerOnRemoval, 0, 0, 'is affected');
     CallAffectHandler(RevivalAffect, Target, nil, ModeRemove);
     AddAffect(Target, SlowPoisonAffect, SlowPoisonDuration, SlowPoisonData, RunHandlerOnRemoval);
   end;
 end;
 { ovl22:190F. Cast handler of spell 27, Snake Charm (entry 31: InitSpellHandlers maps DS:6B84+27*4 to overlay
   stub 0096:00BB; SpellNames[27] is 'Snake Charm' at DS:2D3C). The caster's own current hit points
-  (SelectedCharacter^.Flag11B) become the pool ds4844; it then walks the party list ds5D96 and, for
+  (SelectedCharacter^.Flag11B) become the pool SpellWorkByteA; it then walks the party list PartyListHead and, for
   every giant snake (CreatureType $E) whose hit points fit the remaining pool, subtracts them, counts
-  it in ds6C94 and adds it to the chosen targets ds6C91. The spell's own affect is then applied to the
-  charmed snakes with the message 'is charmed'. Reads SelectedCharacter, ds5D96 and ds681B; changes
-  ds4844, ds6C94 and the target list. }
+  it in SpellTargetCount and adds it to the chosen targets SpellTargets. The spell's own affect is then applied to the
+  charmed snakes with the message 'is charmed'. Reads SelectedCharacter, PartyListHead and CastingSpell; changes
+  SpellWorkByteA, SpellTargetCount and the target list. }
 procedure CastSnakeCharm;
 const
   SnakeType = $E;                 { the CreatureType of a giant snake (MON*CHA, as ovl12 tests) }
 var
-  Current: PCharacter;            { the walker of the party list ds5D96 }
+  Current: PCharacter;            { the walker of the party list PartyListHead }
 begin
-  ds4844 := SelectedCharacter^.Flag11B;
-  ds6C94 := 0;
-  Current := PCharacter(ds5D96);
+  SpellWorkByteA := SelectedCharacter^.Flag11B;
+  SpellTargetCount := 0;
+  Current := PCharacter(PartyListHead);
   while Current <> nil do
   begin
-    if (Current^.CreatureType = SnakeType) and (ds4844 >= Current^.Flag11B) then
+    if (Current^.CreatureType = SnakeType) and (SpellWorkByteA >= Current^.Flag11B) then
     begin
-      ds4844 := ds4844 - Current^.Flag11B;
-      Inc(ds6C94);
-      ds6C91[ds6C94] := Current;
+      SpellWorkByteA := SpellWorkByteA - Current^.Flag11B;
+      Inc(SpellTargetCount);
+      SpellTargets[SpellTargetCount] := Current;
     end;
     Current := Current^.Next;
   end;
-  ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is charmed');
+  ApplySpellToTargets(CastingSpell, 0, 0, 0, 0, 'is charmed');
 end;
 { ovl22:19C3 (e32). Cast handler of spell 28, Spiritual Hammer (SpellHandlers[28]: InitSpellHandlers maps
   DS:6B84+28*4 to overlay stub 0096:00C0; SpellNames[28] is 'Spiritual Hammer' at DS:2D65, the
-  spell's own affect is $17). It applies the current spell ds681B to the chosen targets with no
+  spell's own affect is $17). It applies the current spell CastingSpell to the chosen targets with no
   message of its own and the affect set to run its handler on removal (ApplySpellToTargets, Flag 1),
-  then runs the handler of affect $17 on the first chosen target ds6C95 (CallAffectHandler, mode 0),
-  which is the spell's hammer. Reads ds681B and ds6C95. }
+  then runs the handler of affect $17 on the first chosen target FirstSpellTarget (CallAffectHandler, mode 0),
+  which is the spell's hammer. Reads CastingSpell and FirstSpellTarget. }
 procedure CastSpiritualHammer;
 const
   SpiritualHammerAffect = $17;    { the spell's own affect (SpellTable[28].AffectId): its handler is run here }
   RunHandlerOnRemoval = 1;        { ApplySpellToTargets' Flag: the affect's handler runs when it is removed }
-  ModeApply = 0;                  { CallAffectHandler's mode: apply (not remove) the affect }
 begin
-  ApplySpellToTargets(ds681B, 0, RunHandlerOnRemoval, 0, 0, '');
-  CallAffectHandler(SpiritualHammerAffect, ds6C95, nil, ModeApply);
+  ApplySpellToTargets(CastingSpell, 0, RunHandlerOnRemoval, 0, 0, '');
+  CallAffectHandler(SpiritualHammerAffect, FirstSpellTarget, nil, ModeApply);
 end;
 { ovl22:1A16 (e33). Cast handler of spell 30, Invisibility (SpellHandlers[30]: InitSpellHandlers maps
   DS:6B84+30*4 to overlay stub 0096:00C5; SpellNames[30] is 'Invisibility' at DS:2DB7, its
-  SpellTable affect byte is $19). It only applies the current spell ds681B to the chosen targets with
+  SpellTable affect byte is $19). It only applies the current spell CastingSpell to the chosen targets with
   the message 'is invisible'; the spell's own affect $19 does the hiding, so the handler has nothing
-  else to do. Reads ds681B. }
+  else to do. Reads CastingSpell. }
 procedure CastInvisibility;
 begin
-  ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is invisible');
+  ApplySpellToTargets(CastingSpell, 0, 0, 0, 0, 'is invisible');
 end;
 { ovl22:1A4F (e34). Cast handler of spell 31, Knock (SpellHandlers[31]: InitSpellHandlers maps
   DS:6B84+31*4 to overlay stub 0096:00CA; SpellNames[31] is 'Knock' at DS:2DE0). It only applies
-  the current spell ds681B to the chosen targets with the message 'Knock-Knock'; Knock's SpellTable
+  the current spell CastingSpell to the chosen targets with the message 'Knock-Knock'; Knock's SpellTable
   affect byte is 0, so no affect is applied here. The door effect lives elsewhere: ovl14's wilderness
-  door code looks for Knock among the memorized spells. Reads ds681B. }
+  door code looks for Knock among the memorized spells. Reads CastingSpell. }
 procedure CastKnock;
 begin
-  ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'Knock-Knock');
+  ApplySpellToTargets(CastingSpell, 0, 0, 0, 0, 'Knock-Knock');
 end;
 { ovl22:1A8A (e35). Cast handler of spell 32, Mirror Image (SpellHandlers[32]: InitSpellHandlers maps
   DS:6B84+32*4 to overlay stub 0096:00CF; SpellNames[32] is 'Mirror Image' at DS:2E09). It applies
-  the current spell ds681B to the chosen targets with the message 'is duplicated' and the caster
+  the current spell CastingSpell to the chosen targets with the message 'is duplicated' and the caster
   level set to 1d4 (RollDice(1, 4)); that roll is the number of images and becomes the affect's
-  Data. Reads ds681B. }
+  Data. Reads CastingSpell. }
 procedure CastMirrorImage;
 const
   ImagesCount = 1;                { the images are 1d4 (RollDice(Count, Sides)) }
   ImagesSides = 4;
 begin
-  ApplySpellToTargets(ds681B, RollDice(ImagesCount, ImagesSides), 0, 0, 0, 'is duplicated');
+  ApplySpellToTargets(CastingSpell, RollDice(ImagesCount, ImagesSides), 0, 0, 0, 'is duplicated');
 end;
 { ovl22:1ACC (e36). Cast handler of spell 33, Ray of Enfeeblement (SpellHandlers[33]: InitSpellHandlers maps
   DS:6B84+33*4 to overlay stub 0096:00D4; SpellNames[33] is 'Ray of Enfeeblement' at DS:2E32). It
-  only applies the current spell ds681B to the chosen targets with the message 'is weakened'; the
+  only applies the current spell CastingSpell to the chosen targets with the message 'is weakened'; the
   spell's own affect lowers the target's strength, so the handler has nothing else to do. Reads
-  ds681B. }
+  CastingSpell. }
 procedure CastRayOfEnfeeblement;
 begin
-  ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is weakened');
+  ApplySpellToTargets(CastingSpell, 0, 0, 0, 0, 'is weakened');
 end;
 { ovl22:1B11 (e37). Cast handler of spell 34, Stinking Cloud (SpellHandlers[34]: InitSpellHandlers maps
   DS:6B84+34*4 to overlay stub 0096:00D9; SpellNames[34] is 'Stinking Cloud' at DS:2E5B). It leaves
-  a marker in the list ds6DBB (a list of $13-byte TCombatNode records) for the aim point ds6DB9/
-  ds6DBA: the caster, the aim cell, and for each of the four aim directions (SpellNamesPrefix.AimDirs,
+  a marker in the list CloudList (a list of $13-byte TCombatNode records) for the aim point SpellAimX/
+  SpellAimY: the caster, the aim cell, and for each of the four aim directions (SpellNamesPrefix.AimDirs,
   DS:290E) the tile it found around the aim cell, whether the cell may hold the cloud, and the cloud's
   own affect $28 with the caster level. A cell whose tile is $1E (the cloud tile) borrows the tile of
   an earlier cloud marker that already reaches it; a cell whose tile is $1F (a body on the map)
   borrows the body's tile there (BodyTable). The cloud cell itself is painted into the combat map, the
   cast is announced ('Creates a noxious cloud'), the cursor is moved to the aim point and the cloud
-  affect runs on every combatant in the four cells (ApplyCloudTile). Reads ds681B, ds6DB9/ds6DBA,
-  ds6DBB, SelectedCharacter, BodyCount, BodyTable, CombatTiles, CombatMap and CombatantRecord; changes
-  ds6820, ds6DBB, the combat map and the affects of the targets. }
+  affect runs on every combatant in the four cells (ApplyCloudTile). Reads CastingSpell, SpellAimX/SpellAimY,
+  CloudList, SelectedCharacter, BodyCount, BodyTable, CombatTiles, CombatMap and CombatantRecord; changes
+  SpellAppliedToArea, CloudList, the combat map and the affects of the targets. }
 procedure CastStinkingCloud;
 const
-  CloudTile = $1E;                { a noxious cloud cell (ApplyCloudTile tests the tile under a combatant for it) }
-  BodyTile = $1F;                 { a body on the map: the aim scan borrows the body's tile there (BodyTable) }
   CloudAffect = $28;              { the affect the cast leaves on the caster and his clouds }
   { The cloud count goes into the affect's data in bits 4..7 (Count * CloudCountScale). }
   CloudCountScale = 16;
@@ -1120,24 +1108,24 @@ const
   AimCursorDir = 8;               { the omni direction MoveCombatCursor steps in (DirStepX/DirStepY) }
   MessageColour = $A;             { the colour ShowCharacterMessage shows the message in }
 var
-  Cloud: PCombatNode;             { the walker of the ds6DBB cloud list }
+  Cloud: PCombatNode;             { the walker of the CloudList cloud list }
   Node: PCombatNode;              { the cloud marker this cast fills }
   Occupant: array[1..4] of Byte;  { the combatant standing in each aim cell (GetMapCell's out) }
   J: Byte;                        { the aim direction or the body index being looked at }
   Count: Byte;                    { how many cloud markers the caster already had }
   Tile: Byte;                     { the tile GetMapCell found, or one the scan borrows }
-  Level: Byte;                    { the caster level, SpellCasterLevel(ds681B) }
+  Level: Byte;                    { the caster level, SpellCasterLevel(CastingSpell) }
   I: Byte;                        { the aim direction index, 1..4 }
   Dir: Byte;                      { the compass direction of aim direction I (SpellNamesPrefix.AimDirs) }
 begin
-  ds6820 := 1;
-  Level := SpellCasterLevel(ds681B);
+  SpellAppliedToArea := 1;
+  Level := SpellCasterLevel(CastingSpell);
   Count := 0;
-  Node := ds6DBB;
-  if ds6DBB = nil then
+  Node := CloudList;
+  if CloudList = nil then
   begin
-    GetMem(ds6DBB, SizeOf(TCombatNode));
-    Node := ds6DBB;
+    GetMem(CloudList, SizeOf(TCombatNode));
+    Node := CloudList;
   end
   else
   begin
@@ -1154,26 +1142,26 @@ begin
   AddAffect(SelectedCharacter, CloudAffect, Level, Level + Count * CloudCountScale, 1);
   Node^.Owner := SelectedCharacter;
   Node^.Kind := Count;
-  Node^.X := ds6DB9;
-  Node^.Y := ds6DBA;
+  Node^.X := SpellAimX;
+  Node^.Y := SpellAimY;
   for I := 1 to 4 do
   begin
     Dir := SpellNamesPrefix.AimDirs[I];
-    GetMapCell(ds6DB9 + DirStepX[Dir], ds6DBA + DirStepY[Dir], Occupant[I], Tile);
+    GetMapCell(SpellAimX + DirStepX[Dir], SpellAimY + DirStepY[Dir], Occupant[I], Tile);
     if (Tile > 0) and (CombatTiles[Tile].Cost < RefusedTileCost) then
       Node^.Arms[I] := 1
     else
       Node^.Arms[I] := 0;
     if Tile = CloudTile then
     begin
-      Cloud := ds6DBB;
+      Cloud := CloudList;
       while Cloud <> nil do
       begin
         if Cloud <> Node then
           for J := 1 to 4 do
             if Cloud^.Arms[J] <> 0 then
-              if (Cloud^.X + DirStepX[SpellNamesPrefix.AimDirs[J]] = ds6DB9 + DirStepX[Dir]) and
-                 (Cloud^.Y + DirStepY[SpellNamesPrefix.AimDirs[J]] = ds6DBA + DirStepY[Dir]) and
+              if (Cloud^.X + DirStepX[SpellNamesPrefix.AimDirs[J]] = SpellAimX + DirStepX[Dir]) and
+                 (Cloud^.Y + DirStepY[SpellNamesPrefix.AimDirs[J]] = SpellAimY + DirStepY[Dir]) and
                  (Cloud^.Tiles[J] <> CloudTile) then
                 Tile := Cloud^.Tiles[J];
         Cloud := Cloud^.Next;
@@ -1181,39 +1169,35 @@ begin
     end
     else if Tile = BodyTile then
       for J := 1 to BodyCount do
-        if (BodyTable[J].X = ds6DB9 + DirStepX[Dir]) and
-           (BodyTable[J].Y = ds6DBA + DirStepY[Dir]) then
+        if (BodyTable[J].X = SpellAimX + DirStepX[Dir]) and
+           (BodyTable[J].Y = SpellAimY + DirStepY[Dir]) then
           Tile := BodyTable[J].Tile;
     Node^.Tiles[I] := Tile;
     if Node^.Arms[I] <> 0 then
-      CombatMap^.Cells[ds6DBA + DirStepY[Dir], ds6DB9 + DirStepX[Dir]] := CloudTile;
+      CombatMap^.Cells[SpellAimY + DirStepY[Dir], SpellAimX + DirStepX[Dir]] := CloudTile;
   end;
   ShowCharacterMessage(SelectedCharacter, 'Creates a noxious cloud', MessageColour, 0);
-  MoveCombatCursor(ds6DB9, ds6DBA, AimCursorMargin, AimCursorDir);
+  MoveCombatCursor(SpellAimX, SpellAimY, AimCursorMargin, AimCursorDir);
   DelayByGameSpeed;
   ClearCharacterMessage;
   for I := 1 to 4 do
     if Occupant[I] > 0 then
       ApplyCloudTile(CombatantRecord[Occupant[I]]);
 end;
-{ ovl22:1F41. Cast handler that raises the chosen target ds6C95's Strength (the Strength spell):
+{ ovl22:1F41. Cast handler that raises the chosen target FirstSpellTarget's Strength (the Strength spell):
   it rolls the class bonus die (1d4 for a magic-user level, 1d6 for a cleric or thief level, 1d8
   for a fighter level; the later class wins) and adds it to the target's Strength. A result above
   18 is clamped to 18; for a fighter level the overflow becomes the exceptional-strength percentile
   (10 per point above 18 plus the target's StrengthPercent, capped at 100). RaiseStrength applies the
   new Strength (showing 'is stronger' when it rose) and the strength affect $26 is added for the
-  spell's duration. Reads ds6C95 and ds681B. }
+  spell's duration. Reads FirstSpellTarget and CastingSpell. }
 procedure CastStrength;
 const
-  ExceptionalStrength = 18;       { 18, the largest plain Strength; the overflow becomes the percentile }
   MaxPercent = 100;               { the exceptional-strength percentile ceiling }
   PercentStep = 10;               { each point of Strength above 18 is 10 percent }
   StrengthAffect = $26;           { the strength affect this spell leaves (same vehicle RaiseStrength updates) }
   { The class whose level picks the bonus die: magic-user (d4), cleric or thief (d6), fighter (d8). }
   MagicUserClass = 5;
-  ClericClass = 0;
-  ThiefClass = 6;
-  FighterClass = 2;
   { The bonus die by class. }
   MagicUserSides = 4;
   ClericSides = 6;
@@ -1222,26 +1206,26 @@ const
   TimedMessage = 1;               { nonzero: ShowCharacterMessage delays by the game speed and clears it }
   RunHandlerOnRemoval = 1;        { AddAffect Flag: the affect's handler runs when the affect is removed }
 var
-  Target: PCharacter;             { ds6C95, the chosen target whose Strength is raised }
+  Target: PCharacter;             { FirstSpellTarget, the chosen target whose Strength is raised }
   Percent: Byte;                  { the exceptional-strength percentile passed to RaiseStrength }
   Bonus: Byte;                    { the class bonus die roll (unset when the target has no class: QUIRK ovl22:1F47) }
   Strength: Byte;                 { the new Strength, the sum of the target's Strength and the roll }
   Code: Byte;                     { RaiseStrength's earlier-strength code, passed to AddAffect as Data }
 begin
   Percent := 0;
-  Target := ds6C95;
+  Target := FirstSpellTarget;
   if Target^.ClassLevels[MagicUserClass] > 0 then
     Bonus := RollDice(1, MagicUserSides);
-  if (Target^.ClassLevels[ClericClass] > 0) or (Target^.ClassLevels[ThiefClass] > 0) then
+  if (Target^.ClassLevels[ClassCleric] > 0) or (Target^.ClassLevels[ClassThief] > 0) then
     Bonus := RollDice(1, ClericSides);
-  if Target^.ClassLevels[FighterClass] > 0 then
+  if Target^.ClassLevels[ClassFighter] > 0 then
     Bonus := RollDice(1, FighterSides);
   Strength := Target^.Strength + Bonus;
   { QUIRK ovl22:1FFB: the cap is repeated in both branches (Strength 18 in each); the compiler keeps
     one store per branch instead of hoisting it, which is the original's layout. }
   if Strength > ExceptionalStrength then
   begin
-    if Target^.ClassLevels[FighterClass] > 0 then
+    if Target^.ClassLevels[ClassFighter] > 0 then
     begin
       { QUIRK ovl22:1FD4: TP 6.0 evaluates the right operand of `+` first, so the percentile sum is
         written target-first to keep the product on the left of the add in the original. }
@@ -1255,16 +1239,16 @@ begin
   end;
   if RaiseStrength(Target, Strength, Percent, Code) then
     ShowCharacterMessage(Target, 'is stronger', MessageColour, TimedMessage);
-  AddAffect(Target, StrengthAffect, SpellAffectDuration(ds681B), Code, RunHandlerOnRemoval);
+  AddAffect(Target, StrengthAffect, SpellAffectDuration(CastingSpell), Code, RunHandlerOnRemoval);
 end;
 { ovl22:206F. Cast handler of spell 36, Animate Dead: for up to the caster level corpses still in the
-  party list ds5D96 (Status 6, CreatureType 0) it places the body on the combat map at its own cell
+  party list PartyListHead (Status 6, CreatureType 0) it places the body on the combat map at its own cell
   (PlaceCombatant) and turns it into an undead creature under the caster's side: CreatureType 4, Quick
   set, the memorized spells, the AI state and the combat target cleared, B84 $B2 when it was already a
   computer-run member (above $7F) else $B3, and Side copied from SelectedCharacter. The corpse is then
   revived (ReviveCombatant at HpMax) and, on success, carries the animate affect $20 (Data: the caster's
-  Side in bits 4..7 plus the caster level) with the message 'is animated'. Reads ds681B, ds5D96,
-  SelectedCharacter and ds49F3; changes ds6820, ds6C94 and the corpse records. }
+  Side in bits 4..7 plus the caster level) with the message 'is animated'. Reads CastingSpell, PartyListHead,
+  SelectedCharacter and ViewMode; changes SpellAppliedToArea, SpellTargetCount and the corpse records. }
 procedure CastAnimateDead;
 const
   DeadStatus = 6;                 { TCharacter.Status 6: a corpse Animate Dead can raise }
@@ -1281,7 +1265,6 @@ const
     (b9 04 00), and the original at ovl22:210B has the byte form (probe PRB27.PAS). }
   SideScale = 16;
   AnimatedMark = 2;               { the byte at +$76 Animate Dead sets (ScoreItem reads it, ovl09:128D) }
-  CombatViewMode = 5;             { ds49F3 during combat (whitepaper 5.5) }
   RunHandlerOnRemoval = 1;        { ApplyAffect Flag: the affect's handler runs when it is removed }
   NoSaveNegates = 0;              { ApplyAffect SaveNegates }
   NotSaved = False;               { ApplyAffect Saved }
@@ -1290,12 +1273,12 @@ var
   I: Byte;                        { the spell slot index, 0..$14 }
   SaveData: Byte;                 { the affect data: the caster's Side in bits 4..7 plus the level }
   Level: Byte;                    { the caster level, one corpse per level, counted down }
-  Current: PCharacter;            { the walker of the party list ds5D96 }
+  Current: PCharacter;            { the walker of the party list PartyListHead }
 begin
-  ds6820 := 1;
-  Level := SpellCasterLevel(ds681B);
-  ds6C94 := 0;
-  Current := PCharacter(ds5D96);
+  SpellAppliedToArea := 1;
+  Level := SpellCasterLevel(CastingSpell);
+  SpellTargetCount := 0;
+  Current := PCharacter(PartyListHead);
   while (Current <> nil) and (Level > 0) do
   begin
     if Current^.Status = DeadStatus then
@@ -1305,7 +1288,7 @@ begin
           { The caster's Side goes into bits 4..7 of the affect data, the caster level into the low
             nibble (QUIRK ovl22:2105: the original sign-extends Side with cwde, so it is treated as a
             ShortInt here even though TCharacter.Side is a Byte). }
-          SaveData := ShortInt(Current^.Side) * SideScale + SpellCasterLevel(ds681B);
+          SaveData := ShortInt(Current^.Side) * SideScale + SpellCasterLevel(CastingSpell);
           Current^.Side := SelectedCharacter^.Side;
           Current^.Quick := 1;
           Current^.Pad74[$76] := AnimatedMark;
@@ -1318,7 +1301,7 @@ begin
           else
             Current^.B84 := CreatureMorale;
           Current^.CreatureType := UndeadType;
-          if ds49F3 = CombatViewMode then
+          if ViewMode = ViewModeCombat then
             Current^.Combat^.Target := nil;
           Dec(Level);
           if ReviveCombatant(Current, Current^.HpMax) then
@@ -1333,29 +1316,29 @@ begin
 end;
 { ovl22:2217. Cast handler of spell 37, Cure Blindness (SpellTable[37].AffectId is 0): removes the
   blindness affect $21 that spell 38 Cause Blindness leaves (SpellTable[38].AffectId) from the first
-  chosen target ds6C95 (CureAffect) and, only when the target actually carried it, tells 'can see'
-  through ShowHitMessage. Reads ds6C95. }
+  chosen target FirstSpellTarget (CureAffect) and, only when the target actually carried it, tells 'can see'
+  through ShowHitMessage. Reads FirstSpellTarget. }
 procedure CastCureBlindness;
 const
   BlindnessAffect = $21;          { the blindness affect CureAffect removes; spell 38 Cause Blindness leaves it }
   ShowAbout = 1;                  { ShowHitMessage's Flag argument }
 begin
-  if CureAffect(ds6C95, BlindnessAffect) then
-    ShowHitMessage(ds6C95, ShowAbout, 'can see');
+  if CureAffect(FirstSpellTarget, BlindnessAffect) then
+    ShowHitMessage(FirstSpellTarget, ShowAbout, 'can see');
 end;
 { ovl22:225D. Cast handler of spell 38, Cause Blindness (SpellHandlers[38]: InitSpellHandlers maps
   DS:6B84+38*4 to overlay stub 0096:00ED; SpellNames[38] is 'Cause Blindness' at DS:2EFF). It only
-  applies the current spell ds681B to the chosen targets with the message 'is blind'; the spell's own
+  applies the current spell CastingSpell to the chosen targets with the message 'is blind'; the spell's own
   affect $21 does the blinding (the affect Cure Blindness removes, ovl22:2217), so the handler has
-  nothing else to do. Reads ds681B. }
+  nothing else to do. Reads CastingSpell. }
 procedure CastCauseBlindness;
 begin
-  ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is blind');
+  ApplySpellToTargets(CastingSpell, 0, 0, 0, 0, 'is blind');
 end;
 { ovl22:228A. Cures the six disease affects of the Temple (DiseaseAffects[1..6] at DS:0114: $1F,
-  $22, $2B, $2C, $32, $39) from the chosen target ds6C95 and returns whether it cured any: it cures
+  $22, $2B, $2C, $32, $39) from the chosen target FirstSpellTarget and returns whether it cured any: it cures
   the $22 spell affect on its own, and curing $2B clears its companions $2C (Cause Disease) and $1F
-  (Helpless) too, while curing $32 (Dreaded Mummy Disease) clears $39. ds681F is set while the
+  (Helpless) too, while curing $32 (Dreaded Mummy Disease) clears $39. RemovingAffects is set while the
   affects go so the removal does not trigger the Temple's own cure. Called by CastCureDisease (spell 39,
   Cure Disease) and CastMonsterHeal. }
 function CureDiseaseAffects: Boolean;
@@ -1368,25 +1351,25 @@ const
   DiseaseAffectMummyCleared = $39; { cleared with Dreaded Mummy Disease }
 begin
   CureDiseaseAffects := False;
-  ds681F := 1;
-  if CureAffect(ds6C95, DiseaseAffectCured) then
+  RemovingAffects := 1;
+  if CureAffect(FirstSpellTarget, DiseaseAffectCured) then
     CureDiseaseAffects := True;
-  if CureAffect(ds6C95, DiseaseAffectCause) then
+  if CureAffect(FirstSpellTarget, DiseaseAffectCause) then
   begin
     CureDiseaseAffects := True;
-    RemoveAffect(ds6C95, DiseaseAffectCauseDisease, nil);
-    RemoveAffect(ds6C95, DiseaseAffectHelpless, nil);
+    RemoveAffect(FirstSpellTarget, DiseaseAffectCauseDisease, nil);
+    RemoveAffect(FirstSpellTarget, DiseaseAffectHelpless, nil);
   end;
-  if CureAffect(ds6C95, DiseaseAffectMummy) then
+  if CureAffect(FirstSpellTarget, DiseaseAffectMummy) then
   begin
     CureDiseaseAffects := True;
-    RemoveAffect(ds6C95, DiseaseAffectMummyCleared, nil);
+    RemoveAffect(FirstSpellTarget, DiseaseAffectMummyCleared, nil);
   end;
-  ds681F := 0;
+  RemovingAffects := 0;
 end;
 { ovl22:232F. Cast handler of spell 39, Cure Disease (SpellHandlers[39]: InitSpellHandlers maps
   DS:6B84+39*4 to overlay stub 0096:00F2; SpellNames[39] is 'Cure Disease' at DS:2F28). It calls
-  CureDiseaseAffects to cure the chosen target ds6C95 and stores the result in a local it never
+  CureDiseaseAffects to cure the chosen target FirstSpellTarget and stores the result in a local it never
   reads, so the cure happens through that call alone (SpellHandlers is a table of procedures and
   takes no result). QUIRK ovl22:232F: the Boolean local Cured is written and never read. }
 procedure CastCureDisease;
@@ -1397,27 +1380,27 @@ begin
 end;
 { ovl22:234C. Cast handler of spell 40, Cause Disease (SpellHandlers[40]: InitSpellHandlers maps
   DS:6B84+40*4 to overlay stub 0096:00F7; SpellNames[40] is 'Cause Disease' at DS:2F51). It applies
-  the current spell ds681B to the chosen targets with the message 'is diseased' and no damage of its
+  the current spell CastingSpell to the chosen targets with the message 'is diseased' and no damage of its
   own, but with Flag 1 so the spell's affect runs its handler when it is removed (the affect the
-  Temple's Cure Disease and CureDiseaseAffects clear). Reads ds681B. }
+  Temple's Cure Disease and CureDiseaseAffects clear). Reads CastingSpell. }
 procedure CastCauseDisease;
 const
   RunHandlerOnRemoval = 1;        { ApplySpellToTargets' Flag: the affect's handler runs when it is removed }
 begin
-  ApplySpellToTargets(ds681B, 0, RunHandlerOnRemoval, 0, 0, 'is diseased');
+  ApplySpellToTargets(CastingSpell, 0, RunHandlerOnRemoval, 0, 0, 'is diseased');
 end;
 { ovl22:2385 (e44). Cast handler of spells 41 and 46, Dispel Magic (InitSpellHandlers maps both
   DS:6B84+41*4 and DS:6B84+46*4 to overlay stub 0096:00FC; SpellNames[41] and SpellNames[46] are
   both 'Dispel Magic' at DS:2F7A and DS:3047). It tries to dispel the affects of the chosen target
-  ds6C95: for every affect of the target's list whose Data byte is below $FF it takes the effect's
-  level from the low nibble of Data, turns the caster level (SpellCasterLevel(ds681B)) and that level
+  FirstSpellTarget: for every affect of the target's list whose Data byte is below $FF it takes the effect's
+  level from the low nibble of Data, turns the caster level (SpellCasterLevel(CastingSpell)) and that level
   into a chance (50 percent, +5 for each level the caster is above the effect, -2 for each level
   below), and rolls 1d100: a roll up to that chance removes the affect (RemoveAffect) and, when
-  anything was removed, the target is told 'is affected' (ShowHitMessage). ds6820 marks the cast.
-  QUIRK ovl22:2385: the outer loop runs ds6C94 times but the body always reads the same first target
-  ds6C95 (it is never indexed by the loop counter), so a cast with several targets rolls on the
-  first one once per target and can show 'is affected' more than once. Reads ds681B, ds6C94, ds6C95;
-  changes ds6820, ds4844, ds4845 and the target's affect list. }
+  anything was removed, the target is told 'is affected' (ShowHitMessage). SpellAppliedToArea marks the cast.
+  QUIRK ovl22:2385: the outer loop runs SpellTargetCount times but the body always reads the same first target
+  FirstSpellTarget (it is never indexed by the loop counter), so a cast with several targets rolls on the
+  first one once per target and can show 'is affected' more than once. Reads CastingSpell, SpellTargetCount, FirstSpellTarget;
+  changes SpellAppliedToArea, SpellWorkByteA, SpellWorkByteB and the target's affect list. }
 procedure CastDispelMagic;
 const
   MaxAffectData = $FF;            { an affect whose Data byte is this high is left alone }
@@ -1428,33 +1411,33 @@ const
   DiceSides = 100;                { the chance is rolled on 1d100 }
   ShowAbout = 1;                  { ShowHitMessage's Flag argument }
 var
-  I: Byte;                        { the outer loop counter, 1..ds6C94 }
-  Level: Byte;                    { the caster level, SpellCasterLevel(ds681B) }
-  Target: PCharacter;             { the chosen target ds6C95 whose affects are dispelled }
+  I: Byte;                        { the outer loop counter, 1..SpellTargetCount }
+  Level: Byte;                    { the caster level, SpellCasterLevel(CastingSpell) }
+  Target: PCharacter;             { the chosen target FirstSpellTarget whose affects are dispelled }
   Dispelled: Boolean;             { whether this pass removed any affect }
   Affect: PAffect;                { the walker of Target's affect list }
   Next: PAffect;                  { the affect's successor, kept before a removal }
 begin
-  ds6820 := 1;
-  Level := SpellCasterLevel(ds681B);
-  for I := 1 to ds6C94 do
+  SpellAppliedToArea := 1;
+  Level := SpellCasterLevel(CastingSpell);
+  for I := 1 to SpellTargetCount do
   begin
     Dispelled := False;
-    Target := ds6C95;
+    Target := FirstSpellTarget;
     Affect := PAffect(Target^.Affects);
     while Affect <> nil do
     begin
       Next := Affect^.Next;
       if Affect^.Data < MaxAffectData then
       begin
-        ds4845 := Affect^.Data and LevelMask;
-        if Level > ds4845 then
-          ds4844 := (Level - ds4845) * LevelStep + BaseChance
-        else if Level < ds4845 then
-          ds4844 := BaseChance - (ds4845 - Level) * LevelPenalty
+        SpellWorkByteB := Affect^.Data and LevelMask;
+        if Level > SpellWorkByteB then
+          SpellWorkByteA := (Level - SpellWorkByteB) * LevelStep + BaseChance
+        else if Level < SpellWorkByteB then
+          SpellWorkByteA := BaseChance - (SpellWorkByteB - Level) * LevelPenalty
         else
-          ds4844 := BaseChance;
-        if RollDice(1, DiceSides) <= ds4844 then
+          SpellWorkByteA := BaseChance;
+        if RollDice(1, DiceSides) <= SpellWorkByteA then
         begin
           RemoveAffect(Target, Affect^.Id, Affect);
           Dispelled := True;
@@ -1467,11 +1450,11 @@ begin
   end;
 end;
 { ovl22:24D6 (e45). Cast handler of spell 42, Prayer (InitSpellHandlers maps DS:6B84+42*4 to overlay stub
-  0096:0101; SpellNames[42] is 'Prayer'). It applies the current spell ds681B to the chosen targets
+  0096:0101; SpellNames[42] is 'Prayer'). It applies the current spell CastingSpell to the chosen targets
   with no flag, damage or kind of its own and the message 'is praying'; the caster level it passes as
-  the affect's Data is the caster level (SpellCasterLevel(ds681B)) plus the caster's Side scaled by 16, so
+  the affect's Data is the caster level (SpellCasterLevel(CastingSpell)) plus the caster's Side scaled by 16, so
   the affect's handler can tell whose side the prayer favours (the same Side-in-the-data trick as
-  Charm Person and Animate Dead). Reads ds681B and SelectedCharacter; changes the targets' affects. }
+  Charm Person and Animate Dead). Reads CastingSpell and SelectedCharacter; changes the targets' affects. }
 procedure CastPrayer;
 const
   { The caster's Side goes above the caster level in the affect's data (Side * SideScale). Written as
@@ -1481,16 +1464,16 @@ const
 begin
   { QUIRK ovl22:24F1: the original sign-extends Side with cwde, so it is read as a ShortInt even
     though TCharacter.Side is a Byte. }
-  ApplySpellToTargets(ds681B, SpellCasterLevel(ds681B) + ShortInt(SelectedCharacter^.Side) * SideScale,
+  ApplySpellToTargets(CastingSpell, SpellCasterLevel(CastingSpell) + ShortInt(SelectedCharacter^.Side) * SideScale,
     0, 0, 0, 'is praying');
 end;
 { ovl22:2540 (e9). Cast handler of spell 43, Remove Curse, and the routine the Temple's Remove
   Curse service calls (InitSpellHandlers maps DS:6B84+43*4 to overlay stub 0096:007E; SpellNames[43] is
-  'Remove Curse' at DS:2FCC; the Temple's RemoveCurse ovl04:083A stores the character in ds6C95 and
-  calls this). It first tries to cure the curse affect $24 from the character ds6C95 and, when it was
+  'Remove Curse' at DS:2FCC; the Temple's RemoveCurse ovl04:083A stores the character in FirstSpellTarget and
+  calls this). It first tries to cure the curse affect $24 from the character FirstSpellTarget and, when it was
   there, says 'is un-cursed' (ShowHitMessage). Otherwise it walks the character's carried items
-  (ds6C95^.Items, the list at +$C8) and clears the Cursed flag (+$36) of the first cursed item it
-  finds, saying ''s item is un-cursed'. Reads ds6C95; changes the character's affects and its items. }
+  (FirstSpellTarget^.Items, the list at +$C8) and clears the Cursed flag (+$36) of the first cursed item it
+  finds, saying ''s item is un-cursed'. Reads FirstSpellTarget; changes the character's affects and its items. }
 procedure CastRemoveCurse;
 const
   CurseAffect = $24;              { the curse affect CureAffect removes (AffectCurse, ovl04:08A0) }
@@ -1499,12 +1482,12 @@ var
   Item: PItem;                    { the walker of the character's carried items }
   UnCursed: Boolean;              { whether a cursed item was found and cleared }
 begin
-  if CureAffect(ds6C95, CurseAffect) then
-    ShowHitMessage(ds6C95, ShowAbout, 'is un-cursed')
+  if CureAffect(FirstSpellTarget, CurseAffect) then
+    ShowHitMessage(FirstSpellTarget, ShowAbout, 'is un-cursed')
   else
   begin
     UnCursed := False;
-    Item := ds6C95^.Items;
+    Item := FirstSpellTarget^.Items;
     while (Item <> nil) and not UnCursed do
     begin
       if Item^.Cursed then
@@ -1515,32 +1498,32 @@ begin
       Item := Item^.Next;
     end;
     if UnCursed then
-      ShowHitMessage(ds6C95, ShowAbout, '''s item is un-cursed');
+      ShowHitMessage(FirstSpellTarget, ShowAbout, '''s item is un-cursed');
   end;
 end;
 { ovl22:2604. Cast handler of spell 44, Bestow Curse (InitSpellHandlers maps DS:6B84+44*4 to overlay
   stub 0096:0106; SpellNames[44] is 'Bestow Curse' at DS:2FF5 and SpellTable[44].AffectId is the curse
-  affect $24). It only applies the current spell ds681B to the chosen targets with the message
+  affect $24). It only applies the current spell CastingSpell to the chosen targets with the message
   'has been cursed!'; the spell's own affect does the cursing, so the handler has nothing else to do.
-  Reads ds681B. }
+  Reads CastingSpell. }
 procedure CastBestowCurse;
 begin
-  ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'has been cursed!');
+  ApplySpellToTargets(CastingSpell, 0, 0, 0, 0, 'has been cursed!');
 end;
 { ovl22:263D. Cast handler of spell 45, Blink (InitSpellHandlers maps DS:6B84+45*4 to overlay stub 0096:010B;
   SpellNames[45] is 'Blink' at DS:301E and SpellTable[45].AffectId is the blink affect $25). It only
-  applies the current spell ds681B to the chosen targets with the message 'is blinking'; the spell's
-  own affect does the blinking, so the handler has nothing else to do. Reads ds681B. }
+  applies the current spell CastingSpell to the chosen targets with the message 'is blinking'; the spell's
+  own affect does the blinking, so the handler has nothing else to do. Reads CastingSpell. }
 procedure CastBlink;
 begin
-  ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is blinking');
+  ApplySpellToTargets(CastingSpell, 0, 0, 0, 0, 'is blinking');
 end;
 { ovl22:266B. Cast handler of spells 47 and 64, Fireball (InitSpellHandlers maps both DS:6B84+47*4 and
   DS:6B84+64*4 to overlay stub 0096:0110; SpellNames[47] is 'Fireball', and spell 64 has an empty
-  name, a monster's fireball). It sets ds6820 and takes the caster level from SpellCasterLevel (the
+  name, a monster's fireball). It sets SpellAppliedToArea and takes the caster level from SpellCasterLevel (the
   spell's d6-per-level damage) except for the monster's spell 64, whose level is the roll 1d3*2+1.
-  When the 3D wall view is off (GameVars^[VarForceWallView] = 0) it collects into ds6C91[1..ds6C94]
-  the combatants ScanTargets finds within two steps of the aim point ds6DB9/ds6DBA; it then moves
+  When the 3D wall view is off (GameVars^[VarForceWallView] = 0) it collects into SpellTargets[1..SpellTargetCount]
+  the combatants ScanTargets finds within two steps of the aim point SpellAimX/SpellAimY; it then moves
   the combat cursor onto the aim point and applies the spell to the targets with RollDiceCounted
   (the d6 per level), fire damage and no message. Called through SpellHandlers[47] and [64]. }
 procedure CastFireball;
@@ -1558,28 +1541,28 @@ const
   AimCursorDir = 8;               { MoveCombatCursor's omni direction }
 var
   Level: Byte;                    { the caster level, or the monster's rolled one }
-  I: Byte;                        { the target index, 1..ds6718[0].Val }
+  I: Byte;                        { the target index, 1..SortEntries[0].Val }
 begin
-  ds6820 := 1;
-  if ds681B = MonsterFireball then
+  SpellAppliedToArea := 1;
+  if CastingSpell = MonsterFireball then
     Level := RollDice(LevelDiceCount, LevelDiceSides) * LevelScale + 1
   else
-    Level := SpellCasterLevel(ds681B);
+    Level := SpellCasterLevel(CastingSpell);
   if GameVars^[VarForceWallView] = 0 then
   begin
-    ScanTargets(ds6DB9, ds6DBA, ScanSteps, OmniDir, FootprintBase, CombatMap);
-    for I := 1 to ds6718[0].Val do
-      ds6C91[I] := CombatantRecord[ds6718[I].Head];
-    ds6C94 := ds6718[0].Val;
+    ScanTargets(SpellAimX, SpellAimY, ScanSteps, OmniDir, FootprintBase, CombatMap);
+    for I := 1 to SortEntries[0].Val do
+      SpellTargets[I] := CombatantRecord[SortEntries[I].Head];
+    SpellTargetCount := SortEntries[0].Val;
   end;
-  MoveCombatCursor(ds6DB9, ds6DBA, AimCursorMargin, AimCursorDir);
-  ApplySpellToTargets(ds681B, 0, 0, RollDiceCounted(Level, DamageDiceSides), DamageKindFire, '');
+  MoveCombatCursor(SpellAimX, SpellAimY, AimCursorMargin, AimCursorDir);
+  ApplySpellToTargets(CastingSpell, 0, 0, RollDiceCounted(Level, DamageDiceSides), DamageKindFire, '');
 end;
-{ ovl22:2764. Applies the current spell ds681B to up to the caster level (SpellCasterLevel) of the
-  chosen targets ds6C91[1..ds6C94] that stand on Side, after removing from them the counter-affect
+{ ovl22:2764. Applies the current spell CastingSpell to up to the caster level (SpellCasterLevel) of the
+  chosen targets SpellTargets[1..SpellTargetCount] that stand on Side, after removing from them the counter-affect
   Affect: a target on Side with budget left spends one point of the level and, if it already carries
   Affect, has it cured and is dropped, so the surviving targets are the ones the spell then affects.
-  It sets ds6820, applies the spell through ApplySpellToTargets with Message, and finally runs the
+  It sets SpellAppliedToArea, applies the spell through ApplySpellToTargets with Message, and finally runs the
   affect hooks $12 on each surviving target. Called by CastHaste (ovl22:2892) and the Slow handler
   (ovl22:2C09). Haste passes the slow affect $2A, Slow the haste affect $27 (the two
   spells' SpellTable affect ids), so each removes the opposite spell from the side before it casts. }
@@ -1588,23 +1571,23 @@ const
   AffectHooks = $12;              { RunAffectHooks' kind for the affect this handler leaves }
 var
   Level: Byte;                    { the caster level, the number of targets the spell may reach }
-  I: Byte;                        { the target index, 1..ds6C94 }
+  I: Byte;                        { the target index, 1..SpellTargetCount }
 begin
-  ds6820 := 1;
-  Level := SpellCasterLevel(ds681B);
-  for I := 1 to ds6C94 do
-    if (ds6C91[I]^.Side = Side) and (Level > 0) then
+  SpellAppliedToArea := 1;
+  Level := SpellCasterLevel(CastingSpell);
+  for I := 1 to SpellTargetCount do
+    if (SpellTargets[I]^.Side = Side) and (Level > 0) then
     begin
       Dec(Level);
-      if CureAffect(ds6C91[I], Affect) then
-        ds6C91[I] := nil;
+      if CureAffect(SpellTargets[I], Affect) then
+        SpellTargets[I] := nil;
     end
     else
-      ds6C91[I] := nil;
-  ApplySpellToTargets(ds681B, 0, 0, 0, 0, Message);
-  for I := 1 to ds6C94 do
-    if ds6C91[I] <> nil then
-      RunAffectHooks(AffectHooks, ds6C91[I]);
+      SpellTargets[I] := nil;
+  ApplySpellToTargets(CastingSpell, 0, 0, 0, 0, Message);
+  for I := 1 to SpellTargetCount do
+    if SpellTargets[I] <> nil then
+      RunAffectHooks(AffectHooks, SpellTargets[I]);
 end;
 { ovl22:2892. Cast handler of spell 48, Haste (InitSpellHandlers maps DS:6B84+48*4 to overlay stub
   0096:0115; SpellNames[48] is 'Haste' and SpellTable[48].AffectId is the haste affect $27). It hands
@@ -1655,17 +1638,17 @@ begin
 end;
 { ovl22:295B. The line-beam helper of the line spells: it draws the beam of the Lightning Bolt handler
   CastLightningBolt and of the monster beams (CastMonsterBeam, the dragon breath MonsterBreath) and damages every combatant it
-  passes. It starts at the aim cell ds6DB9/ds6DBA (playing the zap animation DrawCombatIcon($13)) and
+  passes. It starts at the aim cell SpellAimX/SpellAimY (playing the zap animation DrawCombatIcon($13)) and
   walks a line away from the caster for Range * 2 steps (a TLineState filled by SetupLine and advanced
   by StepLine); it draws each step through WalkCombatLine and deals Damage (electrical, SavingThrow kind
   SaveKind) through DamageTargetInCell. The walk stops at the end of the line, when the line leaves the
   map (Tile 0), at a tile whose CombatTiles cost is above MaxPassableCost, or when the occupant of the
   cell changes (a fresh combatant, so the beam does not pass through bodies). When Blocked (the tile
   refused the beam) and Bounce is set, it moves the aim cell to the bounce point and walks a second
-  line back to the caster, turning the beam around once (DirSign flips and Bounce clears). Sets ds6820.
+  line back to the caster, turning the beam around once (DirSign flips and Bounce clears). Sets SpellAppliedToArea.
   Parameters: Range the spell's reach (the line walks Range * 2 cells); Damage the damage dealt per
   cell; SaveKind the SavingThrow kind; Bounce nonzero lets the beam reflect off a wall once. Globals:
-  ds6DB9/ds6DBA (the aim cell, moved to the bounce point), ds6820, SelectedCharacter and CombatTiles.
+  SpellAimX/SpellAimY (the aim cell, moved to the bounce point), SpellAppliedToArea, SelectedCharacter and CombatTiles.
   Called by CastLightningBolt (Lightning Bolt), CastMonsterBeam and MonsterBreath (the dragon breath). }
 procedure CastLineBeam(Range, Damage, SaveKind, Bounce: Byte);
 const
@@ -1687,22 +1670,22 @@ var
   Length: Byte;                   { the remaining beam steps, Range * 2 at the start }
 begin
   DrawCombatIcon(ZapAnimation);
-  GetMapCell(ds6DB9, ds6DBA, PrevOccupant, Tile);
+  GetMapCell(SpellAimX, SpellAimY, PrevOccupant, Tile);
   DirSign := 1;
   CasterX := CombatantX(SelectedCharacter);
   CasterY := CombatantY(SelectedCharacter);
   Bouncing := Bounce;
-  if (CasterX = ds6DB9) and (CasterY = ds6DBA) then
+  if (CasterX = SpellAimX) and (CasterY = SpellAimY) then
     Exit;
   Length := Range * 2;
-  ds6820 := 1;
+  SpellAppliedToArea := 1;
   while Length > 0 do
   begin
     FillChar(Line, SizeOf(Line), 0);
-    Line.X1 := ds6DB9;
-    Line.Y1 := ds6DBA;
-    Line.X2 := ds6DB9 + (ds6DB9 - CasterX) * DirSign * Length;
-    Line.Y2 := ds6DBA + (ds6DBA - CasterY) * DirSign * Length;
+    Line.X1 := SpellAimX;
+    Line.Y1 := SpellAimY;
+    Line.X2 := SpellAimX + (SpellAimX - CasterX) * DirSign * Length;
+    Line.Y2 := SpellAimY + (SpellAimY - CasterY) * DirSign * Length;
     SetupLine(@Line);
     repeat
       StartX := Line.X;
@@ -1723,11 +1706,11 @@ begin
       DamageTargetInCell(Line.X, Line.Y, Damage, SaveKind, Blocked);
       if Blocked then
       begin
-        ds6DB9 := Line.X;
-        ds6DBA := Line.Y;
+        SpellAimX := Line.X;
+        SpellAimY := Line.Y;
         FillChar(Line2, SizeOf(Line2), 0);
-        Line2.X1 := ds6DB9;
-        Line2.Y1 := ds6DBA;
+        Line2.X1 := SpellAimX;
+        Line2.Y1 := SpellAimY;
         Line2.X2 := CasterX;
         Line2.Y2 := CasterY;
         SetupLine(@Line2);
@@ -1747,13 +1730,13 @@ begin
         Length := 0;
     until (Blocked) or (Length = 0);
   end;
-  ds6820 := 0;
+  SpellAppliedToArea := 0;
 end;
 { ovl22:2BB7 (e50). Cast handler of spell 51, Lightning Bolt: it rolls one d6 per caster level
-  (SpellCasterLevel(ds681B), RollDice) as the damage, deals it to the combatant on the aim cell
-  ds6DB9/ds6DBA (DamageTargetInCell, electrical, save kind 4) and then runs the beam CastLineBeam
+  (SpellCasterLevel(CastingSpell), RollDice) as the damage, deals it to the combatant on the aim cell
+  SpellAimX/SpellAimY (DamageTargetInCell, electrical, save kind 4) and then runs the beam CastLineBeam
   with reach 8, the same damage and save kind and the bounce flag 1, so the bolt reflects off a wall
-  once. Reads ds681B. Called through SpellHandlers[51] (InitSpellHandlers). }
+  once. Reads CastingSpell. Called through SpellHandlers[51] (InitSpellHandlers). }
 procedure CastLightningBolt;
 const
   LevelDiceSides = 6;             { one d6 per caster level (the AD&D Lightning Bolt) }
@@ -1764,8 +1747,8 @@ var
   Damage: Byte;                   { the rolled damage (caster level d6) }
   Blocked: Boolean;               { whether the aim cell's tile refuses the beam (not read) }
 begin
-  Damage := RollDice(SpellCasterLevel(ds681B), LevelDiceSides);
-  DamageTargetInCell(ds6DB9, ds6DBA, Damage, SaveKindSpell, Blocked);
+  Damage := RollDice(SpellCasterLevel(CastingSpell), LevelDiceSides);
+  DamageTargetInCell(SpellAimX, SpellAimY, Damage, SaveKindSpell, Blocked);
   CastLineBeam(BeamReach, Damage, SaveKindSpell, BounceOnce);
 end;
 { ovl22:2C09 (e51). Cast handler of spell 55, Slow: hands the opposite side of the selected character
@@ -1780,7 +1763,7 @@ const
 begin
   ApplySpellToSideUpToLevel(HasteAffect, OpposingSide(SelectedCharacter), 'is Slowed');
 end;
-{ ovl22:2C43 (e52). Cast handler of spell 56, Restoration: it gives the selected character ds6C95 back
+{ ovl22:2C43 (e52). Cast handler of spell 56, Restoration: it gives the selected character FirstSpellTarget back
   one drained level. The character's drained levels are Pad74[$74] and the hit points lost with them
   Pad74[$75] (a character shows +$32 max, +$11B current and +$75 lost hit points, ovl33:0004), so one
   restored level gives back Pad74[$75] div Pad74[$74] hit points, added to HpMax (+$32), the current
@@ -1790,19 +1773,17 @@ end;
   has the smallest positive value, and keeps the class whose IsMaxClassLevel call is false; that class gains one
   level, the character's Experience (+$AC) is raised to at least that entry, RecalcClassStats
   recomputes the derived values and the character is told 'is restored' (ShowCharacterMessage). A character
-  with no drained level (Pad74[$74] = 0) is left alone. Reads ds6C95; changes the character's drained
+  with no drained level (Pad74[$74] = 0) is left alone. Reads FirstSpellTarget; changes the character's drained
   levels, hit points, class level and Experience. }
 procedure CastRestoration;
 const
-  DrainedLevels = $74;            { TCharacter.Pad74 index: the levels the character was drained }
-  LostHitPoints = $75;            { TCharacter.Pad74 index: the hit points lost with them (ovl33:0004) }
   MaxRestoredLevel = 13;          { a class level above this is never advanced ($D) }
   MaxExperience = 10000000;       { the initial 'smallest' experience value the loop compares against }
   LastClass = 7;                  { the last class index of ClassLevels }
   MessageColour = $A;             { the colour ShowCharacterMessage shows 'is restored' in }
   TimedMessage = 1;               { nonzero: ShowCharacterMessage delays by the game speed and clears it }
 var
-  Target: PCharacter;             { ds6C95, the selected character being restored }
+  Target: PCharacter;             { FirstSpellTarget, the selected character being restored }
   PerLevel: Byte;                 { the hit points one restored level gives back }
   MaxLevel: ShortInt;             { the highest class level a later class may still advance from }
   Level: ShortInt;                { the class level the loop is looking at (ClassLevels[Class]) }
@@ -1810,7 +1791,7 @@ var
   BestClass: ShortInt;            { the class the level is restored in }
   Class: ShortInt;                { the class index, 0..LastClass }
 begin
-  Target := ds6C95;
+  Target := FirstSpellTarget;
   if Target^.Pad74[DrainedLevels] <= 0 then
     Exit;
   PerLevel := Target^.Pad74[LostHitPoints] div Target^.Pad74[DrainedLevels];
@@ -1842,20 +1823,20 @@ begin
 end;
 { ovl22:2E02. Cast handler of spell 57, a monster-only spell: SpellNames[57] is empty, and the
   InitSpellHandlers table points element 57 of SpellHandlers at this stub. It first cancels the slow affect
-  $2A from the first chosen target ds6C95 (CureAffect, which shows 'is Cured'); when the target was
-  not slowed it applies the current spell ds681B to the chosen targets with 'is Speedy', so the
+  $2A from the first chosen target FirstSpellTarget (CureAffect, which shows 'is Cured'); when the target was
+  not slowed it applies the current spell CastingSpell to the chosen targets with 'is Speedy', so the
   affected target carries the spell's own (haste) affect. It is CastHaste's single-target sibling. }
 procedure CastMonsterHaste;
 const
   SlowAffect = $2A;               { the slow affect the spell cancels (SpellTable[55].AffectId, as CastHaste) }
 begin
-  if not CureAffect(ds6C95, SlowAffect) then
-    ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is Speedy');
+  if not CureAffect(FirstSpellTarget, SlowAffect) then
+    ApplySpellToTargets(CastingSpell, 0, 0, 0, 0, 'is Speedy');
 end;
 { ovl22:2E4D. Cast handler of spell 58, a monster-only spell: SpellNames[58] is empty, and the
   InitSpellHandlers table points element 58 of SpellHandlers at this stub. It cures the first chosen target
-  ds6C95: when the target carries the Poisoned affect $37 (CureAffect) it also removes the affect $16
-  that the poison leaves behind, with ds681F set so the removals do not run ovl04's own cure handlers.
+  FirstSpellTarget: when the target carries the Poisoned affect $37 (CureAffect) it also removes the affect $16
+  that the poison leaves behind, with RemovingAffects set so the removals do not run ovl04's own cure handlers.
   A target that is not poisoned is cured of disease instead (CureDiseaseAffects) and, when neither
   cure applies, heals 1d4 + 8 hit points through HealCharacter and reports 'is Healed'. }
 procedure CastMonsterHeal;
@@ -1874,20 +1855,20 @@ var
     declared so the 'is Healed' string temporary below it lands where the original put it. }
   Spare: Byte;
 begin
-  if CureAffect(ds6C95, PoisonedAffect) then
+  if CureAffect(FirstSpellTarget, PoisonedAffect) then
   begin
-    ds681F := 1;
-    RemoveAffect(ds6C95, PoisonAidAffect, nil);
-    ds681F := 0;
+    RemovingAffects := 1;
+    RemoveAffect(FirstSpellTarget, PoisonAidAffect, nil);
+    RemovingAffects := 0;
   end
   else
     if not CureDiseaseAffects then
-      if HealCharacter(ds6C95, RollDice(HealDiceCount, HealDiceSides) + HealBase, NoFlag) then
-        ShowHitMessage(ds6C95, ShowAbout, 'is Healed');
+      if HealCharacter(FirstSpellTarget, RollDice(HealDiceCount, HealDiceSides) + HealBase, NoFlag) then
+        ShowHitMessage(FirstSpellTarget, ShowAbout, 'is Healed');
 end;
 { ovl22:2EE5. Cast handler of spell 59, a monster-only spell: SpellNames[59] is empty, and the
   InitSpellHandlers table points element 59 of SpellHandlers at this stub. It gives the first chosen target
-  ds6C95 a fixed Strength of 21 with no exceptional percentile (RaiseStrength; a monster's strength),
+  FirstSpellTarget a fixed Strength of 21 with no exceptional percentile (RaiseStrength; a monster's strength),
   shows 'is stronger' when the strength actually rose (ShowCharacterMessage) and adds the strength affect $26
   (the affect CastStrength and this routine leave, SpellTable[35] and [59]; Enlarge's is $0C, ovl24
   RaiseStrength) for the current spell's own duration (SpellAffectDuration). }
@@ -1902,13 +1883,13 @@ const
 var
   Code: Byte;                     { RaiseStrength's earlier-strength code, passed to AddAffect as Data }
 begin
-  if RaiseStrength(ds6C95, MonsterStrength, NoPercent, Code) then
-    ShowCharacterMessage(ds6C95, 'is stronger', MessageColour, TimedMessage);
-  AddAffect(ds6C95, StrengthAffect, SpellAffectDuration(ds681B), Code, RunHandlerOnRemoval);
+  if RaiseStrength(FirstSpellTarget, MonsterStrength, NoPercent, Code) then
+    ShowCharacterMessage(FirstSpellTarget, 'is stronger', MessageColour, TimedMessage);
+  AddAffect(FirstSpellTarget, StrengthAffect, SpellAffectDuration(CastingSpell), Code, RunHandlerOnRemoval);
 end;
 { ovl22:2F4D. Cast handler of spell 60, a monster-only spell: SpellNames[60] is empty, and the
   InitSpellHandlers table points element 60 of SpellHandlers at this stub. It strikes the combatant on the aim
-  cell ds6DB9/ds6DBA for 1d6 + 20 points (DamageTargetInCell: the spell's saving throw kind 4, half
+  cell SpellAimX/SpellAimY for 1d6 + 20 points (DamageTargetInCell: the spell's saving throw kind 4, half
   damage on a save, and the zap animation) and then runs a short beam CastLineBeam(3, 20, 4, 0): six
   cells of 20 points away from the caster, no bounce. }
 procedure CastMonsterBeam;
@@ -1925,43 +1906,43 @@ const
 var
   Blocked: Boolean;               { DamageTargetInCell's out flag: the aim cell's tile refuses the beam (not read) }
 begin
-  DamageTargetInCell(ds6DB9, ds6DBA, RollDice(StrikeDiceCount, StrikeDiceSides) + StrikeBase, SaveKindSpell, Blocked);
+  DamageTargetInCell(SpellAimX, SpellAimY, RollDice(StrikeDiceCount, StrikeDiceSides) + StrikeBase, SaveKindSpell, Blocked);
   CastLineBeam(BeamReach, BeamDamage, SaveKindSpell, NoBounce);
 end;
 { ovl22:2F99 (e57). Cast handler of spell 61, a monster-only spell: SpellNames[61] is empty and the
   InitSpellHandlers handler table points element 61 of SpellHandlers at this stub. It only applies the current
-  spell ds681B to the chosen targets with the message 'is paralyzed'; the spell's own affect does the
-  paralyzing (as CastCauseBlindness does the blinding). Reads ds681B. }
+  spell CastingSpell to the chosen targets with the message 'is paralyzed'; the spell's own affect does the
+  paralyzing (as CastCauseBlindness does the blinding). Reads CastingSpell. }
 procedure CastMonsterParalyze;
 begin
-  ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is paralyzed');
+  ApplySpellToTargets(CastingSpell, 0, 0, 0, 0, 'is paralyzed');
 end;
 { ovl22:2FD0 (e58). Cast handler of spell 62, a monster-only spell: SpellNames[62] is empty and the
   InitSpellHandlers handler table points element 62 of SpellHandlers at this stub. It heals the first chosen
-  target ds6C95 through HealCharacter for 2d4 + 2 hit points (RollDice, no flag) and reports
+  target FirstSpellTarget through HealCharacter for 2d4 + 2 hit points (RollDice, no flag) and reports
   'is Healed' when the heal went through (ShowHitMessage, its Flag 1). The map read the routine's
   own prologue as a separate 3-byte routine ovl22_fn_2FD3 at the sub sp word; make match WRITE=1
   removed that entry (nothing calls it, and the entry stubs point at 2FD0, overlay entry 58).
-  Reads ds6C95. }
+  Reads FirstSpellTarget. }
 procedure CastMonsterHealWounds;
 begin
-  if HealCharacter(ds6C95, RollDice(2, 4) + 2, 0) then
-    ShowHitMessage(ds6C95, 1, 'is Healed');
+  if HealCharacter(FirstSpellTarget, RollDice(2, 4) + 2, 0) then
+    ShowHitMessage(FirstSpellTarget, 1, 'is Healed');
 end;
 { ovl22:302A (e59). Cast handler of spell 63, a monster-only spell: SpellNames[63] is empty and the
   InitSpellHandlers handler table points element 63 of SpellHandlers at this stub. It only applies the current
-  spell ds681B to the chosen targets with the message 'is invisible'; the spell's own affect does the
-  work (as CastDetectionSpell and CastCauseBlindness leave it to the affect). Reads ds681B. }
+  spell CastingSpell to the chosen targets with the message 'is invisible'; the spell's own affect does the
+  work (as CastDetectionSpell and CastCauseBlindness leave it to the affect). Reads CastingSpell. }
 procedure CastMonsterInvisibility;
 begin
-  ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is invisible');
+  ApplySpellToTargets(CastingSpell, 0, 0, 0, 0, 'is invisible');
 end;
 { ovl22:3058 (e60). Cast handler of spell 65, a monster-only spell: SpellNames[65] is empty and the
   InitSpellHandlers handler table points element 65 of SpellHandlers at this stub. It applies the current
-  spell ds681B to the chosen targets for 2d4 + 2 points (RollDiceCounted, its count kept in LastDiceCount)
+  spell CastingSpell to the chosen targets for 2d4 + 2 points (RollDiceCounted, its count kept in LastDiceCount)
   of magic damage with no message. The roll is the damage CastMagicMissile deals for a caster of
   level 3 or 4 (two missiles of 1d4 + 1, ovl22:1439), fixed here since a monster has no caster level.
-  Reads ds681B; changes LastDiceCount. }
+  Reads CastingSpell; changes LastDiceCount. }
 procedure CastMonsterMagicDamage;
 const
   DiceCount = 2;                  { the two missiles of a 3rd or 4th level Magic Missile }
@@ -1969,7 +1950,7 @@ const
   DamageBonus = 2;                { one point per missile }
   DamageKind = 8;                 { DealDamage: kind 8 is magic (as CastMagicMissile, ovl22:1439) }
 begin
-  ApplySpellToTargets(ds681B, 0, 0,
+  ApplySpellToTargets(CastingSpell, 0, 0,
     RollDiceCounted(DiceCount, DiceSides) + DamageBonus, DamageKind, '');
 end;
 { ovl22:3092 (e61). Cast handler of spell 66, a monster-only spell: SpellNames[66] is empty and the
@@ -1982,26 +1963,26 @@ procedure CastMonsterNoEffect;
 begin
 end;
 { ovl22:30A2 (e62). Cast handler of the monster-only spell 67 (SpellHandlers element 67, whose
-  SpellNames entry is empty, whitepaper 5.22.2): applies the current spell ds681B to the chosen
+  SpellNames entry is empty, whitepaper 5.22.2): applies the current spell CastingSpell to the chosen
   targets with caster level $FF (a fixed affect data, as CastSlowPoison's FullCasterLevel), Flag 1
   so the affect's handler runs when it is removed, no damage or kind of its own, and the message
   'is Reading'. }
 procedure CastMonsterReadMagic;
 begin
-  ApplySpellToTargets(ds681B, $FF, 1, 0, 0, 'is Reading');
+  ApplySpellToTargets(CastingSpell, $FF, 1, 0, 0, 'is Reading');
 end;
 { ovl22:30D9. MonsterBreath: the breath attack of a monster (the dragon breath the line spells'
-  comments name). When ds6DE3 is set (a combat round counter) it first rolls 1d100 and gives up on a
+  comments name). When CombatRound is set (a combat round counter) it first rolls 1d100 and gives up on a
   roll of 50 or less, so the monster does not breathe every round. It takes the breather's combat cell
   (CombatantX/Y of Who), shows 'Breathes!', asks the target picker SpellTargetPicker for the aim
-  (spell $33, the Lightning Bolt, quick) with its Done at ds70C6, and nudges the aim cell
-  ds6DB9/ds6DBA one cell towards the breather (SignOf) and off the cell beside him. It clears the
+  (spell $33, the Lightning Bolt, quick) with its Done at PickerDone, and nudges the aim cell
+  SpellAimX/SpellAimY one cell towards the breather (SignOf) and off the cell beside him. It clears the
   breather's attacker affect, plays the zap animation (DrawCombatIcon($13)), draws the breath line
   (WalkCombatLine) from the breather to the aim cell, damages the aim cell for his maximum hit points
   (DamageTargetInCell: electrical, save kind 3) and runs the line beam CastLineBeam($A, HpMax, 3, 0).
   Finally it spends the breath affect Affect: while its Data byte is above $FD it is only decremented,
   otherwise the affect $58 is removed; EndCombatTurn(Who) then runs and its byte result is left in the
-  unread Blocked local (QUIRK ovl22:30D9). Globals: ds6DE3, ds6DB9/ds6DBA, ds70C6. Parameters: Who the
+  unread Blocked local (QUIRK ovl22:30D9). Globals: CombatRound, SpellAimX/SpellAimY, PickerDone. Parameters: Who the
   breathing monster, Affect its breath affect, Unused is never read (QUIRK ovl22:30D9). }
 procedure MonsterBreath(Who: PCharacter; Affect: PAffect; Unused: Byte);
 const
@@ -2023,22 +2004,22 @@ var
   Blocked: Boolean;               { DamageTargetInCell's out flag, then EndCombatTurn's result }
   CasterX, CasterY: ShortInt;     { the breather's combat cell (CombatantX/Y) }
 begin
-  if (ds6DE3 <> 0) and (RollDice(1, ChanceSides) <= BreatheChance) then
+  if (CombatRound <> 0) and (RollDice(1, ChanceSides) <= BreatheChance) then
     Exit;
   CasterX := CombatantX(Who);
   CasterY := CombatantY(Who);
   ShowCharacterMessage(Who, 'Breathes!', MessageColour, TimedMessage);
-  SpellTargetPicker(PickerSpell, PickerQuick, ds70C6);
-  ds6DB9 := CasterX + SignOf(ds6DB9 - CasterX);
-  ds6DBA := CasterY + SignOf(ds6DBA - CasterY);
-  if ds6DB9 = CasterX + 1 then
-    Inc(ds6DB9);
-  if ds6DBA = CasterY + 1 then
-    Inc(ds6DBA);
+  SpellTargetPicker(PickerSpell, PickerQuick, PickerDone);
+  SpellAimX := CasterX + SignOf(SpellAimX - CasterX);
+  SpellAimY := CasterY + SignOf(SpellAimY - CasterY);
+  if SpellAimX = CasterX + 1 then
+    Inc(SpellAimX);
+  if SpellAimY = CasterY + 1 then
+    Inc(SpellAimY);
   ClearAttackerAffect(Who);
   DrawCombatIcon(ZapAnimation);
-  WalkCombatLine(CasterX, CasterY, ds6DB9, ds6DBA, BeamStep, BeamWidth);
-  DamageTargetInCell(ds6DB9, ds6DBA, Who^.HpMax, SaveKindBreath, Blocked);
+  WalkCombatLine(CasterX, CasterY, SpellAimX, SpellAimY, BeamStep, BeamWidth);
+  DamageTargetInCell(SpellAimX, SpellAimY, Who^.HpMax, SaveKindBreath, Blocked);
   CastLineBeam(BeamReach, Who^.HpMax, SaveKindBreath, NoBounce);
   if Affect^.Data > BreathDataLimit then
     Dec(Affect^.Data)
@@ -2073,7 +2054,6 @@ end;
   calls it too. Nothing happens when the spell is not on the scroll (Slot stays 0). }
 procedure ConsumeScrollSpell(Who: PCharacter; Item: PItem; Spell: Byte);
 const
-  SpellMask = $7F;                { the low seven bits of a scroll's spell byte hold the spell number }
   { A scroll's NameNum[2] is its remaining spell count plus $D1 (BuildTreasureItem, ovl21:1010); a
     value below this means no spells are left and the used-up scroll is removed. }
   UsedUpScrollBelow = $D2;
@@ -2094,7 +2074,7 @@ begin
   if Item^.NameNum[2] < UsedUpScrollBelow then
     RemoveInventoryItem(Who, Item);
 end;
-{ ovl22:331A. Announces a spell event for a named character. In combat (ds49F3 = 5) it shows the timed
+{ ovl22:331A. Announces a spell event for a named character. In combat (ViewMode = 5) it shows the timed
   message 'Casts a Spell' and, on the combat message row, 'Spell:' with the spell's name at column 0.
   Outside combat it clears the message window, draws Who's name at column 1 of row $13 (DrawCharacterName),
   draws Message right after the name (two columns past the name's length: 'casts', 'has memorized' or
@@ -2104,7 +2084,6 @@ end;
   entry at 3379 was invented inside this routine; make match WRITE=1 removed it. }
 procedure ShowSpellMessage(Who: PCharacter; Message: String40; Spell: Byte);
 const
-  CombatViewMode = 5;             { ds49F3 during combat (whitepaper 5.5) }
   TextColumn = 1;                 { the column the name and the spell's name are drawn at }
   MessageRow = $13;               { the row Who's name and Message are drawn on, out of combat }
   SpellNameRow = $14;             { the row the spell's name is drawn on }
@@ -2113,7 +2092,7 @@ const
   TimedMessage = 1;               { nonzero: ShowCharacterMessage delays by the game speed and clears it }
   NoMode = 0;                     { DrawCharacterName's Mode: no extra highlight }
 begin
-  if ds49F3 = CombatViewMode then
+  if ViewMode = ViewModeCombat then
   begin
     ShowCharacterMessage(Who, 'Casts a Spell', MessageColour, TimedMessage);
     ClearWindow(0, $17, $27, $17);
@@ -2134,17 +2113,17 @@ end;
   (@ChooseSpellTargets) and elements 1..$43 the cast handler of every spell number 1..$43, each an
   overlay stub of this unit (several spells share one handler: elements 5, 11, 18, 22 and 29 are
   CastDetectionSpell; 6, 7, 16, 17 and 52..54 are CastProtection; 46 is CastDispelMagic with 41).
-  Then it stores @MonsterBreath in DS:6988 (ds6988), clears the affect-removal flag ds681F, the
+  Then it stores @MonsterBreath in DS:6988 (MonsterBreathVector), clears the affect-removal flag RemovingAffects, the
   item-cast flag ItemAffectUse (set while the Use action casts a spell from an item, ovl19; the
   spell is then not forgotten and SpellCasterLevel returns 6) and the picker's chosen character
-  ds6DB5, and sets ds6821 to 1. }
+  PickedSpellCharacter, and sets RedrawItemWindow to 1. }
 procedure InitSpellHandlers;
 begin
   SpellTargetPicker := ChooseSpellTargets;
-  ds681F := 0;
+  RemovingAffects := 0;
   ItemAffectUse := False;
-  ds6DB5 := nil;
-  ds6821 := 1;
+  PickedSpellCharacter := nil;
+  RedrawItemWindow := 1;
   SpellHandlers[1] := CastBless;                { 1 Bless }
   SpellHandlers[2] := CastCurse;                { 2 Curse }
   SpellHandlers[3] := CastCureLightWounds;      { 3 Cure Light Wounds }
@@ -2212,7 +2191,7 @@ begin
   SpellHandlers[65] := CastMonsterMagicDamage;  { 65 (monster-only, no name) }
   SpellHandlers[66] := CastMonsterNoEffect;     { 66 (monster-only, no name) }
   SpellHandlers[67] := CastMonsterReadMagic;    { 67 (monster-only, no name) }
-  ds6988 := @MonsterBreath;
+  MonsterBreathVector := @MonsterBreath;
 end;
 
 begin
