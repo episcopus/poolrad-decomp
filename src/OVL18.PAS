@@ -106,7 +106,7 @@ begin
   RedrawView;
 end;
 { ovl18:06B3. Animates the doors of the area view (Flag 1) or clears them (flag 0): it draws the
-  doors of the two block-code tables DS:0900 and DS:090B through RemapPictureColours (bit 7 of a code
+  doors of the two block-code tables DS:0900 and DS:090B through RemapPictureColors (bit 7 of a code
   selects the second SQRPACI bank SqrPaciBank2, otherwise SqrPaciBank1), stepping the area view through
   DS:094D/DS:095F and stepping the display, then clears the doors. Called by ovl03:31B4 and
   ovl17:1602. }
@@ -123,30 +123,30 @@ begin
     begin
       for DoorCol := 0 to $A do
         if DoorBlockCodesFirst[DoorCol] > $7F then
-          RemapPictureColours(@DoorRemapFrom, @DoorRemapToFirst, DoorBlockCodesFirst[DoorCol] and $7F, 1,
+          RemapPictureColors(@DoorRemapFrom, @DoorRemapToFirst, DoorBlockCodesFirst[DoorCol] and $7F, 1,
             Pointer(SqrPaciBank2))
         else
-          RemapPictureColours(@DoorRemapFrom, @DoorRemapToFirst, DoorBlockCodesFirst[DoorCol], 1, Pointer(SqrPaciBank1));
+          RemapPictureColors(@DoorRemapFrom, @DoorRemapToFirst, DoorBlockCodesFirst[DoorCol], 1, Pointer(SqrPaciBank1));
       for DoorCol := 0 to $11 do
         if DoorBlockCodesSecond[DoorCol] > $7F then
-          RemapPictureColours(@DoorRemapFrom, @DoorRemapToSecond, DoorBlockCodesSecond[DoorCol] and $7F, 1,
+          RemapPictureColors(@DoorRemapFrom, @DoorRemapToSecond, DoorBlockCodesSecond[DoorCol] and $7F, 1,
             Pointer(SqrPaciBank2))
         else
-          RemapPictureColours(@DoorRemapFrom, @DoorRemapToSecond, DoorBlockCodesSecond[DoorCol], 1, Pointer(SqrPaciBank1));
+          RemapPictureColors(@DoorRemapFrom, @DoorRemapToSecond, DoorBlockCodesSecond[DoorCol], 1, Pointer(SqrPaciBank1));
       DrawAreaView(DoorViewColumns[DoorRow], DoorViewRows[DoorRow]);
       FlushPictureChanges;
     end;
   end;
   for DoorCol := 0 to $A do
     if DoorBlockCodesFirst[DoorCol] > $7F then
-      RemapPictureColours(@DoorRemapFrom, @DoorRemapToFirst, DoorBlockCodesFirst[DoorCol] and $7F, 0, Pointer(SqrPaciBank2))
+      RemapPictureColors(@DoorRemapFrom, @DoorRemapToFirst, DoorBlockCodesFirst[DoorCol] and $7F, 0, Pointer(SqrPaciBank2))
     else
-      RemapPictureColours(@DoorRemapFrom, @DoorRemapToFirst, DoorBlockCodesFirst[DoorCol], 0, Pointer(SqrPaciBank1));
+      RemapPictureColors(@DoorRemapFrom, @DoorRemapToFirst, DoorBlockCodesFirst[DoorCol], 0, Pointer(SqrPaciBank1));
   for DoorCol := 0 to $11 do
     if DoorBlockCodesSecond[DoorCol] > $7F then
-      RemapPictureColours(@DoorRemapFrom, @DoorRemapToSecond, DoorBlockCodesSecond[DoorCol] and $7F, 0, Pointer(SqrPaciBank2))
+      RemapPictureColors(@DoorRemapFrom, @DoorRemapToSecond, DoorBlockCodesSecond[DoorCol] and $7F, 0, Pointer(SqrPaciBank2))
     else
-      RemapPictureColours(@DoorRemapFrom, @DoorRemapToSecond, DoorBlockCodesSecond[DoorCol], 0, Pointer(SqrPaciBank1));
+      RemapPictureColors(@DoorRemapFrom, @DoorRemapToSecond, DoorBlockCodesSecond[DoorCol], 0, Pointer(SqrPaciBank1));
   if Flag <> 0 then
   begin
     DrawAreaView($17, $19);

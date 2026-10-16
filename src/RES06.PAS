@@ -201,7 +201,7 @@ begin
     case VideoAdapter of
       0:
         begin
-          Color := TextColourMap4[Color];
+          Color := TextColorMap4[Color];
           DestOff := Row * 4;
           FontRow := 0;
           for Line := 0 to 3 do

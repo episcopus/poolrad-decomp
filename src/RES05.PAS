@@ -69,7 +69,7 @@ end;
 
 { 0802:0040. Writes Count copies of the character Ch at text cell (Col, Row) through the BIOS
   (INT 10h function 2 sets the cursor, function 9 writes the character with its attribute) on the
-  page in TextPage. With VideoAdapter 0 the colour goes through the four-colour table TextColourMap4; with
+  page in TextPage. With VideoAdapter 0 the colour goes through the four-colour table TextColorMap4; with
   VideoAdapter 1 the same two calls are repeated on the page in FillTextPage with the colour as it is. }
 procedure WriteCharsAt(Col, Row, Color, Count: Byte; Ch: Char);
 begin
@@ -82,7 +82,7 @@ begin
   Regs.AL := Ord(Ch);
   Regs.BH := TextPage;
   if VideoAdapter = 0 then
-    Regs.BL := TextColourMap4[Color]
+    Regs.BL := TextColorMap4[Color]
   else
     Regs.BL := Color;
   Regs.CX := Count;

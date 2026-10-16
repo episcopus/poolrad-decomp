@@ -53,7 +53,7 @@ const
   LongRestHours = 6;
   LongRestLevel = 2;
   MinutesPerLevel = 15;
-  { Colours of the prompt line (ReadPromptChoice, AskYesNo) and of the messages (ShowCharacterMessage). }
+  { Colors of the prompt line (ReadPromptChoice, AskYesNo) and of the messages (ShowCharacterMessage). }
   TitleColor = 13;
   WordColor = 10;
   HotColor = 15;

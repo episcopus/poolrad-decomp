@@ -188,7 +188,7 @@ end;
   Sel^.CBodyBlock) into the character's icon slot (PictureSlots[Sel^.CombatIcon]), then merges the CHEAD
   halves into the CBODY halves (MergePictureData: OR the tile bytes, AND the pixels), so the head
   masks the body. When Recolor is set it also builds a 16-entry colour map from the six nibble pairs
-  Sel^.Figure[1..6] through FigureColourSlots and applies it to both halves of the icon (RemapPictureColours).
+  Sel^.Figure[1..6] through FigureColorSlots and applies it to both halves of the icon (RemapPictureColors).
   Finally it frees slot 11, restores the tile set and flushes the keyboard. Called by the ovl16
   character menus, by AddMonsterToParty and by LoadGame. }
 procedure BuildCharacterIcon(Recolor: Boolean);
@@ -215,11 +215,11 @@ begin
       end;
       for I := 1 to 6 do
       begin
-        MapTo[FigureColourSlots[I]] := Figure[I] and $0F;
-        MapTo[FigureColourSlots[I] + 8] := (Figure[I] and $F0) shr 4;
+        MapTo[FigureColorSlots[I]] := Figure[I] and $0F;
+        MapTo[FigureColorSlots[I] + 8] := (Figure[I] and $F0) shr 4;
       end;
-      RemapPictureColours(@MapFrom, @MapTo, 0, 0, PictureSlots[CombatIcon].FirstPic);
-      RemapPictureColours(@MapFrom, @MapTo, 0, 0, PictureSlots[CombatIcon].SecondPic);
+      RemapPictureColors(@MapFrom, @MapTo, 0, 0, PictureSlots[CombatIcon].FirstPic);
+      RemapPictureColors(@MapFrom, @MapTo, 0, 0, PictureSlots[CombatIcon].SecondPic);
     end;
     FreePictureSlot(11);
     RestoreTileSet;

@@ -29,8 +29,8 @@ const
                               at RestFirstColumn + 1 = 12, then moves right three columns a field }
   RestRow = 17;             { the text row of the rest time line }
   TopClockDigit = 6;        { the top digit of the clock (years); its carry ages the party instead of carrying }
-  RestTextColour = 10;      { EGA colour of the rest time }
-  RestSelectedColour = 15;  { EGA colour of the field the player is changing }
+  RestTextColor = 10;      { EGA colour of the rest time }
+  RestSelectedColor = 15;  { EGA colour of the field the player is changing }
   TimedAffectFlagCount = $48; { the 72 TimedAffectFlags entries, one per party member (TimedAffectFlagsFrom0 is the same
                                 bytes from index 1; the FillChar at ovl20:0000 and ovl20:0CE5 marks them) }
   TimedAffectDue = 1;         { the value that FillChar stores: every member's timed affects are due }
@@ -40,13 +40,13 @@ const
   RestInterruptSides = 100;
   RestMessageColumn = 1;
   RestMessageRow = $13;
-  RestMessageColour = 15;
+  RestMessageColor = 15;
   RestStepsPerSpellLevel = 3; { ovl20:0B80 multiplies the returned level by three }
   RestMinuteStep = 5;           { Inc and Dec on the minutes field move five minutes }
   RestHealAmount = 1;           { hit points HealCharacter restores at each whole-party heal (ovl20:0871) }
-  RestTitleColour = 13;
-  RestWordColour = 10;
-  RestHotColour = 15;
+  RestTitleColor = 13;
+  RestWordColor = 10;
+  RestHotColor = 15;
   { The RestTime digits, the mixed-radix clock ovl20:02F2 carries (whitepaper 5.22.1). These are digit
     names, not menu fields: the menu's Selected is one of them. }
   MinutesDigit = 1;             { RestTime[1]: the minutes, the bottom digit; RestMinuteStep edits it }
@@ -319,7 +319,7 @@ end;
 { ovl20:05F0: retf 2: Selected (2 bytes of parameters); 272 bytes of locals. Draws the rest time on row 17:
   "Rest Time:" and then days and hours as two digits with a colon between them, and the minutes (the tens
   and the minutes of RestTime, MinutesPerTensDigit * RestTime[TensOfMinutesDigit] +
-  RestTime[MinutesDigit]). The field Selected is drawn in RestSelectedColour, the others in RestTextColour.
+  RestTime[MinutesDigit]). The field Selected is drawn in RestSelectedColor, the others in RestTextColor.
   Selected is a RestTime digit (TensOfMinutesDigit, HoursDigit or DaysDigit) or 0; Colors[0] is never
   drawn, so Selected 0 (every caller but the menu) highlights nothing. }
 procedure ShowRestTime(Selected: ShortInt);
@@ -329,15 +329,15 @@ var
   Col: Byte;
 begin
   for Digit := 0 to 6 do
-    Colors[Digit] := RestTextColour;
-  Colors[Selected] := RestSelectedColour;
-  DrawTextAt(RestLabelColumn, RestRow, RestTextColour, 'Rest Time:');
+    Colors[Digit] := RestTextColor;
+  Colors[Selected] := RestSelectedColor;
+  DrawTextAt(RestLabelColumn, RestRow, RestTextColor, 'Rest Time:');
   Col := RestFirstColumn;
   for Digit := DaysDigit downto HoursDigit do
   begin
     DrawTextAt(Col + 1, RestRow, Colors[Digit], TwoDigitText(RestTime[Digit]));
     { Col + 1 + 1 + 1 is the original's expression for the colon column, one past the two digits }
-    DrawTextAt(Col + 1 + 1 + 1, RestRow, RestTextColour, ':');
+    DrawTextAt(Col + 1 + 1 + 1, RestRow, RestTextColor, ':');
     Inc(Col, 3);
   end;
   DrawTextAt(Col + 1, RestRow, Colors[TensOfMinutesDigit],
@@ -364,7 +364,7 @@ begin
   repeat
     ShowRestTime(Selected);
     Key := ReadPromptChoice('', 'Rest   daYs Hours Mins   Inc Dec   Exit',
-                            RestTitleColour, RestWordColour, RestHotColour, 1, 0, ExtendedKey);
+                            RestTitleColor, RestWordColor, RestHotColor, 1, 0, ExtendedKey);
     if ExtendedKey <> 0 then
       case Key of
         ScanUp: Key := 'I';
@@ -432,9 +432,9 @@ begin
       Who := Who^.Next;
     end;
     ShowRestTime(0);
-    { the original draws this message in colour 10 (RestTextColour), not the interruption message's
-      RestMessageColour 15; the healing itself is what the message claims }
-    DrawTextAt(RestMessageColumn, RestMessageRow, RestTextColour, 'The Whole Party Is Healed');
+    { the original draws this message in colour 10 (RestTextColor), not the interruption message's
+      RestMessageColor 15; the healing itself is what the message claims }
+    DrawTextAt(RestMessageColumn, RestMessageRow, RestTextColor, 'The Whole Party Is Healed');
     if Healed then DrawPartyRoster(SelectedCharacter);
     DelayByGameSpeed;
     ClearCharacterMessage;
@@ -618,7 +618,7 @@ begin
     if KeyPressed then
     begin
       ShowRestTime(0);
-      if AskYesNo('Stop Resting? ', RestTitleColour, RestWordColour, RestHotColour) = 'Y' then
+      if AskYesNo('Stop Resting? ', RestTitleColor, RestWordColor, RestHotColor) = 'Y' then
         EndRest := 1
       else
         ClearPromptLine;
@@ -646,7 +646,7 @@ begin
           begin
             ClearCharacterMessage;
             ShowRestTime(0);
-            DrawTextAt(RestMessageColumn, RestMessageRow, RestMessageColour,
+            DrawTextAt(RestMessageColumn, RestMessageRow, RestMessageColor,
                        'The Party is rudely interrupted!');
             EndRest := 1;
             RunRestPeriod := 1;

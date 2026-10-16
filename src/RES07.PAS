@@ -53,10 +53,10 @@ function SwapNibbles(Value: Byte): Byte;
 procedure MirrorPicture(Source, Dest: Pointer);
 procedure ShowPicture(PicCol, PicRow: Integer; Buf: Pointer);
 procedure FlushPictureChanges;
-procedure RemapPictureColours(FromMap, ToMap: Pointer; FirstItem: Integer; Flicker: Byte; Pic: Pointer);
+procedure RemapPictureColors(FromMap, ToMap: Pointer; FirstItem: Integer; Flicker: Byte; Pic: Pointer);
 procedure AllocatePicture(Height, WidthCols: Word; ItemCount, AllocFlags: Byte; var Pic);
 procedure ReleasePicture(var Pic);
-procedure FillPictureRect(FirstCol, FirstRow: Integer; Width, Height: Word; Colour: Byte; Palette: Pointer; Target: Pointer);
+procedure FillPictureRect(FirstCol, FirstRow: Integer; Width, Height: Word; Color: Byte; Palette: Pointer; Target: Pointer);
 procedure SetPaletteRegister(Register, Color: Byte);
 implementation
 
@@ -161,7 +161,7 @@ end;
 { 0464:02A5: unpacks the pixel data of the DAX block Source (its pixels start at Offset,
   $11) into Data, the picture LoadPicture allocated, one item and one cell (four source
   bytes, eight pixels) at a time. Per VideoAdapter: 0 writes two bytes per cell, the
-  palette colour of each pixel in 2-bit form (PixelBitsByColour), and, when the picture has a pixel
+  palette colour of each pixel in 2-bit form (PixelBitsByColor), and, when the picture has a pixel
   buffer (Pixels, AllocFlags bit 0), the mask of the pixels equal to Color; 1 writes the
   four EGA plane bytes of each cell (a pixel's colour bits select its planes) and the
   mask; 2 copies ByteSize bytes of each item unchanged and builds the mask from them.
@@ -209,10 +209,10 @@ begin
             begin
               if Odd(Index) then
                 Data[OutOfs] := Data[OutOfs] or
-                  PixelBitsByColour[PaletteColor(CellBytes[Index shr 1] and $0F, @Palette), Index]
+                  PixelBitsByColor[PaletteColor(CellBytes[Index shr 1] and $0F, @Palette), Index]
               else
                 Data[OutOfs] := Data[OutOfs] or
-                  PixelBitsByColour[PaletteColor((CellBytes[Index shr 1] and $F0) shr 4, @Palette), Index];
+                  PixelBitsByColor[PaletteColor((CellBytes[Index shr 1] and $F0) shr 4, @Palette), Index];
             end;
             if Pixels <> nil then
               Data[OutOfs] := Data[OutOfs] and not Pixels^[PixIndex - 2];
@@ -221,10 +221,10 @@ begin
             begin
               if Odd(Index) then
                 Data[OutOfs] := Data[OutOfs] or
-                  PixelBitsByColour[PaletteColor(CellBytes[Index shr 1] and $0F, @Palette), Index - 4]
+                  PixelBitsByColor[PaletteColor(CellBytes[Index shr 1] and $0F, @Palette), Index - 4]
               else
                 Data[OutOfs] := Data[OutOfs] or
-                  PixelBitsByColour[PaletteColor((CellBytes[Index shr 1] and $F0) shr 4, @Palette), Index - 4];
+                  PixelBitsByColor[PaletteColor((CellBytes[Index shr 1] and $F0) shr 4, @Palette), Index - 4];
             end;
             if Pixels <> nil then
               Data[OutOfs] := Data[OutOfs] and not Pixels^[PixIndex - 1];
@@ -963,14 +963,14 @@ end;
   but only item 0 is used. FirstItem is an item index (the byte offset of an item is
   FirstItem * ByteSize). Flicker (nonzero) makes each change random: adapters 0 and 2
   change each matching pixel with chance 1 in 4, adapter 1 changes a random subset of the
-  matching pixels of each cell. Adapter 0 compares 2-bit pixel pairs (PixelBitsByColour,
+  matching pixels of each cell. Adapter 0 compares 2-bit pixel pairs (PixelBitsByColor,
   GlyphPixelMasks), adapter 1 the four EGA planes (EgaPlaneBitMasks), adapter 2 the two
   nibbles of each byte. Called by LoadPictureSlot (ovl32), LoadSpriteList (ovl28),
   AnimateAreaDoors (ovl18, the door frame index) and ovl16, ovl17 (the others 0).
   QUIRK 0464:1F51: the header inside the colour loop tests FirstItem again; the header
   before the loop has already set it to 0, so Items is 1 for every colour: a negative
   FirstItem recolours and copies back item 0 only. }
-procedure RemapPictureColours(FromMap, ToMap: Pointer; FirstItem: Integer; Flicker: Byte; Pic: Pointer);
+procedure RemapPictureColors(FromMap, ToMap: Pointer; FirstItem: Integer; Flicker: Byte; Pic: Pointer);
 var
   FromMapCopy: TColorMap;            { FromMap, copied on entry }
   ToMapCopy: TColorMap;              { ToMap, copied on entry }
@@ -987,7 +987,7 @@ var
   RowBytes: Word;                    { bytes per pixel row }
   FromHigh: Byte;                    { adapter 2: the FromMap colour in the high nibble }
   ToHigh: Byte;                      { adapter 2: the ToMap colour in the high nibble }
-  Colour: Byte;                      { colour index loop variable }
+  Color: Byte;                      { colour index loop variable }
   Scratch: Pointer;                  { the scratch copy of Pic the changes are written to }
 begin
   FromMapCopy := PColorMap(FromMap)^;
@@ -1009,7 +1009,7 @@ begin
   PPicture(Scratch)^.Palette := PPicture(Pic)^.Palette;
   Move(PPicture(Pic)^.Data[PicOfs], PPicture(Scratch)^.Data[ScratchOfs],
     PPicture(Scratch)^.ItemCount * PPicture(Scratch)^.ByteSize);
-  for Colour := 0 to 15 do
+  for Color := 0 to 15 do
   begin
     with PPicture(Pic)^ do
     begin
@@ -1023,7 +1023,7 @@ begin
       PicOfs := FirstItem * ByteSize;
       ScratchOfs := 0;
     end;
-    if FromMapCopy[Colour] <> ToMapCopy[Colour] then
+    if FromMapCopy[Color] <> ToMapCopy[Color] then
     begin
       with PPicture(Scratch)^ do
       begin
@@ -1037,10 +1037,10 @@ begin
               begin
                 for Quad := 0 to 3 do
                   if (PPicture(Pic)^.Data[PicOfs] and GlyphPixelMasks[Quad + 4]) =
-                    PixelBitsByColour[PaletteColor(FromMapCopy[Colour], @Palette), Quad] then
+                    PixelBitsByColor[PaletteColor(FromMapCopy[Color], @Palette), Quad] then
                     if (Flicker = 0) or ((Flicker <> 0) and (Random(4) = 0)) then
                       Data[ScratchOfs] := (Data[ScratchOfs] and not GlyphPixelMasks[Quad + 4]) or
-                        PixelBitsByColour[PaletteColor(ToMapCopy[Colour], @Palette), Quad];
+                        PixelBitsByColor[PaletteColor(ToMapCopy[Color], @Palette), Quad];
                 Inc(PicOfs);
                 Inc(ScratchOfs);
               end;
@@ -1048,7 +1048,7 @@ begin
         1:
         begin
           for Plane := 0 to 3 do
-            if (FromMapCopy[Colour] and EgaPlaneBitMasks[Plane]) > 0 then
+            if (FromMapCopy[Color] and EgaPlaneBitMasks[Plane]) > 0 then
               PlaneMask[Plane] := 0
             else
               PlaneMask[Plane] := $FF;
@@ -1063,7 +1063,7 @@ begin
                 for Plane := 0 to 3 do
                   Mask := (PPicture(Pic)^.Data[PicOfs + Plane] xor PlaneMask[Plane]) and Mask;
                 for Plane := 0 to 3 do
-                  if (ToMapCopy[Colour] and EgaPlaneBitMasks[Plane]) > 0 then
+                  if (ToMapCopy[Color] and EgaPlaneBitMasks[Plane]) > 0 then
                     Data[ScratchOfs + Plane] := Data[ScratchOfs + Plane] or Mask
                   else
                     Data[ScratchOfs + Plane] := Data[ScratchOfs + Plane] and not Mask;
@@ -1074,8 +1074,8 @@ begin
         2:
         begin
           RowBytes := WidthCols * 4;
-          FromHigh := FromMapCopy[Colour] shl 4;
-          ToHigh := ToMapCopy[Colour] shl 4;
+          FromHigh := FromMapCopy[Color] shl 4;
+          ToHigh := ToMapCopy[Color] shl 4;
           for SharedLoopIndex := FirstItem to Items + FirstItem - 1 do
             for PixelRow := 1 to Height do
               for ColByte := 1 to RowBytes do
@@ -1083,9 +1083,9 @@ begin
                 if (PPicture(Pic)^.Data[PicOfs] and $F0) = FromHigh then
                   if (Flicker = 0) or ((Flicker <> 0) and (Random(4) = 0)) then
                     Data[ScratchOfs] := (Data[ScratchOfs] and $0F) or ToHigh;
-                if (PPicture(Pic)^.Data[PicOfs] and $0F) = FromMapCopy[Colour] then
+                if (PPicture(Pic)^.Data[PicOfs] and $0F) = FromMapCopy[Color] then
                   if (Flicker = 0) or ((Flicker <> 0) and (Random(4) = 0)) then
-                    Data[ScratchOfs] := (Data[ScratchOfs] and $F0) or ToMapCopy[Colour];
+                    Data[ScratchOfs] := (Data[ScratchOfs] and $F0) or ToMapCopy[Color];
                 Inc(PicOfs);
                 Inc(ScratchOfs);
               end;
@@ -1156,20 +1156,20 @@ begin
     end;
   end;
 end;
-{ 0464:2632: fills a rectangle of picture Target with palette colour Colour (Palette is
+{ 0464:2632: fills a rectangle of picture Target with palette colour Color (Palette is
   the 8-byte PPalette). Width and FirstCol are in cells of 8 pixels (2, 4 or 1x4 bytes per
   cell), but FirstRow and Height are PIXEL rows: the loop runs once per pixel row, from
   row FirstRow for Height rows, with no * 8. FirstCol and FirstRow may be negative: the
   rectangle is clipped at the picture's left, top, right and bottom edges. VideoAdapter 0
-  writes two bytes per cell (PixelsByColour2Bit[PaletteColor(Colour)]), 2 writes four bytes per cell
-  (PixelsByColour4Bit[Colour]) and 1 writes one byte per EGA plane through the plane mask of Colour
+  writes two bytes per cell (PixelsByColor2Bit[PaletteColor(Color)]), 2 writes four bytes per cell
+  (PixelsByColor4Bit[Color]) and 1 writes one byte per EGA plane through the plane mask of Color
   (EgaPlaneBitMasks). Every row it touches is marked in RowDirtyFlags and in the trackers RowFirstChangedOfs,
   RowFirstChangedCol and RowLastChangedOfs for FlushPictureChanges. Called by DrawWallDescriptors (ovl29:0174,
   four times, FirstCol = 2, the wall descriptors' pixel rows and the WallDescriptor1..WallDescriptor4
   colours) and by DrawIconCell (ovl16:34DF).
   QUIRK 0464:2707: a rectangle that starts above row 0 is drawn one row too far: the row
   bound is Height - |FirstRow| and the loop includes it. }
-procedure FillPictureRect(FirstCol, FirstRow: Integer; Width, Height: Word; Colour: Byte; Palette: Pointer; Target: Pointer);
+procedure FillPictureRect(FirstCol, FirstRow: Integer; Width, Height: Word; Color: Byte; Palette: Pointer; Target: Pointer);
 var
   Pal: TPalette;
   ClipLeft, RightOver, StartCol, RightRoom, Count, LastRow, DestOfs, Row: Word;
@@ -1244,9 +1244,9 @@ begin
           RowFirstChangedOfs[TrackRow] := DestOfs;
         end;
         if VideoAdapter = 0 then
-          FillChar(PPicture(Target)^.Data[DestOfs], Count, PixelsByColour2Bit[PaletteColor(Colour, @Pal)])
+          FillChar(PPicture(Target)^.Data[DestOfs], Count, PixelsByColor2Bit[PaletteColor(Color, @Pal)])
         else
-          FillChar(PPicture(Target)^.Data[DestOfs], Count, PixelsByColour4Bit[Colour]);
+          FillChar(PPicture(Target)^.Data[DestOfs], Count, PixelsByColor4Bit[Color]);
         Inc(DestOfs, Count);
         if DestOfs - 1 > RowLastChangedOfs[TrackRow] then RowLastChangedOfs[TrackRow] := DestOfs - 1;
         Inc(DestOfs, RightRoom);
@@ -1262,7 +1262,7 @@ begin
       DestOfs := DestOfs * 4;
       FillChar(Mask, 4, 0);
       for PlaneIndex := 0 to 3 do
-        if (EgaPlaneBitMasks[PlaneIndex] and Colour) > 0 then Mask[PlaneIndex] := $FF;
+        if (EgaPlaneBitMasks[PlaneIndex] and Color) > 0 then Mask[PlaneIndex] := $FF;
       for Row := 0 to LastRow do
       begin
         RowDirtyFlags[TrackRow] := 1;
@@ -1286,7 +1286,7 @@ begin
 end;
 { 0464:2A0D: sets one EGA palette register through INT 10h function $10
   (AL=0): Register is the palette register and Color the colour value, mapped from
-  the 0..15 palette range to the hardware's 0..7 and 16..23. Called by SwapPaletteColours0And8/e3
+  the 0..15 palette range to the hardware's 0..7 and 16..23. Called by SwapPaletteColors0And8/e3
   (0,8)/(8,0) and (0,0)/(8,8) and by ShowTitleScreen (1,9). }
 procedure SetPaletteRegister(Register, Color: Byte);
 begin

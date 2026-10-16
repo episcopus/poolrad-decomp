@@ -305,7 +305,7 @@ end;
   (T), Drop (D) and Exit (E) until Exit or Escape (#0) is chosen or Done is set. Items runs RunItemMenu,
   Spells runs ChooseSpellFromList, Trade runs TradeMoney and Drop runs ChooseAndDropMoney and then
   ShowCharacterMoney. The sheet is drawn again after Items, Spells and Trade. In view mode 5 (combat)
-  RestorePaletteColours0And8 runs on entry and SwapPaletteColours0And8 on exit. Done: the stop flag, 0 keeps the view
+  RestorePaletteColors0And8 runs on entry and SwapPaletteColors0And8 on exit. Done: the stop flag, 0 keeps the view
   going; RunItemMenu gets
   it too. ViewedCharacter keeps a copy of SelectedCharacter (ovl19:0AD1). }
 procedure ViewSelectedCharacter(var Done: Byte);
@@ -321,7 +321,7 @@ var
   Choice: Word;                 { -1: ChooseSpellFromList opens its window and asks for a spell }
 begin
   if ViewMode = ViewModeCombat then
-    RestorePaletteColours0And8;
+    RestorePaletteColors0And8;
   Key := ' ';
   Done := 0;
   ViewedCharacter := SelectedCharacter;
@@ -364,7 +364,7 @@ begin
       ShowCharacterSheet;
   end;
   if ViewMode = ViewModeCombat then
-    SwapPaletteColours0And8;
+    SwapPaletteColors0And8;
   RedrawView;
 end;
 { ovl19:0D70. Asks whether Item may leave the character: ovl19:0EF8 calls it before its T, D and S

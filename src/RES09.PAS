@@ -8,7 +8,7 @@ interface
 uses RES06;
 procedure DrawWindowFrame(LeftCol, TopRow, RightCol, BottomRow: ShortInt; FrameSet: Byte);
 procedure ClearWindow(LeftCol, TopRow, RightCol, BottomRow: ShortInt);
-procedure DrawWindow(LeftCol, TopRow, RightCol, BottomRow: ShortInt; FrameSet, TextColour: Byte;
+procedure DrawWindow(LeftCol, TopRow, RightCol, BottomRow: ShortInt; FrameSet, TextColor: Byte;
   Text: String40);
 implementation
 uses POOLVARS, OVL34;
@@ -120,19 +120,19 @@ begin
   end;
 end;
 { 03F1:02E8. Draws a titled window for dialogs and screens: clears it (ClearWindow), draws
-  its frame (DrawWindowFrame) and centres Text on TopRow in colour TextColour
+  its frame (DrawWindowFrame) and centres Text on TopRow in colour TextColor
   (DrawTextAt, skipped when Text is empty). LeftCol/TopRow/RightCol/BottomRow are the
   window's text columns and rows; FrameSet selects the frame tiles. Text is a String40
   value parameter: the compiler copies it to a hidden stack temporary on entry (the
   StrLCopy at 02EE, limit $28), and Length and the 0626 call read that temporary
   ([bp-$29]). Side effect: the screen. Called from ovl01/02/03/04/05/06 and res12. }
-procedure DrawWindow(LeftCol, TopRow, RightCol, BottomRow: ShortInt; FrameSet, TextColour: Byte;
+procedure DrawWindow(LeftCol, TopRow, RightCol, BottomRow: ShortInt; FrameSet, TextColor: Byte;
   Text: String40);
 begin
   ClearWindow(LeftCol, TopRow, RightCol, BottomRow);
   DrawWindowFrame(LeftCol, TopRow, RightCol, BottomRow, FrameSet);
   if Length(Text) <> 0 then
-    DrawTextAt((LeftCol + RightCol - Length(Text)) div 2, TopRow, TextColour, Text);
+    DrawTextAt((LeftCol + RightCol - Length(Text)) div 2, TopRow, TextColor, Text);
 end;
 
 begin

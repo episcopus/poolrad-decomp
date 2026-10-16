@@ -1675,14 +1675,14 @@ begin
   DrawLocationLine;
   DrawPartyRoster(SelectedCharacter);
 end;
-{ 00BA:2B88. Draws the combat screen: SwapPaletteColours0And8 prepares the EGA palette, the left window
+{ 00BA:2B88. Draws the combat screen: SwapPaletteColors0And8 prepares the EGA palette, the left window
   (1,1)-(21,21) and the right window (23,1)-(38,21) are drawn with DrawWindow, the bottom two rows
   (0,23)-(39,24) are cleared, and the cursor is placed on the combat map's view origin plus three
   cells (MoveCombatCursor: margin CursorMargin, direction CursorNoStep). Called by StartBattle,
   PlayerTurn and the combat overlays. Globals: CombatMap (read). Side effect: the screen. }
 procedure DrawCombatScreen;
 begin
-  SwapPaletteColours0And8;
+  SwapPaletteColors0And8;
   DrawWindow(1, 1, $15, $15, 0, 0, '');
   DrawWindow($17, 1, $26, $15, 0, 0, '');
   ClearWindow(0, $17, $27, $18);

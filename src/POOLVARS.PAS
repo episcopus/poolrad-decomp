@@ -880,11 +880,11 @@ const
   { the second door block codes of AnimateAreaDoors (indexed 0..$11); same 7-bit flag }
   DoorBlockCodesSecond: array[0..$11] of Byte = (
       86, 87, 88, 89, 108, 109, 110, 111, 112, 114, 115, 116, 117, 118, 119, 223, 243, 245);
-  { the first 16-byte record AnimateAreaDoors passes to RemapPictureColours }
+  { the first 16-byte record AnimateAreaDoors passes to RemapPictureColors }
   DoorRemapFrom: array[0..$F] of Byte = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
-  { the second 16-byte record AnimateAreaDoors passes to RemapPictureColours }
+  { the second 16-byte record AnimateAreaDoors passes to RemapPictureColors }
   DoorRemapToFirst: array[0..$F] of Byte = (1, 1, 2, 3, 4, 5, 6, 2, 8, 9, 10, 11, 12, 13, 14, 15);
-  { the third 16-byte record AnimateAreaDoors passes to RemapPictureColours }
+  { the third 16-byte record AnimateAreaDoors passes to RemapPictureColors }
   DoorRemapToSecond: array[0..$F] of Byte = (0, 1, 2, 3, 4, 5, 6, 2, 8, 9, 10, 11, 12, 13, 14, 15);
   { the per-step DrawAreaView columns of AnimateAreaDoors (indexed 0..8) }
   DoorViewColumns: array[0..8] of Word = (17, 17, 17, 19, 19, 19, 23, 23, 23);
@@ -965,9 +965,9 @@ const
       (Col: 37; Row: 8; Pic: 147),
       (Col: 19; Row: 16; Pic: 247),
       (Col: 25; Row: 27; Pic: 256));
-  { 16-byte table LoadSpriteList passes to RemapPictureColours (with SpriteRemapTo) }
+  { 16-byte table LoadSpriteList passes to RemapPictureColors (with SpriteRemapTo) }
   SpriteRemapFrom: array[0..$F] of Byte = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
-  { second 16-byte table LoadSpriteList passes to RemapPictureColours }
+  { second 16-byte table LoadSpriteList passes to RemapPictureColors }
   SpriteRemapTo: array[0..$F] of Byte = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0, 14, 15);
   { The ten pieces a wall of the 3D view is drawn from (DrawWallPiece, DrawWallView): each piece is a
     rectangle of 8x8 tiles, Width x Height, whose tiles follow each other in a wall's 156-byte tile
@@ -982,7 +982,7 @@ const
   WallPieceCol: array[0..9] of Integer = (5, 4, 6, 4, 2, 7, 2, 0, 9, 5);
   { view row of each wall piece's top left tile; see above }
   WallPieceRow: array[0..9] of Integer = (4, 3, 3, 3, 1, 1, 1, 0, 0, 4);
-  { Colour maps for RemapPictureColours (16 entries, colour I becomes entry I): PictureRemapFrom is the identity,
+  { Color maps for RemapPictureColors (16 entries, colour I becomes entry I): PictureRemapFrom is the identity,
     PictureRemap13To8 turns colour 13 into 8 and PictureRemap13To0 turns 13 into 0 (the image). LoadPictureSlot recolours the
     TileSet picture sets from PictureRemapFrom to PictureRemap13To8 and ICON from PictureRemapFrom to PictureRemap13To0. }
   PictureRemapFrom: array[0..15] of Byte = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);  { identity colour
@@ -991,12 +991,12 @@ const
     see above }
   PictureRemap13To0: array[0..15] of Byte = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0, 14, 15);  { colour 13 to 0;
     see above }
-  { DS:0D02..0D05: storage of PixelsByColour2Bit }
+  { DS:0D02..0D05: storage of PixelsByColor2Bit }
   Raw0D02: array[0..3] of Byte =
     (
       $00, $55, $AA, $FF);
   { two 4-bit pixels of colour C (C * $11); see above }
-  PixelsByColour4Bit: array[0..15] of Byte = (0, 17, 34, 51, 68, 85, 102, 119, 136, 153, 170, 187, 204, 221, 238, 255);
+  PixelsByColor4Bit: array[0..15] of Byte = (0, 17, 34, 51, 68, 85, 102, 119, 136, 153, 170, 187, 204, 221, 238, 255);
   { DS:0D16..0D18: storage of BreakChars }
   ds0D16: array[0..2] of Byte =
     (
@@ -1413,13 +1413,13 @@ const
     3 - Bit; adjacent to GlyphColorPatterns. }
   EgaPlaneMasks: array[0..3] of Byte = (8, 4, 2, 1);
   { Per-colour words DrawGlyph mode 0 ORs into the pixel accumulator (0709:02A3):
-    indexed by the mapped colour 0..3; adjacent to TextColourMap4. }
+    indexed by the mapped colour 0..3; adjacent to TextColorMap4. }
   GlyphColorPatterns: array[0..3] of Word = (0, 21845, 43690, 65535);
   { Globals of the DOS file and BIOS text layer (res05); evidence in re/dseg.toml where named. }
   { 16 entries, the colours 0..15 mapped to 0..3 (0,0,0,1,2,2,2,3,3,1,1,1,2,2,3,3 in the image);
     WriteCharsAt maps the text colour through it when VideoAdapter is 0 (0802:0086). }
   { four-colour map of the text colours; see above }
-  TextColourMap4: array[0..15] of Byte = (0, 0, 0, 1, 2, 2, 2, 3, 3, 1, 1, 1, 2, 2, 3, 3);
+  TextColorMap4: array[0..15] of Byte = (0, 0, 0, 1, 2, 2, 2, 3, 3, 1, 1, 1, 2, 2, 3, 3);
   { DS:25E5..25F5: storage of GlyphPixelMasks }
   ds25E5: array[0..16] of Byte =
     (
@@ -1428,7 +1428,7 @@ const
   { Plane bit masks 1, 2, 4, 8 that res07's direct picture blit writes to the Sequencer Map Mask
     (port 3C5h) for plane 0..3 when it copies one byte per plane (0464:1A6E). }
   EgaPlaneBitMasks: array[0..3] of Byte = (1, 2, 4, 8);
-  { DS:25FA..2609: storage of PixelBitsByColour }
+  { DS:25FA..2609: storage of PixelBitsByColor }
   Raw25FA: array[0..15] of Byte =
     (
       $00, $00, $00, $00, $40, $10, $04, $01, $80, $20, $08, $02, $C0, $30, $0C, $03);
@@ -1889,7 +1889,7 @@ const
   ds3CF4: array[0..0] of Byte =
     (
       $0B);
-  { DS:3CF5..3D3A: storage of FigureColourSlots }
+  { DS:3CF5..3D3A: storage of FigureColorSlots }
   Raw3CF5: array[0..69] of Byte =
     (
       $0A, $01, $02, $03, $04, $06, $07, $1E, $19, $14, $0F, $0A, $0A, $55, $00, $23,
@@ -2605,10 +2605,10 @@ var
     indexes it with the game variables VarWallIndexOutside and VarWallIndexInside. Its last six
     bytes are also entry 0 of SpecialBlocks, which DrawAreaView never reads. }
   WallViewIdTable: array[0..15] of Byte absolute Raw0C26;  { wall view id table, two equal groups of 8; see above }
-  { Fill bytes of FillPictureRect (the image: 00 55 AA FF then 00 11 .. BB at PixelsByColour4Bit..). PixelsByColour2Bit[C] is
-    the byte of four 2-bit pixels of colour C (C 0..3); PixelsByColour4Bit[C] the byte of two 4-bit pixels of
-    colour C (C * $11). The two tables overlap: PixelsByColour2Bit[C + 4] is PixelsByColour4Bit[C]. }
-  PixelsByColour2Bit: array[0..15] of Byte absolute Raw0D02;  { four 2-bit pixels of colour C; see above }
+  { Fill bytes of FillPictureRect (the image: 00 55 AA FF then 00 11 .. BB at PixelsByColor4Bit..). PixelsByColor2Bit[C] is
+    the byte of four 2-bit pixels of colour C (C 0..3); PixelsByColor4Bit[C] the byte of two 4-bit pixels of
+    colour C (C * $11). The two tables overlap: PixelsByColor2Bit[C + 4] is PixelsByColor4Bit[C]. }
+  PixelsByColor2Bit: array[0..15] of Byte absolute Raw0D02;  { four 2-bit pixels of colour C; see above }
   { Characters 0768's word scanner tests (0709:0822..08F0): the leading run is skipped,
     the word run stops at them or space, the trailing run is skipped. Storage descriptor
     $0404 in the three 0D12 calls: 4 bytes at bit offset 32 (set of #32..#63, proven by a
@@ -2632,7 +2632,7 @@ var
     into a picture byte for VideoAdapter 0. For C 0..3 it is C's 2-bit value in pixel K's bit pair
     (C = 1, K = 0 gives $40); the entries for C 4..15 do not follow that pattern (image bytes
     from DS:25FA: 00 00 00 00 40 10 04 01 80 20 08 02 C0 30 0C 03 00 11 22 12 ...). }
-  PixelBitsByColour: array[0..15, 0..3] of Byte absolute Raw25FA;
+  PixelBitsByColor: array[0..15, 0..3] of Byte absolute Raw25FA;
   { Globals of the loader (StartGame, src/OVL11.PAS); the address in each comment is the write or
     read that shows it. }
   { Table of 30-byte entries indexed by TileSet: entries 1..8 hold 'Insert disk N in drive ' in the
@@ -2679,10 +2679,10 @@ var
   { the to-hit value per class 0..7 and level (RecalcClassStats) }
   ClassThac0Table: array[0..7, 0..10] of Byte absolute ds3C7C;
   ThiefSkillTable: array[0..8, 1..8] of Byte absolute ds3CF4;  { the eight thief skills per thief level }
-  { The colour-slot table BuildCharacterIcon reads to build the character icon's colour map: FigureColourSlots[I] for
+  { The colour-slot table BuildCharacterIcon reads to build the character icon's colour map: FigureColorSlots[I] for
     I 1..6 holds 1, 2, 3, 4, 6, 7 (the destination colour of the I-th of the six colour pairs, and
     plus 8 for the high nibble). It sits inside the ThiefSkillTable region (DS:3CF4). }
-  FigureColourSlots: array[0..$F] of Byte absolute Raw3CF5;
+  FigureColorSlots: array[0..$F] of Byte absolute Raw3CF5;
   ThiefRaceTable: array[0..7, 1..8] of ShortInt absolute ds3D3C;  { the race adjustment of the eight thief skills }
   { the dexterity adjustment of the first five thief skills }
   ThiefDexTable: array[0..18, 1..5] of ShortInt absolute ds3D4F;
