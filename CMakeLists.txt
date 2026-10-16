@@ -1,0 +1,45 @@
+cmake_minimum_required(VERSION 3.16)
+project(poolrad C)
+
+# The C translation of Pool of Radiance (SPEC 7.4, Phase 7). Builds on macOS, Linux and Windows.
+#
+#   cmake -S . -B build/cmake && cmake --build build/cmake
+#
+# targets: poolrad         the game (needs SDL3: window, keyboard, audio)
+#          poolrad_replay  headless; replays recordings of the original and checks the screen (tests)
+
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS ON)
+
+if(MSVC)
+  add_compile_options(/W3 /wd4244 /wd4267 /wd4996 /wd4101 /wd4146 /wd4018 /wd4305)
+else()
+  add_compile_options(-Wall -Wextra -Wno-unused-variable -Wno-unused-label -Wno-unused-parameter
+                      -Wno-unused-but-set-variable -Wno-parentheses -Wno-pragma-pack -Wno-sign-compare
+                      -Wno-comment -fno-strict-aliasing -fwrapv)
+endif()
+
+set(ENGINE_RTL
+  c/rtl/core.c c/rtl/heap.c c/rtl/file.c c/rtl/crt.c c/rtl/ega.c c/rtl/sha256.c c/rtl/soundtrace.c)
+file(GLOB ENGINE_GAME CONFIGURE_DEPENDS c/game/*.c c/driver/*.c)
+
+add_library(poolrad_engine STATIC ${ENGINE_RTL} ${ENGINE_GAME})
+target_include_directories(poolrad_engine PUBLIC c/include c/game)
+
+add_executable(poolrad_replay c/platform/replay.c)
+target_link_libraries(poolrad_replay PRIVATE poolrad_engine)
+if(UNIX)
+  target_link_libraries(poolrad_replay PRIVATE m)
+endif()
+
+find_package(SDL3 QUIET)
+if(SDL3_FOUND AND EXISTS ${CMAKE_SOURCE_DIR}/c/platform/sdl_host.c)
+  add_executable(poolrad c/platform/sdl_host.c)
+  target_link_libraries(poolrad PRIVATE poolrad_engine SDL3::SDL3)
+  if(UNIX)
+    target_link_libraries(poolrad PRIVATE m)
+  endif()
+else()
+  message(STATUS "SDL3 not found: only poolrad_replay is built (install SDL3 to build the game)")
+endif()
