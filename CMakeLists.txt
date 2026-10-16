@@ -43,3 +43,10 @@ if(SDL3_FOUND AND EXISTS ${CMAKE_SOURCE_DIR}/c/platform/sdl_host.c)
 else()
   message(STATUS "SDL3 not found: only poolrad_replay is built (install SDL3 to build the game)")
 endif()
+
+# ---- sound driver probe (tools/c/sound_check.py runs it against the oracle's golden) ----
+add_executable(sound_probe c/tests/sound_probe.c c/platform/null.c)
+target_link_libraries(sound_probe PRIVATE poolrad_engine)
+if(UNIX)
+  target_link_libraries(sound_probe PRIVATE m)
+endif()
