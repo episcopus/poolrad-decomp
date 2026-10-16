@@ -987,7 +987,7 @@ var
     if StatIndex < AbilityCount then
       ShowAbilityScore(StatIndex, Highlight)
     else
-      DrawHitPoints(SelectedCharacter, HitPointColumn, HitPointRow, Byte(Highlight));
+      DrawHitPoints(SelectedCharacter, HitPointColumn, HitPointRow, Highlight);
   end;
 
 begin
@@ -1312,7 +1312,7 @@ begin
       AllowedBits := TrainableBits;
     ClearWindow(MenuLeft, MenuTop, MenuRight, MenuBottom);
     Row := NameRow;
-    DrawCharacterName(SelectedCharacter, NameCol, Row, 0);
+    DrawCharacterName(SelectedCharacter, NameCol, Row, False);
     DrawTextAt(Length(Name) + 4, Row, BecomeTextColor, ' will become:');
     for I := 0 to 7 do
       if (ClassLevels[I] > 0) and ((ClassTrainingBits[I] and AllowedBits) > 0) then

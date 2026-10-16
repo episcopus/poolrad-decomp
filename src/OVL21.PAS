@@ -803,7 +803,7 @@ begin
         JewelryText := JewelryText + ' pieces of Jewelry';
       end;
       ClearRect(1, 1, $26, $16);
-      DrawCharacterName(SelectedCharacter, 1, 1, 0);
+      DrawCharacterName(SelectedCharacter, 1, 1, False);
       DrawTextAt(1, 7, White, 'You have a fine collection of:');
       DrawTextAt(1, 9, White, GemsText);
       DrawTextAt(1, $0A, White, JewelryText);

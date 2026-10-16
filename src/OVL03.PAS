@@ -1418,7 +1418,7 @@ begin
     Node := PooledItems;
     while Node <> nil do
     begin
-      FormatItemLine(LongInt(SelectedCharacter), Node, 0, 0, 0, 0);
+      FormatItemLine(LongInt(SelectedCharacter), Node, 0, 0, False, False);
       Node := Node^.Next;
     end;
   end;
@@ -1939,7 +1939,7 @@ begin
   DecodeOperands(1);
   ClearRect(EclTextLeft, EclTextTop, EclTextRight, EclTextBottom);
   Prompt := EclStrings[1];
-  SelectPartyMember(Prompt, 0, SelectedCharacter);
+  SelectPartyMember(Prompt, False, SelectedCharacter);
 end;
 { ovl03:2B7E. ECL command 54 (dispatcher ovl03:2F2D, CurrentOpcode 36h): adds a computer-run member. Operand
   1 is the kind AddMonsterToParty adds (it rolls the character and calls AddPartyMember, which makes it the

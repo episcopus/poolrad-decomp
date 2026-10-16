@@ -507,7 +507,7 @@ begin
   begin
     Index := CombatantIndex(Who);
     ShowCursorOn(Who, 3, 0);
-    ShowCharacterMessage(Who, Msg, $A, 1);
+    ShowCharacterMessage(Who, Msg, $A, True);
     Who^.Flag10D := 0;
     Who^.Status := NewStatus;
     if Who^.Status <> StatusFled then
@@ -560,7 +560,7 @@ begin
   CureAffect := False;
   if HasAffect(Who, AffectId, Affect) then
   begin
-    ShowCharacterMessage(Who, 'is Cured', $A, 1);
+    ShowCharacterMessage(Who, 'is Cured', $A, True);
     RemoveAffect(Who, AffectId, Affect);
     CureAffect := True;
   end;
@@ -673,7 +673,7 @@ begin
       Who^.Combat^.CanCast := 0;
       if Who^.Combat^.PendingSpell > 0 then
       begin
-        ShowCharacterMessage(Who, 'lost a spell', $C, 1);
+        ShowCharacterMessage(Who, 'lost a spell', $C, True);
         ForgetSpell(Who^.Combat^.PendingSpell);
         Who^.Combat^.PendingSpell := 0;
       end;
@@ -685,7 +685,7 @@ begin
         Msg := Msg + ', and is Dying';
       if Who^.Status in [6, 7, 8] then
         Msg := 'is killed';
-      ShowCharacterMessage(Who, Msg, GlyphRow + 1, 0);
+      ShowCharacterMessage(Who, Msg, GlyphRow + 1, False);
       if ViewMode <> ViewModeCombat then
         DelayByGameSpeed
       else
@@ -716,7 +716,7 @@ begin
   HookAffectId := AffectId;
   RunAffectHooks(HookApplyAffect, Who);
   if (HookAffectId = 0) or (Saved and (SaveNegates = 1)) then
-    ShowCharacterMessage(Who, 'is Unaffected', $A, 1)
+    ShowCharacterMessage(Who, 'is Unaffected', $A, True)
   else
   begin
     if HasAffect(Who, AffectId, Existing) then
@@ -777,7 +777,7 @@ begin
       Msg := 'stands up and grins'
     else
       Msg := 'gets back up';
-    ShowCharacterMessage(Who, Msg, $A, 1);
+    ShowCharacterMessage(Who, Msg, $A, True);
     RecountCombatSides;
     ReviveCombatant := True;
   end

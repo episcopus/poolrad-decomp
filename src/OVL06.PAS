@@ -59,7 +59,7 @@ begin
   Entry := PooledItems;
   while Entry <> nil do
   begin
-    FormatItemLine(0, Entry, 0, 0, 0, 0);
+    FormatItemLine(0, Entry, 0, 0, False, False);
     Entry := Entry^.Next;
   end;
 end;
@@ -204,7 +204,7 @@ begin
   Entry := PooledItems;
   while Entry <> nil do
   begin
-    FormatItemLine(0, Entry, 0, 0, 0, 0);
+    FormatItemLine(0, Entry, 0, 0, False, False);
     Entry := Entry^.Next;
   end;
   repeat

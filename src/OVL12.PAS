@@ -354,7 +354,7 @@ end;
   redraw. }
 procedure DropFromFight(Who: PCharacter; NewStatus: Byte; Msg: String40);
 begin
-  ShowCharacterMessage(Who, Msg, CombatMessageRow, 0);
+  ShowCharacterMessage(Who, Msg, CombatMessageRow, False);
   case Who^.Status of
     StatusStoned, StatusDead, StatusGone: Exit;
   end;
@@ -413,7 +413,7 @@ end;
   [V]). }
 procedure StartTrainingWithManual(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
-  ShowCharacterMessage(Who, 'starts to train', CombatMessageRow, 1);
+  ShowCharacterMessage(Who, 'starts to train', CombatMessageRow, True);
   AddAffect(Who, AffectTrainingManual, TrainingManualDuration, TrainingManualData, RunsHandlerOnRemove);
 end;
 { ovl12:01C3. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000).
@@ -451,7 +451,7 @@ var
   Weight: Byte;                 { the class weights summed (ovl04:0510) }
   I: ShortInt;
 begin
-  ShowCharacterMessage(Who, 'is hardier', CombatMessageRow, 1);
+  ShowCharacterMessage(Who, 'is hardier', CombatMessageRow, True);
   Inc(Who^.Constitution);
   if Who^.Constitution >= ConstitutionLimit then
   begin
@@ -674,7 +674,7 @@ end;
 procedure ShowSilenceAndStopCasting(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   if Who^.Combat^.CanUseMagicItem <> 0 then
-    ShowCharacterMessage(Who, 'is silenced', CombatMessageRow, 1);
+    ShowCharacterMessage(Who, 'is silenced', CombatMessageRow, True);
   Who^.Combat^.CanUseMagicItem := 0;
   Who^.Combat^.CanCast := 0;
 end;
@@ -731,7 +731,7 @@ begin
         Item^.Affects[3] := GivenItemAffect3;
         AddItemCopy(Who, Item);
         Dispose(Item);
-        ShowCharacterMessage(Who, 'Gains an item', CombatMessageRow, 1);
+        ShowCharacterMessage(Who, 'Gains an item', CombatMessageRow, True);
       end;
   RecalcCombatValues(Who);
 end;
@@ -776,7 +776,7 @@ begin
   if (RollDice(1, Affect^.Data + 1) > 1) and (CastingSpell > 0) and (SpellAppliedToArea = 0) then
   begin
     CancelPendingHook(0);
-    ShowCharacterMessage(Who, 'lost an image', CombatMessageRow, 1);
+    ShowCharacterMessage(Who, 'lost an image', CombatMessageRow, True);
     Dec(Affect^.Data);
     if Affect^.Data = 0 then
       RemoveAffect(Who, AffectImages, nil);
@@ -800,7 +800,7 @@ end;
 procedure CoughStopsCasting(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   if Who^.Combat^.CanUseMagicItem <> 0 then
-    ShowCharacterMessage(Who, 'is coughing', CombatMessageRow, 1);
+    ShowCharacterMessage(Who, 'is coughing', CombatMessageRow, True);
   Who^.Combat^.CanUseMagicItem := 0;
   Who^.Combat^.CanCast := 0;
   RecalcCombatValues(Who);
@@ -897,7 +897,7 @@ begin
   if (Affect^.Data and AgedBit) = 0 then
   begin
     Affect^.Data := Affect^.Data + AgedBit;
-    ShowCharacterMessage(Who, 'ages', CombatMessageRow, 1);
+    ShowCharacterMessage(Who, 'ages', CombatMessageRow, True);
     Inc(Who^.Age);
   end;
   HookedMoveOrAttacks := HookedMoveOrAttacks shl 1;
@@ -973,7 +973,7 @@ begin
     if DistanceToTarget(SelectedCharacter, Who) > 1 then
       if RollDice(1, 100) <= Chance then
       begin
-        ShowCharacterMessage(Who, 'Avoids it', CombatMessageRow, 1);
+        ShowCharacterMessage(Who, 'Avoids it', CombatMessageRow, True);
         DamageAmount := 0;
         AttackRoll := MissRoll;
         Dec(AvoidedAttackCounter);
@@ -1026,7 +1026,7 @@ begin
   if TryAddAffect(Who, AffectDrainsStrength, Affect^.Data, WeakeningDuration) then
     if Who^.Strength > MinimumStrength then
     begin
-      ShowCharacterMessage(Who, 'is weakened', CombatMessageRow, 1);
+      ShowCharacterMessage(Who, 'is weakened', CombatMessageRow, True);
       Dec(Who^.Strength);
     end
     else if not HasAffect(Who, AffectHelpless, FoundAffect) then
@@ -1151,7 +1151,7 @@ end;
 procedure ProgressRot(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   if RemovingAffects <> 0 then Exit;
-  ShowCharacterMessage(Who, 'Rots...', CombatMessageRow, 1);
+  ShowCharacterMessage(Who, 'Rots...', CombatMessageRow, True);
   if Who^.Charisma > RotCharismaLoss then
     Dec(Who^.Charisma, RotCharismaLoss)
   else
@@ -1232,7 +1232,7 @@ begin
   AttackTarget := Who^.Combat^.Target;
   if not SavingThrow(AttackTarget, SaveKindPoison, Bonus) then
   begin
-    ShowCharacterMessage(AttackTarget, 'is Poisoned', CombatMessageRow, 0);
+    ShowCharacterMessage(AttackTarget, 'is Poisoned', CombatMessageRow, False);
     DelayByGameSpeed;
     AddAffect(AttackTarget, AffectPoisoned, PermanentDuration, DataFF, NoRemoveHandler);
     DropFromFight(AttackTarget, StatusDead, 'is killed');
@@ -1359,7 +1359,7 @@ begin
   end
   else
   begin
-    ShowCharacterMessage(Who, 'Sucks some Blood', CombatMessageRow, 1);
+    ShowCharacterMessage(Who, 'Sucks some Blood', CombatMessageRow, True);
     Dice := RollDiceCounted(1, 4);
     DamageKind := 0;
     DealDamage(AttackTarget, Dice, 0, False);
@@ -1397,7 +1397,7 @@ begin
     AddAffect(Who, AffectForcedAttack, ForcedAttackDuration, CombatantIndex(AttackTarget), RunsHandlerOnRemove);
     AddAffect(AttackTarget, AffectHeldFast, HeldFastDuration, HeldFastData, NoRemoveHandler);
     CallAffectHandler(AffectHeldFast, AttackTarget, nil, 0);
-    ShowCharacterMessage(AttackTarget, 'is held fast', CombatMessageRow, 1);
+    ShowCharacterMessage(AttackTarget, 'is held fast', CombatMessageRow, True);
   end;
 end;
 { ovl12:19D9. Affect handler that revives Who (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000).
@@ -1503,7 +1503,7 @@ var
   FoundAffect: Pointer;         { the affect HasAffect gives back for AffectGazeReflectable }
 begin
   AttackTarget := Who^.Combat^.Target;
-  ShowCharacterMessage(Who, 'gazes...', CombatMessageRow, 0);
+  ShowCharacterMessage(Who, 'gazes...', CombatMessageRow, False);
   DrawCombatIcon(GazeAnimation);
   WalkCombatLine(CombatantX(Who), CombatantY(Who), CombatantX(AttackTarget), CombatantY(AttackTarget),
     GazeLineKind, GazeLineFlag);
@@ -1517,7 +1517,7 @@ begin
         if (Item^.NameNum[1] = MirrorNameNum) or (Item^.NameNum[2] = MirrorNameNum) or
           (Item^.NameNum[3] = MirrorNameNum) then
         begin
-          ShowCharacterMessage(AttackTarget, 'reflects it!', ReflectRow, 0);
+          ShowCharacterMessage(AttackTarget, 'reflects it!', ReflectRow, False);
           WalkCombatLine(CombatantX(AttackTarget), CombatantY(AttackTarget), CombatantX(Who), CombatantY(Who),
             GazeLineKind, GazeLineFlag);
           Reflected := True;
@@ -1551,7 +1551,7 @@ begin
     Exit;
   if not WalkLine(CombatantX(Who), CombatantY(Who), EndX, EndY, StepCount, Pointer(CombatMap)) then
     Exit;
-  ShowCharacterMessage(Who, 'Gazes...', CombatMessageRow, 0);
+  ShowCharacterMessage(Who, 'Gazes...', CombatMessageRow, False);
   DrawCombatIcon(GazeAnimation);
   WalkCombatLine(CombatantX(Who), CombatantY(Who), CombatantX(AttackTarget), CombatantY(AttackTarget),
     GazeLineKind, GazeLineFlag);
@@ -1624,7 +1624,7 @@ begin
     Msg := ByteToText(Count) + ' levels'
   else
     Msg := 'a level';
-  ShowCharacterMessage(Who, 'is drained ' + Msg, CombatMessageRow, 1);
+  ShowCharacterMessage(Who, 'is drained ' + Msg, CombatMessageRow, True);
   if Who^.Status = StatusAnimated then
   begin
     DropFromFight(Who, StatusGone, 'is dead forever');
@@ -1701,7 +1701,7 @@ begin
   begin
     AddAffect(AttackTarget, AffectMummyDisease, MummyDiseaseDuration, HealingBlockData, RunsHandlerOnRemove);
     AddAffect(AttackTarget, AffectRot, RotDuration, (RollDice(1, 6) * RotStage) + RotDataLow, RunsHandlerOnRemove);
-    ShowCharacterMessage(AttackTarget, 'is Diseased', CombatMessageRow, 1);
+    ShowCharacterMessage(AttackTarget, 'is Diseased', CombatMessageRow, True);
   end;
 end;
 { ovl12:2490. an affect handler (the AffectHandlers shape: Who, Affect and Mode; Who and Mode are not
@@ -1753,7 +1753,7 @@ begin
   if CastingSpell = SpellMagicMissile then
   begin
     CancelPendingHook(0);
-    ShowCharacterMessage(Who, 'is unaffected', CombatMessageRow, 1);
+    ShowCharacterMessage(Who, 'is unaffected', CombatMessageRow, True);
   end
   else if (DamageKind and KindElectricity) <> 0 then
     CancelPendingHook(0);
@@ -2131,7 +2131,7 @@ begin
     if DistanceToTarget(Who, AttackTarget) < SpitMaxDistance then
     begin
       Turn := EndCombatTurn(Who);
-      ShowCharacterMessage(Who, 'Spits Acid', CombatMessageRow, 1);
+      ShowCharacterMessage(Who, 'Spits Acid', CombatMessageRow, True);
       DrawCombatIcon(SpitAnimation);
       WalkCombatLine(CombatantX(Who), CombatantY(Who), CombatantX(AttackTarget), CombatantY(AttackTarget),
         SpitLineKind, SpitLineFlag);
@@ -2304,11 +2304,11 @@ begin
       if ViewMode = ViewModeCombat then
       begin
         ViewMode := ViewModeCamp;
-        ShowCharacterMessage(Who, 'is stronger', CombatMessageRow, 1);
+        ShowCharacterMessage(Who, 'is stronger', CombatMessageRow, True);
         ViewMode := ViewModeCombat;
       end
       else
-        ShowCharacterMessage(Who, 'is stronger', CombatMessageRow, 1);
+        ShowCharacterMessage(Who, 'is stronger', CombatMessageRow, True);
     end;
     RedrawItemWindow := 1;
     AddAffect(Who, AffectStrength, PermanentDuration, Code, RunsHandlerOnRemove);

@@ -472,7 +472,7 @@ begin
     2:
     begin
       RedrawView;
-      SelectPartyMember('Cast Spell on whom', 1, PickedSpellCharacter);
+      SelectPartyMember('Cast Spell on whom', True, PickedSpellCharacter);
       if PickedSpellCharacter = nil then
       begin
         FirstSpellTarget := nil;
@@ -708,7 +708,6 @@ const
   SideScale = 128;
   { Charm Person's side effect: the affect handler runs when the affect is removed (Flag 1). }
   MessageColor = $A;             { the colour ShowCharacterMessage shows the message in }
-  TimedMessage = 1;               { nonzero: ShowCharacterMessage delays by the game speed and clears it }
 var
   Affect: Pointer;                { the charm affect HasAffect finds on the target }
   Target: PCharacter;             { the first chosen target FirstSpellTarget, tested and charmed }
@@ -744,7 +743,6 @@ const
   PercentLevel5 = $5B;
   PercentLevel6 = $64;
   MessageColor = $A;             { the colour ShowCharacterMessage shows the message in }
-  TimedMessage = 1;               { nonzero: ShowCharacterMessage delays by the game speed and clears it }
 var
   Code: Byte;                     { RaiseStrength's earlier-strength code, passed to AddAffect as Data }
 begin
@@ -770,7 +768,6 @@ const
   SaveKind = 4;                   { SavingThrow's kind for a spell (whitepaper 5.22.2) }
   StrengthAffect = $0C;           { the strength affect Enlarge adds; Reduce cancels it (ovl22:12A5) }
   MessageColor = $A;             { the colour ShowCharacterMessage shows the message in }
-  TimedMessage = 1;               { nonzero: ShowCharacterMessage delays by the game speed and clears it }
 begin
   if SpellTargetCount > 0 then
     if not SavingThrow(FirstSpellTarget, SaveKind, 0) then
@@ -789,7 +786,6 @@ const
   CharismaCap = $19;              { Charisma's maximum, 25 }
   RestoreOnRemoval = 1;           { Flag: the affect handler runs when the affect is removed }
   MessageColor = $A;
-  TimedMessage = 1;
 var
   OldCharisma: Byte;              { the target's Charisma before the roll, the affect's Data }
 begin
@@ -1171,7 +1167,7 @@ begin
     if Node^.Arms[I] <> 0 then
       CombatMap^.Cells[SpellAimY + DirStepY[Dir], SpellAimX + DirStepX[Dir]] := CloudTile;
   end;
-  ShowCharacterMessage(SelectedCharacter, 'Creates a noxious cloud', MessageColor, 0);
+  ShowCharacterMessage(SelectedCharacter, 'Creates a noxious cloud', MessageColor, False);
   MoveCombatCursor(SpellAimX, SpellAimY, AimCursorMargin, AimCursorDir);
   DelayByGameSpeed;
   ClearCharacterMessage;
@@ -1198,7 +1194,6 @@ const
   ClericSides = 6;
   FighterSides = 8;
   MessageColor = $A;             { the colour ShowCharacterMessage shows 'is stronger' in }
-  TimedMessage = 1;               { nonzero: ShowCharacterMessage delays by the game speed and clears it }
 var
   Target: PCharacter;             { FirstSpellTarget, the chosen target whose Strength is raised }
   Percent: Byte;                  { the exceptional-strength percentile passed to RaiseStrength }
@@ -1766,7 +1761,6 @@ const
   MaxExperience = 10000000;       { the initial 'smallest' experience value the loop compares against }
   LastClass = 7;                  { the last class index of ClassLevels }
   MessageColor = $A;             { the colour ShowCharacterMessage shows 'is restored' in }
-  TimedMessage = 1;               { nonzero: ShowCharacterMessage delays by the game speed and clears it }
 var
   Target: PCharacter;             { FirstSpellTarget, the selected character being restored }
   PerLevel: Byte;                 { the hit points one restored level gives back }
@@ -1863,7 +1857,6 @@ const
   NoPercent = 0;                  { no exceptional-strength percentile }
   StrengthAffect = $26;           { the strength affect left on the target (as CastStrength, ovl22:1F41) }
   MessageColor = $A;             { the colour ShowCharacterMessage shows 'is stronger' in }
-  TimedMessage = 1;               { nonzero: ShowCharacterMessage delays by the game speed and clears it }
 var
   Code: Byte;                     { RaiseStrength's earlier-strength code, passed to AddAffect as Data }
 begin
@@ -1972,7 +1965,6 @@ const
   BreatheChance = $32;            { the monster does not breathe on a 1d100 roll up to this }
   ChanceSides = $64;              { the chance is rolled on 1d100 }
   MessageColor = $A;             { the colour ShowCharacterMessage shows 'Breathes!' in }
-  TimedMessage = 1;               { nonzero: ShowCharacterMessage delays by the game speed and clears it }
   PickerSpell = $33;              { the picker uses the Lightning Bolt's target mode }
   PickerQuick = 1;                { the picker's second argument }
   ZapAnimation = $13;             { DrawCombatIcon's zap animation, as DamageTargetInCell }
@@ -2071,8 +2063,6 @@ const
   SpellNameRow = $14;             { the row the spell's name is drawn on }
   GapAfterName = 2;               { Message starts this many columns past the name's length }
   MessageColor = $A;             { the colour of the messages }
-  TimedMessage = 1;               { nonzero: ShowCharacterMessage delays by the game speed and clears it }
-  NoMode = 0;                     { DrawCharacterName's Mode: no extra highlight }
 begin
   if ViewMode = ViewModeCombat then
   begin
@@ -2083,7 +2073,7 @@ begin
   else
   begin
     ClearWindow(TextColumn, $12, $26, $16);
-    DrawCharacterName(Who, TextColumn, MessageRow, NoMode);
+    DrawCharacterName(Who, TextColumn, MessageRow, False);
     DrawTextAt(Length(Who^.Name) + GapAfterName, MessageRow, MessageColor, Message);
     DrawTextAt(TextColumn, SpellNameRow, MessageColor, SpellNames[Spell]);
     DelayByGameSpeed;

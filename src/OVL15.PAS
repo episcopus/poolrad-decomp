@@ -222,7 +222,7 @@ begin
   else
   begin
     MayUseMagic := False;
-    ShowCharacterMessage(SelectedCharacter, Reason, MessageColor, 1);
+    ShowCharacterMessage(SelectedCharacter, Reason, MessageColor, True);
   end;
 end;
 { ovl15:04A1. The Cast command: when MayUseMagic allows it, repeatedly lists SelectedCharacter's memorized
@@ -251,7 +251,7 @@ begin
       else if Listed <> 0 then
         Redraw := 1
       else
-        ShowCharacterMessage(SelectedCharacter, 'has no spells memorized', MessageColor, 1);
+        ShowCharacterMessage(SelectedCharacter, 'has no spells memorized', MessageColor, True);
     until Spell = 0;
   if Redraw <> 0 then RedrawView;
 end;
@@ -286,7 +286,7 @@ begin
   end;
   if Any then
   begin
-    ShowCharacterMessage(SelectedCharacter, 'can memorize:', MessageColor, 0);
+    ShowCharacterMessage(SelectedCharacter, 'can memorize:', MessageColor, False);
     Row := 3;
     for SpellClass := ClassCleric to SpellBookMage do
       if HasClass[SpellClass] then
@@ -377,7 +377,7 @@ begin
   begin
     Done := not ShowSpellSlotsLeft;
     if Done then
-      ShowCharacterMessage(SelectedCharacter, 'cannot memorize any spells', MessageColor, 1)
+      ShowCharacterMessage(SelectedCharacter, 'cannot memorize any spells', MessageColor, True)
     else
     begin
       Spell := ChooseSpellFromList(ListLearnable, 2, Choice, Listed);
@@ -440,7 +440,7 @@ begin
     begin
       Done := True;
       if Listed = 0 then
-        ShowCharacterMessage(SelectedCharacter, 'has no copyable scrolls', MessageColor, 1)
+        ShowCharacterMessage(SelectedCharacter, 'has no copyable scrolls', MessageColor, True)
       else
         Redraw := 1;
     end
@@ -731,7 +731,7 @@ begin
     begin
       Picked := not Picked;
       if Picked then
-        ShowCharacterMessage(SelectedCharacter, 'has been selected', MessageColor, 0)
+        ShowCharacterMessage(SelectedCharacter, 'has been selected', MessageColor, False)
       else
         ClearCharacterMessage;
     end;
@@ -756,19 +756,19 @@ begin
   end
   else
   begin
-    ShowCharacterMessage(SelectedCharacter, 'will be gone', MessageColor, 0);
+    ShowCharacterMessage(SelectedCharacter, 'will be gone', MessageColor, False);
     if AskYesNo('Drop from party? ', AskColor, WordColor, HotColor) = KeyYes then
     begin
       if SelectedCharacter^.Flag10D <> 0 then
-        ShowCharacterMessage(SelectedCharacter, 'bids you farewell', MessageColor, 1)
+        ShowCharacterMessage(SelectedCharacter, 'bids you farewell', MessageColor, True)
       else
-        ShowCharacterMessage(SelectedCharacter, 'is dumped in a ditch', MessageColor, 1);
+        ShowCharacterMessage(SelectedCharacter, 'is dumped in a ditch', MessageColor, True);
       RemoveSelectedCharacter(False, True);
       ClearWindow($11, 1, $26, $0B);
       DrawPartyRoster(SelectedCharacter);
     end
     else
-      ShowCharacterMessage(SelectedCharacter, 'Breathes A sigh of relief', MessageColor, 1);
+      ShowCharacterMessage(SelectedCharacter, 'Breathes A sigh of relief', MessageColor, True);
   end;
 end;
 { ovl15:1A97. The Speed command: shows 'Game Speed = n (0=fastest 9=slowest)' and the choices

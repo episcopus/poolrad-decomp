@@ -107,7 +107,7 @@ begin
               if PooledItems = nil then
               begin
                 New(PooledItems);
-                FormatItemLine(LongInt(Who), Item, 0, 0, 0, 0);
+                FormatItemLine(LongInt(Who), Item, 0, 0, False, False);
                 PooledItems^ := Item^;
                 PooledItems^.Readied := False;
                 PooledItems^.Next := nil;
@@ -116,7 +116,7 @@ begin
               begin
                 Entry := PooledItems;
                 New(PooledItems);
-                FormatItemLine(LongInt(Who), Item, 0, 0, 0, 0);
+                FormatItemLine(LongInt(Who), Item, 0, 0, False, False);
                 PooledItems^ := Item^;
                 PooledItems^.Readied := False;
                 PooledItems^.Next := Entry;
@@ -367,7 +367,7 @@ begin
   Entry := PooledItems;
   while Entry <> nil do
   begin
-    FormatItemLine(0, Entry, 0, 0, 0, 0);
+    FormatItemLine(0, Entry, 0, 0, False, False);
     Entry := Entry^.Next;
   end;
   List := PooledItems;

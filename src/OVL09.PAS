@@ -83,7 +83,7 @@ begin
   if Done = 0 then
     Done := CheckMorale(Who);
   if (Who^.Combat^.Panic <> 0) and (Who^.Combat^.ForcedFlight = 0) then
-    ShowCharacterMessage(Who, 'flees in panic', $0A, 1);
+    ShowCharacterMessage(Who, 'flees in panic', $0A, True);
   if Done <> 0 then
     Exit;
   if UseMagicItem(Who) then
@@ -716,7 +716,7 @@ begin
   if Who^.Combat^.ForcedFlight <> 0 then
   begin
     Who^.Combat^.Panic := 1;
-    ShowCharacterMessage(Who, 'is forced to flee', $0A, 1);
+    ShowCharacterMessage(Who, 'is forced to flee', $0A, True);
   end
   else if Who^.B84 <= $7F then
   else

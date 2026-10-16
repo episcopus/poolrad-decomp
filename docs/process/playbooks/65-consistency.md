@@ -84,9 +84,11 @@ Not done in this pass:
 - **Reviewer sign-off per subsystem** (SPEC 10, P6 exit): done for ovl03, ovl12, ovl16, res07 and res12 on
   2026-10-16 (independent read-only reviews, must-fix findings applied; each `work/reviews/<unit>.md` has a
   "Phase 6 sign-off" section). ovl12 M12 (bare numbers) was finished the same day (shared `Align*`, `Creature*`,
-  `HalfOnSave`, `TurnUndeadIndex` in POOLVARS). Open: the `ClassMask` field (an index 0..16, to be `ClassCombo`; 61 uses in
-  6 files), and the should-fix lists of the reviews (`Thac0`, `B84`, `HpB1`, `Flag10D`, `Guarding`, `TileGate`,
-  `SortEntries` as the ScanTargets result list, Byte used as Boolean). The other units have not had a
+  `HalfOnSave`, `TurnUndeadIndex` in POOLVARS). The `ClassMask` field of TCharacter became `ClassCombo` (an index 0..16; the item and `ClassBits` masks keep
+  their names) and res12's flag parameters and locals are Boolean now. Open: the should-fix lists of the reviews
+  (`Thac0`, `B84`, `HpB1`, `Flag10D`, `Guarding`, `TileGate`, `SortEntries` as the ScanTargets result list), and the
+  Byte flags that travel through many units (the results of `EndCombatTurn` and `GuardTurn` and the `Done` var
+  parameters of ovl08, ovl09, ovl19 and others), which a translator should read as Boolean. The other units have not had a
   phase 6 review. `make review-pass` is not rerun: it would restamp the round 2 pass.
 - **A lesson of the review:** a name is only as good as the evidence of its first use. The reviews found
   names that two units read differently (`ResistValue` was the armour class, `Flag11B` the hit points,

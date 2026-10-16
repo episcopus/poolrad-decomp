@@ -786,6 +786,7 @@ const
   AnswerNo = 1;                   { AskMenu returns the 0-based hotkey position: for '~Yes ~No' the second key }
   AcceptExtendedKeys = 1;         { the ExtKey argument of ReadPromptChoice that lets the prompt return extended keys }
   ClearTextBeforeMessage = 1;     { ShowPagedText's ClearFirst parameter }
+  TimedMessage = True;            { ShowCharacterMessage's Wait: delay by the game speed, then clear the message }
   OmniDir = $FF;                  { ScanTargets' Dir: every direction (InDirArc omni) }
   UnlimitedSteps = $FF;           { ScanTargets' MaxSteps: no limit }
   SoundIdleOff = 0;               { SetSoundDriverIdle: the driver stays silent while an animation or removal runs }
