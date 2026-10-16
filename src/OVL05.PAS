@@ -180,7 +180,7 @@ end;
   B84 below $80) is okay, dead or fled (or VarFixedXpBattle is 1); BattleWon is set and PartyFled
   cleared when a combatant is okay or dead; NoExperienceCount counts the members without Flag10D or
   dead. A won battle computes and awards BattleExperience. A surviving party gets its fled members
-  back (Status 0, Flag10D 1), dying ones unconscious, unconscious ones with Flag11B back to okay; a
+  back (Status 0, Flag10D 1), dying ones unconscious, unconscious ones with HpCurrent back to okay; a
   fled party (VarBattleOutcome $81) keeps only its fled members, the others leave the list
   (RemoveSelectedCharacter). A destroyed party leaves the list entirely and VarPartySize becomes 0. In a duel the
   duelist (Flag10D 1, okay, not a monster) wins the experience, every okay or dead combatant gets
@@ -241,7 +241,7 @@ begin
               end;
             StatusDying: Who^.Status := StatusUnconscious;
             StatusUnconscious:
-              if Who^.Flag11B > 0 then
+              if Who^.HpCurrent > 0 then
               begin
                 Who^.Status := StatusOkay;
                 Who^.Flag10D := 1;

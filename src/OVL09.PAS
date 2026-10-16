@@ -695,8 +695,8 @@ end;
   forced to flee' is shown through ShowCharacterMessage, and nothing else is checked. A character with B84
   at or below $7F (not computer-run) is not checked either. Otherwise the morale is MoraleScratch =
   (B84 and $7F) * 2, zeroed above $66, which the hook kind $11 (RunAffectHooks) may change. The first
-  test holds when the morale is below the percentage of hit points lost (100 minus Flag11B * 100
-  div HpMax; Flag11B is the current hit points) or is zero. Then MoraleScratch takes SecondMoraleByte, the hook runs
+  test holds when the morale is below the percentage of hit points lost (100 minus HpCurrent * 100
+  div HpMax; HpCurrent is the current hit points) or is zero. Then MoraleScratch takes SecondMoraleByte, the hook runs
   again, and the second test holds when it is below 100 minus GameVars2^[Var2Morale] (word 710 of the
   second game word block, $6B00..$6EFF, not GameVars; the morale source of ovl10), or is zero, or Who
   is on the party side (Side 0). Only when both tests hold is there a roll: FastestEnemyMovement at or below half
@@ -725,7 +725,7 @@ begin
     if MoraleScratch > $66 then
       MoraleScratch := 0;
     RunAffectHooks($11, Who);
-    if (MoraleScratch < 100 - Who^.Flag11B * 100 div Who^.HpMax) or (MoraleScratch = 0) then
+    if (MoraleScratch < 100 - Who^.HpCurrent * 100 div Who^.HpMax) or (MoraleScratch = 0) then
     begin
       Saved6825 := MoraleScratch;
       MoraleScratch := SecondMoraleByte;

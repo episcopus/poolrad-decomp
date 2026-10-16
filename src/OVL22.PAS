@@ -970,7 +970,7 @@ end;
   stub 0096:00B6; SpellNames[26] is 'Slow Poison' at DS:2D13). It needs the first chosen target FirstSpellTarget
   to not be Animated (Status is not 1, an undead) and to carry the Poisoned affect $37 (HasAffect);
   anything else is dropped (FirstSpellTarget := nil) and the cast does nothing. A poisoned target at 0 hit
-  points is brought back to 1 (Flag11B), the spell's own affect is applied to the targets
+  points is brought back to 1 (HpCurrent), the spell's own affect is applied to the targets
   ('is affected'), the revival affect's removal handler is run (CallAffectHandler($4E), which heals
   an unconscious character, ovl24 AffectRevival) and the poison-slowing affect $0F is added for $A
   units. Reads FirstSpellTarget and CastingSpell. }
@@ -996,8 +996,8 @@ begin
   end;
   if HasAffect(Target, PoisonedAffect, Affect) then
   begin
-    if Target^.Flag11B = 0 then
-      Target^.Flag11B := ReviveHitPoints;
+    if Target^.HpCurrent = 0 then
+      Target^.HpCurrent := ReviveHitPoints;
     ApplySpellToTargets(CastingSpell, FullCasterLevel, RunsHandlerOnRemove, 0, 0, 'is affected');
     CallAffectHandler(RevivalAffect, Target, nil, ModeRemove);
     AddAffect(Target, SlowPoisonAffect, SlowPoisonDuration, SlowPoisonData, RunsHandlerOnRemove);
@@ -1005,7 +1005,7 @@ begin
 end;
 { ovl22:190F. Cast handler of spell 27, Snake Charm (entry 31: InitSpellHandlers maps DS:6B84+27*4 to overlay
   stub 0096:00BB; SpellNames[27] is 'Snake Charm' at DS:2D3C). The caster's own current hit points
-  (SelectedCharacter^.Flag11B) become the pool SpellWorkByteA; it then walks the party list PartyListHead and, for
+  (SelectedCharacter^.HpCurrent) become the pool SpellWorkByteA; it then walks the party list PartyListHead and, for
   every giant snake (CreatureType $E) whose hit points fit the remaining pool, subtracts them, counts
   it in SpellTargetCount and adds it to the chosen targets SpellTargets. The spell's own affect is then applied to the
   charmed snakes with the message 'is charmed'. Reads SelectedCharacter, PartyListHead and CastingSpell; changes
@@ -1016,14 +1016,14 @@ const
 var
   Current: PCharacter;            { the walker of the party list PartyListHead }
 begin
-  SpellWorkByteA := SelectedCharacter^.Flag11B;
+  SpellWorkByteA := SelectedCharacter^.HpCurrent;
   SpellTargetCount := 0;
   Current := PCharacter(PartyListHead);
   while Current <> nil do
   begin
-    if (Current^.CreatureType = SnakeType) and (SpellWorkByteA >= Current^.Flag11B) then
+    if (Current^.CreatureType = SnakeType) and (SpellWorkByteA >= Current^.HpCurrent) then
     begin
-      SpellWorkByteA := SpellWorkByteA - Current^.Flag11B;
+      SpellWorkByteA := SpellWorkByteA - Current^.HpCurrent;
       Inc(SpellTargetCount);
       SpellTargets[SpellTargetCount] := Current;
     end;
@@ -1787,7 +1787,7 @@ begin
     Exit;
   PerLevel := Target^.Pad74[LostHitPoints] div Target^.Pad74[DrainedLevels];
   Inc(Target^.HpMax, PerLevel);
-  Inc(Target^.Flag11B, PerLevel);
+  Inc(Target^.HpCurrent, PerLevel);
   Inc(Target^.HpB1, PerLevel);
   Dec(Target^.Pad74[LostHitPoints], PerLevel);
   Dec(Target^.Pad74[DrainedLevels]);

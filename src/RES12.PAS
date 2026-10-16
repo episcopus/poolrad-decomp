@@ -185,9 +185,6 @@ const
   VideoAdapterEga = 1;
   { The bottom message line 1509 reports a lost item on and 1693 flashes on. }
   ScreenLastCol = 39;
-  { IsMaxClassLevel's race values (Race, +$2E, the RaceNames table DS:0F03) and the strength scores
-    at which a demihuman's level limit in a class rises (the AD&D demihuman level limits [H]). }
-  ExceptionalStrength = $12;   { 18, raises it by two }
   { SpellCasterLevel: the SpellTable.SpellClass values (ClassNames order: 0 cleric, 1 magic-user, 2
     a fixed level) and the fixed levels it returns for class 2 and while ItemAffectUse is set. What
     spell class 2 and ItemAffectUse are is not proven [?]. }
@@ -507,7 +504,7 @@ begin
       ValueShift := 0;
     end;
     DrawArmourClass(Member, ValueShift + $20, Row);
-    case Member^.Flag11B of
+    case Member^.HpCurrent of
       0..9: ValueShift := 2;
       $A..$63: ValueShift := 1;
     else
@@ -535,7 +532,7 @@ begin
   DrawTextAt(Col, Row, LightGreen, ValueText);
 end;
 
-{ 00BA:0973. Draws Who's current hit points (Flag11B, +$11b) as text at (Col, Row). The colour is
+{ 00BA:0973. Draws Who's current hit points (HpCurrent, +$11b) as text at (Col, Row). The colour is
   Yellow while the hit points are below the maximum (HpMax, +$32), LightGreen at the maximum, and
   LightMagenta when Flag is set (the caller's highlight). Called by DrawPartyRoster and
   DrawCharacterPanel. }
@@ -544,13 +541,13 @@ var
   ValueColor: Byte;
   Unused: Byte;   { the original frame carries one byte here that the code never reads }
 begin
-  if Who^.Flag11B < Who^.HpMax then
+  if Who^.HpCurrent < Who^.HpMax then
     ValueColor := Yellow
   else
     ValueColor := LightGreen;
   if Flag <> 0 then
     ValueColor := LightMagenta;
-  DrawTextAt(Col, Row, ValueColor, ByteToText(Who^.Flag11B));
+  DrawTextAt(Col, Row, ValueColor, ByteToText(Who^.HpCurrent));
 end;
 
 { 00BA:09E3. Draws the character panel the combat and inventory screens show (whitepaper 5.24): it
@@ -1347,7 +1344,7 @@ begin
   HasAffect := Found;
 end;
 { 00BA:2228. Applies Damage hit points to Who and updates its status. It computes Overkill =
-  Damage - HpCurrent when the damage exceeds Who's current hit points (Flag11B, +$11B) and
+  Damage - HpCurrent when the damage exceeds Who's current hit points (HpCurrent, +$11B) and
   Remaining = HpCurrent - Damage otherwise (the other stays 0, so Remaining = 0 whenever the
   damage is at or above HpCurrent; that is the code's "reaches 0 or below"). The status tests run
   in this order: dead (StatusDead) when the overkill is above 9, or when Remaining = 0 and Who was
@@ -1365,10 +1362,10 @@ var
 begin
   Overkill := 0;
   Remaining := 0;
-  if PCharacter(Who)^.Flag11B >= Damage then
-    Remaining := PCharacter(Who)^.Flag11B - Damage
+  if PCharacter(Who)^.HpCurrent >= Damage then
+    Remaining := PCharacter(Who)^.HpCurrent - Damage
   else
-    Overkill := Damage - PCharacter(Who)^.Flag11B;
+    Overkill := Damage - PCharacter(Who)^.HpCurrent;
   if (Overkill > 9) or ((Remaining = 0) and (PCharacter(Who)^.Status = StatusAnimated)) then
     PCharacter(Who)^.Status := StatusDead
   else if Overkill > 0 then
@@ -1382,7 +1379,7 @@ begin
   if not (PCharacter(Who)^.Status in [StatusOkay, StatusAnimated]) then
   begin
     PCharacter(Who)^.Flag10D := 0;
-    PCharacter(Who)^.Flag11B := 0;
+    PCharacter(Who)^.HpCurrent := 0;
     if ViewMode = ViewModeCombat then
     begin
       Dec(SideCounts[ShortInt(PCharacter(Who)^.Side)]);
@@ -1390,7 +1387,7 @@ begin
     end;
   end
   else
-    PCharacter(Who)^.Flag11B := Remaining;
+    PCharacter(Who)^.HpCurrent := Remaining;
 end;
 { 00BA:234A. Shows how far a heal brought Who: "is fully healed" when its current hit points (the
   byte +$11B) equal its maximum (HpMax, +$32) and "is partially healed" otherwise, through
@@ -1401,7 +1398,7 @@ procedure ShowHealResult(Who: Pointer);
 var
   Message: String40;
 begin
-  if PCharacter(Who)^.Flag11B = PCharacter(Who)^.HpMax then
+  if PCharacter(Who)^.HpCurrent = PCharacter(Who)^.HpMax then
     Message := 'is fully healed'
   else
     Message := 'is partially healed';

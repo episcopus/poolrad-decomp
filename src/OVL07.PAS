@@ -1072,7 +1072,7 @@ begin
   end;
 end;
 { ovl07:20CC. DamageWithMessage: unless Who is already dead (Status 6), shows '<name> dies.' when
-  Damage is more than its hit points (Flag11B) plus 10, else '<name> is hit FOR <n> points of
+  Damage is more than its hit points (HpCurrent) plus 10, else '<name> is hit FOR <n> points of
   Damage.' in the text window (rows $11..$16, starting a new page with a 'press <enter>' prompt
   when the window is full), applies the damage (ApplyDamage), clears the window and redraws
   the selected character. }
@@ -1087,7 +1087,7 @@ begin
     Exit;
   ClearFirst := 0;
   Str(Damage, Num);
-  if Who^.Flag11B + 10 < Damage then
+  if Who^.HpCurrent + 10 < Damage then
     Text := '  ' + Who^.Name + ' dies. '
   else
     Text := '  ' + Who^.Name + ' is hit FOR ' + Num + ' points of Damage.';

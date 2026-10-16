@@ -323,7 +323,7 @@ begin
 end;
 { ovl12:0058. Puts Who out of the fight, with Msg shown on Who at row CombatMessageRow (ShowCharacterMessage).
   Unless Who's Status is StatusDead, StatusStoned or StatusGone (6, 7 or 8) already, its Status becomes NewStatus,
-  its Flag10D and Flag11B are cleared, its death affects are removed (RemoveDeathAffects), the hooks of a combatant going
+  its Flag10D and HpCurrent are cleared, its death affects are removed (RemoveDeathAffects), the hooks of a combatant going
   down run, and Who leaves
   the map (RemoveCombatant) when Flag10D is clear. Then DelayByGameSpeed, the prompt is cleared and,
   outside combat, the selected character is redrawn. Like DropCombatant (ovl24:0F06) without the ground
@@ -336,7 +336,7 @@ begin
   end;
   Who^.Status := NewStatus;
   Who^.Flag10D := 0;
-  Who^.Flag11B := 0;
+  Who^.HpCurrent := 0;
   RemoveDeathAffects(Who);
   RunAffectHooks(HookGoesDown, Who);
   if Who^.Flag10D = 0 then
@@ -417,7 +417,7 @@ end;
 { ovl12:0233. Training of Who's constitution: shows "is hardier" on Who (row CombatMessageRow), Constitution goes up by one,
   and Who's hit points gain: the hit points above HpB1 (HpMax - HpB1) are divided by the class weight (fighter
   levels count Constitution - 15, non-fighter levels count twice above 15, else 1; 1 when the weight is 0),
-  and the gain goes to HpMax and to the current hit points Flag11B. Nothing is gained below Constitution 15,
+  and the gain goes to HpMax and to the current hit points HpCurrent. Nothing is gained below Constitution 15,
   nor from 17 up without a fighter level. At Constitution 20 Who gets AffectTrainedOut instead and the
   routine ends. It has the AffectHandlers frame (Who, Affect, Mode); Affect and Mode are not read here. Runs for affect $07
   (id 7, InitAffectHandlers [V]). }
@@ -450,7 +450,7 @@ begin
   if (Who^.Constitution < FighterOnlyConstitution) or (Who^.ClassLevels[ClassFighter] > 0) then
   begin
     Inc(Who^.HpMax, Gain);
-    Inc(Who^.Flag11B, Gain);
+    Inc(Who^.HpCurrent, Gain);
   end;
 end;
 { ovl12:0377. It moves 2 from the attack roll to the saving throw roll when the selected character's
@@ -581,14 +581,14 @@ end;
 { ovl12:05EB. Affect handler of the slowed poison that Slow Poison (ovl22 CastSlowPoison) gives [V]: an affect handler
   (the AffectHandlers shape: Who, Affect and Mode; Mode is
   not read, ovl24:0000). It adds affect $0F (AffectSlowPoisonDamage) to Who for SlowPoisonDamageDuration with the
-  Data byte of Affect, when TryAddAffect allows it. Then, while Who has more than one hit point (Flag11B,
+  Data byte of Affect, when TryAddAffect allows it. Then, while Who has more than one hit point (HpCurrent,
   the current hit points [I]), it deals 1 point of plain damage (DamageKind 0, no save, DealDamage) and,
   outside combat, redraws the selected character (ViewMode is not ViewModeCombat). Runs for affect $0F (id 15,
   InitAffectHandlers [V]). }
 procedure SlowPoisonDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   if TryAddAffect(Who, AffectSlowPoisonDamage, Affect^.Data, SlowPoisonDamageDuration) then
-    if Who^.Flag11B > 1 then
+    if Who^.HpCurrent > 1 then
     begin
       DamageKind := 0;
       DealDamage(Who, 1, 0, False);
@@ -1006,7 +1006,7 @@ begin
 end;
 { ovl12:1168. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000). It gives Who
   the disease affect AffectCauseDisease for AffectCauseDiseaseDuration rounds, with the Data of Affect, when TryAddAffect
-  allows it. Then, while Who has more than one hit point (Flag11B), it deals 1 point of plain damage (DamageKind 0, no
+  allows it. Then, while Who has more than one hit point (HpCurrent), it deals 1 point of plain damage (DamageKind 0, no
   save, DealDamage) and, outside combat, redraws the selected character. Otherwise Who gets AffectHelpless unless it has
   it already. Runs for affect $2C (id 44, InitAffectHandlers [V]). }
 procedure CauseDiseaseAndDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
@@ -1014,7 +1014,7 @@ var
   FoundAffect: Pointer;
 begin
   if TryAddAffect(Who, AffectCauseDisease, Affect^.Data, AffectCauseDiseaseDuration) then
-    if Who^.Flag11B > 1 then
+    if Who^.HpCurrent > 1 then
     begin
       DamageKind := 0;
       DealDamage(Who, 1, 0, False);
@@ -1370,14 +1370,14 @@ begin
   end;
 end;
 { ovl12:19D9. Affect handler that revives Who (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000).
-  ReviveCombatant (ovl24:1869) puts Who back on its square at Who's current hit points (Flag11B) and returns False when it
+  ReviveCombatant (ovl24:1869) puts Who back on its square at Who's current hit points (HpCurrent) and returns False when it
   cannot be placed. Then Who gets AffectRevival for RevivalRetryDuration round, with the Data of Affect, so the revival is
   tried again (TryAddAffect; its result is stored and never read). Runs for affect $4E (id 78, InitAffectHandlers [V]). }
 procedure ReviveOrRetryRevival(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   Added: Boolean;               { the result of TryAddAffect, stored and never read }
 begin
-  if not ReviveCombatant(Who, Who^.Flag11B) then
+  if not ReviveCombatant(Who, Who^.HpCurrent) then
     Added := TryAddAffect(Who, AffectRevival, Affect^.Data, RevivalRetryDuration);
 end;
 { ovl12:1A19. Affect handler that burns the character Who attacked last (the AffectHandlers shape: Who, Affect and Mode;
@@ -1538,11 +1538,11 @@ end;
   DropFromFight with StatusGone, and HpMax is 0. Otherwise,
   for each of the Count levels: the counter Pad74[$74] (+$74, not named yet) goes up; the total of all class
   levels (Total) is taken; Quotient = HpMax div Total hit points are lost: for each of them HpMax, HpB1 and
-  Flag11B (the current hit points) go down by one while above 0 and Pad74[$75] (the lost hit points, the
+  HpCurrent (the current hit points) go down by one while above 0 and Pad74[$75] (the lost hit points, the
   third number of ShowDebugTrace, ovl33:0004) goes up. Then, when Who's HighestLevel is below 2, the
   character is dead forever (with a Count of 2 its highest class level is cleared too). Otherwise one level
   comes off the class that holds the highest level (nested HighestLevelClass), and when no hit points are
-  left (Flag11B 0) and Status is not StatusDead Who is killed (DropFromFight, "is killed"). RecalcClassStats (ovl23)
+  left (HpCurrent 0) and Status is not StatusDead Who is killed (DropFromFight, "is killed"). RecalcClassStats (ovl23)
   runs, then HighestLevel becomes that class's level, Experience (+$AC) the experience floor the nested
   routine found, and RecalcCombatValues redraws Who. The trace line 'max,cur,lost' is shown in debug mode only.
   Parameters: Who (the victim, a far pointer), Count (the levels drained, 1 or more).
@@ -1609,15 +1609,15 @@ begin
       for ClassIndex := 0 to LastClass do
         Inc(Total, Who^.ClassLevels[ClassIndex]);
       Quotient := Who^.HpMax div Total;
-      ShowDebugTrace('max,cur,lost', Who^.HpMax, Who^.Flag11B, Who^.Pad74[$75]);
+      ShowDebugTrace('max,cur,lost', Who^.HpMax, Who^.HpCurrent, Who^.Pad74[$75]);
       for Point := 1 to Quotient do
       begin
         if Who^.HpMax > 0 then
           Dec(Who^.HpMax);
         if Who^.HpB1 > 0 then
           Dec(Who^.HpB1);
-        if Who^.Flag11B > 0 then
-          Dec(Who^.Flag11B);
+        if Who^.HpCurrent > 0 then
+          Dec(Who^.HpCurrent);
         Inc(Who^.Pad74[$75]);
       end;
       if Who^.HighestLevel < 2 then
@@ -1630,7 +1630,7 @@ begin
       else
       begin
         Dec(Who^.ClassLevels[HighestLevelClass]);
-        if (Who^.Flag11B = 0) and (Who^.Status <> StatusDead) then
+        if (Who^.HpCurrent = 0) and (Who^.Status <> StatusDead) then
           DropFromFight(Who, StatusDead, 'is killed');
         RecalcClassStats(Who);
       end;
@@ -1794,13 +1794,13 @@ begin
   end;
 end;
 { ovl12:2700. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Affect and Mode are not read). Who gets
-  RegainedHitPoints back on Flag11B (the current hit points [I], TCharacter +$11B), but never more than HpMax (+$32).
+  RegainedHitPoints back on HpCurrent (the current hit points [I], TCharacter +$11B), but never more than HpMax (+$32).
   Runs for affect $62 (id 98, InitAffectHandlers [V]). }
 procedure RegainHitPoints(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
-  Inc(Who^.Flag11B, RegainedHitPoints);
-  if Who^.Flag11B > Who^.HpMax then
-    Who^.Flag11B := Who^.HpMax;
+  Inc(Who^.HpCurrent, RegainedHitPoints);
+  if Who^.HpCurrent > Who^.HpMax then
+    Who^.HpCurrent := Who^.HpMax;
 end;
 { ovl12:2730. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read). A dying character
   (StatusDying) gets DyingRevivalPoints less the rounds it has bled (DyingRounds, TCombatant +$E), so one that has bled

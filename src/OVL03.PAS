@@ -971,7 +971,7 @@ begin
 end;
 { ovl03:12C6. ECL command 29 (dispatcher ovl03:2F2D, CurrentOpcode $1D): stores in operand 1 one byte
   computed over the whole party, the list PartyListHead followed through TCharacter.Next (+$104). For each
-  member it reads the current hit points (Flag11B, +$11B), ResistValue (+$111), HitAdjust (+$110) and
+  member it reads the current hit points (HpCurrent, +$11B), ResistValue (+$111), HitAdjust (+$110) and
   the class levels 0 and 5 (ClassLevels, +$96 and +$9B). ResistValue is lowered by ResistThreshold and
   HitAdjust by HitAdjustThreshold (0 when they are not above it). The member's share is
   HitPoints + 5 * ResistValue + 5 * HitAdjust + 8 * ClassLevel5 + 4 * ClassLevel0, divided by 10; the low
@@ -993,7 +993,7 @@ begin
   Member := PCharacter(PartyListHead);
   while Member <> nil do
   begin
-    HitPoints := Member^.Flag11B;
+    HitPoints := Member^.HpCurrent;
     ResistValue := Member^.ResistValue;
     HitAdjust := Member^.HitAdjust;
     ClassLevel5 := Member^.ClassLevels[5];

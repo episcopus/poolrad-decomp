@@ -787,7 +787,7 @@ end;
   (this routine covers 1406..17F6: the map's entries 14A1, 1583, 1713 and 1758 lie inside it):
   it clears the attack-slot counters (AttackSlotRolls[1..2], AttackSlotCounts[1..2]) and the damage, marks the
   attacker's Combat^.Pad8, then either takes the helpless auto-hit (no roll, ShowAttackResult kind 3
-  passing the target's current hit points (Flag11B) plus 5 as the damage dealt and 1 as the number
+  passing the target's current hit points (HpCurrent) plus 5 as the damage dealt and 1 as the number
   displayed, ClearAttackerAffect, both attack slots cleared) or, against a target
   that fights back, switches the readied weapon to its large-foe dice when the target is big
   (CombatSize above $80 or a footprint kind above 1), recomputes the target's combat values, runs hook
@@ -797,7 +797,7 @@ end;
   damage, ShowAttackResult shows it and the death hook runs; when nothing landed a miss is shown.
   Done is left nonzero when the turn ends (EndCombatTurn) and zero while another attack remains.
   QUIRK ovl13:1733: the damage dealt and the number displayed are both DamageAmount (the miss at
-  ovl13:1797 passes 0 for both, the helpless hit passes Flag11B + 5 and 1). Called by
+  ovl13:1797 passes 0 for both, the helpless hit passes HpCurrent + 5 and 1). Called by
   PerformAttack (ovl13:19D6). Globals: AttackRoll, AttackSlotCounts, DamageAmount, SoundNoAction, SoundAttackMissed. }
 procedure ResolveCombatantAttacks(Attacker, Target: PCharacter; AttackKind: Byte; var Done: Byte);
 var
@@ -827,7 +827,7 @@ begin
     while Attacker^.AttackSlots[Attacker^.Combat^.Pad4[4]] = 0 do
       Dec(Attacker^.Combat^.Pad4[4]);
     Inc(AttackSlotCounts[Attacker^.Combat^.Pad4[4]]);
-    ShowAttackResult(Attacker, Target, 3, Target^.Flag11B + 5, 1, 1);
+    ShowAttackResult(Attacker, Target, 3, Target^.HpCurrent + 5, 1, 1);
     ClearAttackerAffect(Attacker);
     for SlotIndex := 1 to 2 do
       Attacker^.AttackSlots[SlotIndex] := 0;
@@ -1035,7 +1035,7 @@ end;
   the routine FindSpellTarget and ovl09 SpellAccepted use. It walks the nine directions Dir 0..8
   from Who (Dir 8 is Who's own cell, DirStepX[8]/DirStepY[8] are 0,0), maps each with GetMapCell,
   and for an occupied cell keeps the SAME-side combatant (Side = Who^.Side) whose current hit
-  points (Flag11B) are below its maximum (HpMax) when it is the most wounded so far (BestHp) or,
+  points (HpCurrent) are below its maximum (HpMax) when it is the most wounded so far (BestHp) or,
   for Who's own cell (the occupant is Who), when it is below half its maximum; a body cell (tile
   BodyTile) with no occupant makes it walk BodyTable for a body standing on the scanned cell whose
   owner is not yet dead (Status not in StatusKilled, 6..8). It then hands over the chosen
@@ -1073,13 +1073,13 @@ begin
     begin
       PCharacter(Selected) := CombatantRecord[Occupant];
       if (PCharacter(Selected)^.Side = Who^.Side) and
-         (PCharacter(Selected)^.Flag11B < PCharacter(Selected)^.HpMax) then
-        if (PCharacter(Selected)^.Flag11B < BestHp) or
+         (PCharacter(Selected)^.HpCurrent < PCharacter(Selected)^.HpMax) then
+        if (PCharacter(Selected)^.HpCurrent < BestHp) or
            ((PCharacter(Selected) = Who) and
-            (PCharacter(Selected)^.Flag11B < PCharacter(Selected)^.HpMax shr 1)) then
+            (PCharacter(Selected)^.HpCurrent < PCharacter(Selected)^.HpMax shr 1)) then
         begin
           SelectedWho := PCharacter(Selected);
-          BestHp := PCharacter(Selected)^.Flag11B;
+          BestHp := PCharacter(Selected)^.HpCurrent;
         end;
     end
     else if Tile = BodyTile then
@@ -1500,7 +1500,7 @@ end;
   morale byte SecondMoraleByte, the value CheckMorale reads for a monster's second morale test: it walks the
   battle's character list PartyListHead and, for every combatant on the monster side (Side = SideMonsters),
   adds its maximum hit points (HpMax, +$32) and, when it is still in the fight (Flag10D set), its
-  current hit points (Flag11B, +$11B). A monster whose Flag10D is clear keeps its maximum counted
+  current hit points (HpCurrent, +$11B). A monster whose Flag10D is clear keeps its maximum counted
   while its current hit points fall out of the sum, so damage lowers the percentage. The result is
   20 * current div maximum * 5 (0 when the monster side has no maximum hit points at all, which
   leaves SecondMoraleByte unchanged). Called by StartBattle (ovl10:1E31, before the first round) and
@@ -1519,7 +1519,7 @@ begin
     if Who^.Side = SideMonsters then
     begin
       if Who^.Flag10D <> 0 then
-        TotalCurrentHp := TotalCurrentHp + Who^.Flag11B;
+        TotalCurrentHp := TotalCurrentHp + Who^.HpCurrent;
       TotalMaxHp := TotalMaxHp + Who^.HpMax;
     end;
     Who := Who^.Next;

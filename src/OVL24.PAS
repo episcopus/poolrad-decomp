@@ -511,7 +511,7 @@ begin
     Who^.Flag10D := 0;
     Who^.Status := NewStatus;
     if Who^.Status <> StatusFled then
-      Who^.Flag11B := 0;
+      Who^.HpCurrent := 0;
     RedrawGround(0, 0, Index);
     FlushPictureChanges;
     CombatantTable[Index].Kind := 0;
@@ -731,7 +731,7 @@ begin
   end;
 end;
 
-{ ovl24:175D (e21). Heals Who by Amount hit points (Flag11B, capped at HpMax) when its status is
+{ ovl24:175D (e21). Heals Who by Amount hit points (HpCurrent, capped at HpMax) when its status is
   0, 1, 4 or 5 and either it is wounded and Flag is set, or Flag is 0 and it has no affect $32. A
   fallen character that is dying becomes unconscious; an unconscious one outside combat has the
   handler of affect $4E called (mode 1). Returns True when it healed. ovl04's cure spells call it
@@ -742,12 +742,12 @@ var
 begin
   HealCharacter := False;
   if Who^.Status in [0, 1, 4, 5] then
-    if ((Who^.Flag11B < Who^.HpMax) and (Flag <> 0)) or
+    if ((Who^.HpCurrent < Who^.HpMax) and (Flag <> 0)) or
       (not HasAffect(Who, AffectMummyDisease, Affect) and (Flag = 0)) then
     begin
-      Who^.Flag11B := Who^.Flag11B + Amount;
-      if Who^.Flag11B > Who^.HpMax then
-        Who^.Flag11B := Who^.HpMax;
+      Who^.HpCurrent := Who^.HpCurrent + Amount;
+      if Who^.HpCurrent > Who^.HpMax then
+        Who^.HpCurrent := Who^.HpMax;
       if Who^.Flag10D = 0 then
       begin
         if Who^.Status = StatusDying then
@@ -770,7 +770,7 @@ begin
   begin
     Who^.Status := StatusOkay;
     Who^.Flag10D := 1;
-    Who^.Flag11B := HitPoints;
+    Who^.HpCurrent := HitPoints;
     if ViewMode = ViewModeCombat then
       ShowCursorOn(Who, 3, 0);
     if Who^.Side = SideMonsters then

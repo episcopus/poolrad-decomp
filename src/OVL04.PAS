@@ -227,7 +227,7 @@ end;
 { ovl04:0510. Raise Dead: the character is dead when Status is StatusAnimated (1) or StatusDead (6) (ovl04:0539); otherwise it
   asks first. Charges PriceRaiseDead; only a dead character is raised: AffectAnimateDead and
   AffectPoisoned are removed, Status becomes StatusOkay, Flag10D becomes 1 (battle participant eligible
-  for experience, ovl05:0355), and Flag11B becomes 1. Flag11B is the current hit points [I], so this
+  for experience, ovl05:0355), and HpCurrent becomes 1. HpCurrent is the current hit points [I], so this
   restores one hit point [I] (ovl24:175D). Constitution is reduced by one before the constitution
   thresholds are tested; from 14 up the hit points above HpB1 are divided by the bonus over all class
   levels (fighter levels count constitution - 14; non-fighter levels count twice above constitution 15,
@@ -260,7 +260,7 @@ begin
         RemoveAffect(Who, AffectAnimateDead, nil);
         RemoveAffect(Who, AffectPoisoned, nil);
         RemovingAffects := 0;
-        Who^.Flag11B := 1;
+        Who^.HpCurrent := 1;
         Who^.Status := StatusOkay;
         Who^.Flag10D := 1;
         if Who^.Constitution > 0 then Dec(Who^.Constitution);
@@ -350,7 +350,7 @@ end;
 
 { ovl04:0928. Stone to Flesh: asks first when Status is not StatusStoned; charges PriceStoneToFlesh
   and, for a stoned character, sets Status to StatusOkay, Flag10D to 1 (experience eligible,
-  ovl05:0355) and Flag11B to 1. Flag11B is the current hit points [I], so this restores one hit point [I]
+  ovl05:0355) and HpCurrent to 1. HpCurrent is the current hit points [I], so this restores one hit point [I]
   (ovl24:175D). }
 procedure StoneToFlesh;
 var
@@ -369,7 +369,7 @@ begin
       begin
         SelectedCharacter^.Status := StatusOkay;
         SelectedCharacter^.Flag10D := 1;
-        SelectedCharacter^.Flag11B := 1;
+        SelectedCharacter^.HpCurrent := 1;
       end;
   end;
 end;

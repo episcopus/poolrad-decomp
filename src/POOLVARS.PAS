@@ -283,9 +283,14 @@ type
     { +$2E: the race (whitepaper 4.2.5); signed: ComputeThiefSkills sign-extends it (ovl23:034F)
       to index the race row of ThiefRaceTable. }
     Race: ShortInt;
-    { +$2F: the class (whitepaper 4.2.5): 0 cleric, 2 fighter, 5 magic-user, 6 thief, 8..16 the
-      multi-class combinations (AwardExperience splits the experience by 2 or 3, ovl05:0454);
-      signed (the case at ovl05:045A compares with jl). }
+    { +$2F: the class or class combination (whitepaper 4.2.5), NOT a bit mask: 0..7 a single class in ClassNames order
+      and 8..16 nine
+      named combinations (ClassNames[ClassMask], ovl19:01D2; the row index of ClassAlignmentChoices, ClassAbilityMinimums and
+      StartingAgeTable); AwardExperience splits the experience by 2 or 3 (ovl05:0454); signed (the case at ovl05:045A
+      compares with
+      jl). TItemRow.ClassMask and ClassBits are real bit masks, so the same word means two things; renaming this field
+      to ClassCombo
+      touches 61 uses in 6 files and is left to a later pass. }
     ClassMask: ShortInt;
     { +$30: the age in years; the saved record holds it at 0x30 (whitepaper 4.2.5); CarryClock adds one
       to every character when the rest clock's top digit reaches its radix (ovl20:037B). }
@@ -293,7 +298,10 @@ type
     HpMax: Byte;                  { +$32: maximum hit points }
     { +$33..+$6A: one byte per spell 1..$38 (the rows of the spell table SpellTable): RecalcClassStats sets it to 1
       for every cleric spell (table class 0) of a level the character has a cleric spell slot
-      for (ovl23:0135); likely the spells the character can learn [I]. }
+      for (ovl23:0135). In ovl16 it is the set of spells the character knows: a magic-user starts with Detect Magic,
+      Read Magic,
+      Shield and Sleep (spells 11, 18, 19, 21), a cleric with every level 1 spell of class 0 (spells 1..8), and TrainCharacter
+      sets the chosen spell [V image, code]. }
     KnownSpells: array[1..$38] of Byte;
     { +$6B: the sweep-attack limit RecalcCombatValues (00BA:0BB8) sets: the fighter level
       (ClassLevels[2]) when it is above 0 and the race is above 0, else 1; StartCombatantRound
@@ -332,19 +340,25 @@ type
     { +$96..$9D: the level in each of the eight classes; Raise Dead treats index 2 apart (class 2
       is the fighter in the create-character run, whitepaper 5.8). Signed: only levels above 0 count. }
     ClassLevels: array[0..7] of ShortInt;
-    { +$9E: Sign-extended row index LoadMonster's caller (ovl17:1262) and the create menus (ovl16)
-      use to pick the character's picture banks: ovl17:1262 reads FigureBankTable[2 + B9E*8 + roll] and
-      FigureBankTable[18/28/38/48 + B9E*5 + roll], and ovl16:13CB reads RaceAbilityLimits[B9E + (Race shl 4)].
-      ovl16:0A29 sets it to (the create menu's selection - 1); it is probably the sex, 0 male
-      (whitepaper 4.2.5), but that is not settled. }
-    B9E: ShortInt;
+    { +$9E: the sex, 0 male and 1 female [V]: CreateCharacter builds the 'Pick Gender' menu from SexNames[0..1] and
+      stores the choice
+      minus one (ovl16:0A29), ovl19 draws SexNames[Sex], RaceAbilityLimits rows are (male, female) pairs indexed by it
+      (the female
+      limits are lower or equal in every race) and ovl17 picks the head and body picture banks by it
+      (FigureBankTable[3 + Sex * 8 + roll] and [19..58], ovl17:1262). Sign-extended by ovl16:13CB. }
+    Sex: ShortInt;
     { +$9F: the creature kind some spells test a target by: Charm Person and the shared helper
       ovl22_fn_1758 require 1 or less (ovl22:11F3, 1760), Snake Charm $E (ovl22:193E) and ovl12
       tests 4 and $A; MON*CHA has the humanoids at 0 or 1, the undead at 4 and a giant snake at $E,
       and a saved party member at 0. }
     CreatureType: Byte;
-    { +$A0: the script reads it signed (GetCharacterVar, ovl07:08C5). Purpose unknown: ScoreItem (ovl09:128D)
-      refuses an item whose Affects[3] is $84 when the low nibble of its Affects[2] differs from this byte. }
+    { +$A0: the alignment index of AlignmentNames [V]: 0 Lawful Good, 1 Lawful Neutral, 2 Lawful Evil, 3 Neutral Good, 4 True
+      Neutral, 5 Neutral Evil, 6 Chaotic Good, 7 Chaotic Neutral, 8 Chaotic Evil (ShowCharacterSheet draws
+      AlignmentNames[Alignment],
+      ovl19:0198; CreateCharacter stores the picked entry of ClassAlignmentChoices; the script reads it signed, GetCharacterVar
+      ovl07:08C5). ScoreItem (ovl09:128D) and the item handler AlignmentBoundWeaponHurtsOthers compare it with the low
+      nibble of an
+      item's Affects[2]. }
     Alignment: ShortInt;
     { +$A1: RecalcClassStats sets 3 when the fighter level (ClassLevels[2]) is above 6, else 2
       (ovl23:0083): likely attacks per two rounds [I]. }
@@ -363,9 +377,10 @@ type
       when this byte is nonzero; its meaning beyond that is not proven (it may mark a creature whose
       attacks use the strength tables). }
     StrengthBonusFlag: Byte;
-    { +$AB: LoadMonster's caller gives a new monster the value Random(256) here (ovl17:1262);
-      the rest of the byte's use is not known. }
-    BAB: Byte;
+    { +$AB: a random tag: CreateCharacter and
+      LoadMonster's caller store Random(256) here (ovl16, ovl17:1262) and AddSavedCharacters
+      tells two records of the same name apart by it (ovl16:3263). It is never added to anything. }
+    RandomTag: Byte;
     Experience: LongInt;          { +$AC: experience points; AwardExperience adds a battle's share (ovl05:04A3) }
     { +$B0: the character's class bits [I]: UseBestItem skips an item whose ClassMask (TItemRow) shares
       no bit with it (ovl09:13CA). Purpose unknown beyond that. }
@@ -389,8 +404,10 @@ type
     CBodyBlock: Byte;             { +$BE: the CBODY picture block BuildCharacterIcon loads for the combat icon }
     CombatIcon: Byte;             { +$BF: the icon picture DrawIcon draws for it on the combat map (ovl31) }
     { +$C0..+$C6: the character's figure descriptor as BuildCharacterIcon reads it. Figure[0] indexes FigureBankTable
-      for the CHEAD/CBODY name suffix; Figure[1..6] are six colour pairs (low nibble the source
-      colour's destination in the icon colour map, high nibble the source colour's + 8 slot). }
+      for the CHEAD/CBODY name suffix; Figure[1..6] are six colour pairs: the low
+      nibble is the colour the picture colour FigureColorSlots[I] becomes, the high nibble the colour of slot + 8.
+      Figure[0] is the
+      icon size, 1 small (Dwarf, Gnome, Halfling) or 2 large. }
     Figure: array[0..6] of Byte;
     ItemCountC7: Byte;            { +$C7: nonzero offers Use in the combat menu (ovl08:06E1); likely the item count }
     Items: PItem;                 { +$C8: the list of carried items }
@@ -446,7 +463,7 @@ type
     WeaponDamageBonus: array[1..2] of ShortInt;  { +$119, +$11A: signed; the strength and item plus bonus goes here }
     { +$11B: Raise Dead and Stone to Flesh set it to 1; HealCharacter adds to it up to HpMax,
       ReviveCombatant sets it and DropCombatant clears it: the current hit points [I] (ovl24:17B9). }
-    Flag11B: Byte;
+    HpCurrent: Byte;
     { +$11C: the party's slowest and fastest values of it set the script's range (MovementRange,
       ovl07:1FB1), doubled by affect $27 and halved by affect $2A: likely the movement rate [I]. }
     Movement: Byte;
@@ -648,6 +665,10 @@ const
   ExceptionalStrength = 18;
   { sizeof(TMenuLine): the bytes of one menu line record. }
   MenuLineBytes = $2E;
+  { TCharacter.Figure[0], the size of the
+    character's icon: 1 small (Dwarf, Gnome, Halfling; the CHEAD/CBODY suffix 'S'), 2 large ('T'). }
+  IconSizeSmall = 1;
+  IconSizeLarge = 2;
   { The affect handler protocol (ovl24 CallAffectHandler, AddAffect; whitepaper 5.19): the Mode of a handler call,
     the Flag of an affect (does its handler run when it is removed), the Duration of a lasting affect and the
     hook kind a combatant going down runs. }
@@ -916,9 +937,13 @@ const
   ds08BE: array[0..6] of Byte =
     (
       $08, $08, $0A, $0A, $08, $04, $06);
-  { The CHEAD/CBODY character-picture name suffix table: the byte FigureBankTable[FigureIndex] is the
-    character BuildCharacterIcon appends to 'CHEAD'/'CBODY' (index 1 gives 'S', 2 gives 'T'). Its extent is
-    unverified: the region runs to the door table at DS:0900. }
+  { DS:08C5..08FF, 59 bytes [V image]: [0] = 4 (this is ClassHitDieSides[7], the monk die, read through the other
+    table); [1] and [2]
+    are the letters 'S' and 'T' BuildCharacterIcon appends to 'CHEAD'/'CBODY' by the icon size Figure[0]; [3..18] are
+    head picture
+    bank numbers by sex (two rows of 8, highest bank 14 = MaxHeadBank); [19..58] body banks by class group (highest 12
+    = MaxBodyBank),
+    which ovl17 views as MonsterBanks. }
   FigureBankTable: array[0..$3A] of Char = (
       #4, 'S', 'T', #1, #2, #3, #4, #5, #8, #11, #12, #6, #7, #9, #10, #13, #14, #6, #7, #2, #4, #2, #4, #2, #2,
       #4, #8, #2, #4, #1, #3, #4, #5, #6, #7, #9, #11, #7, #9, #2, #2, #2, #2, #2, #8, #10, #12, #8, #10, #6, #6,
@@ -2626,8 +2651,13 @@ var
     DS:04B6. }
   TurnUndeadTable: array[0..10, 0..9] of Byte absolute Raw0447;
   AlterMenuText: string[40] absolute ds055A;  { 'Order Drop Speed Icon Pics Exit': the camp Alter menu (ovl15:1C86) }
-  { One bit per class 0..7 (the value is added to a class-bit mask): ovl16:29AE builds the character's
-    class bits from the classes with a level above 0 (DS:05DE[ClassLevels]) and the bits it may train. }
+  { Per class 0..7 (cleric, druid, fighter, paladin, ranger, magic-user, thief, monk) the training guild bits [I]: 1
+    magic-user, 2 cleric,
+    4 thief, 8 fighter; cleric and druid share bit 2, paladin and ranger carry two bits (8 + 2), the monk 4 + 2 [V
+    image 02 02 08 0A 0A 01 04 06].
+    RollHitPoints and TrainCharacter (ovl16:29AE) test them against the hall's mask. The image holds 18 bytes: bytes
+    8..17 (10 10 10 20 20
+    20 40 40 40 00) are read by nothing by name (probably a group per ClassMask 8..16 [H]). }
   ClassTrainingBits: array[0..7] of Byte absolute Raw05DE;
   { The 'C D M T V A R L S B E J' hotkey line: the prompt RunCharacterMenu (ovl16:0161) passes to
     ReadPromptChoice under the title 'Choose a function '. }
@@ -2732,14 +2762,16 @@ var
   ClassThac0Table: array[0..7, 0..10] of Byte absolute ds3C7C;
   ThiefSkillTable: array[0..8, 1..8] of Byte absolute ds3CF4;  { the eight thief skills per thief level }
   { The colour-slot table BuildCharacterIcon reads to build the character icon's colour map: FigureColorSlots[I] for
-    I 1..6 holds 1, 2, 3, 4, 6, 7 (the destination colour of the I-th of the six colour pairs, and
-    plus 8 for the high nibble). It sits inside the ThiefSkillTable region (DS:3CF4). }
+    I 1..6 holds 1, 2, 3, 4, 6, 7: the colour of the ICON picture that the I-th Figure colour pair replaces
+    (MapTo[slot] gets the low
+    nibble, MapTo[slot + 8] the high nibble, MapFrom is the identity map [V ovl17:218, ovl16:1732]); the starting
+    values are the identity. It sits inside the ThiefSkillTable region (DS:3CF4). }
   FigureColorSlots: array[0..$F] of Byte absolute Raw3CF5;
   ThiefRaceTable: array[0..7, 1..8] of ShortInt absolute ds3D3C;  { the race adjustment of the eight thief skills }
   { the dexterity adjustment of the first five thief skills }
   ThiefDexTable: array[0..18, 1..5] of ShortInt absolute ds3D4F;
   { The per-race ability limits ModifyCharacter (ovl16:209F) and ovl16:056C clamp to: a 16-byte row
-    per race, a minimum and maximum column per ability (RaceAbilityLimits, indexed by [Race, B9E] or
+    per race, a minimum and maximum column per ability (RaceAbilityLimits, indexed by [Race, Sex] or
     [Race, column]). Columns +0/+2/+4 hold the Strength minimum, maximum and exceptional percentile
     maximum (RaceStrengthMax and RaceStrengthPercent are the same rows viewed two and four columns
     on), columns +6/+7 .. +14/+15 the minimum and maximum of Intelligence, Wisdom, Dexterity,
@@ -2788,9 +2820,12 @@ var
   LoaderLoopIndex: Byte absolute Raw465C;  { loop counter of the loader's three fill loops (ovl11:0130, 02CA, 035E) }
   GameDirBackup: string[40] absolute Raw4661;  { the save game name; the loader copies GameDir here and back
     (ovl11:0469, 05EA) }
-  { Set to 1 by the RunCharacterMenu STING cheat (the J key, ovl16:0161). While set, the menu
-    offers Train (CharacterMenuSlots slot 3), and TrainCharacter (ovl16:29AE) skips the consciousness, gold,
-    class and experience checks and does not charge the 1000 gold. }
+  { Set to 1 by the RunCharacterMenu STING cheat (the J key, ovl16:0161), which exists only when the game was started
+    with the argument
+    STING (ParamStr(1) = 'STING'). While set, the menu offers Train (CharacterMenuSlots slot 3), and TrainCharacter
+    (ovl16:29AE) skips
+    the status, gold, guild and experience refusals and does not charge the 1000 gold; the racial level cap is still
+    tested first. }
   StingCheat: Byte absolute Raw470C;
   FinalPictureNumber: string[1] absolute Raw4713;  { Str(TileSet): the picture number ShowEndingNarrative appends to FINAL }
   { The character the View command was started for: a copy of SelectedCharacter that ViewSelectedCharacter
