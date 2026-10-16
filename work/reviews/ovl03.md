@@ -90,3 +90,11 @@ colours and window numbers, and thin comments, not wrong ones.
 
 passed: all three round 1 must-fix findings are fixed and verified against the code, no must-fix is open; the should-fix
 findings above stay for the decompiler.
+
+## Phase 6 sign-off (round 3, 2026-10-16)
+
+Independent read-only review by a side session of the phase 6 pass (main at ffd08bd; the side session has no registered agent name). Its must-fix findings were applied by claude-p6 on branch task/p6-review-fixes (commits listed below), checked with `make match` (47 units), `make rebuild` (IDENTICAL), `make readability` and `make check` (passed at a4cbff9). The reviewer did not re-read the applied fixes; the checks above are the verification. The round 2 pass above stays recorded in re/symbols.toml (the tool stamps one pass per unit).
+
+Commits: 5bc90cb, b2b09a8, d9fb390, cd024f8.
+
+All eight must-fix findings applied (DamageParty save kind and bonus masks swapped, positional names, evidence and whitepaper opcodes). Open should-fix: Thac0 and B84 field names, a few comment details.

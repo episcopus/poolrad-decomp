@@ -55,3 +55,11 @@ Severity: must-fix (blocks review-pass), should-fix, note. When the decompiler f
 ## Verdict
 
 Round 1: not passed (five must-fix). Round 2: passed. All five must-fix findings are fixed and verified (5fcd93f, 4217327, 8e5d577, a1224e2, 0d3f96f); no must-fix is open. The should-fix items stay open for the decompiler or Phase 6 and do not block.
+
+## Phase 6 sign-off (round 3, 2026-10-16)
+
+Independent read-only review by a side session of the phase 6 pass (main at ffd08bd; the side session has no registered agent name). Its must-fix findings were applied by claude-p6 on branch task/p6-review-fixes (commits listed below), checked with `make match` (47 units), `make rebuild` (IDENTICAL), `make readability` and `make check` (passed at a4cbff9). The reviewer did not re-read the applied fixes; the checks above are the verification. The round 2 pass above stays recorded in re/symbols.toml (the tool stamps one pass per unit).
+
+Commits: a4cbff9, cd024f8.
+
+Must-fix M1..M9 applied: SoundDamageMessage and SoundAffectMessage, HpCurrent, ArmourClassValue, BaseArmourClassValue and RearArmourClassValue (TCharacter +$111, +$A9, +$112), SpellCasterLevel comment, BonusRace = RaceElf, ScreenLastCol from ScreenCols, shared constants OmniDir, UnlimitedSteps, SoundIdleOff, SoundIdleDefault and the PictureMasked flags, WalkCombatLine StepDelay and WalkFinished. Open should-fix: SortEntries as ScanResults (S1), Guarding, TileGate and Flag10D field names (S3), the Byte-as-Boolean types (S5), more QUIRK tags (S6), the HiddenNames bit comment (S7), shared clock and key constants (S8, S10), whitepaper 5.24 wording (S11, partly fixed), RedrawView mode names (S12), header list (S13).
