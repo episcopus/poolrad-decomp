@@ -9532,3 +9532,17 @@ kind = "routine"
 why = "handler of affect $03 carried by Two-Handed Sword +1 +3 vs. Undead (Affects[2] $03 [V]); CreatureType 4 is undead (ovl12:013B) (P6 review of ovl12)"
 date = "2026-10-16"
 
+[[rename]]
+old = "DamageUnlessAlignmentMatches"
+new = "AlignmentBoundWeaponHurtsOthers"
+kind = "routine"
+why = "item handler of affect $84 (ReadyItem ovl19:571, 607 passes the item as Affect): unreadies the item and deals the high nibble of its Affects[2] when the low nibble differs from the wielder's Alignment; ScoreItem tests the same nibble (ovl09:128D) (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "ShowMustHaveGiantStrength"
+new = "RequireGiantStrength"
+kind = "routine"
+why = "item handler of affect $87: unreadies the item and shows 'Must have Giant Strength' when Strength is below 19 (ovl12:3134; P6 review of ovl12)"
+date = "2026-10-16"
+
