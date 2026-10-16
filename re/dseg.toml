@@ -409,7 +409,7 @@ evidence = "five words, one per 8x8 bank, subtracted from Symbol to index within
 [[global]]
 offset = 0x5E4E
 name = "TileBuf"
-evidence = "far pointer to the tile staging buffer: tiles are Moved to +$17 and shown by res07_fn_1951 (ovl34:027A,029E); the loader (StartGame) allocates it through res07_fn_248E(8, 1, 1, 0) at ovl11:00A4"
+evidence = "far pointer to the tile staging buffer: tiles are Moved to +$17 and shown by ShowPicture (ovl34:027A,029E); the loader (StartGame) allocates it through res07_fn_248E(8, 1, 1, 0) at ovl11:00A4"
 
 [[global]]
 offset = 0x4A20
@@ -803,7 +803,7 @@ evidence = "DrawGlyph mode 0 picks ds25E5[Bit] for pixel column Bit 0..7 of the 
 [[global]]
 offset = 0x25F6
 name = "EgaPlaneBitMasks"
-evidence = "res07_fn_1951 (0464:1A6E) writes ds25F6[Plane] (1, 2, 4, 8) to the Sequencer Map Mask (port 3C5h) for plane 0..3 when it copies one byte per plane at DS:5050[Row]+Col in segment A000"
+evidence = "ShowPicture (0464:1A6E) writes ds25F6[Plane] (1, 2, 4, 8) to the Sequencer Map Mask (port 3C5h) for plane 0..3 when it copies one byte per plane at DS:5050[Row]+Col in segment A000"
 
 [[global]]
 offset = 0x0508
@@ -1355,7 +1355,7 @@ evidence = "the second door block codes of AnimateAreaDoors, same bit 7 flag (ov
 [[global]]
 offset = 0x091D
 name = "DoorRemapFrom"
-evidence = "the 16-byte source colour record AnimateAreaDoors passes to RemapPictureColours (ovl18:06B3)"
+evidence = "the 16-byte source colour record AnimateAreaDoors passes to RemapPictureColors (ovl18:06B3)"
 
 [[global]]
 offset = 0x092D
@@ -1390,17 +1390,17 @@ evidence = "the wall view id table: two equal groups of eight ids ShowAreaView a
 [[global]]
 offset = 0x0C6C
 name = "SpriteRemapFrom"
-evidence = "source colour table LoadSpriteList passes to RemapPictureColours (ovl28)"
+evidence = "source colour table LoadSpriteList passes to RemapPictureColors (ovl28)"
 
 [[global]]
 offset = 0x0C7C
 name = "SpriteRemapTo"
-evidence = "target colour table LoadSpriteList passes to RemapPictureColours, colour 13 to 0 (ovl28)"
+evidence = "target colour table LoadSpriteList passes to RemapPictureColors, colour 13 to 0 (ovl28)"
 
 [[global]]
 offset = 0x0CD2
 name = "PictureRemapFrom"
-evidence = "identity colour map LoadPictureSlot passes as the source of RemapPictureColours (ovl32)"
+evidence = "identity colour map LoadPictureSlot passes as the source of RemapPictureColors (ovl32)"
 
 [[global]]
 offset = 0x0CE2
@@ -1785,7 +1785,7 @@ evidence = "the BIOS display page WriteCharsAt writes text to; res08_init sets i
 [[global]]
 offset = 0x4A1D
 name = "CurrentVideoMode"
-evidence = "copy of SavedVideoMode taken in res08_init; SetVideoMode and PaletteColor restore it (res07)"
+evidence = "copy of SavedVideoMode taken in res08_init; written by SetVideoMode and res08_init; the current mode (res07)"
 
 [[global]]
 offset = 0x4A24
@@ -1825,12 +1825,12 @@ evidence = "per cell row offset table the loader fills (I * 40, ovl11:0186) Flus
 [[global]]
 offset = 0x51E0
 name = "TandyScanlineSegments"
-evidence = "per cell row graphics plane address the loader fills (ovl11) ShowPicture and MirrorPicture write to (res07)"
+evidence = "per cell row graphics plane address the loader fills (ovl11) ShowPicture and FlushPictureChanges write to (res07)"
 
 [[global]]
 offset = 0x5370
 name = "ClipChecksEnabled"
-evidence = "set to 1 by the loader (ovl11:042E); DrawPictureItem and DrawPictureItemClipped run their range checks only while nonzero (res07)"
+evidence = "set to 1 by the loader (ovl11:042E); DrawPictureItemClipped runs its range checks only while nonzero (DrawPictureItem never reads it) (res07)"
 
 [[global]]
 offset = 0x5377
@@ -2141,7 +2141,7 @@ evidence = "the Done variable CastMonsterReadMagic and MonsterBreath pass to Spe
 [[global]]
 offset = 0x70C7
 name = "SharedLoopIndex"
-evidence = "a global ShortInt loop counter FreeSpriteList, DrawPictureItem, RemapPictureColours and FillPictureRect share (ovl28, res07)"
+evidence = "a global ShortInt loop counter FreeSpriteList, DrawPictureItem, RemapPictureColors and FillPictureRect share (ovl28, res07)"
 
 [[global]]
 offset = 0x84CC

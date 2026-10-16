@@ -1,11 +1,17 @@
 unit RES07;
-{ The picture unit: loads a DAX picture block into a picture record (routine
-  0111), unpacks the 4-bit pixel data of a picture for the active video adapter
-  (02A5), blits pictures, cells and sprites with clipping (08D4, 0D71, 15C7,
-  1951) and builds the 8x8 tile and sprite banks that combat, the 3D view and
-  the title draw from. Evidence: callers ovl32 LoadPictureSlot/Load24x24Set,
-  ovl34 Load8x8Bank, ovl28 DrawSprite, ovl01 ShowTitleScreen
-  (build/packets/res07.md); picture format and roles: whitepaper 4.2.3, 5.16. }
+{ The picture unit: loads a DAX picture block into a picture record (LoadPicture, 0111), unpacks its 4-bit pixel data
+  for the active video
+  adapter (UnpackPicturePixels, 02A5), draws pictures, cells and sprites (DrawPictureItem 08D4, DrawPictureItemClipped
+  0D71, MirrorPicture
+  15C7, ShowPicture 1951), tracks the changed rows of the staging picture DrawBuf and shows them
+  (FlushPictureChanges), fills and recolors
+  pictures (FillPictureRect, RemapPictureColors), sets the video mode and the palette registers (SetVideoMode,
+  SetPaletteRegister) and builds
+  the 8x8 tile and sprite banks that combat, the 3D view and the title draw from. Every drawing routine branches on
+  VideoAdapter: 0 CGA
+  (4 colours, 2 bits per pixel), 1 EGA (planar, 16 colours), 2 Tandy/PCjr (packed, 4 bits per pixel). Callers: ovl32
+  LoadPictureSlot and
+  Load24x24Set, ovl34 Load8x8Bank, ovl28 DrawSprite, ovl01 ShowTitleScreen; picture format and roles: whitepaper 4.2.3, 5.16. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 uses Dos, POOLVARS, RES04, RES05;
@@ -95,9 +101,10 @@ begin
     PaletteColor := (Pal[Index shr 1] and $F0) shr 4;
 end;
 { 0464:00CF: sets video mode A through INT 10h function 0, the way the game
-  changes the EGA mode: the mode that was current (CurrentVideoMode) is kept in
-  SavedVideoMode so the restore routine can go back, then CurrentVideoMode becomes A.
-  Called by res08_init with $0D and by the restore routine. }
+  changes the mode: the mode that was current (CurrentVideoMode) is kept in
+  SavedVideoMode, then CurrentVideoMode becomes A. res08_init sets the mode of the adapter kind: $0D EGA, 9 Tandy, 4
+  CGA. Called by
+  res08_init and by RestoreVideoMode, so the two calls swap the modes [I]. }
 procedure SetVideoMode(Mode: Byte);
 var
   { QUIRK 0464:00D2: the original allocates a two-byte local it never reads or
@@ -111,9 +118,14 @@ begin
   CurrentVideoMode := Mode;
 end;
 
-{ 0464:00FF: restores the video mode saved at the last mode set through
-  SavedVideoMode. Called by the picture loaders before they draw a range or
-  name error message, and by the loaders that switch modes to show a picture. }
+{ 0464:00FF: SetVideoMode(SavedVideoMode). Because SetVideoMode saves the current mode first, the call swaps the two
+  modes: the first
+  call goes back to the DOS text mode and leaves the game mode saved, a second call returns to the game mode [I].
+  Callers are the
+  loaders (ovl28, ovl29, ovl32, ovl34) and res08_init just before an error message, which they show in text mode; the pattern
+  RestoreVideoMode, message, key, RestoreVideoMode, QuitGame ends with QuitGame setting the DOS mode. QUIRK [I]: a
+  lone call before
+  QuitGame would leave the game mode saved (not run in the oracle). }
 procedure RestoreVideoMode;
 begin
   SetVideoMode(SavedVideoMode);
@@ -686,8 +698,9 @@ begin
   Inc(Mirrored, (Value and GlyphPixelMasks[0]) shr 14);
   MirrorWord := Mirrored;
 end;
-{ 0464:1596: swaps the two nibbles of X: the low nibble becomes the high one.
-  The byte-sized companion of 1484 for flipping an 8-pixel byte. }
+{ 0464:1596: swaps the two nibbles of Value: the low nibble becomes the high one. On VideoAdapter 2 a byte holds two
+  4-bit pixels, so this
+  mirrors a pair of pixels (MirrorPicture); the companion of MirrorByte (1484) and MirrorWord (1509). }
 function SwapNibbles(Value: Byte): Byte;
 var
   Swapped: Byte;
@@ -983,7 +996,7 @@ var
   Mask: Byte;                        { adapter 1: the pixels of the cell that have the colour }
   PlaneMask: array[0..3] of Byte;    { adapter 1: per EGA plane $00 (the colour bit is set) or $FF }
   Plane: Byte;                       { EGA plane loop variable }
-  Unused: Byte;                      { the original frame has one byte the locals never use }
+  Unused: Byte;                      { QUIRK 0464:1F51: the original frame has one byte the locals never use }
   Quad: Byte;                        { pixel pair loop variable (adapter 0) }
   RowBytes: Word;                    { bytes per pixel row }
   FromHigh: Byte;                    { adapter 2: the FromMap colour in the high nibble }
@@ -1039,7 +1052,8 @@ begin
                 for Quad := 0 to 3 do
                   if (PPicture(Pic)^.Data[PicOfs] and GlyphPixelMasks[Quad + 4]) =
                     PixelBitsByColor[PaletteColor(FromMapCopy[Color], @Palette), Quad] then
-                    if (Flicker = 0) or ((Flicker <> 0) and (Random(4) = 0)) then
+                    if (Flicker = 0) or ((Flicker <> 0) and (Random(4) = 0)) then   { QUIRK 0464:2375: the redundant
+                      second test is the original's }
                       Data[ScratchOfs] := (Data[ScratchOfs] and not GlyphPixelMasks[Quad + 4]) or
                         PixelBitsByColor[PaletteColor(ToMapCopy[Color], @Palette), Quad];
                 Inc(PicOfs);
@@ -1287,8 +1301,11 @@ begin
 end;
 { 0464:2A0D: sets one EGA palette register through INT 10h function $10
   (AL=0): Register is the palette register and Color the colour value, mapped from
-  the 0..15 palette range to the hardware's 0..7 and 16..23. Called by SwapPaletteColors0And8/e3
-  (0,8)/(8,0) and (0,0)/(8,8) and by ShowTitleScreen (1,9). }
+  the 0..15 palette range to the hardware's 0..7 and 16..23. Called by SwapPaletteColors0And8 (0, 8) and (8, 0),
+  RestorePaletteColors0And8
+  (0, 0) and (8, 8) (ovl31) and by ShowTitleScreen, which cycles (1, 9), (1, $B) and (1, $F) (ovl01:122..132). Why
+  8..15 map to 16..23 is [H]: bit 4
+  is the intensity bit of the RGBI monitor palette. }
 procedure SetPaletteRegister(Register, Color: Byte);
 begin
   Regs.AH := $10;                    { INT 10h function $10: set palette register }

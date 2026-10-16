@@ -2303,16 +2303,24 @@ var
   { The display page WriteCharsAt writes to first (BH of INT 10h, 0802:0048); res08_init sets it
     to 0 for EGA and passes it to SetActivePage. }
   TextPage: Byte;  { display page; see above }
-  SavedVideoMode: Byte;  { video mode QuitGame passes to INT 10h; no writer is in the decompiled units }
-  CurrentVideoMode: Byte;  { copy of SavedVideoMode taken in res08_init; reader unknown }
+  { The other video mode: SetVideoMode (res07) sets it to the mode that was current before the call, res08_init sets
+    it to the DOS mode, and
+    QuitGame passes it to INT 10h. RestoreVideoMode is SetVideoMode(SavedVideoMode), so it toggles between the two [I]. }
+  SavedVideoMode: Byte;
+  CurrentVideoMode: Byte;  { the current video mode: res08_init sets it from INT 10h AH=0Fh, SetVideoMode to the mode it sets }
   { DS:4A1E..4A1F: storage of VideoAdapter }
   ds4A1E: array[0..1] of Byte;
   { the video mode read by ClearWindow (03F1:0137) and res06: 0 fills
                                     the text-scanline banks, 1 draws through FillPlaneRect on the EGA
                                     display pages, 2 fills the four graphics banks; POOL.CFG 'E'
                                     selects 1 (whitepaper 2.3) }
-  DrawBuf: Pointer;  { far pointer DrawCellPicture passes to DrawPictureItem; what it points at is unknown }
-  IconBackgroundBuffer: Pointer;  { screen buffer the loader allocates through AllocatePicture (ovl11:00D4) }
+  DrawBuf: Pointer;  { the staging picture of the main view: StartGame allocates it as a 21-cell x 168-row picture
+    (AllocatePicture($A8, $15,
+                       1, 0), ovl11:56); DrawCellPicture draws into it and FlushPictureChanges shows it at screen
+                       pixel (8, 8) }
+  IconBackgroundBuffer: Pointer;  { the save-under buffer for one combat icon: StartGame allocates 3 cells x 24 rows
+    (24x24 pixels, ovl11:57);
+                                    DrawCombatIcon draws with Flags 5 (mask and save) and restores the cell from it (res12) }
   RowDirtyFlags: array[0..$A7] of Byte;  { $A8-byte buffer the loader clears (ovl11:00EC) }
   { The changed-region trackers the blitters (res07 08D4/0D71/2632) fill and res07
     FlushPictureChanges (1B52) flushes: per changed screen row, RowFirstChangedOfs holds the
@@ -2706,7 +2714,8 @@ var
     bytes are also entry 0 of SpecialBlocks, which DrawAreaView never reads. }
   WallViewIdTable: array[0..15] of Byte absolute Raw0C26;  { wall view id table, two equal groups of 8; see above }
   { Fill bytes of FillPictureRect (the image: 00 55 AA FF then 00 11 .. BB at PixelsByColor4Bit..). PixelsByColor2Bit[C] is
-    the byte of four 2-bit pixels of colour C (C 0..3); PixelsByColor4Bit[C] the byte of two 4-bit pixels of
+    the byte of four 2-bit pixels of colour C (C 0..3 are the CGA colours; the declared bound runs into the next
+    table); PixelsByColor4Bit[C] the byte of two 4-bit pixels of
     colour C (C * $11). The two tables overlap: PixelsByColor2Bit[C + 4] is PixelsByColor4Bit[C]. }
   PixelsByColor2Bit: array[0..15] of Byte absolute Raw0D02;  { four 2-bit pixels of colour C; see above }
   { Characters 0768's word scanner tests (0709:0822..08F0): the leading run is skipped,
@@ -2729,9 +2738,13 @@ var
     indexed by the bit column 0..7. }
   GlyphPixelMasks: array[0..7] of Word absolute ds25E5;
   { Per palette colour C (0..15) and pixel position K (0..3): the byte UnpackPicturePixels ORs
-    into a picture byte for VideoAdapter 0. For C 0..3 it is C's 2-bit value in pixel K's bit pair
-    (C = 1, K = 0 gives $40); the entries for C 4..15 do not follow that pattern (image bytes
-    from DS:25FA: 00 00 00 00 40 10 04 01 80 20 08 02 C0 30 0C 03 00 11 22 12 ...). }
+    into a picture byte for VideoAdapter 0. Only colours 0..3 exist [V image DS:25FA: 00 00 00 00 / 40 10 04 01 / 80
+    20 08 02 / C0 30 0C 03]:
+    C's 2-bit value in pixel K's bit pair (C = 1, K = 0 gives $40). The declared bound [0..15] only runs into the
+    neighbours (FillRectPalette
+    at DS:260A). Every 4-bit palette entry of every DAX picture is at most 3 (778 blocks parsed), so on VideoAdapter 0
+    the palette maps the
+    16 pixel values to CGA colours 0..3 [I]. }
   PixelBitsByColor: array[0..15, 0..3] of Byte absolute Raw25FA;
   { Globals of the loader (StartGame, src/OVL11.PAS); the address in each comment is the write or
     read that shows it. }
@@ -2866,6 +2879,9 @@ var
   { up: ECL 36, 49, 51, 58 and 61 (ovl03:179B, 2AA2, 2AEB, 271F, 2B14); down: 37, 38 (ovl03:18F8); meaning unknown }
   EclPC: Word absolute ds49ED;  { set to $9900 by the loader (ovl11:03C0) }
   DelayPerGlyph: Byte absolute Raw4A00;  { set to 1 by the loader (ovl11:03A1) and by EndBattle (ovl05:1631) }
+  { The adapter kind: 0 CGA (BIOS mode 4), 1 EGA (mode $0D, planar), 2 Tandy/PCjr (mode 9, packed); AdapterCga,
+    AdapterEga, AdapterTandy.
+    res08_init sets it from POOL.CFG line 1 (E, T or anything else), and res05, res06, res07 and the overlays branch on it. }
   VideoAdapter: Byte absolute ds4A1E;
   ClipChecksEnabled: Byte absolute Raw5370;  { set to 1 by the loader (ovl11:042E) }
   { POOL.CFG line 3: the game directory with trailing backslash (res08_init, whitepaper 2.3). StartGame
@@ -2981,7 +2997,12 @@ var
     immediate word, $80 a packed string, $81 the address of a string. }
   OperandType: array[0..64] of Byte absolute ds7005;
   OperandHigh: array[0..64] of Byte absolute ds7045;  { the high byte of a word operand }
-  { loop counter of FreeSpriteList (the sprite list slots); ShortInt: the loop exits with jg }
+  { A global signed byte used as the for-loop counter of FreeSpriteList (ovl28:209), DrawPictureItem (four loops),
+    DrawPictureItemClipped (two),
+    RemapPictureColors (three) and FillPictureRect (res07), and read after its loop by ovl31 ProbeStep and
+    RemoveCombatant (QUIRK ovl31:0E41).
+    ShortInt: the loops exit with jg, and a limit of 128 or more truncates to its low byte (QUIRK res07
+    DrawPictureItem 0A3B..0A90). }
   SharedLoopIndex: ShortInt absolute Raw70C7;
   PictureShownFlags: array[0..1] of Byte absolute Raw84C8;  { two bytes InitScript clears (ovl07:01DF); meaning unknown }
   BattleWon: Byte absolute ds84DA;  { 1 when the party (or the duelist) won the battle (ovl05:05CA, 07AC) }
