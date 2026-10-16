@@ -48,8 +48,6 @@ const
   TwentyCounts = 100;           { what a 20 counts in the attack and resistance rolls }
   VarSideBonusParty = 881;      { a game word added to the party's attack rolls (low byte, signed) }
   VarSideBonusMonsters = 880;   { the same for the other side }
-  { The affects of a cloud tile (ApplyCloudTile). }
-  AffectAttackerLoses = $19;    { removed from an attacker before it rolls (ClearAttackerAffect) }
   { Strength as one byte (EncodeStrength): 18 with a percentile is 1..101, other values 100 up. }
   StrengthOffset = 100;
   DeathAffectCount = 16;        { entries of DeathAffects }
@@ -89,7 +87,7 @@ begin
         Prev := Prev^.Next;
       Prev^.Next := Cur^.Next;
     end;
-    FreeMem(Cur, AffectSize);
+    FreeMem(Cur, AffectRecordSize);
   end;
 end;
 
@@ -529,8 +527,8 @@ procedure ClearAttackerAffect(Who: PCharacter);
 var
   Affect: Pointer;
 begin
-  while HasAffect(Who, AffectAttackerLoses, Affect) do
-    RemoveAffect(Who, AffectAttackerLoses, Affect);
+  while HasAffect(Who, AffectInvisibility, Affect) do
+    RemoveAffect(Who, AffectInvisibility, Affect);
 end;
 
 { ovl24:100A (e13). Removes the sixteen affects of DeathAffects from Who: what a combatant loses
@@ -618,7 +616,7 @@ begin
     Cur := Who^.Affects;
     while (Cur <> nil) and (Found = nil) do
     begin
-      if ((Cur^.Id = AffectStrength1) or (Cur^.Id = AffectStrength2)) and (Cur^.Data < StrengthKept) then
+      if ((Cur^.Id = AffectEnlarge) or (Cur^.Id = AffectStrength)) and (Cur^.Data < StrengthKept) then
         Found := Cur;
       Cur := Cur^.Next;
     end;

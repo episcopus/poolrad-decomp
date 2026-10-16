@@ -23,9 +23,6 @@ uses POOLVARS, RES06, RES09, RES12, OVL07, OVL19, OVL21, OVL22, OVL24, OVL25;
 const
   { Affect numbers (the ids HasAffect and RemoveAffect look for in a character's affect list). }
   AffectBlind = $21;            { Cure Blindness checks and removes it (ovl04:0262) }
-  AffectCurse = $24;            { Remove Curse accepts it as a reason to cast (ovl04:08A0) }
-  AffectRemovedAtNeutralizePoison2 = $16; { purpose unknown; removed with $37 (ovl04:07F1) }
-  AffectRemovedAtNeutralizePoison3 = $0F; { purpose unknown; removed with $37 (ovl04:0807) }
   { Prices in gold pieces (the second argument of ChargeForCure). }
   PriceCureBlindness = 1000;
   PriceCureDisease = 1000;
@@ -311,15 +308,15 @@ begin
     begin
       RemovingAffects := 1;
       RemoveAffect(SelectedCharacter, AffectPoisoned, nil);
-      RemoveAffect(SelectedCharacter, AffectRemovedAtNeutralizePoison2, nil);
-      RemoveAffect(SelectedCharacter, AffectRemovedAtNeutralizePoison3, nil);
+      RemoveAffect(SelectedCharacter, AffectSlowPoison, nil);
+      RemoveAffect(SelectedCharacter, AffectSlowPoisonDamage, nil);
       RemovingAffects := 0;
     end;
   end;
 end;
 
 { ovl04:083A. Remove Curse: the character needs it when one of its items is cursed or it has
-  AffectCurse; otherwise asks first. Charges PriceRemoveCurse and hands the character to
+  AffectBestowCurse; otherwise asks first. Charges PriceRemoveCurse and hands the character to
   CastRemoveCurse through FirstSpellTarget. }
 procedure RemoveCurse;
 var
@@ -338,7 +335,7 @@ begin
     if Item^.Cursed then Cursed := True;
     Item := Item^.Next;
   end;
-  if not Cursed and not HasAffect(SelectedCharacter, AffectCurse, Affect) then
+  if not Cursed and not HasAffect(SelectedCharacter, AffectBestowCurse, Affect) then
     Answer := AskCastAnyway('is not cursed.');
   if Answer = KeyYes then
   begin

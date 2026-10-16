@@ -33,8 +33,6 @@ const
   DiagonalCost = 3;             { a diagonal step (odd direction) three times (ovl09:0723) }
   { The four affects that let a combatant step onto a CloudTile cell (ovl09:0744..07A4); which
     spells leave them is not known. }
-  AffectKeptC = $6F;
-  AffectKeptD = $7D;
   AiTurnLimit = 20;             { AiTurn gives up after this many passes of its loop (ovl09:0B3C) }
   HookTurnStart = $0E;          { the affect hook kind AiTurn runs first, at the start of the turn [I] }
   RangeWrapped = $FF;           { a Range of 0 minus one wraps to this byte (AiTurn) }
@@ -368,8 +366,8 @@ begin
       if Tile = CloudTile then
         if not HasAffect(Who, AffectAnimateDead, Affect) then
           if not HasAffect(Who, AffectCough, Affect) then
-            if not HasAffect(Who, AffectKeptC, Affect) then
-              if not HasAffect(Who, AffectKeptD, Affect) then
+            if not HasAffect(Who, AffectPoisonImmunity, Affect) then
+              if not HasAffect(Who, AffectUndeadImmunity, Affect) then
                 Cost := Who^.Combat^.Moves + 1;
       if Who^.Combat^.Moves >= Cost then
         CanAffordStep := True;

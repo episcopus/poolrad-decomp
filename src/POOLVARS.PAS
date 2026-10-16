@@ -659,12 +659,12 @@ const
   StrengthKept = $80;             { bit 7 of a strength affect's Data: the earlier strength is kept in it (ovl24:115C) }
   { Affect numbers (AffectHandlers, DS:6828) that more than one unit names. }
   AffectTrainingManual = 7;       { "Training with Manual of Bodily Health" (ovl15:0FBC names it) }
-  AffectSize = 9;
-  AffectStrength1 = $0C;
+  AffectRecordSize = 9;
+  AffectEnlarge = $0C;
   AffectCough = $1E;
   AffectHelpless = $1F;
   AffectAnimateDead = $20;
-  AffectStrength2 = $26;
+  AffectStrength = $26;
   AffectCauseDisease = $2C;
   AffectMummyDisease = $32;
   AffectPoisoned = $37;
@@ -688,6 +688,28 @@ const
   { TCharacter.Pad74 indexes: the levels a character was drained and the hit points lost with them. }
   DrainedLevels = $74;
   LostHitPoints = $75;
+  { Affects named by the spell, monster or race that gives them (SpellTable AffectId byte at +$A, ovl15 DisplaySpellEffects,
+    OVL16 CreateCharacter, the monster files; ovl12 review of 2026-10-16): Detect Invisibility and Invisibility,
+    Spiritual Hammer, the slowed poison and Slow Poison, Bestow Curse, and the immunities of the undead. }
+  AffectDetectInvisibility = $18;
+  AffectInvisibility = $19;       { also what attacking ends (RollToHit clears it from the attacker, ovl24:0CB7) }
+  AffectSpiritualHammer = $17;
+  AffectSlowPoisonDamage = $0F;   { the slowed poison CastSlowPoison gives: 1 point of damage and the affect again }
+  AffectSlowPoison = $16;         { Slow Poison; when it ends a character that is still poisoned dies }
+  AffectBestowCurse = $24;
+  AffectPoisonImmunity = $6F;     { SPECTRE, WIGHT, WRAITH, FERRAN MARTINEZ: poison and hold hooks cancelled [I] }
+  AffectUndeadImmunity = $7D;     { SKELETON, ZOMBIE, MUMMY, VAMPIRE: charm, sleep, hold and poison hooks cancelled [I] }
+  { SavingThrow kinds (TCharacter.SavingThrows[0..4]): the five saves in the order of the AD&D table [I]. }
+  SaveKindPoison = 0;
+  SaveKindStone = 1;
+  SaveKindWand = 2;
+  SaveKindBreath = 3;
+  SaveKindSpell = 4;
+  { Spell numbers of SpellTable that code tests CastingSpell against. }
+  SpellCharmPerson = 10;
+  SpellMagicMissile = 15;
+  CombatMessageRow = 10;          { the row ShowCharacterMessage shows a message at: the top row of the combat message window }
+  RunsHandlerOnRemove = 1;        { TAffect.Flag: the affect's handler runs when the affect is removed }
   { Screen and prompt constants several units share. BottomRow is the bottom text row (24) where prompts, amounts
     and messages are shown; ScreenCols the cells of a text row. The key constants are the answers of the prompts. }
   BottomRow = 24;
@@ -2371,7 +2393,7 @@ var
   { DS:6823..6824: storage of AvoidedAttackCounter }
   Raw6823: array[0..1] of Byte;
   MoraleScratch: Byte;  { AI morale scratch (CheckMorale computes it from B84, compares percentages) }
-  { DS:6826..6827: storage of AttackTarget, HandlerCombatant }
+  { DS:6826..6827: storage of AttackTarget }
   Raw6826: array[0..1] of Byte;
   { DS:6828..6829: storage of AffectHandlers }
   ds6828: array[0..1] of Byte;
@@ -2811,14 +2833,11 @@ var
   AttackRoll: ShortInt absolute AttackSlotRolls;  { the scalar attack or resistance roll (ovl24:0C63) }
   AvoidedAttackCounter: Byte absolute Raw6823;  { decremented every time an attack is avoided (ovl12:0FAC); meaning
     unknown [?] }
-  { The character Who attacked last (Who^.Combat^.Target), copied by BoostAttackAgainstTarget (ovl12:013B).
+  { The character Who attacked last (Who^.Combat^.Target), copied by BoostAttackAgainstUndead (ovl12:013B).
     A far pointer: its segment word is DS:6828, the start of AffectHandlers, which overlaps it. }
+  { Also the combatant the affect $4A handler ForcedAttack (ovl13:3A86) stores from CombatantRecord[Affect^.Data] and attacks;
+    it overlaps the offset word of AffectHandlers[0], which is never called (SaveKind lies in it). }
   AttackTarget: PCharacter absolute Raw6826;
-  { A combatant pointer the affect handlers share as scratch: ovl13:3A86 (the affect $4A handler)
-    stores the combatant the affect records (CombatantRecord[Affect^.Data]) here and attacks it, and
-    ovl12's handler at ovl12 code 0x138 stores Who^.Combat^.Target here before reading it. It
-    overlaps the offset word of AffectHandlers[0], which is never called (SaveKind lies in it). }
-  HandlerCombatant: PCharacter absolute Raw6826;
   { The handler of every affect number, called through CallAffectHandler (ovl24:001E); extent unknown. Entry 0
     is not a handler: SaveKind lies in it. }
   AffectHandlers: array[0..$8B] of TAffectHandler absolute ds6828;  { see above }

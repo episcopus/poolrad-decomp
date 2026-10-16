@@ -9378,3 +9378,157 @@ kind = "routine"
 why = "ECL command 17 compares two pairs and sets the compare flag to equal only when both pairs are equal, else not equal (ovl03:0AED; P6 review) [I]"
 date = "2026-10-16"
 
+[[rename]]
+old = "LowerAttackRollByFour"
+new = "InvisibleTargetHardToHit"
+kind = "routine"
+why = "handler of affect $19, Invisibility (SpellTable spells 30 and 50 have AffectId $19 [V]): an attacker without Detect Invisibility ($18) sets HookVetoFlag and AttackRoll loses 4 (ovl12:0918) (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "GiveLowerAttackRollAffect"
+new = "GiveInvisibilityForOneRound"
+kind = "routine"
+why = "AddAffect of $19 Invisibility for 1 round with Data $0C; handler of affect $38 (ovl12:1363) (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "RollToGiveLowerAttackRollAffect"
+new = "CamouflageGivesInvisibility"
+kind = "routine"
+why = "handler of affect $48, shown as Camouflaged by ovl15 DisplaySpellEffects: gives $19 Invisibility 95 times in 100 (carried by the 6TH LVL THIEF, MON5SPC block 93) (ovl12:1730) (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "SetFlagAndLowerAttackRollByFour"
+new = "InvisibleTargetCannotBeTargeted"
+kind = "routine"
+why = "handler of affect $47, Invisible in ovl15 DisplaySpellEffects: sets HookVetoFlag and takes 4 off AttackRoll without the Detect Invisibility test (ovl12:171F) (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "SetFlagIfTargetReflects"
+new = "VetoTargetWithMirrorOrWoodenHolySymbol"
+kind = "routine"
+why = "handler of affect $7E carried by the VAMPIRE (MON4SPC 23 and 105): sets HookVetoFlag when the target has readied a Mirror (NameNum $76) or a Wooden Holy Symbol (NameNum $98 and $FC) (ovl12:2E37) (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "GiveAffectItem"
+new = "GiveSpiritualHammer"
+kind = "routine"
+why = "handler of affect $17, the AffectId of Spiritual Hammer (SpellTable spell 28 [V]): gives the caster a +1 Hammer item (type $14) and takes it back when removed (ovl12:07E0) (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "RemoveAffect17WhenRemoved"
+new = "EndSpiritualHammerWhenHammerRemoved"
+kind = "routine"
+why = "affect $89, the Spiritual Hammer item own affect (OVL13 NoLootCopyAffect): when the hammer leaves the character the spell affect $17 is removed (ovl12:317A) (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "AddAffectAndDamage"
+new = "SlowPoisonDamage"
+kind = "routine"
+why = "handler of affect $0F, the slowed poison CastSlowPoison (ovl22) gives: 1 point of damage and the affect again while the character has more than 1 hit point (ovl12:05EB) (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "CancelCharmAndUnknown35HighChance"
+new = "ElfResistsCharmAndSleep"
+kind = "routine"
+why = "handler of affect $6B given to elves (OVL16 CreateCharacter): 90 percent to cancel the charm and sleep (Sleep is AffectId $35 [V]) hooks (ovl12:2992) (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "CancelCharmAndUnknown35"
+new = "ImmuneToCharmAndSleep"
+kind = "routine"
+why = "handler of affect $6C carried by GHOUL, SPECTRE, WIGHT, WRAITH and FERRAN MARTINEZ (MON*SPC): always cancels the charm and sleep hooks (ovl12:29B6) (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "CancelCharmAndUnknown35ModerateChance"
+new = "HalfElfResistsCharmAndSleep"
+kind = "routine"
+why = "handler of affect $7C given to half-elves (OVL16 CreateCharacter): 30 percent to cancel the charm and sleep hooks (ovl12:2DE4) (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "CancelCharmUnknown35PoisonAndParalysisHooks"
+new = "ImmuneToCharmSleepHoldAndPoison"
+kind = "routine"
+why = "handler of affect $7D carried by SKELETON, GIANT SKELETON, ZOMBIE, JUJU ZOMBIE, MUMMY and VAMPIRE (MON4SPC): cancels the charm, sleep, paralysis and poison hooks (ovl12:2E08) (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "CancelDamageOfSpellOrElectricity"
+new = "ImmuneToMagicMissileAndElectricity"
+kind = "routine"
+why = "handler of affect $5B carried by the JUJU ZOMBIE: cancels damage of the Magic Missile spell (15) and of electricity (ovl12:2556) (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "AddConstitutionSaveBonus"
+new = "DwarfHalflingPoisonSaveBonus"
+kind = "routine"
+why = "handler of affect $5A, given to dwarves and halflings (OVL16:513..530): a Constitution bonus on the poison save (kind 0) (ovl12:24D9) [I rule] (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "AddConstitutionSaveBonusKind2Or4"
+new = "DwarfGnomeHalflingWandSpellSaveBonus"
+kind = "routine"
+why = "handler of affect $61, given to dwarves, gnomes and halflings (OVL16): the Constitution bonus on the rod/staff/wand (2) and spell (4) saves (ovl12) [I rule] (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "CancelHookOnChance"
+new = "RollMagicResistance"
+kind = "routine"
+why = "the hook cancel with a percent chance reduced by the caster level of CastingSpell, the AD&D magic resistance rule [I]; used by affects $69 (50) and $6A (15) (ovl12:2915) (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "AgeCharacterOnce"
+new = "ApplyHaste"
+kind = "routine"
+why = "handler of affect $27, Haste (SpellTable spell 48 [V]): ages the caster one year and doubles HookedMoveOrAttacks (ovl12:0C4B) (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "HalveAgeDoubling"
+new = "ApplySlow"
+kind = "routine"
+why = "handler of affect $2A, Slow (SpellTable spell 55 [V]): halves HookedMoveOrAttacks (ovl12:10C1) (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "AvoidIfSelectedItemPlusZero"
+new = "ProtectFromNormalMissiles"
+kind = "routine"
+why = "handler of affect $29, Protection From Normal Missiles (SpellTable spell 54 [V]): avoids a ranged attack when the attacker item has Plus 0 (ovl12:0FAC) (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "ExchangeStrengthWithAffect"
+new = "ApplyStrengthAffect"
+kind = "routine"
+why = "handler of affects $0C Enlarge and $26 Strength (SpellTable spells 12 and 35 [V]): raises or restores Strength through the affect Data (ovl12) (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "ComputerTakesOver"
+new = "ApplyCharmPerson"
+kind = "routine"
+why = "handler of affect $0B, Charm Person (SpellTable spell 10 [V]): the computer plays Who on the gazer side (ovl12:0400) (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "BoostAttackAgainstTarget"
+new = "BoostAttackAgainstUndead"
+kind = "routine"
+why = "handler of affect $03 carried by Two-Handed Sword +1 +3 vs. Undead (Affects[2] $03 [V]); CreatureType 4 is undead (ovl12:013B) (P6 review of ovl12)"
+date = "2026-10-16"
+

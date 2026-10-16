@@ -134,7 +134,7 @@ begin
     begin
       CurAffect := NextAffect;
       NextAffect := NextAffect^.Next;
-      FreeMem(CurAffect, AffectSize);
+      FreeMem(CurAffect, AffectRecordSize);
     end;
   end;
   FreeMem(Who, CharacterSize);

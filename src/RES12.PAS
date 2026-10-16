@@ -237,7 +237,6 @@ const
   CombatMessageLeft = $17;
   CombatMessageRight = $26;
   CombatMessageBottom = $15;
-  CombatMessageRow = $A;
   MessageLeft = 1;
   MessageRight = $26;
   MessageTop = $12;

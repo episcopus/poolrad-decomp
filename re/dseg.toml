@@ -1948,11 +1948,6 @@ name = "MoraleScratch"
 evidence = "AI morale scratch CheckMorale computes from B84 and compares with the percentage of hit points lost (ovl09:10D7, ovl12 handlers)"
 
 [[global]]
-offset = 0x6826
-name = "HandlerCombatant"
-evidence = "combatant pointer the affect handlers share as scratch: the affect $4A handler stores the combatant it attacks here (ovl13:3A86, ovl12:013B)"
-
-[[global]]
 offset = 0x6988
 name = "MonsterBreathVector"
 evidence = "set to @MonsterBreath by InitSpellHandlers (ovl22:37A1); no routine reads it"

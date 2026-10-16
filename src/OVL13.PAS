@@ -1301,8 +1301,6 @@ const
   { The SpellTable bytes e15 tests (TSpellEntry.PadB). }
   SpellCombatFlag = $B;          { +$B: 0 marks a spell castable only in camp }
   SpellCastDelay = $C;           { +$C: div 3 gives the casting delay in rows }
-  { The colour/row ShowCharacterMessage shows 'Begins Casting' on. }
-  CastMessageRow = 10;
 var
   Spell: Byte;                   { the spell number cast, 0 while none is chosen }
   Unused: Byte;                  { QUIRK ovl13:2417: declared but never read }
@@ -1341,7 +1339,7 @@ begin
   else
   begin
     Done := 1;
-    ShowCharacterMessage(ChosenChar, 'Begins Casting', CastMessageRow, 1);
+    ShowCharacterMessage(ChosenChar, 'Begins Casting', CombatMessageRow, 1);
     ChosenChar^.Combat^.PendingSpell := Spell;
     if ChosenChar^.Combat^.Initiative > CastTime then
       Dec(ChosenChar^.Combat^.Initiative, CastTime)
@@ -2060,17 +2058,17 @@ end;
   called from behind (attack kind 1) and the turn ends through EndCombatTurn; the affect is removed
   from Who when the attack left the combatant out of the fight. Otherwise the combatant loses affect
   $3A, and (mode 0 only) the affect's removal flag is cleared and it is removed from Who, which runs
-  this handler again with mode 1 and so does not recurse. Globals: HandlerCombatant (the recorded combatant),
+  this handler again with mode 1 and so does not recurse. Globals: AttackTarget (the recorded combatant),
   CombatantRecord. }
 procedure ForcedAttack(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   Done: Byte;                    { [bp-1] the turn-done flag PerformAttack fills in }
   Unused: Byte;                  { QUIRK ovl13:3A89: declared but never read; it pads the frame }
 begin
-  HandlerCombatant := CombatantRecord[Affect^.Data];
-  if (Mode <> 0) or (Who^.Flag10D = 0) or (HandlerCombatant^.Flag10D = 0) then
+  AttackTarget := CombatantRecord[Affect^.Data];
+  if (Mode <> 0) or (Who^.Flag10D = 0) or (AttackTarget^.Flag10D = 0) then
   begin
-    RemoveAffect(HandlerCombatant, AffectHeldFast, nil);
+    RemoveAffect(AttackTarget, AffectHeldFast, nil);
     if Mode = 0 then
     begin
       Affect^.Flag := 0;
@@ -2083,9 +2081,9 @@ begin
     Who^.AttackSlots[2] := 0;
     Who^.WeaponAttacks[1] := 3;
     Who^.WeaponDamage[1] := 4;
-    PerformAttack(Who, HandlerCombatant, 1, nil, Done);
+    PerformAttack(Who, AttackTarget, 1, nil, Done);
     Done := EndCombatTurn(Who);
-    if HandlerCombatant^.Flag10D = 0 then
+    if AttackTarget^.Flag10D = 0 then
       RemoveAffect(Who, AffectForcedAttack, Affect);
   end;
 end;
