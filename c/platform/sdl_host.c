@@ -2,10 +2,11 @@
  * Windows.
  *
  *   poolrad [--data DIR] [--save DIR] [--scale N] [--fullscreen] [--aspect 4:3|square] [--filter nearest|linear]
- *           [--sound speaker|tandy|off] [--volume 0-100] [--mute] [--intro]
+ *           [--sound speaker|tandy|off] [--volume 0-100] [--mute] [--skip-intro]
  *
- * The game starts at the main menu: the original's switch STING skips the title screens and the code wheel
- * question; --intro plays them (and asks the question).
+ * The game starts as the original did: title screens, music and the code wheel question. --skip-intro passes the
+ * original's own switch STING, which goes straight to the main menu (and also arms the developers' keys).
+ * Options given on the command line win over the choices remembered in poolrad.ini (and are remembered).
  *
  * The data directory is the original game's folder (GAME.OVR, the .DAX files, ITEMS ...). The game's own saved
  * files go to the save directory (a per-user folder by default), so the data folder is never changed.
@@ -138,7 +139,15 @@ static void present(void)
 }
 
 /* ---- audio: the PC speaker and the Tandy SN76489 as square waves ------------------------------------------------ */
+/* The driver writes the devices from its 236.7 Hz timer interrupt, so a sound is a sequence of writes a few
+ * milliseconds apart (pitch sweeps, envelopes, gate toggles). The writes are queued with the time they were made
+ * (a timer tick's own time, see run_timer) and the audio thread replays them at that time, AUDIO_LATENCY behind
+ * the clock, so every tick is heard; reading the device state once per audio buffer instead lost short sounds. */
 #define RATE 44100
+#define AUDIO_LATENCY_NS 40000000u     /* the sound plays this far behind the game: room for a buffer's writes */
+#define AUDIO_RESYNC_NS 80000000u      /* further than this from that point (a stall, a slow device): jump */
+#define SOUND_QUEUE 16384              /* writes waiting for the audio thread (about 5 s of a playing tune) */
+static Uint64 now_ns(void);
 static SDL_AudioStream *audio;
 static SDL_Mutex *audio_lock;
 static struct {
@@ -157,56 +166,141 @@ static struct {
   float lp;
 } syn = {0, {0, 0, 0}, 0x4000, 0, 0};
 
+enum { EvSpeaker, EvSpeakerOff, EvTandy };
+typedef struct SoundEvent {
+  Uint64 t;                /* when the game made the write (SDL ticks, ns) */
+  u16 a;                   /* speaker divisor, Tandy byte */
+  u8 kind, b;              /* b: the speaker's port 61h low bits */
+} SoundEvent;
+static SoundEvent sq[SOUND_QUEUE];
+static unsigned sq_head, sq_tail;      /* under audio_lock */
+static Uint64 play_ns;                 /* the time of the next sample the audio thread makes; 0: not started */
+static Uint64 tick_ns;                 /* while the timer handler runs: the tick's time; 0 otherwise */
+static FILE *wav_out;                  /* --wav FILE: the rendered sound, for tests */
+static u32 wav_samples;
+
 static float tandy_amp(int att)
 {
   return att >= 15 ? 0.0f : (float)pow(10.0, -0.1 * att);       /* 2 dB per step */
 }
 
+static void apply_event(const SoundEvent *e)
+{
+  u8 v;
+  int reg;
+  switch (e->kind) {
+  case EvSpeaker:
+    snd.spk_div = e->a;
+    snd.spk_on = (e->b & 3) == 3;
+    break;
+  case EvSpeakerOff:
+    snd.spk_on = 0;
+    break;
+  default:
+    v = (u8)e->a;
+    if (v & 0x80) {
+      reg = (v >> 5) & 3;
+      snd.tandy_latch = (u8)(v & 0x7F);
+      if (v & 0x10) {
+        snd.vol[reg] = v & 15;
+      } else if (reg == 3) {
+        snd.noise = v & 7;
+        syn.lfsr = 0x4000;
+      } else {
+        snd.tone[reg] = (u16)((snd.tone[reg] & 0x3F0) | (v & 15));
+      }
+    } else {
+      reg = (snd.tandy_latch >> 5) & 3;
+      if (!(snd.tandy_latch & 0x10) && reg < 3) {
+        snd.tone[reg] = (u16)((snd.tone[reg] & 15) | ((v & 0x3F) << 4));
+      }
+    }
+    break;
+  }
+}
+
+static void queue_event(u8 kind, u16 a, u8 b)
+{
+  SoundEvent e;
+  if (!audio_lock) return;
+  e.t = tick_ns ? tick_ns : now_ns();
+  e.kind = kind;
+  e.a = a;
+  e.b = b;
+  SDL_LockMutex(audio_lock);
+  if ((sq_head + 1) % SOUND_QUEUE == sq_tail) {                  /* nobody is playing them: keep the state only */
+    apply_event(&sq[sq_tail]);
+    sq_tail = (sq_tail + 1) % SOUND_QUEUE;
+  }
+  sq[sq_head] = e;
+  sq_head = (sq_head + 1) % SOUND_QUEUE;
+  SDL_UnlockMutex(audio_lock);
+}
+
+static float synth_sample(void)
+{
+  int ch;
+  float mix = 0;
+  double spk_hz = snd.spk_div ? 1193181.0 / snd.spk_div : 0;
+  if (snd.spk_on && spk_hz > 0 && spk_hz < RATE / 2) {
+    syn.spk_phase += spk_hz / RATE;
+    if (syn.spk_phase >= 1.0) syn.spk_phase -= 1.0;
+    mix += syn.spk_phase < 0.5 ? 0.5f : -0.5f;
+  }
+  for (ch = 0; ch < 3; ch++) {
+    u16 p = snd.tone[ch];
+    float a = tandy_amp(snd.vol[ch]);
+    if (a > 0 && p > 1) {
+      double hz = 3579545.0 / (32.0 * p);
+      if (hz < RATE / 2) {
+        syn.tone_phase[ch] += hz / RATE;
+        if (syn.tone_phase[ch] >= 1.0) syn.tone_phase[ch] -= 1.0;
+        mix += (syn.tone_phase[ch] < 0.5 ? 0.3f : -0.3f) * a;
+      }
+    }
+  }
+  {
+    float a = tandy_amp(snd.vol[3]);
+    if (a > 0) {
+      static const int rates[3] = {512, 1024, 2048};
+      int sel = snd.noise & 3;
+      double hz = sel < 3 ? 3579545.0 / (rates[sel] / 1.0) : (snd.tone[2] > 1 ? 3579545.0 / (32.0 * snd.tone[2]) : 1000);
+      syn.noise_phase += hz / RATE;
+      while (syn.noise_phase >= 1.0) {
+        int fb = (snd.noise & 4) ? ((syn.lfsr ^ (syn.lfsr >> 1)) & 1) : (syn.lfsr & 1);
+        syn.lfsr = (u16)((syn.lfsr >> 1) | (fb << 14));
+        syn.noise_phase -= 1.0;
+      }
+      mix += ((syn.lfsr & 1) ? 0.3f : -0.3f) * a;
+    }
+  }
+  syn.lp += (mix - syn.lp) * 0.45f;                             /* a little smoothing against harsh aliasing */
+  return syn.lp;
+}
+
+/* n samples from play_ns on: each write is applied at the sample of its time. */
 static void synth(s16 *out, int n)
 {
-  int i, ch;
+  int i;
   float master = cfg.muted ? 0.0f : (float)cfg.volume / 100.0f * 0.35f;
-  int spk_on = snd.spk_on;
-  double spk_hz = snd.spk_div ? 1193181.0 / snd.spk_div : 0;
+  Uint64 want = now_ns() - AUDIO_LATENCY_NS;
+  if (play_ns == 0 || play_ns + AUDIO_RESYNC_NS < want || play_ns > want + AUDIO_RESYNC_NS) {
+    play_ns = want;
+  }
   for (i = 0; i < n; i++) {
-    float mix = 0;
-    if (spk_on && spk_hz > 0 && spk_hz < RATE / 2) {
-      syn.spk_phase += spk_hz / RATE;
-      if (syn.spk_phase >= 1.0) syn.spk_phase -= 1.0;
-      mix += syn.spk_phase < 0.5 ? 0.5f : -0.5f;
+    Uint64 t = play_ns + (Uint64)i * 1000000000u / RATE;
+    float v;
+    while (sq_tail != sq_head && sq[sq_tail].t <= t) {
+      apply_event(&sq[sq_tail]);
+      sq_tail = (sq_tail + 1) % SOUND_QUEUE;
     }
-    for (ch = 0; ch < 3; ch++) {
-      u16 p = snd.tone[ch];
-      float a = tandy_amp(snd.vol[ch]);
-      if (a > 0 && p > 1) {
-        double hz = 3579545.0 / (32.0 * p);
-        if (hz < RATE / 2) {
-          syn.tone_phase[ch] += hz / RATE;
-          if (syn.tone_phase[ch] >= 1.0) syn.tone_phase[ch] -= 1.0;
-          mix += (syn.tone_phase[ch] < 0.5 ? 0.3f : -0.3f) * a;
-        }
-      }
-    }
-    {
-      float a = tandy_amp(snd.vol[3]);
-      if (a > 0) {
-        static const int rates[3] = {512, 1024, 2048};
-        int sel = snd.noise & 3;
-        double hz = sel < 3 ? 3579545.0 / (rates[sel] / 1.0) : (snd.tone[2] > 1 ? 3579545.0 / (32.0 * snd.tone[2]) : 1000);
-        syn.noise_phase += hz / RATE;
-        while (syn.noise_phase >= 1.0) {
-          int fb = (snd.noise & 4) ? ((syn.lfsr ^ (syn.lfsr >> 1)) & 1) : (syn.lfsr & 1);
-          syn.lfsr = (u16)((syn.lfsr >> 1) | (fb << 14));
-          syn.noise_phase -= 1.0;
-        }
-        mix += ((syn.lfsr & 1) ? 0.3f : -0.3f) * a;
-      }
-    }
-    syn.lp += (mix - syn.lp) * 0.45f;                           /* a little smoothing against harsh aliasing */
-    {
-      float v = syn.lp * master * 32767.0f;
-      out[i] = (s16)(v > 32767.0f ? 32767.0f : (v < -32768.0f ? -32768.0f : v));
-    }
+    v = synth_sample() * master * 32767.0f;
+    out[i] = (s16)(v > 32767.0f ? 32767.0f : (v < -32768.0f ? -32768.0f : v));
+  }
+  play_ns += (Uint64)n * 1000000000u / RATE;
+  if (wav_out) {
+    fwrite(out, 2, (size_t)n, wav_out);
+    wav_samples += (u32)n;
   }
 }
 
@@ -227,7 +321,23 @@ static void SDLCALL audio_cb(void *ud, SDL_AudioStream *stream, int additional, 
   }
 }
 
-static void audio_start(void)
+static void wav_header(FILE *f, u32 samples)
+{
+  u32 bytes = samples * 2;
+  u8 h[44] = {'R', 'I', 'F', 'F', 0, 0, 0, 0, 'W', 'A', 'V', 'E', 'f', 'm', 't', ' ', 16, 0, 0, 0, 1, 0, 1, 0,
+              RATE & 255, (RATE >> 8) & 255, 0, 0, (RATE * 2) & 255, ((RATE * 2) >> 8) & 255, ((RATE * 2) >> 16) & 255, 0,
+              2, 0, 16, 0, 'd', 'a', 't', 'a', 0, 0, 0, 0};
+  u32 riff = bytes + 36;
+  int k;
+  for (k = 0; k < 4; k++) {
+    h[4 + k] = (u8)(riff >> (8 * k));
+    h[40 + k] = (u8)(bytes >> (8 * k));
+  }
+  fseek(f, 0, SEEK_SET);
+  fwrite(h, 1, sizeof h, f);
+}
+
+static void audio_start(const char *wav_path)
 {
   SDL_AudioSpec spec;
   audio_lock = SDL_CreateMutex();
@@ -236,6 +346,10 @@ static void audio_start(void)
   spec.freq = RATE;
   memset(&snd, 0, sizeof snd);
   snd.vol[0] = snd.vol[1] = snd.vol[2] = snd.vol[3] = 15;
+  if (wav_path) {
+    wav_out = fopen(wav_path, "wb");
+    if (wav_out) wav_header(wav_out, 0);
+  }
   audio = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, audio_cb, NULL);
   if (audio) {
     SDL_ResumeAudioStreamDevice(audio);
@@ -244,51 +358,36 @@ static void audio_start(void)
   }
 }
 
+static void audio_stop(void)
+{
+  if (audio) SDL_DestroyAudioStream(audio);
+  audio = NULL;
+  if (wav_out) {
+    wav_header(wav_out, wav_samples);
+    fclose(wav_out);
+    wav_out = NULL;
+  }
+}
+
 void platform_speaker_set(u16 divisor, u8 port61_low2)
 {
   extern void sound_trace_speaker(u16, u8);
   sound_trace_speaker(divisor, port61_low2);
-  if (!audio_lock) return;
-  SDL_LockMutex(audio_lock);
-  snd.spk_div = divisor;
-  snd.spk_on = (port61_low2 & 3) == 3;
-  SDL_UnlockMutex(audio_lock);
+  queue_event(EvSpeaker, divisor, port61_low2);
 }
 
 void platform_speaker_off(void)
 {
   extern void sound_trace_speaker(u16, u8);
   sound_trace_speaker(0, 0);
-  if (!audio_lock) return;
-  SDL_LockMutex(audio_lock);
-  snd.spk_on = 0;
-  SDL_UnlockMutex(audio_lock);
+  queue_event(EvSpeakerOff, 0, 0);
 }
 
 void platform_tandy_write(u8 v)
 {
   extern void sound_trace_tandy(u8);
   sound_trace_tandy(v);
-  if (!audio_lock) return;
-  SDL_LockMutex(audio_lock);
-  if (v & 0x80) {
-    int reg = (v >> 5) & 3;
-    snd.tandy_latch = (u8)(v & 0x7F);
-    if (v & 0x10) {
-      snd.vol[reg] = v & 15;
-    } else if (reg == 3) {
-      snd.noise = v & 7;
-      syn.lfsr = 0x4000;
-    } else {
-      snd.tone[reg] = (u16)((snd.tone[reg] & 0x3F0) | (v & 15));
-    }
-  } else {
-    int reg = (snd.tandy_latch >> 5) & 3;
-    if (!(snd.tandy_latch & 0x10) && reg < 3) {
-      snd.tone[reg] = (u16)((snd.tone[reg] & 15) | ((v & 0x3F) << 4));
-    }
-  }
-  SDL_UnlockMutex(audio_lock);
+  queue_event(EvTandy, v, 0);
 }
 
 /* ---- keyboard ----------------------------------------------------------------------------------------------------- */
@@ -390,38 +489,42 @@ static Uint64 start_ns;
 static time_t start_wall;
 static u16 timer_div;
 static void (*timer_handler)(void);
-static Uint64 timer_last_ns;
-static double timer_carry;
+static double timer_next_ns;             /* when the next timer interrupt is due */
 static Uint64 pump_ns;
 static unsigned spin;
 static const char *shot_path;            /* --screenshot FILE MS: save the window to a BMP after MS ms and exit (tests) */
 static Uint64 shot_ms;
-static const char *inject_keys;          /* --inject L,A,...: key presses fed in at start-up, one every 700 ms (tests) */
+static const char *inject_keys;          /* --inject L,A,~3000,...: key presses fed in at start-up, one every 700 ms;
+                                            ~MS waits MS ms more (tests) */
 static Uint64 inject_next;
-static int show_intro;                   /* --intro: the title screens and the code wheel question */
+static int show_intro = 1;               /* the title screens and the code wheel question; --skip-intro: none */
 
 static Uint64 now_ns(void)
 {
   return SDL_GetTicksNS();
 }
 
+static double timer_period_ns(void)
+{
+  return 1e9 * (timer_div ? timer_div : 65536) / 1193182.0;
+}
+
+/* Every interrupt that is due, each with its own time (tick_ns), so the sound it makes is placed where the PC
+   would have made it even when the game polls late. */
 static void run_timer(void)
 {
-  Uint64 t;
-  double due;
-  int n;
+  double t;
+  int n = 0;
   if (!timer_handler) return;
-  t = now_ns();
-  due = (double)(t - timer_last_ns) * 1e-9 * (1193182.0 / (timer_div ? timer_div : 65536)) + timer_carry;
-  timer_last_ns = t;
-  n = (int)due;
-  timer_carry = due - n;
-  if (n > 16) {                                                   /* the game was suspended: do not storm */
-    n = 16;
-    timer_carry = 0;
+  t = (double)now_ns();
+  if (t - timer_next_ns > 16 * timer_period_ns()) {               /* the game was suspended: do not storm */
+    timer_next_ns = t;
   }
-  while (n-- > 0 && timer_handler) {
+  while (timer_handler && timer_next_ns <= t && n++ < 16) {
+    tick_ns = (Uint64)timer_next_ns;
     timer_handler();
+    tick_ns = 0;
+    timer_next_ns += timer_period_ns();
   }
 }
 
@@ -438,6 +541,10 @@ static void inject(void)
   snprintf(name, sizeof name, "%.*s", (int)(n < 15 ? n : 15), p);
   inject_keys = p[n] ? p + n + 1 : p + n;
   inject_next = now_ns() + 700000000u;
+  if (name[0] == '~') {
+    inject_next = now_ns() + (Uint64)atol(name + 1) * 1000000u;
+    return;
+  }
   if (strlen(name) == 1 && name[0] >= 'A' && name[0] <= 'Z') sc = (SDL_Scancode)(SDL_SCANCODE_A + (name[0] - 'A'));
   else if (strlen(name) == 1 && name[0] >= '1' && name[0] <= '9') sc = (SDL_Scancode)(SDL_SCANCODE_1 + (name[0] - '1'));
   else if (!strcmp(name, "ENTER")) sc = SDL_SCANCODE_RETURN;
@@ -603,8 +710,7 @@ void platform_timer_set(u16 divisor, void (*handler)(void))
   sound_trace_pit0(divisor);
   timer_div = divisor;
   timer_handler = handler;
-  timer_last_ns = now_ns();
-  timer_carry = 0;
+  timer_next_ns = (double)now_ns() + timer_period_ns();
 }
 
 void platform_timer_reset(void)
@@ -622,7 +728,7 @@ void platform_video_changed(void)
 void platform_quit(int code)
 {
   save_ini();
-  if (audio) SDL_DestroyAudioStream(audio);
+  audio_stop();
   if (tex) SDL_DestroyTexture(tex);
   if (ren) SDL_DestroyRenderer(ren);
   if (win) SDL_DestroyWindow(win);
@@ -676,38 +782,77 @@ static void write_cfg(void)
   fclose(f);
 }
 
-int main(int argc, char **argv)
+static const char *wav_path;             /* --wav FILE: also write the sound to a WAV file (tests) */
+
+/* The command line. Pass 0 takes only the folders (the save folder holds poolrad.ini); pass 1, after the ini is read,
+   takes the rest, so an option given on the command line wins over the remembered choice. 0: usage error. */
+static int parse_args(int argc, char **argv, int pass, int *want_full)
 {
   int i;
+  for (i = 1; i < argc; i++) {
+    const char *a = argv[i];
+    int has1 = i + 1 < argc;
+    if (strcmp(a, "--data") == 0 && has1) {
+      if (pass == 0) snprintf(data_dir, sizeof data_dir, "%s", argv[i + 1]);
+      i++;
+    } else if (strcmp(a, "--save") == 0 && has1) {
+      if (pass == 0) snprintf(save_dir, sizeof save_dir, "%s", argv[i + 1]);
+      i++;
+    } else if (strcmp(a, "--scale") == 0 && has1) {
+      if (pass == 1) cfg.scale = atoi(argv[i + 1]);
+      i++;
+    } else if (strcmp(a, "--fullscreen") == 0) {
+      *want_full = 1;
+    } else if (strcmp(a, "--windowed") == 0) {
+      *want_full = 0;
+    } else if (strcmp(a, "--aspect") == 0 && has1) {
+      if (pass == 1) cfg.aspect43 = strcmp(argv[i + 1], "square") != 0;
+      i++;
+    } else if (strcmp(a, "--filter") == 0 && has1) {
+      if (pass == 1) cfg.smooth = strcmp(argv[i + 1], "linear") == 0;
+      i++;
+    } else if (strcmp(a, "--sound") == 0 && has1) {
+      const char *v = argv[++i];
+      if (pass == 1) {
+        cfg.sound = v[0] == 't' || v[0] == 'T' ? 'T' : (v[0] == 'o' || v[0] == 'n' || v[0] == 'O' || v[0] == 'N' ? 'N' : 'P');
+      }
+    } else if (strcmp(a, "--volume") == 0 && has1) {
+      if (pass == 1) cfg.volume = atoi(argv[i + 1]);
+      i++;
+    } else if (strcmp(a, "--mute") == 0) {
+      if (pass == 1) cfg.muted = 1;
+    } else if (strcmp(a, "--intro") == 0) {
+      show_intro = 1;
+    } else if (strcmp(a, "--skip-intro") == 0) {
+      show_intro = 0;
+    } else if (strcmp(a, "--inject") == 0 && has1) {
+      inject_keys = argv[++i];
+    } else if (strcmp(a, "--wav") == 0 && has1) {
+      wav_path = argv[++i];
+    } else if (strcmp(a, "--screenshot") == 0 && i + 2 < argc) {
+      shot_path = argv[++i];
+      shot_ms = (Uint64)atol(argv[++i]);
+    } else {
+      fprintf(stderr,
+              "usage: poolrad [--data DIR] [--save DIR] [--scale N] [--fullscreen|--windowed] [--aspect 4:3|square]\n"
+              "               [--filter nearest|linear] [--sound speaker|tandy|off] [--volume 0-100] [--mute]\n"
+              "               [--skip-intro]\n");
+      return 0;
+    }
+  }
+  if (cfg.scale < 1) cfg.scale = 1;
+  if (cfg.scale > 8) cfg.scale = 8;
+  if (cfg.volume < 0) cfg.volume = 0;
+  if (cfg.volume > 100) cfg.volume = 100;
+  return 1;
+}
+
+int main(int argc, char **argv)
+{
   int want_full = -1;
   const char *pref;
   char *base;
-  for (i = 1; i < argc; i++) {
-    if (strcmp(argv[i], "--data") == 0 && i + 1 < argc) snprintf(data_dir, sizeof data_dir, "%s", argv[++i]);
-    else if (strcmp(argv[i], "--save") == 0 && i + 1 < argc) snprintf(save_dir, sizeof save_dir, "%s", argv[++i]);
-    else if (strcmp(argv[i], "--scale") == 0 && i + 1 < argc) cfg.scale = atoi(argv[++i]);
-    else if (strcmp(argv[i], "--fullscreen") == 0) want_full = 1;
-    else if (strcmp(argv[i], "--windowed") == 0) want_full = 0;
-    else if (strcmp(argv[i], "--aspect") == 0 && i + 1 < argc) cfg.aspect43 = strcmp(argv[++i], "square") != 0;
-    else if (strcmp(argv[i], "--filter") == 0 && i + 1 < argc) cfg.smooth = strcmp(argv[++i], "linear") == 0;
-    else if (strcmp(argv[i], "--sound") == 0 && i + 1 < argc) {
-      const char *s = argv[++i];
-      cfg.sound = s[0] == 't' || s[0] == 'T' ? 'T' : (s[0] == 'o' || s[0] == 'n' || s[0] == 'O' || s[0] == 'N' ? 'N' : 'P');
-    } else if (strcmp(argv[i], "--volume") == 0 && i + 1 < argc) cfg.volume = atoi(argv[++i]);
-    else if (strcmp(argv[i], "--mute") == 0) cfg.muted = 1;
-    else if (strcmp(argv[i], "--intro") == 0) show_intro = 1;
-    else if (strcmp(argv[i], "--inject") == 0 && i + 1 < argc) inject_keys = argv[++i];
-    else if (strcmp(argv[i], "--screenshot") == 0 && i + 2 < argc) {
-      shot_path = argv[++i];
-      shot_ms = (Uint64)atol(argv[++i]);
-    }
-    else {
-      fprintf(stderr,
-              "usage: poolrad [--data DIR] [--save DIR] [--scale N] [--fullscreen|--windowed] [--aspect 4:3|square]\n"
-              "               [--filter nearest|linear] [--sound speaker|tandy|off] [--volume 0-100] [--mute] [--intro]\n");
-      return 2;
-    }
-  }
+  if (!parse_args(argc, argv, 0, &want_full)) return 2;
   if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO)) {
     fprintf(stderr, "poolrad: SDL: %s\n", SDL_GetError());
     return 1;
@@ -734,6 +879,7 @@ int main(int argc, char **argv)
   make_dir(save_dir);
   snprintf(ini_path, sizeof ini_path, "%s/poolrad.ini", save_dir);
   load_ini();
+  parse_args(argc, argv, 1, &want_full);
   if (want_full >= 0) cfg.fullscreen = want_full;
   write_cfg();
 
@@ -754,12 +900,14 @@ int main(int argc, char **argv)
   SDL_SetWindowFullscreen(win, cfg.fullscreen != 0);
   SDL_HideCursor();
   apply_view();
-  audio_start();
+  audio_start(wav_path);
 
   rtl_init();
   if (!show_intro) {
     static const char *const sting[1] = {"STING"};
-    rtl_set_args(1, sting);               /* the game's own switch: no title screens, no code wheel question */
+    rtl_set_args(1, sting);               /* the game's own switch: no title screens, no code wheel question (it
+                                             also arms the developers' keys: Ctrl-D debug mode, Ctrl-C quit, and
+                                             the J cheat of the character menu) */
   }
   pool_init_units();
   pool_main();

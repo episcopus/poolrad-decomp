@@ -24,10 +24,11 @@ vcpkg `sdl3`, or configure with `-DPOOLRAD_FETCH_SDL3=ON`, which downloads and b
 | `--aspect 4:3\|square` | stretch the picture to 4:3 as a PC monitor showed it, or keep square pixels |
 | `--filter nearest\|linear` | sharp or smooth scaling |
 | `--sound speaker\|tandy\|off`, `--volume 0-100`, `--mute` | PC speaker or Tandy 3-voice sound |
+| `--skip-intro` | start at the main menu: no title screens, music or code wheel question (the original's own `STING` switch, which also arms its developers' keys: Ctrl-D, Ctrl-C and the J cheat) |
 
 While playing: **F11** or **Alt+Enter** full screen; **Alt+1 .. Alt+6** window size; **Alt+A** aspect; **Alt+F** filter;
 **Alt+M** mute; **Alt+Minus / Alt+Plus** volume (Cmd instead of Alt on macOS). The choices are kept in
-`poolrad.ini` in the save folder. The game's own keys are the PC's: arrows (or the numeric keypad), Home and End,
+`poolrad.ini` in the save folder; an option given on the command line wins over the remembered choice and replaces it. The game's own keys are the PC's: arrows (or the numeric keypad), Home and End,
 Enter, Esc, letters.
 
 ## How it works
@@ -57,6 +58,11 @@ edited by hand.
 **Platform.** `platform.h` lists every read of the outside world (keyboard, clock, PIT, retrace) and write
 (timer interrupt, speaker, Tandy chip). The SDL host answers them with the real machine; the replay driver answers
 them with what the original read at the same point of a recorded run.
+
+**Sound.** The driver changes the speaker and the Tandy chip on every tick of its 236.7 Hz timer, so a sound is a
+run of writes a few milliseconds apart. The SDL host stamps each write with its tick's time and the audio thread
+replays them at that time, 40 ms behind the game, so no tick is lost. `--wav FILE` also writes the sound to a file
+(for tests).
 
 ## Proof
 

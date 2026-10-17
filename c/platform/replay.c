@@ -69,6 +69,8 @@ static u32 expect_random;
 static u32 irq_delivered;
 static void (*timer_handler)(void);
 static const char *g_data = ".", *g_save = "build/c/save", *g_dump;
+static const char *g_sound;               /* --sound FILE: the sound hardware writes of the run (which sounds, in order;
+                                             ticks arrive in the recording's batches, so lengths are approximate) */
 static long g_snap = -2;
 static long g_snap_call = -1, g_ncalls;           /* --snap-call N: snapshot at the N-th traced call */
 static long g_trace_lo = -1, g_trace_hi = -1;     /* --trace-calls LO HI: routine names while the read count is in [LO, HI) */                 /* write DGROUP, heap and planes after this read */
@@ -389,6 +391,13 @@ static void finish(const char *why)
 {
   WriteCtx w = {0, 0};
   check_cps(-1);
+  if (g_sound) {
+    FILE *f = fopen(g_sound, "w");
+    if (f) {
+      sound_trace_dump(f);
+      fclose(f);
+    }
+  }
   dump_screen("final");
   rtl_written_files(check_file, &w);
   if (w.seen < (int)nwritten && !failed) {
@@ -547,6 +556,7 @@ int main(int argc, char **argv)
     else if (strcmp(argv[i], "--save") == 0 && i + 1 < argc) g_save = argv[++i];
     else if (strcmp(argv[i], "--dump") == 0 && i + 1 < argc) g_dump = argv[++i];
     else if (strcmp(argv[i], "--screens-only") == 0) g_screens_only = 1;
+    else if (strcmp(argv[i], "--sound") == 0 && i + 1 < argc) g_sound = argv[++i];
     else if (strcmp(argv[i], "--trace-calls") == 0 && i + 2 < argc) {
       g_trace_lo = atol(argv[++i]);
       g_trace_hi = atol(argv[++i]);
@@ -556,7 +566,7 @@ int main(int argc, char **argv)
     else rpl = argv[i];
   }
   if (!rpl) {
-    fprintf(stderr, "usage: poolrad_replay --data DIR [--save DIR] [--dump PREFIX] SESSION.rpl\n");
+    fprintf(stderr, "usage: poolrad_replay --data DIR [--save DIR] [--dump PREFIX] [--sound FILE] SESSION.rpl\n");
     return 2;
   }
   {
