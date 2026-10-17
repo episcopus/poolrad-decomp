@@ -5,7 +5,6 @@
  * wrote) and then in the data directory, so a pinned data directory is never changed: a write goes to the save
  * directory, and a file opened for update is copied there on its first write. Names match without regard to case. */
 #include <ctype.h>
-#include <dirent.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,8 +12,14 @@
 #include <sys/stat.h>
 #ifdef _WIN32
 #include <direct.h>
+#include <io.h>
+#include <windows.h>
 #define MKDIR(p) _mkdir(p)
+#ifndef S_ISDIR
+#define S_ISDIR(m) (((m) & _S_IFMT) == _S_IFDIR)
+#endif
 #else
+#include <dirent.h>
 #include <unistd.h>
 #define MKDIR(p) mkdir((p), 0777)
 #endif
@@ -60,6 +65,54 @@ u16 rtl_IOResult(void)
   u16 r = IORES;
   IORES = 0;
   return r;
+}
+
+/* Lists a host directory: calls cb(name, is_dir, ctx) for each entry until it returns nonzero. */
+static int dir_list(const char *path, int (*cb)(const char *name, int is_dir, void *ctx), void *ctx)
+{
+#ifdef _WIN32
+  char pat[1100];
+  WIN32_FIND_DATAA fd;
+  HANDLE h;
+  snprintf(pat, sizeof pat, "%s\\*", path);
+  h = FindFirstFileA(pat, &fd);
+  if (h == INVALID_HANDLE_VALUE) {
+    return 0;
+  }
+  do {
+    if (strcmp(fd.cFileName, ".") && strcmp(fd.cFileName, "..") &&
+        cb(fd.cFileName, (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0, ctx)) {
+      FindClose(h);
+      return 1;
+    }
+  } while (FindNextFileA(h, &fd));
+  FindClose(h);
+  return 0;
+#else
+  DIR *d = opendir(path);
+  struct dirent *e;
+  if (!d) {
+    return 0;
+  }
+  while ((e = readdir(d)) != NULL) {
+    struct stat st;
+    char full[1200];
+    int isdir = 0;
+    if (!strcmp(e->d_name, ".") || !strcmp(e->d_name, "..")) {
+      continue;
+    }
+    snprintf(full, sizeof full, "%s/%s", path, e->d_name);
+    if (stat(full, &st) == 0) {
+      isdir = S_ISDIR(st.st_mode) != 0;
+    }
+    if (cb(e->d_name, isdir, ctx)) {
+      closedir(d);
+      return 1;
+    }
+  }
+  closedir(d);
+  return 0;
+#endif
 }
 
 /* ---- names ------------------------------------------------------------------------------------------------ */
@@ -116,6 +169,27 @@ static int dos_rel(const u8 *pname, char *out, size_t cap)
   return 1;
 }
 
+typedef struct Match {
+  const char *want;
+  char found[256];
+} Match;
+
+static int match_cb(const char *name, int is_dir, void *ctx)
+{
+  Match *m = (Match *)ctx;
+  const char *a = name, *b = m->want;
+  (void)is_dir;
+  while (*a && *b && toupper((unsigned char)*a) == toupper((unsigned char)*b)) {
+    a++;
+    b++;
+  }
+  if (!*a && !*b) {
+    snprintf(m->found, sizeof m->found, "%s", name);
+    return 1;
+  }
+  return 0;
+}
+
 /* Find a path below `root` matching `rel` (backslash separated) without regard to case; writes the host path. */
 static int find_host(const char *root, const char *rel, char *out, size_t cap)
 {
@@ -128,29 +202,14 @@ static int find_host(const char *root, const char *rel, char *out, size_t cap)
   tmp[sizeof tmp - 1] = 0;
   tok = strtok(tmp, "\\");
   while (tok) {
-    DIR *d = opendir(cur);
-    struct dirent *e;
-    int found = 0;
-    if (!d) {
+    Match m;
+    m.want = tok;
+    m.found[0] = 0;
+    if (!dir_list(cur, match_cb, &m)) {
       return 0;
     }
-    while ((e = readdir(d)) != NULL) {
-      const char *a = e->d_name, *b = tok;
-      while (*a && *b && toupper((unsigned char)*a) == toupper((unsigned char)*b)) {
-        a++;
-        b++;
-      }
-      if (!*a && !*b) {
-        strncat(cur, "/", sizeof cur - strlen(cur) - 1);
-        strncat(cur, e->d_name, sizeof cur - strlen(cur) - 1);
-        found = 1;
-        break;
-      }
-    }
-    closedir(d);
-    if (!found) {
-      return 0;
-    }
+    strncat(cur, "/", sizeof cur - strlen(cur) - 1);
+    strncat(cur, m.found, sizeof cur - strlen(cur) - 1);
     tok = strtok(NULL, "\\");
   }
   strncpy(out, cur, cap - 1);
@@ -396,7 +455,10 @@ void rtl_append_text(void *f)
 void rtl_close(void *f)
 {
   FileRec *r = (FileRec *)f;
-  HostFile *h = host_of(f, 1);
+  HostFile *h = host_of(f, 0);
+  if (!h) {
+    IORES = IO_NOTOPEN;                  /* Close on a file that is not open says so, over an earlier error */
+  }
   if (h) {
     fclose(h->fp);
     h->fp = NULL;
@@ -469,7 +531,7 @@ static int make_writable(HostFile *h)
 void rtl_seek(void *f, s32 pos)
 {
   FileRec *r = (FileRec *)f;
-  HostFile *h = host_of(f, 1);
+  HostFile *h = IORES ? NULL : host_of(f, 1);       /* an unread IOResult makes file operations do nothing */
   if (h) {
     fseek(h->fp, (long)pos * (long)r->RecSize, SEEK_SET);
   }
@@ -543,7 +605,7 @@ int rtl_eof(void *f)
 void rtl_blockread(void *f, void *buf, u16 count, void *result)
 {
   FileRec *r = (FileRec *)f;
-  HostFile *h = host_of(f, 1);
+  HostFile *h = IORES ? NULL : host_of(f, 1);
   size_t want = (size_t)count * r->RecSize, got;
   extern void rtl_store(void *dst, const void *src, u32 count);
   u8 tmp[4096];
@@ -581,7 +643,7 @@ void rtl_blockread(void *f, void *buf, u16 count, void *result)
 void rtl_blockwrite(void *f, const void *buf, u16 count, void *result)
 {
   FileRec *r = (FileRec *)f;
-  HostFile *h = host_of(f, 1);
+  HostFile *h = IORES ? NULL : host_of(f, 1);
   size_t want = (size_t)count * r->RecSize, put;
   if (!h) {
     return;
@@ -792,37 +854,58 @@ void file_init(void)
   ndeleted = 0;
 }
 
+/* The pinned data file a DOS name (\POOLRAD\X) stands for, or 0. */
+int rtl_data_file(const char *dos_name, char *out, size_t cap)
+{
+  const char *rel = dos_name;
+  if (strncmp(rel, "\\POOLRAD\\", 9) == 0) {
+    rel += 9;
+  }
+  return find_host(platform_data_dir(), rel, out, cap);
+}
+
 /* The files written during the run (below the save directory) and their DOS names, for the replay's checks. */
 int rtl_written_files(void (*cb)(const char *dos_name, const char *host_path, void *ctx), void *ctx);
 
+typedef struct WalkCtx {
+  const char *host;
+  const char *dos;
+  void (*cb)(const char *, const char *, void *);
+  void *ctx;
+  int n;
+} WalkCtx;
+
+static int walk(const char *host, const char *dos, void (*cb)(const char *, const char *, void *), void *ctx);
+
+static int walk_cb(const char *name, int is_dir, void *c)
+{
+  WalkCtx *w = (WalkCtx *)c;
+  char hp[1200], dp[600];
+  size_t i;
+  snprintf(hp, sizeof hp, "%s/%s", w->host, name);
+  snprintf(dp, sizeof dp, "%s\\%s", w->dos, name);
+  for (i = 0; dp[i]; i++) {
+    dp[i] = (char)toupper((unsigned char)dp[i]);
+  }
+  if (is_dir) {
+    w->n += walk(hp, dp, w->cb, w->ctx);
+  } else {
+    w->cb(dp, hp, w->ctx);
+    w->n++;
+  }
+  return 0;
+}
+
 static int walk(const char *host, const char *dos, void (*cb)(const char *, const char *, void *), void *ctx)
 {
-  DIR *d = opendir(host);
-  struct dirent *e;
-  int n = 0;
-  if (!d) {
-    return 0;
-  }
-  while ((e = readdir(d)) != NULL) {
-    char hp[1200], dp[600];
-    struct stat st;
-    if (e->d_name[0] == '.') continue;
-    snprintf(hp, sizeof hp, "%s/%s", host, e->d_name);
-    {
-      size_t i;
-      snprintf(dp, sizeof dp, "%s\\%s", dos, e->d_name);
-      for (i = 0; dp[i]; i++) dp[i] = (char)toupper((unsigned char)dp[i]);
-    }
-    if (stat(hp, &st) != 0) continue;
-    if (S_ISDIR(st.st_mode)) {
-      n += walk(hp, dp, cb, ctx);
-    } else {
-      cb(dp, hp, ctx);
-      n++;
-    }
-  }
-  closedir(d);
-  return n;
+  WalkCtx w;
+  w.host = host;
+  w.dos = dos;
+  w.cb = cb;
+  w.ctx = ctx;
+  w.n = 0;
+  dir_list(host, walk_cb, &w);
+  return w.n;
 }
 
 int rtl_written_files(void (*cb)(const char *, const char *, void *), void *ctx)

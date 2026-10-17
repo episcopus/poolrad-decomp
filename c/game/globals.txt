@@ -1,534 +1,534 @@
-0002 239 Raw0002
-0002 273 CodeWheelRecords
-00F1 34 ds00F1
-00F1 451 TempleMenuText
-0113 411 ds0113
-0113 7 DiseaseAffects
-02AE 35 StepTurnOffsets
-02AE 36 ds02AE
-02D2 16 FacingWallDirs
-02E2 16 GroupFacing
-02F2 4 FacingCombatDir
-02F6 8 RingStartCol
-02FE 8 RingStartRow
-0306 44 ds0306
-0306 60 PlacementShapes
-0332 80 KoboldGoblinNames
-0332 80 Raw0332
-0382 128 OrcGoblinHobgoblinNames
-0402 128 OgreTrollGiantNames
-0402 69 Raw0402
-0447 110 TurnUndeadTable
-0447 111 Raw0447
-04B6 41 WildernessPromptWithArea
-04DF 41 WildernessPromptNoArea
-0508 41 CampMenuText
-0531 41 CampMagicMenuText
-055A 41 AlterMenuText
-055A 42 ds055A
-0584 82 PartyOrderMenuTexts
-05D6 8 ClassItemBits
-05DE 18 Raw05DE
-05DE 8 ClassTrainingBits
-05F0 24 CharacterMenuHotkeys
-05F0 41 Raw05F0
-0619 462 CharacterMenuSlots
-07E7 1 IconEditorPromptsBase
-07E8 205 IconEditorPrompts
-07E8 206 ds07E8
-08B6 8 ClassHitDiceCount
-08BE 7 ds08BE
-08BE 8 ClassHitDieSides
-08C5 58 MonsterBanks
-08C5 59 FigureBankTable
-0900 11 DoorBlockCodesFirst
-090B 18 DoorBlockCodesSecond
-091D 16 DoorRemapFrom
-092D 16 DoorRemapToFirst
-093D 16 DoorRemapToSecond
-094D 18 DoorViewColumns
-095F 17 Raw095F
-095F 18 DoorViewRows
-0970 265 ds0970
-0970 306 TreasureItemRows
-0A79 164 SpellLevelNames
-0A79 410 ds0A79
-0C13 16 ds0C13
-0C13 17 DeathAffects
-0C23 3 ExtraDeathAffects
-0C26 10 Raw0C26
-0C26 16 WallViewIdTable
-0C30 60 SpecialBlocks
-0C6C 16 SpriteRemapFrom
-0C7C 16 SpriteRemapTo
-0C8C 10 WallPieceFirstTile
-0C96 10 WallPieceWidth
-0CA0 10 WallPieceHeight
-0CAA 20 WallPieceCol
-0CBE 20 WallPieceRow
-0CD2 16 PictureRemapFrom
-0CE2 16 PictureRemap13To8
-0CF2 16 PictureRemap13To0
-0D02 16 PixelsByColor2Bit
-0D02 4 Raw0D02
-0D06 16 PixelsByColor4Bit
-0D16 3 ds0D16
-0D16 8 BreakChars
-0D19 11 BadNameChars
-0D24 20 CoinCopperValues
-0D38 459 ClassNames
-0F03 80 RaceNames
-0F53 153 AlignmentNames
-0FEC 14 SexNames
-0FFA 77 MoneyKindNames
-1047 117 StatusNames
-1047 96 ds1047
-10A7 5376 ItemNameParts
-10A7 5377 Raw10A7
-25A8 24 FacingNames
-25C0 9 LinePatternTable
-25C9 4 EgaPlaneMasks
-25CD 8 GlyphColorPatterns
-25D5 16 TextColorMap4
-25E5 16 GlyphPixelMasks
-25E5 17 ds25E5
-25F6 4 EgaPlaneBitMasks
-25FA 16 Raw25FA
-25FA 64 PixelBitsByColor
-260A 8 FillRectPalette
-2612 2 SoundStopAll
-2614 300 InsertDiskPrompts
-2614 4 ds2614
-2618 2 SoundSpellDefault
-261A 2 SoundDamageMessage
-261C 2 SoundAffectMessage
-261E 2 SoundCombatantDies
-2620 2 SoundAttackLeaves
-2622 2 SoundNoAction
-2624 2 SoundLightningBolt
-2626 2 SoundAttackMissed
-2628 2 SoundStep
-262A 2 SoundFireball
-262C 2 SoundAttackArrives
-262C 246 Raw262C
-2722 10 SymbolBase
-272C 10 Raw272C
-272C 2 WallSymbolFloor
-2736 9 DirStepX
-273F 5 ds273F
-273F 9 DirStepY
-2744 1 ds2744
-2744 1024 CombatTiles
-2745 1024 WalkTileTable
-2745 255 Raw2745
-2844 39 ds2844
-2844 40 Footprints
-286B 4 ds286B
-286B 5 HelplessAffects
-286F 14 HeadPictureNumbers
-287D 14 BodyPictureNumbers
-287D 15 Raw287D
-288C 9 KeypadScanLetters
-288C 93 ds288C
-28E9 2337 SpellNames
-28E9 36 ds28E9
-28E9 41 SpellNamesPrefix
-290D 2285 Raw290D
-290D 5 CloudArmDirections
-31FA 1088 ds31FA
-31FA 912 SpellTable
-363A 14 ClockRadix
-3648 1582 ds3648
-3648 1584 AreaMap
-3C76 6 MapBaseX
-3C7C 119 ds3C7C
-3C7C 88 ClassThac0Table
-3CF3 1 ThiefSkillTableBase
-3CF4 1 ds3CF4
-3CF4 72 ThiefSkillTable
-3CF5 16 FigureColorSlots
-3CF5 70 Raw3CF5
-3D3B 1 ThiefRaceTableBase
-3D3C 18 ds3D3C
-3D3C 64 ThiefRaceTable
-3D4E 1 ThiefDexTableBase
-3D4F 84 ds3D4F
-3D4F 95 ThiefDexTable
-3DA3 116 Raw3DA3
-3DA3 256 RaceAbilityLimits
-3DA3 256 RaceStrengthMax
-3DA3 256 RaceStrengthPercent
-3E17 68 Raw3E17
-3E17 96 RaceClassChoices
-3E5B 214 Raw3E5B
-3E5B 224 StartingAgeTable
-3F31 80 RaceAgeBrackets
-3F81 102 ClassAbilityMinimums
-3FE7 167 Raw3FE7
-3FE7 170 ClassAlignmentChoices
-408E 13 ds408E
-408E 19 ConstitutionHitPointTable
-409B 33 Raw409B
-409B 448 ExperienceTable
-40BC 1 ClericSlotTableBase
-40BD 279 ds40BD
-40BD 39 ClericSlotTable
-41D4 1 MageSlotTableBase
-41D5 142 ds41D5
-41D5 39 MageSlotTable
-4263 11 Raw4263
-4263 16 StartingGoldDice
-426E 360 SavingThrowTable
-426E 366 ds426E
-43DC 2 OvrResult
-43DE 2 OvrEmsPages
-43E0 2 OvrTrapCount
-43E2 2 OvrLoadCount
-43E4 1 OvrFileMode
-43EC 2 OvrCodeList
-43EE 2 OvrHeapSize
-43F0 4 OvrDebugPtr
-43F4 2 OvrHeapOrg
-43F6 2 OvrHeapPtr
-43F8 2 OvrHeapEnd
-43FA 2 OvrLoadList
-43FC 2 OvrDosHandle
-43FE 2 OvrEmsHandle
-4400 4 HeapOrg
-4404 4 HeapPtr
-4408 4 HeapEnd
-4408 4 HeapWords
-440C 4 FreeList
-4410 4 FreeZero
-4414 4 HeapError
-4418 4 ExitProc
-441C 2 ExitCode
-441E 4 ErrorAddr
-4422 2 PrefixSeg
-4424 2 StackLimit
-4426 2 InOutRes
-4428 4 RandSeed
-442C 1 FileMode
-442D 1 Test8087
-442E 1 ScriptRunEnded
-442F 1 ScriptBlockStarted
-4430 1 ReselectCharacterPending
-4431 1 AreaRedrawArmed
-4432 1 AreaStepRedrawOnce
-4433 1 Command55Ran
-4434 1 Command33Ran
-4435 1 EncounterMemberCount
-4436 4 ReselectCharacter
-443A 1 MonstersLooted
-443B 1 PartyFled
-443C 1 AiLastDirection
-443D 1 AiStepTurns
-443E 1 AiScratch
-443E 2 Raw443E
-4440 528 PlacementCells
-4650 2 SideOriginCol
-4652 2 SideOriginRow
-4654 2 FirstRingCells
-4656 2 SideFacing
-4658 1 PlacingSide
-4658 2 ds4658
-465A 1 CombatBlock
-465A 2 ds465A
-465C 1 LoaderLoopIndex
-465C 4 Raw465C
-4660 1 LoaderOpenResult
-4661 41 GameDirBackup
-4661 43 Raw4661
-468C 128 LoaderFile
-470C 1 StingCheat
-470C 2 Raw470C
-470E 4 FinalPictureBank
-4712 1 SavedViewMode
-4713 2 FinalPictureNumber
-4713 3 Raw4713
-4716 4 SheetCharacter
-471A 3 ds471A
-471A 4 ViewedCharacter
-471D 1 ds471D
-471D 73 TimedAffectFlags
-471E 72 TimedAffectFlagsFrom0
-4766 4 SpellMenuList
-476A 21 SpellMenuSpells
-477F 196 SpellMenuItems
-4843 1 SpellMenuItemCount
-4844 1 SpellWorkByteA
-4845 1 SpellWorkByteB
-4846 2 ReadiedItemWeight
-4848 4 NewHeapEnd
-484C 1 CfgChar
-484D 256 CfgText
-494D 128 CfgProbe
-49CD 1 CfgProbeResult
-49CE 2 FileProbeResult
-49D0 1 OfferSaveOnHeapError
-49D1 1 CfgFlagF
-49D2 4 GameVars
-49D2 4 VarsAt4900
-49D6 4 GameVars2
-49D6 4 VarsAt6B00
-49DA 4 GameVars3
-49DA 4 VarsAt9700
-49DE 4 EclCode
-49E2 1 GameSpeed
-49E3 2 EclStepEntry
-49E5 2 EclSearchEntry
-49E7 2 EclPreCampEntry
-49E9 2 EclCampInterruptedEntry
-49EB 2 EclInitialEntry
-49ED 2 EclPC
-49ED 6 ds49ED
-49F3 1 ViewMode
-49F4 1 SuppressContinuePrompt
-49F5 1 ShowPortraits
-49F6 1 ShowMonsterPics
-49F7 1 DebugMode
-49F8 1 SkipAreaScriptLoad
-49F9 1 PreviousAreaViewKind
-49FA 1 AreaViewKind
-49FB 2 RestInterruptCounter
-49FD 1 ShownHeadBank
-49FE 1 ShownBodyBank
-49FF 1 PartyDestroyed
-4A00 1 DelayPerGlyph
-4A00 2 Raw4A00
-4A02 20 Regs
-4A16 2 ActivePageSegment
-4A18 2 FillPageSegment
-4A1A 1 FillTextPage
-4A1B 1 TextPage
-4A1C 1 SavedVideoMode
-4A1D 1 CurrentVideoMode
-4A1E 1 VideoAdapter
-4A1E 2 ds4A1E
-4A20 4 DrawBuf
-4A24 4 IconBackgroundBuffer
-4A28 168 RowDirtyFlags
-4AD0 336 RowFirstChangedCol
-4C20 336 RowFirstChangedOfs
-4D70 336 RowLastChangedOfs
-4EC0 400 CgaScanlineSegments
-5050 400 EgaScanlineOffsets
-51E0 400 TandyScanlineSegments
-5370 1 ClipChecksEnabled
-5370 2 Raw5370
-5372 1 SoundMode
-5373 1 SoundModeBeforePause
-5374 2 SoundDriverIdle
-5376 1 TileSet
-5377 1 SavedTileSet
-5378 2 UnreadWord5378
-537A 256 SaveDir
-547A 2 UnreadWord547A
-547C 1 ds547C
-547C 256 GameDir
-547D 1 DiskDriveLetter
-547D 255 Raw547D
-557C 1 OpenNoPrompt
-557D 1 HeapErrorStop
-557E 4 PackedBuf
-5582 2064 ItemTable
-5D92 4 SelectedCharacter
-5D96 4 PartyListHead
-5D9A 132 Raw5D9A
-5D9A 4 LootListBoundary
-5E1E 2 LoaderReadCount
-5E20 4 GameFont
-5E24 1 GlyphCol
-5E25 1 GlyphRow
-5E25 21 ds5E25
-5E3A 20 TileBanks
-5E4E 4 TileBuf
-5E52 4 SqrPaciBank1
-5E56 4 SqrPaciBank2
-5E5A 192 Raw5E5A
-5E5A 2048 PictureSlots
-5F1A 13 ds5F1A
-5F1A 4 DyingPicture
-5F27 292 CombatantTable
-604B 72 CombatantViewCol
-6093 72 CombatantViewRow
-60DB 1250 CellOccupant
-65BD 288 CombatantRecord
-66DD 56 BodyTable
-6715 1 BodyCount
-6716 2 ds6716
-6716 4 CombatMap
-6718 220 Raw6718
-6718 768 SortEntries
-67F4 28 PooledMoney
-6810 4 PooledItems
-6814 1 PartySideCount
-6814 2 SideCounts
-6815 1 EnemySideCount
-6816 1 SaveRoll
-6817 1 HookAffectId
-6818 1 DamageAmount
-6819 1 DamageKind
-681A 1 HookedMoveOrAttacks
-681B 1 CastingSpell
-681C 1 LastDiceCount
-681D 1 HookRunning
-681E 1 HookVetoFlag
-681F 1 RemovingAffects
-6820 1 SpellAppliedToArea
-6821 1 RedrawItemWindow
-6822 1 AttackRoll
-6822 1 ds6822
-6822 3 AttackSlotRolls
-6823 1 AvoidedAttackCounter
-6823 2 Raw6823
-6825 1 MoraleScratch
-6826 2 Raw6826
-6826 4 AttackTarget
-6828 2 ds6828
-6828 560 AffectHandlers
-682A 1 SaveKind
-682A 350 ds682A
-6988 208 Raw6988
-6988 4 MonsterBreathVector
-6A58 4 WallSets
-6A58 4 WallTiles
-6A5C 4 GeoBlock
-6A5C 4 GeoCells
-6A60 1 WallDescriptor1
-6A61 1 WallDescriptor2
-6A62 1 WallDescriptor3
-6A63 1 WallDescriptor4
-6A63 73 Raw6A63
-6AAC 1 WallMapMode
-6AAD 1 PartyMapColumn
-6AAE 1 PartyMapRow
-6AAE 16 WallSetSlotPairs
-6AAF 1 PartyFacing
-6AB0 1 PartyCellWallId
-6AB1 1 PartyCellEventByte
-6AB2 2 UnreadWord6AB2
-6AB4 2 UnreadWord6AB4
-6AB6 8 PictureAnimationBase
-6ABE 61 ds6ABE
-6ABE 66 PictureAnimation
-6AFB 15 LoadSlots
-6AFB 5 Raw6AFB
-6B00 1 HeadBankIndex
-6B01 4 HeadSpriteBank
-6B05 1 BodyBankIndex
-6B06 4 BodySpriteBank
-6B0A 18 Raw6B0A
-6B0A 9 LastSpriteFile
-6B1C 1 LastSpriteBank
-6B1C 13 Raw6B1C
-6B29 2 ListMenuTop
-6B2B 1 PromptWordChoice
-6B2C 1 LastPromptExtKey
-6B2C 2 ds6B2C
-6B2E 4 PromptTimeout
-6B32 1 PromptTimeoutKey
-6B32 78 ds6B32
-6B80 4 CurrentItem
-6B84 269 Raw6B84
-6B84 272 SpellHandlers
-6B84 4 SpellPickerPointer
-6B84 4 SpellTargetPicker
-6C91 296 SpellTargets
-6C91 3 Raw6C91
-6C94 1 SpellTargetCount
-6C95 288 Raw6C95
-6C95 4 FirstSpellTarget
-6DB5 4 PickedSpellCharacter
-6DB9 1 SpellAimX
-6DBA 1 SpellAimY
-6DBB 4 CloudList
-6DBF 1 ItemAffectUse
-6DC0 1 MoneyInPool
-6DC0 2 ds6DC0
-6DC2 13 ds6DC2
-6DC2 14 RestTime
-6DCF 7 RestStudyCountdowns
-6DCF 9 ds6DCF
-6DD8 2 RestHealCounter
-6DDA 1 RestWindowActive
-6DDA 2 ds6DDA
-6DDC 1 MarkerFrame
-6DDC 2 ds6DDC
-6DDE 3 DoorMenuFlags
-6DE1 1 ds6DE1
-6DE2 1 AllyAttackConfirmed
-6DE3 1 CombatRound
-6DE4 72 Raw6DE4
-6DE4 74 CombatantScanList
-6E2C 3 AttackSlotCounts
-6E2F 1 SecondMoraleByte
-6E30 1 MagicToggleOn
-6E31 1 CombatScratchFlag
-6E31 5 Raw6E31
-6E36 306 Raw6E36
-6E36 4 CombatAnimationPicture
-6F68 1 SpecialViewCode2
-6F69 1 SpecialViewCode1
-6F6A 2 ScriptWordFB
-6F6C 2 ScriptWordFC
-6F6E 2 ScriptWordB1
-6F70 4 ReturnStack
-6F74 4 ReturnPrev
-6F78 6 CompareFlags
-6F7E 1 PreviousOpcode
-6F7F 1 CurrentOpcode
-6F7F 2 ds6F7F
-6F81 1 EncounterSpriteBank
-6F82 1 EncounterPicBank
-6F83 1 EncounterIconSlot
-6F83 69 Raw6F83
-6FC8 3840 EclStrings
-6FC8 61 ds6FC8
-7005 64 ds7005
-7005 65 OperandType
-7045 64 ds7045
-7045 65 OperandHigh
-7085 65 OperandLow
-70C6 1 PickerDone
-70C7 1 SharedLoopIndex
-70C7 5121 Raw70C7
-84C8 2 PictureShown
-84C8 2 PictureShownFlags
-84C8 4 Raw84C8
-84CC 2 ScriptSoundCode
-84CE 2 ScriptWordB8
-84D0 2 ScriptWordB9
-84D2 1 ActiveFlagClearedByScript
-84D3 1 NameClearedByScript
-84D4 1 DuelMode
-84D5 1 NoExperienceCount
-84D6 4 BattleExperience
-84DA 1 BattleWon
-84DA 2 ds84DA
-84DC 1 WallViewMode
-84DD 1 SavedSearchMode
-84DE 1 GlyphRunInBox
-84DF 1 GlyphRunPending
-84E0 1 CloseUpShown
-84E1 1 CloseUpHidden
-84E2 1 PictureFrameDirty
-84E3 1 Sprite3DLoaded
-84E4 1 EclWindowCleared
-84E5 1 SpecialViewGate
-84E6 1 PartyMovedByScript
-84E7 1 EncounterMembersAdded
-84E8 1 HeadBodyWritten
-84E9 1 SkipCloseUpIfNoPics
-84EA 1 LastShownPictureWord
-84EA 6 Raw84EA
-84F0 1 CheckBreak
-84F1 1 CheckEof
-84F2 1 DirectVideo
-84F3 1 CheckSnow
-84F4 2 LastMode
-84F6 1 TextAttr
-84F8 2 WindMin
-84FA 2 WindMax
-8508 256 Input
-8608 256 Output
+0002 239 Raw0002 -
+0002 273 CodeWheelRecords -
+00F1 34 ds00F1 -
+00F1 451 TempleMenuText -
+0113 411 ds0113 -
+0113 7 DiseaseAffects -
+02AE 35 StepTurnOffsets -
+02AE 36 ds02AE -
+02D2 16 FacingWallDirs -
+02E2 16 GroupFacing -
+02F2 4 FacingCombatDir -
+02F6 8 RingStartCol -
+02FE 8 RingStartRow -
+0306 44 ds0306 -
+0306 60 PlacementShapes -
+0332 80 KoboldGoblinNames -
+0332 80 Raw0332 -
+0382 128 OrcGoblinHobgoblinNames -
+0402 128 OgreTrollGiantNames -
+0402 69 Raw0402 -
+0447 110 TurnUndeadTable -
+0447 111 Raw0447 -
+04B6 41 WildernessPromptWithArea -
+04DF 41 WildernessPromptNoArea -
+0508 41 CampMenuText -
+0531 41 CampMagicMenuText -
+055A 41 AlterMenuText -
+055A 42 ds055A -
+0584 82 PartyOrderMenuTexts -
+05D6 8 ClassItemBits -
+05DE 18 Raw05DE -
+05DE 8 ClassTrainingBits -
+05F0 24 CharacterMenuHotkeys -
+05F0 41 Raw05F0 -
+0619 462 CharacterMenuSlots -
+07E7 1 IconEditorPromptsBase -
+07E8 205 IconEditorPrompts -
+07E8 206 ds07E8 -
+08B6 8 ClassHitDiceCount -
+08BE 7 ds08BE -
+08BE 8 ClassHitDieSides -
+08C5 58 MonsterBanks -
+08C5 59 FigureBankTable -
+0900 11 DoorBlockCodesFirst -
+090B 18 DoorBlockCodesSecond -
+091D 16 DoorRemapFrom -
+092D 16 DoorRemapToFirst -
+093D 16 DoorRemapToSecond -
+094D 18 DoorViewColumns -
+095F 17 Raw095F -
+095F 18 DoorViewRows -
+0970 265 ds0970 -
+0970 306 TreasureItemRows -
+0A79 164 SpellLevelNames -
+0A79 410 ds0A79 -
+0C13 16 ds0C13 -
+0C13 17 DeathAffects -
+0C23 3 ExtraDeathAffects -
+0C26 10 Raw0C26 -
+0C26 16 WallViewIdTable -
+0C30 60 SpecialBlocks -
+0C6C 16 SpriteRemapFrom -
+0C7C 16 SpriteRemapTo -
+0C8C 10 WallPieceFirstTile -
+0C96 10 WallPieceWidth -
+0CA0 10 WallPieceHeight -
+0CAA 20 WallPieceCol -
+0CBE 20 WallPieceRow -
+0CD2 16 PictureRemapFrom -
+0CE2 16 PictureRemap13To8 -
+0CF2 16 PictureRemap13To0 -
+0D02 16 PixelsByColor2Bit -
+0D02 4 Raw0D02 -
+0D06 16 PixelsByColor4Bit -
+0D16 3 ds0D16 -
+0D16 4 BreakChars -
+0D19 11 BadNameChars -
+0D24 20 CoinCopperValues -
+0D38 459 ClassNames -
+0F03 80 RaceNames -
+0F53 153 AlignmentNames -
+0FEC 14 SexNames -
+0FFA 77 MoneyKindNames -
+1047 117 StatusNames -
+1047 96 ds1047 -
+10A7 5376 ItemNameParts -
+10A7 5377 Raw10A7 -
+25A8 24 FacingNames -
+25C0 9 LinePatternTable -
+25C9 4 EgaPlaneMasks -
+25CD 8 GlyphColorPatterns -
+25D5 16 TextColorMap4 -
+25E5 16 GlyphPixelMasks -
+25E5 17 ds25E5 -
+25F6 4 EgaPlaneBitMasks -
+25FA 16 Raw25FA -
+25FA 64 PixelBitsByColor -
+260A 8 FillRectPalette -
+2612 2 SoundStopAll -
+2614 300 InsertDiskPrompts -
+2614 4 ds2614 -
+2618 2 SoundSpellDefault -
+261A 2 SoundDamageMessage -
+261C 2 SoundAffectMessage -
+261E 2 SoundCombatantDies -
+2620 2 SoundAttackLeaves -
+2622 2 SoundNoAction -
+2624 2 SoundLightningBolt -
+2626 2 SoundAttackMissed -
+2628 2 SoundStep -
+262A 2 SoundFireball -
+262C 2 SoundAttackArrives -
+262C 246 Raw262C -
+2722 10 SymbolBase -
+272C 10 Raw272C -
+272C 2 WallSymbolFloor -
+2736 9 DirStepX -
+273F 5 ds273F -
+273F 9 DirStepY -
+2744 1 ds2744 -
+2744 1024 CombatTiles -
+2745 1024 WalkTileTable -
+2745 255 Raw2745 -
+2844 39 ds2844 -
+2844 40 Footprints -
+286B 4 ds286B -
+286B 5 HelplessAffects -
+286F 14 HeadPictureNumbers -
+287D 14 BodyPictureNumbers -
+287D 15 Raw287D -
+288C 9 KeypadScanLetters -
+288C 93 ds288C -
+28E9 2337 SpellNames -
+28E9 36 ds28E9 -
+28E9 41 SpellNamesPrefix -
+290D 2285 Raw290D -
+290D 5 CloudArmDirections -
+31FA 1088 ds31FA -
+31FA 912 SpellTable -
+363A 14 ClockRadix -
+3648 1582 ds3648 -
+3648 1584 AreaMap -
+3C76 6 MapBaseX -
+3C7C 119 ds3C7C -
+3C7C 88 ClassThac0Table -
+3CF3 1 ThiefSkillTableBase -
+3CF4 1 ds3CF4 -
+3CF4 72 ThiefSkillTable -
+3CF5 16 FigureColorSlots -
+3CF5 70 Raw3CF5 -
+3D3B 1 ThiefRaceTableBase -
+3D3C 18 ds3D3C -
+3D3C 64 ThiefRaceTable -
+3D4E 1 ThiefDexTableBase -
+3D4F 84 ds3D4F -
+3D4F 95 ThiefDexTable -
+3DA3 116 Raw3DA3 -
+3DA3 256 RaceAbilityLimits -
+3DA3 256 RaceStrengthMax -
+3DA3 256 RaceStrengthPercent -
+3E17 68 Raw3E17 -
+3E17 96 RaceClassChoices -
+3E5B 214 Raw3E5B -
+3E5B 224 StartingAgeTable -
+3F31 80 RaceAgeBrackets -
+3F81 102 ClassAbilityMinimums -
+3FE7 167 Raw3FE7 -
+3FE7 170 ClassAlignmentChoices -
+408E 13 ds408E -
+408E 19 ConstitutionHitPointTable -
+409B 33 Raw409B -
+409B 448 ExperienceTable -
+40BC 1 ClericSlotTableBase -
+40BD 279 ds40BD -
+40BD 39 ClericSlotTable -
+41D4 1 MageSlotTableBase -
+41D5 142 ds41D5 -
+41D5 39 MageSlotTable -
+4263 11 Raw4263 -
+4263 16 StartingGoldDice -
+426E 360 SavingThrowTable -
+426E 366 ds426E -
+43DC 2 OvrResult -
+43DE 2 OvrEmsPages -
+43E0 2 OvrTrapCount -
+43E2 2 OvrLoadCount -
+43E4 1 OvrFileMode -
+43EC 2 OvrCodeList -
+43EE 2 OvrHeapSize -
+43F0 4 OvrDebugPtr -
+43F4 2 OvrHeapOrg -
+43F6 2 OvrHeapPtr -
+43F8 2 OvrHeapEnd -
+43FA 2 OvrLoadList -
+43FC 2 OvrDosHandle -
+43FE 2 OvrEmsHandle -
+4400 4 HeapOrg -
+4404 4 HeapPtr -
+4408 4 HeapEnd -
+4408 4 HeapWords -
+440C 4 FreeList -
+4410 4 FreeZero -
+4414 4 HeapError -
+4418 4 ExitProc -
+441C 2 ExitCode -
+441E 4 ErrorAddr -
+4422 2 PrefixSeg -
+4424 2 StackLimit -
+4426 2 InOutRes -
+4428 4 RandSeed -
+442C 1 FileMode -
+442D 1 Test8087 -
+442E 1 ScriptRunEnded -
+442F 1 ScriptBlockStarted -
+4430 1 ReselectCharacterPending -
+4431 1 AreaRedrawArmed -
+4432 1 AreaStepRedrawOnce -
+4433 1 Command55Ran -
+4434 1 Command33Ran -
+4435 1 EncounterMemberCount -
+4436 4 ReselectCharacter -
+443A 1 MonstersLooted -
+443B 1 PartyFled -
+443C 1 AiLastDirection -
+443D 1 AiStepTurns -
+443E 1 AiScratch -
+443E 2 Raw443E -
+4440 528 PlacementCells -
+4650 2 SideOriginCol -
+4652 2 SideOriginRow -
+4654 2 FirstRingCells -
+4656 2 SideFacing -
+4658 1 PlacingSide -
+4658 2 ds4658 -
+465A 1 CombatBlock -
+465A 2 ds465A -
+465C 1 LoaderLoopIndex -
+465C 4 Raw465C -
+4660 1 LoaderOpenResult -
+4661 41 GameDirBackup -
+4661 43 Raw4661 -
+468C 128 LoaderFile file
+470C 1 StingCheat -
+470C 2 Raw470C -
+470E 4 FinalPictureBank -
+4712 1 SavedViewMode -
+4713 2 FinalPictureNumber -
+4713 3 Raw4713 -
+4716 4 SheetCharacter -
+471A 3 ds471A -
+471A 4 ViewedCharacter -
+471D 1 ds471D -
+471D 73 TimedAffectFlags -
+471E 72 TimedAffectFlagsFrom0 -
+4766 4 SpellMenuList -
+476A 21 SpellMenuSpells -
+477F 196 SpellMenuItems -
+4843 1 SpellMenuItemCount -
+4844 1 SpellWorkByteA -
+4845 1 SpellWorkByteB -
+4846 2 ReadiedItemWeight -
+4848 4 NewHeapEnd -
+484C 1 CfgChar -
+484D 256 CfgText file
+494D 128 CfgProbe file
+49CD 1 CfgProbeResult -
+49CE 2 FileProbeResult -
+49D0 1 OfferSaveOnHeapError -
+49D1 1 CfgFlagF -
+49D2 4 GameVars -
+49D2 4 VarsAt4900 -
+49D6 4 GameVars2 -
+49D6 4 VarsAt6B00 -
+49DA 4 GameVars3 -
+49DA 4 VarsAt9700 -
+49DE 4 EclCode -
+49E2 1 GameSpeed -
+49E3 2 EclStepEntry -
+49E5 2 EclSearchEntry -
+49E7 2 EclPreCampEntry -
+49E9 2 EclCampInterruptedEntry -
+49EB 2 EclInitialEntry -
+49ED 2 EclPC -
+49ED 6 ds49ED -
+49F3 1 ViewMode -
+49F4 1 SuppressContinuePrompt -
+49F5 1 ShowPortraits -
+49F6 1 ShowMonsterPics -
+49F7 1 DebugMode -
+49F8 1 SkipAreaScriptLoad -
+49F9 1 PreviousAreaViewKind -
+49FA 1 AreaViewKind -
+49FB 2 RestInterruptCounter -
+49FD 1 ShownHeadBank -
+49FE 1 ShownBodyBank -
+49FF 1 PartyDestroyed -
+4A00 1 DelayPerGlyph -
+4A00 2 Raw4A00 -
+4A02 20 Regs -
+4A16 2 ActivePageSegment -
+4A18 2 FillPageSegment -
+4A1A 1 FillTextPage -
+4A1B 1 TextPage -
+4A1C 1 SavedVideoMode -
+4A1D 1 CurrentVideoMode -
+4A1E 1 VideoAdapter -
+4A1E 2 ds4A1E -
+4A20 4 DrawBuf -
+4A24 4 IconBackgroundBuffer -
+4A28 168 RowDirtyFlags -
+4AD0 336 RowFirstChangedCol -
+4C20 336 RowFirstChangedOfs -
+4D70 336 RowLastChangedOfs -
+4EC0 400 CgaScanlineSegments -
+5050 400 EgaScanlineOffsets -
+51E0 400 TandyScanlineSegments -
+5370 1 ClipChecksEnabled -
+5370 2 Raw5370 -
+5372 1 SoundMode -
+5373 1 SoundModeBeforePause -
+5374 2 SoundDriverIdle -
+5376 1 TileSet -
+5377 1 SavedTileSet -
+5378 2 UnreadWord5378 -
+537A 256 SaveDir -
+547A 2 UnreadWord547A -
+547C 1 ds547C -
+547C 256 GameDir -
+547D 1 DiskDriveLetter -
+547D 255 Raw547D -
+557C 1 OpenNoPrompt -
+557D 1 HeapErrorStop -
+557E 4 PackedBuf -
+5582 2064 ItemTable -
+5D92 4 SelectedCharacter -
+5D96 4 PartyListHead -
+5D9A 132 Raw5D9A -
+5D9A 4 LootListBoundary -
+5E1E 2 LoaderReadCount -
+5E20 4 GameFont -
+5E24 1 GlyphCol -
+5E25 1 GlyphRow -
+5E25 21 ds5E25 -
+5E3A 20 TileBanks -
+5E4E 4 TileBuf -
+5E52 4 SqrPaciBank1 -
+5E56 4 SqrPaciBank2 -
+5E5A 192 Raw5E5A -
+5E5A 2048 PictureSlots -
+5F1A 13 ds5F1A -
+5F1A 4 DyingPicture -
+5F27 292 CombatantTable -
+604B 72 CombatantViewCol -
+6093 72 CombatantViewRow -
+60DB 1250 CellOccupant -
+65BD 288 CombatantRecord -
+66DD 56 BodyTable -
+6715 1 BodyCount -
+6716 2 ds6716 -
+6716 4 CombatMap -
+6718 220 Raw6718 -
+6718 768 SortEntries -
+67F4 28 PooledMoney -
+6810 4 PooledItems -
+6814 1 PartySideCount -
+6814 2 SideCounts -
+6815 1 EnemySideCount -
+6816 1 SaveRoll -
+6817 1 HookAffectId -
+6818 1 DamageAmount -
+6819 1 DamageKind -
+681A 1 HookedMoveOrAttacks -
+681B 1 CastingSpell -
+681C 1 LastDiceCount -
+681D 1 HookRunning -
+681E 1 HookVetoFlag -
+681F 1 RemovingAffects -
+6820 1 SpellAppliedToArea -
+6821 1 RedrawItemWindow -
+6822 1 AttackRoll -
+6822 1 ds6822 -
+6822 3 AttackSlotRolls -
+6823 1 AvoidedAttackCounter -
+6823 2 Raw6823 -
+6825 1 MoraleScratch -
+6826 2 Raw6826 -
+6826 4 AttackTarget -
+6828 2 ds6828 -
+6828 560 AffectHandlers -
+682A 1 SaveKind -
+682A 350 ds682A -
+6988 208 Raw6988 -
+6988 4 MonsterBreathVector -
+6A58 4 WallSets -
+6A58 4 WallTiles -
+6A5C 4 GeoBlock -
+6A5C 4 GeoCells -
+6A60 1 WallDescriptor1 -
+6A61 1 WallDescriptor2 -
+6A62 1 WallDescriptor3 -
+6A63 1 WallDescriptor4 -
+6A63 73 Raw6A63 -
+6AAC 1 WallMapMode -
+6AAD 1 PartyMapColumn -
+6AAE 1 PartyMapRow -
+6AAE 16 WallSetSlotPairs -
+6AAF 1 PartyFacing -
+6AB0 1 PartyCellWallId -
+6AB1 1 PartyCellEventByte -
+6AB2 2 UnreadWord6AB2 -
+6AB4 2 UnreadWord6AB4 -
+6AB6 8 PictureAnimationBase -
+6ABE 61 ds6ABE -
+6ABE 66 PictureAnimation -
+6AFB 15 LoadSlots -
+6AFB 5 Raw6AFB -
+6B00 1 HeadBankIndex -
+6B01 4 HeadSpriteBank -
+6B05 1 BodyBankIndex -
+6B06 4 BodySpriteBank -
+6B0A 18 Raw6B0A -
+6B0A 9 LastSpriteFile -
+6B1C 1 LastSpriteBank -
+6B1C 13 Raw6B1C -
+6B29 2 ListMenuTop -
+6B2B 1 PromptWordChoice -
+6B2C 1 LastPromptExtKey -
+6B2C 2 ds6B2C -
+6B2E 4 PromptTimeout -
+6B32 1 PromptTimeoutKey -
+6B32 78 ds6B32 -
+6B80 4 CurrentItem -
+6B84 269 Raw6B84 -
+6B84 272 SpellHandlers -
+6B84 4 SpellPickerPointer -
+6B84 4 SpellTargetPicker -
+6C91 296 SpellTargets -
+6C91 3 Raw6C91 -
+6C94 1 SpellTargetCount -
+6C95 288 Raw6C95 -
+6C95 4 FirstSpellTarget -
+6DB5 4 PickedSpellCharacter -
+6DB9 1 SpellAimX -
+6DBA 1 SpellAimY -
+6DBB 4 CloudList -
+6DBF 1 ItemAffectUse -
+6DC0 1 MoneyInPool -
+6DC0 2 ds6DC0 -
+6DC2 13 ds6DC2 -
+6DC2 14 RestTime -
+6DCF 7 RestStudyCountdowns -
+6DCF 9 ds6DCF -
+6DD8 2 RestHealCounter -
+6DDA 1 RestWindowActive -
+6DDA 2 ds6DDA -
+6DDC 1 MarkerFrame -
+6DDC 2 ds6DDC -
+6DDE 3 DoorMenuFlags -
+6DE1 1 ds6DE1 -
+6DE2 1 AllyAttackConfirmed -
+6DE3 1 CombatRound -
+6DE4 72 Raw6DE4 -
+6DE4 74 CombatantScanList -
+6E2C 3 AttackSlotCounts -
+6E2F 1 SecondMoraleByte -
+6E30 1 MagicToggleOn -
+6E31 1 CombatScratchFlag -
+6E31 5 Raw6E31 -
+6E36 306 Raw6E36 -
+6E36 4 CombatAnimationPicture -
+6F68 1 SpecialViewCode2 -
+6F69 1 SpecialViewCode1 -
+6F6A 2 ScriptWordFB -
+6F6C 2 ScriptWordFC -
+6F6E 2 ScriptWordB1 -
+6F70 4 ReturnStack -
+6F74 4 ReturnPrev -
+6F78 6 CompareFlags -
+6F7E 1 PreviousOpcode -
+6F7F 1 CurrentOpcode -
+6F7F 2 ds6F7F -
+6F81 1 EncounterSpriteBank -
+6F82 1 EncounterPicBank -
+6F83 1 EncounterIconSlot -
+6F83 69 Raw6F83 -
+6FC8 3840 EclStrings -
+6FC8 61 ds6FC8 -
+7005 64 ds7005 -
+7005 65 OperandType -
+7045 64 ds7045 -
+7045 65 OperandHigh -
+7085 65 OperandLow -
+70C6 1 PickerDone -
+70C7 1 SharedLoopIndex -
+70C7 5121 Raw70C7 -
+84C8 2 PictureShown -
+84C8 2 PictureShownFlags -
+84C8 4 Raw84C8 -
+84CC 2 ScriptSoundCode -
+84CE 2 ScriptWordB8 -
+84D0 2 ScriptWordB9 -
+84D2 1 ActiveFlagClearedByScript -
+84D3 1 NameClearedByScript -
+84D4 1 DuelMode -
+84D5 1 NoExperienceCount -
+84D6 4 BattleExperience -
+84DA 1 BattleWon -
+84DA 2 ds84DA -
+84DC 1 WallViewMode -
+84DD 1 SavedSearchMode -
+84DE 1 GlyphRunInBox -
+84DF 1 GlyphRunPending -
+84E0 1 CloseUpShown -
+84E1 1 CloseUpHidden -
+84E2 1 PictureFrameDirty -
+84E3 1 Sprite3DLoaded -
+84E4 1 EclWindowCleared -
+84E5 1 SpecialViewGate -
+84E6 1 PartyMovedByScript -
+84E7 1 EncounterMembersAdded -
+84E8 1 HeadBodyWritten -
+84E9 1 SkipCloseUpIfNoPics -
+84EA 1 LastShownPictureWord -
+84EA 6 Raw84EA -
+84F0 1 CheckBreak -
+84F1 1 CheckEof -
+84F2 1 DirectVideo -
+84F3 1 CheckSnow -
+84F4 2 LastMode -
+84F6 1 TextAttr -
+84F8 2 WindMin -
+84FA 2 WindMax -
+8508 256 Input file
+8608 256 Output file

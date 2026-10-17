@@ -8,6 +8,7 @@
      StartGame. */
 void Load8x8Bank(u8 BlockId, u8 Bank)
 {
+  POOL_TRACE("Load8x8Bank");
   u8 NumSet[2] = {0};
   u8 NumBlock[4] = {0};
   u8 Unused = 0;
@@ -40,6 +41,7 @@ void Load8x8Bank(u8 BlockId, u8 Bank)
      overhead wall map) pass 1 (ovl29:010C, 0146, 02FB). */
 void Put8x8Symbol(s8 XPos, s8 YPos, u16 Symbol, u8 Direct, u8 Attr)
 {
+  POOL_TRACE("Put8x8Symbol");
   u8 Bank = 0;
   u8 Key = 0;
   s32 t1;
@@ -77,4 +79,5 @@ void Put8x8Symbol(s8 XPos, s8 YPos, u16 Symbol, u8 Direct, u8 Attr)
 /* Initialisation part of unit OVL34. */
 void init_OVL34(void)
 {
+  POOL_TRACE("init");
 }

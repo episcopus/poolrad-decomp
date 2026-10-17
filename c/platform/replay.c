@@ -24,6 +24,7 @@
 
 extern int rtl_written_files(void (*cb)(const char *, const char *, void *), void *ctx);
 extern u32 rtl_random_calls(void);
+extern int rtl_data_file(const char *dos_name, char *out, size_t cap);
 extern void sound_trace_dump(FILE *f);
 
 enum { K_WAIT = 0, K_PEEK = 1, K_TIME = 2, K_DATE = 3, K_PIT = 4, K_RETRACE = 5, K_SKIP = 9 };
@@ -53,16 +54,28 @@ static long idx;                 /* reads of the recording consumed so far, skip
 static long total_reads;
 static Checkpoint *cps;
 static size_t ncps, next_cp;
+static u32 masks[256][2];
+static int nmasks;
+typedef struct Zero {
+  char name[256];
+  u32 lo[8], hi[8];
+  int n;
+} Zero;
+static Zero zeros[32];
+static int nzeros;
 static Written *written;
 static size_t nwritten;
 static u32 expect_random;
 static u32 irq_delivered;
 static void (*timer_handler)(void);
 static const char *g_data = ".", *g_save = "build/c/save", *g_dump;
-static long g_snap = -1;                 /* write DGROUP, heap and planes after this read */
+static long g_snap = -2;
+static long g_snap_call = -1, g_ncalls;           /* --snap-call N: snapshot at the N-th traced call */
+static long g_trace_lo = -1, g_trace_hi = -1;     /* --trace-calls LO HI: routine names while the read count is in [LO, HI) */                 /* write DGROUP, heap and planes after this read */
 static int screens_ok, screens_bad, state_ok, state_bad, skipped_cps;
 static char first_problem[512];
 static int failed;
+static int g_screens_only;
 static const char *session_name = "?";
 
 /* ---- the recording ----------------------------------------------------------------------------------------- */
@@ -101,6 +114,30 @@ static void load(const char *path)
       c.random_calls = rc;
       if (ncps == cap_c) { cap_c *= 2; cps = (Checkpoint *)realloc(cps, cap_c * sizeof *cps); }
       cps[ncps++] = c;
+    } else if (line[0] == 'M') {
+      unsigned lo, hi;
+      if (sscanf(line + 2, "%u %u", &lo, &hi) == 2 && nmasks < 256) {
+        masks[nmasks][0] = lo;
+        masks[nmasks][1] = hi;
+        nmasks++;
+      }
+    } else if (line[0] == 'Z') {
+      char *p = line + 2, *e;
+      Zero *z = &zeros[nzeros < 32 ? nzeros : 31];
+      size_t n = strcspn(p, " ");
+      memset(z, 0, sizeof *z);
+      snprintf(z->name, sizeof z->name, "%.*s", (int)n, p);
+      p += n;
+      for (;;) {
+        unsigned long lo = strtoul(p, &e, 10), hi;
+        if (e == p) break;
+        p = e;
+        hi = strtoul(p, &e, 10);
+        if (e == p) break;
+        p = e;
+        if (z->n < 8) { z->lo[z->n] = (u32)lo; z->hi[z->n] = (u32)hi; z->n++; }
+      }
+      if (nzeros < 32) nzeros++;
     } else if (line[0] == 'F') {
       expect_random = (u32)atol(line + 2);
     } else if (line[0] == 'W') {
@@ -127,7 +164,7 @@ static void screen_digest(char out[65])
   sha256_hex(d, out);
 }
 
-/* The oracle's canonical_nostack: DGROUP (the stack bytes zeroed), the allocated heap, the screen digest. */
+/* The game's state: DGROUP without the masked ranges, the allocated heap, the screen digest (export_replay.py: masked_digest). */
 static void canon_digest(char out[65])
 {
   static u8 ds[0x10000];
@@ -136,9 +173,14 @@ static void canon_digest(char out[65])
   char scr[65];
   u32 org = POOL_LINEAR(*(u32 *)(pool_ds + 0x4400)), ptr = POOL_LINEAR(*(u32 *)(pool_ds + 0x4404));
   memcpy(ds, pool_ds, sizeof ds);
-  memset(ds + 0x8760, 0, 0x4000);               /* the stack segment (SS 24F2:0000, 4000h bytes) inside DGROUP */
+  {
+    int i;
+    for (i = 0; i < nmasks; i++) {                /* the runtime's own bookkeeping (tools/c/export_replay.py) */
+      memset(ds + masks[i][0], 0, masks[i][1] - masks[i][0]);
+    }
+  }
   sha256_init(&c);
-  sha256_update(&c, "DGROUP", 6);
+  sha256_update(&c, "MASKED", 6);
   sha256_update(&c, ds, sizeof ds);
   sha256_update(&c, "heap", 4);
   if (org > 0 && org <= ptr && ptr <= 0xA0000) {
@@ -197,6 +239,24 @@ static void dump_screen(const char *label)
   fclose(f);
 }
 
+#ifdef POOL_TRACE_CALLS
+static void canon_digest(char out[65]);
+static void snapshot(void);
+void pool_trace(const char *name)
+{
+  if (g_trace_lo >= 0 && idx >= g_trace_lo && idx < g_trace_hi) {
+    char d[65];
+    if (g_ncalls++ == g_snap_call && g_dump) {
+      snapshot();
+    }
+    canon_digest(d);
+    fprintf(stdout, "call %s %.16s\n", name, d);          /* the game's state on entry, as tools/c/export_replay.py */
+  }
+}
+#endif
+
+long pool_replay_index(void) { return idx; }
+
 static void snapshot(void)
 {
   char path[512];
@@ -239,6 +299,11 @@ static void check_cps(long at)
       state_ok++;
     } else {
       state_bad++;
+      if (!failed && !g_screens_only) {
+        snprintf(first_problem, sizeof first_problem, "game state differs at checkpoint %s (after read %ld); see tools/c/bisect_state.py",
+                 c->label, c->at);
+        failed = 1;
+      }
     }
     if (c->random_calls != rtl_random_calls() && c->at != -1) {
       /* the checkpoint's Random count is that of the original at the same read */
@@ -257,16 +322,34 @@ typedef struct WriteCtx {
   int seen;
 } WriteCtx;
 
-static void sha_file(const char *path, char out[65])
+static void sha_file(const char *path, const char *dos, char out[65])
 {
   FILE *f = fopen(path, "rb");
   Sha256 c;
   u8 d[32], buf[8192];
   size_t n;
+  u32 pos = 0;
+  const Zero *z = NULL;
+  int i;
+  for (i = 0; i < nzeros; i++) {
+    if (dos && strcmp(zeros[i].name, dos) == 0) z = &zeros[i];
+  }
   sha256_init(&c);
   out[0] = 0;
   if (!f) return;
-  while ((n = fread(buf, 1, sizeof buf, f)) > 0) sha256_update(&c, buf, n);
+  while ((n = fread(buf, 1, sizeof buf, f)) > 0) {
+    if (z) {                                       /* known differences: those bytes count as zero */
+      int k;
+      u32 j;
+      for (k = 0; k < z->n; k++) {
+        for (j = z->lo[k]; j < z->hi[k]; j++) {
+          if (j >= pos && j < pos + n) buf[j - pos] = 0;
+        }
+      }
+    }
+    pos += (u32)n;
+    sha256_update(&c, buf, n);
+  }
   fclose(f);
   sha256_final(&c, d);
   sha256_hex(d, out);
@@ -277,7 +360,7 @@ static void check_file(const char *dos, const char *host, void *ctx)
   WriteCtx *w = (WriteCtx *)ctx;
   char sha[65];
   size_t i;
-  sha_file(host, sha);
+  sha_file(host, dos, sha);
   for (i = 0; i < nwritten; i++) {
     if (strcmp(written[i].name, dos) == 0) {
       w->seen++;
@@ -286,6 +369,16 @@ static void check_file(const char *dos, const char *host, void *ctx)
         w->bad++;
       }
       return;
+    }
+  }
+  {
+    /* a file the original opened for update but left as it was: the translation may have rewritten it unchanged */
+    char pinned[1100], psha[65];
+    if (rtl_data_file(dos, pinned, sizeof pinned)) {
+      sha_file(pinned, NULL, psha);
+      if (strcmp(psha, sha) == 0) {
+        return;
+      }
     }
   }
   problem("the translation wrote %s, the original did not", dos, 0);
@@ -447,6 +540,12 @@ int main(int argc, char **argv)
     if (strcmp(argv[i], "--data") == 0 && i + 1 < argc) g_data = argv[++i];
     else if (strcmp(argv[i], "--save") == 0 && i + 1 < argc) g_save = argv[++i];
     else if (strcmp(argv[i], "--dump") == 0 && i + 1 < argc) g_dump = argv[++i];
+    else if (strcmp(argv[i], "--screens-only") == 0) g_screens_only = 1;
+    else if (strcmp(argv[i], "--trace-calls") == 0 && i + 2 < argc) {
+      g_trace_lo = atol(argv[++i]);
+      g_trace_hi = atol(argv[++i]);
+    }
+    else if (strcmp(argv[i], "--snap-call") == 0 && i + 1 < argc) g_snap_call = atol(argv[++i]);
     else if (strcmp(argv[i], "--snap") == 0 && i + 1 < argc) g_snap = atol(argv[++i]);
     else rpl = argv[i];
   }

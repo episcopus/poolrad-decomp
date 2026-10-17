@@ -7,6 +7,7 @@
      sequence (Pause 5). */
 void WaitKeyOrTimeout(u16 Pause)
 {
+  POOL_TRACE("WaitKeyOrTimeout");
   s32 Start = 0;
   s32 Limit = 0;
   Start = GameClock();
@@ -21,6 +22,7 @@ void WaitKeyOrTimeout(u16 Pause)
      timeout (WaitKeyOrTimeout). Called by the title sequence (ShowTitleScreen). */
 void ShowCredits(void)
 {
+  POOL_TRACE("ShowCredits");
   DrawWindow(1, 1, 0x26, 3, 0, 0, S("\000"));
   DrawWindow(1, 5, 0x26, 0x17, 0, 0, S("\000"));
   DrawTextAt(5, 1, LightGreen_OVL01, S("\024scenario created by:"));
@@ -74,12 +76,12 @@ void ShowCredits(void)
      the map). Side effects: screen, GameDir. */
 void ShowTitleScreen(void)
 {
+  POOL_TRACE("ShowTitleScreen");
   PT8x8Bank Pic = 0;
   s32 Total = 0;
   u8 I = 0;
   String40_RES06 DirBackup = {0};
   s32 Deadline = 0;
-  u8 t1;
   Total = 0;
   Pic = 0;
   rtl_str_assign(DirBackup, 40, GameDir);
@@ -100,22 +102,26 @@ void ShowTitleScreen(void)
         Total += rtl_Random(4);
         if (Total > 50000) {
           Total = 0;
-          t1 = (u16)(rtl_Random(3) + 1);
-          I = 0;
-          if (I <= t1) for (;;) {
-            SetPaletteRegister(1, 9);
-            rtl_Delay(0x96);
-            SetPaletteRegister(1, 0xB);
-            rtl_Delay(0x64);
-            SetPaletteRegister(1, 0xF);
-            rtl_Delay(0x32);
-            SetPaletteRegister(1, 0xB);
-            rtl_Delay(0x64);
-            SetPaletteRegister(1, 9);
-            rtl_Delay(0x96);
-            SetPaletteRegister(1, 1);
-            if (I == t1) break;
-            I++;
+          {
+            u8 limit = (u16)(rtl_Random(3) + 1);
+            if (0 <= limit) {
+              I = 0;
+              for (;;) {
+                  SetPaletteRegister(1, 9);
+                  rtl_Delay(0x96);
+                  SetPaletteRegister(1, 0xB);
+                  rtl_Delay(0x64);
+                  SetPaletteRegister(1, 0xF);
+                  rtl_Delay(0x32);
+                  SetPaletteRegister(1, 0xB);
+                  rtl_Delay(0x64);
+                  SetPaletteRegister(1, 9);
+                  rtl_Delay(0x96);
+                  SetPaletteRegister(1, 1);
+                if (I == limit) break;
+                I++;
+              }
+            }
           }
         }
       }
@@ -128,4 +134,5 @@ void ShowTitleScreen(void)
 /* Initialisation part of unit OVL01. */
 void init_OVL01(void)
 {
+  POOL_TRACE("init");
 }

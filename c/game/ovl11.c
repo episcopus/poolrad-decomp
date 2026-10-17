@@ -17,6 +17,7 @@
      read). The loop counter is the global DS:465C, reused by the three fill loops. */
 void StartGame(void)
 {
+  POOL_TRACE("StartGame");
   u8 t1[256];
   u8 t2[256];
   GameVars = rtl_getmem(2048);
@@ -33,38 +34,42 @@ void StartGame(void)
   rtl_FillChar((void *)&RowFirstChangedCol, 0x150, 0);
   rtl_FillChar((void *)&RowFirstChangedOfs, 0x150, 0xFF);
   rtl_FillChar((void *)&RowLastChangedOfs, 0x150, 0);
-  LoaderLoopIndex = 0;
-  if (LoaderLoopIndex <= LastScanline) for (;;) {
-    if (LoaderLoopIndex & 1) {
-      CgaScanlineSegments[LoaderLoopIndex] = TextSegOdd + (((LoaderLoopIndex / 2)) * 5);
-    } else {
-      CgaScanlineSegments[LoaderLoopIndex] = TextSegEven + (((LoaderLoopIndex / 2)) * 5);
+  {
+    if (0 <= LastScanline) {
+      LoaderLoopIndex = 0;
+      for (;;) {
+          if (LoaderLoopIndex & 1) {
+            CgaScanlineSegments[LoaderLoopIndex] = TextSegOdd + (((LoaderLoopIndex / 2)) * 5);
+          } else {
+            CgaScanlineSegments[LoaderLoopIndex] = TextSegEven + (((LoaderLoopIndex / 2)) * 5);
+          }
+          EgaScanlineOffsets[LoaderLoopIndex] = LoaderLoopIndex * BytesPerEgaScanline;
+          switch ((LoaderLoopIndex % 4)) {
+          case 0:
+          {
+            TandyScanlineSegments[LoaderLoopIndex] = (((LoaderLoopIndex / 4)) * 0xA) + TandyBank0;
+            break;
+          }
+          case 1:
+          {
+            TandyScanlineSegments[LoaderLoopIndex] = (((LoaderLoopIndex / 4)) * 0xA) + TandyBank1;
+            break;
+          }
+          case 2:
+          {
+            TandyScanlineSegments[LoaderLoopIndex] = (((LoaderLoopIndex / 4)) * 0xA) + TandyBank2;
+            break;
+          }
+          case 3:
+          {
+            TandyScanlineSegments[LoaderLoopIndex] = (((LoaderLoopIndex / 4)) * 0xA) + TandyBank3;
+            break;
+          }
+          }
+        if (LoaderLoopIndex == LastScanline) break;
+        LoaderLoopIndex++;
+      }
     }
-    EgaScanlineOffsets[LoaderLoopIndex] = LoaderLoopIndex * BytesPerEgaScanline;
-    switch ((LoaderLoopIndex % 4)) {
-    case 0:
-    {
-      TandyScanlineSegments[LoaderLoopIndex] = (((LoaderLoopIndex / 4)) * 0xA) + TandyBank0;
-      break;
-    }
-    case 1:
-    {
-      TandyScanlineSegments[LoaderLoopIndex] = (((LoaderLoopIndex / 4)) * 0xA) + TandyBank1;
-      break;
-    }
-    case 2:
-    {
-      TandyScanlineSegments[LoaderLoopIndex] = (((LoaderLoopIndex / 4)) * 0xA) + TandyBank2;
-      break;
-    }
-    case 3:
-    {
-      TandyScanlineSegments[LoaderLoopIndex] = (((LoaderLoopIndex / 4)) * 0xA) + TandyBank3;
-      break;
-    }
-    }
-    if (LoaderLoopIndex == LastScanline) break;
-    LoaderLoopIndex++;
   }
   rtl_FillChar((void *)&TileBanks, 0x14, 0);
   rtl_FillChar((void *)&SqrPaciBank1, 8, 0);
@@ -73,12 +78,16 @@ void StartGame(void)
   rtl_FillChar((void *)&(*FPD(TBlock400 (*), GameVars3)), 0x400, 0);
   rtl_FillChar((void *)&(*FPD(TEclCode (*), EclCode)), 0x1E00, 0);
   rtl_FillChar((void *)&PictureSlots, 0xD0, 0);
-  LoaderLoopIndex = 1;
-  if (LoaderLoopIndex <= 2) for (;;) {
-    LoadSlots[LoaderLoopIndex].Kind = 0xFF;
-    LoadSlots[LoaderLoopIndex].Addr = 0;
-    if (LoaderLoopIndex == 2) break;
-    LoaderLoopIndex++;
+  {
+    if (1 <= 2) {
+      LoaderLoopIndex = 1;
+      for (;;) {
+          LoadSlots[LoaderLoopIndex].Kind = 0xFF;
+          LoadSlots[LoaderLoopIndex].Addr = 0;
+        if (LoaderLoopIndex == 2) break;
+        LoaderLoopIndex++;
+      }
+    }
   }
   rtl_FillChar((void *)&PictureAnimation, 0x42, 0);
   PooledItems = 0;
@@ -89,12 +98,16 @@ void StartGame(void)
   rtl_FillChar((void *)&DoorMenuFlags, 3, 1);
   UnreadWord6AB2 = 0;
   UnreadWord6AB4 = 1;
-  LoaderLoopIndex = 2;
-  if (LoaderLoopIndex <= 3) for (;;) {
-    WallSetSlotPairs[LoaderLoopIndex].A = 0xFFFF;
-    WallSetSlotPairs[LoaderLoopIndex].B = 0xFFFF;
-    if (LoaderLoopIndex == 3) break;
-    LoaderLoopIndex++;
+  {
+    if (2 <= 3) {
+      LoaderLoopIndex = 2;
+      for (;;) {
+          WallSetSlotPairs[LoaderLoopIndex].A = 0xFFFF;
+          WallSetSlotPairs[LoaderLoopIndex].B = 0xFFFF;
+        if (LoaderLoopIndex == 3) break;
+        LoaderLoopIndex++;
+      }
+    }
   }
   ShowPortraits = 1;
   ShowMonsterPics = 1;
@@ -146,11 +159,15 @@ void StartGame(void)
   Load8x8Bank(0xCB, 0);
   LoadPicture(S("\007sqrpaci"), 1, 0, 0, (void *)&SqrPaciBank1);
   LoadPicture(S("\007sqrpaci"), 2, 0, 0, (void *)&SqrPaciBank2);
-  LoaderLoopIndex = 0;
-  if (LoaderLoopIndex <= 0xB) for (;;) {
-    LoadPictureSlot(S("\006COMSPR"), LoaderLoopIndex, (s16)(LoaderLoopIndex + 0xD));
-    if (LoaderLoopIndex == 0xB) break;
-    LoaderLoopIndex++;
+  {
+    if (0 <= 0xB) {
+      LoaderLoopIndex = 0;
+      for (;;) {
+          LoadPictureSlot(S("\006COMSPR"), LoaderLoopIndex, (s16)(LoaderLoopIndex + 0xD));
+        if (LoaderLoopIndex == 0xB) break;
+        LoaderLoopIndex++;
+      }
+    }
   }
   LoadPictureSlot(S("\006COMSPR"), 0x19, 0x19);
   LoaderOpenResult = OpenGameFile(S("\005ITEMS"), rtl_str_cat(t2, 3, (const u8 *const[]){InsertDiskPrompts[TileSet], rtl_str_char(t1, (u8)DiskDriveLetter), S("\001:")}), 0, (void *)&LoaderFile);
@@ -169,6 +186,7 @@ void StartGame(void)
 /* Initialisation part of unit OVL11. */
 void init_OVL11(void)
 {
+  POOL_TRACE("init");
   /* ovl11:0615. The unit's initialisation part is empty: the compiler emits only `55 89 E5 5D CB`
      (push bp; mov bp, sp; pop bp; retf, the frame with no body), so the loader unit runs no code when
      the program starts; its work happens only when the main program calls StartGame. */

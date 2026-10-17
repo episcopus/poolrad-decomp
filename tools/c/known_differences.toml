@@ -1,0 +1,53 @@
+# Differences between the original and the C translation that are not behaviour (tools/c/export_replay.py,
+# c/platform/replay.c). Each entry masks byte ranges of a file the game writes, in the original's file and in the
+# translation's, before the two are compared.
+
+[[file]]
+name = "\\POOLRAD\\SAVE\\SAVGAMB.DAT"      # also SAVGAMA.DAT .. SAVGAMJ.DAT: see below
+ranges = [[0x3209, 0x3351]]
+reason = "SaveGame writes MemberFiles, a local array of 328 bytes; the bytes after each name are the stale stack of the original's run (the C locals are zeroed). Whitepaper appendix C: an uninitialised local is not state the port reproduces."
+
+[[file]]
+name = "\\POOLRAD\\SAVE\\SAVGAMA.DAT"
+ranges = [[0x3209, 0x3351]]
+reason = "as SAVGAMB.DAT"
+
+[[file]]
+name = "\\POOLRAD\\SAVE\\SAVGAMC.DAT"
+ranges = [[0x3209, 0x3351]]
+reason = "as SAVGAMB.DAT"
+
+[[file]]
+name = "\\POOLRAD\\SAVE\\SAVGAMD.DAT"
+ranges = [[0x3209, 0x3351]]
+reason = "as SAVGAMB.DAT"
+
+[[file]]
+name = "\\POOLRAD\\SAVE\\SAVGAME.DAT"
+ranges = [[0x3209, 0x3351]]
+reason = "as SAVGAMB.DAT"
+
+[[file]]
+name = "\\POOLRAD\\SAVE\\SAVGAMF.DAT"
+ranges = [[0x3209, 0x3351]]
+reason = "as SAVGAMB.DAT"
+
+[[file]]
+name = "\\POOLRAD\\SAVE\\SAVGAMG.DAT"
+ranges = [[0x3209, 0x3351]]
+reason = "as SAVGAMB.DAT"
+
+[[file]]
+name = "\\POOLRAD\\SAVE\\SAVGAMH.DAT"
+ranges = [[0x3209, 0x3351]]
+reason = "as SAVGAMB.DAT"
+
+[[file]]
+name = "\\POOLRAD\\SAVE\\SAVGAMI.DAT"
+ranges = [[0x3209, 0x3351]]
+reason = "as SAVGAMB.DAT"
+
+[[file]]
+name = "\\POOLRAD\\SAVE\\SAVGAMJ.DAT"
+ranges = [[0x3209, 0x3351]]
+reason = "as SAVGAMB.DAT"

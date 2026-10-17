@@ -4,6 +4,7 @@
      Mode 0 to apply or check it, 1 when it is removed. */
 void CallAffectHandler(u8 AffectId, PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("CallAffectHandler");
   ((void (*)(PCharacter, PAffect, u8))rtl_proc(AffectHandlers[AffectId]))(Who, Affect, Mode);
 }
 
@@ -12,6 +13,7 @@ void CallAffectHandler(u8 AffectId, PCharacter Who, PAffect Affect, u8 Mode)
      9 bytes are freed. Nothing happens when the character has no such affect. */
 void RemoveAffect(PCharacter Who, u8 AffectId, farptr Affect)
 {
+  POOL_TRACE("RemoveAffect");
   PAffect Prev = 0;
   PAffect Cur = 0;
   Cur = Affect;
@@ -45,13 +47,13 @@ void RemoveAffect(PCharacter Who, u8 AffectId, farptr Affect)
      scan. */
 void RunAffectHook(PCharacter Who, u8 AffectId)
 {
+  POOL_TRACE("RunAffectHook");
   TSortRec Saved[72] = {0};
   PCharacter Other = 0;
   farptr Affect = 0;
   u8 Found = 0;
   u8 I = 0;
   u8 Range = 0;
-  u8 t1;
   Found = 0;
   Other = PartyListHead;
   if (HasAffect(Who, AffectId, &Affect)) {
@@ -67,14 +69,18 @@ void RunAffectHook(PCharacter Who, u8 AffectId)
             Range = 1;
           }
           ScanTargets(CombatantX(Other), CombatantY(Other), Range, 0xFF, CombatantKind(Other), CombatMap);
-          t1 = SortEntries[0].Val_;
-          I = 1;
-          if (I <= t1) for (;;) {
-            if (SortEntries[I].Head == CombatantIndex(Who)) {
-              Found = 1;
+          {
+            u8 limit = SortEntries[0].Val_;
+            if (1 <= limit) {
+              I = 1;
+              for (;;) {
+                  if (SortEntries[I].Head == CombatantIndex(Who)) {
+                    Found = 1;
+                  }
+                if (I == limit) break;
+                I++;
+              }
             }
-            if (I == t1) break;
-            I++;
           }
         } else {
           Found = 1;
@@ -95,6 +101,7 @@ void RunAffectHook(PCharacter Who, u8 AffectId)
      units call it with 7, $F and $13. QUIRK ovl24:02FD: 4 bytes of frame nothing uses. */
 void RunAffectHooks(u8 Kind, PCharacter Who)
 {
+  POOL_TRACE("RunAffectHooks");
   farptr Unused = 0;
   switch (Kind) {
   case 0:
@@ -326,6 +333,7 @@ void RunAffectHooks(u8 Kind, PCharacter Who)
      from nausea'); the new affect's handler is called. A stinking cloud by its texts [I]. */
 void ApplyCloudTile(PCharacter Who)
 {
+  POOL_TRACE("ApplyCloudTile");
   u8 Tile = 0;
   u8 Occupant = 0;
   farptr Affect = 0;
@@ -360,6 +368,7 @@ void ApplyCloudTile(PCharacter Who)
      Level exceeds Who's ArmourClassValue (+$111). */
 u8 RollBeatsResistance(PCharacter Who, u8 Level)
 {
+  POOL_TRACE("RollBeatsResistance");
   u8 Result = 0;
   Result = 0;
   AttackRoll = RollDice(1, 20);
@@ -383,6 +392,7 @@ u8 RollBeatsResistance(PCharacter Who, u8 Level)
      of its side (881 for the party, 880 for the others, low byte signed) reaches Needed. */
 u8 RollToHit(PCharacter Attacker, PCharacter Target, u8 Needed)
 {
+  POOL_TRACE("RollToHit");
   u8 Result = 0;
   s8 SideBonus = 0;
   Result = 0;
@@ -413,6 +423,7 @@ u8 RollToHit(PCharacter Attacker, PCharacter Target, u8 Needed)
      changed by the save hooks ($C, with SaveKind), succeeds when it reaches SavingThrows[Kind]. */
 u8 SavingThrow(PCharacter Who, s8 Kind, s8 Bonus)
 {
+  POOL_TRACE("SavingThrow");
   u8 Result = 0;
   SaveRoll = RollDice(1, 20);
   switch (SaveRoll) {
@@ -446,18 +457,22 @@ u8 SavingThrow(PCharacter Who, s8 Kind, s8 Bonus)
      sum is a Byte and wraps above 255. */
 u8 RollDice(u8 Count, u8 Sides)
 {
+  POOL_TRACE("RollDice");
   u8 Result = 0;
   u8 I = 0;
   u8 Total = 0;
-  u8 t1;
   Total = 0;
   if (Count > 0) {
-    t1 = Count;
-    I = 1;
-    if (I <= t1) for (;;) {
-      Total += (u16)(rtl_Random(Sides) + 1);
-      if (I == t1) break;
-      I++;
+    {
+      u8 limit = Count;
+      if (1 <= limit) {
+        I = 1;
+        for (;;) {
+            Total += (u16)(rtl_Random(Sides) + 1);
+          if (I == limit) break;
+          I++;
+        }
+      }
     }
   }
   Result = Total;
@@ -468,6 +483,7 @@ u8 RollDice(u8 Count, u8 Sides)
      yet). */
 u8 RollDiceCounted(u8 Count, u8 Sides)
 {
+  POOL_TRACE("RollDiceCounted");
   u8 Result = 0;
   LastDiceCount = Count;
   Result = RollDice(Count, Sides);
@@ -478,6 +494,7 @@ u8 RollDiceCounted(u8 Count, u8 Sides)
      given id, duration, data and flag. */
 void AddAffect(PCharacter Who, u8 AffectId, u16 Duration, u8 Data, u8 Flag)
 {
+  POOL_TRACE("AddAffect");
   PAffect Added = 0;
   PAffect Last = 0;
   Added = rtl_getmem(9);
@@ -503,6 +520,7 @@ void AddAffect(PCharacter Who, u8 AffectId, u16 Duration, u8 Data, u8 Flag)
      (RemoveDeathAffects). */
 void DropCombatant(PCharacter Who, u8 NewStatus, const u8 *Msg_in)
 {
+  POOL_TRACE("DropCombatant");
   const u8 *Msg = Msg_in;
   u8 Index = 0;
   if ((*FPD(TCharacter (*), Who)).Flag10D != 0) {
@@ -528,6 +546,7 @@ void DropCombatant(PCharacter Who, u8 NewStatus, const u8 *Msg_in)
      before rolling, so attacking ends the affect (an invisibility by that rule [I]). */
 void ClearAttackerAffect(PCharacter Who)
 {
+  POOL_TRACE("ClearAttackerAffect");
   farptr Affect = 0;
   while (HasAffect(Who, AffectInvisibility, &Affect)) {
     RemoveAffect(Who, AffectInvisibility, Affect);
@@ -538,12 +557,17 @@ void ClearAttackerAffect(PCharacter Who)
      when it goes down (DropCombatant, DealDamage). */
 void RemoveDeathAffects(PCharacter Who)
 {
+  POOL_TRACE("RemoveDeathAffects");
   u8 I = 0;
-  I = 1;
-  if (I <= DeathAffectCount) for (;;) {
-    RemoveAffect(Who, DeathAffects[I], 0);
-    if (I == DeathAffectCount) break;
-    I++;
+  {
+    if (1 <= DeathAffectCount) {
+      I = 1;
+      for (;;) {
+          RemoveAffect(Who, DeathAffects[I], 0);
+        if (I == DeathAffectCount) break;
+        I++;
+      }
+    }
   }
 }
 
@@ -551,12 +575,17 @@ void RemoveDeathAffects(PCharacter Who)
      of DeathAffects too) from Who; an entry of the overlay, its callers are not decompiled yet. */
 void RemoveExtraDeathAffects(PCharacter Who)
 {
+  POOL_TRACE("RemoveExtraDeathAffects");
   u8 I = 0;
-  I = 1;
-  if (I <= 2) for (;;) {
-    RemoveAffect(Who, ExtraDeathAffects[I], 0);
-    if (I == 2) break;
-    I++;
+  {
+    if (1 <= 2) {
+      I = 1;
+      for (;;) {
+          RemoveAffect(Who, ExtraDeathAffects[I], 0);
+        if (I == 2) break;
+        I++;
+      }
+    }
   }
 }
 
@@ -564,6 +593,7 @@ void RemoveExtraDeathAffects(PCharacter Who)
      False otherwise. */
 u8 CureAffect(PCharacter Who, u8 AffectId)
 {
+  POOL_TRACE("CureAffect");
   u8 Result = 0;
   farptr Affect = 0;
   Result = 0;
@@ -579,6 +609,7 @@ u8 CureAffect(PCharacter Who, u8 AffectId)
      percentile + 1 (1..101). */
 u8 EncodeStrength(u8 Strength, u8 Percent)
 {
+  POOL_TRACE("EncodeStrength");
   u8 Result = 0;
   Result = Strength + StrengthOffset;
   if (Strength == ExceptionalStrength) {
@@ -591,6 +622,7 @@ u8 EncodeStrength(u8 Strength, u8 Percent)
      is 18 with Data - 1 percent, above is Data - 100 with no percent. */
 void DecodeStrength(PAffect Affect, u8 (*Strength), u8 (*Percent))
 {
+  POOL_TRACE("DecodeStrength");
   (*Percent) = 0;
   (*Strength) = ((*FPD(TAffect (*), Affect)).Data & (u8)~StrengthKept);
   if ((*Strength) <= 101) {
@@ -608,6 +640,7 @@ void DecodeStrength(PAffect Affect, u8 (*Strength), u8 (*Percent))
      strength encoded, and the result is True. */
 u8 RaiseStrength(PCharacter Who, u8 Strength, u8 Percent, u8 (*Code))
 {
+  POOL_TRACE("RaiseStrength");
   u8 Result = 0;
   PAffect Cur = 0;
   PAffect Found = 0;
@@ -651,6 +684,7 @@ u8 RaiseStrength(PCharacter Who, u8 Strength, u8 Percent, u8 (*Code))
      leaves the map (RemoveCombatant) unless they stood it up again. */
 void DealDamage(PCharacter Who, u8 Damage, u8 SaveEffect, u8 Saved)
 {
+  POOL_TRACE("DealDamage");
   u8 Msg[256] = {0};
   u8 t1[256];
   u8 t2[256];
@@ -750,6 +784,7 @@ void DealDamage(PCharacter Who, u8 Damage, u8 SaveEffect, u8 Saved)
      nothing uses. */
 void ApplyAffect(PCharacter Who, u8 AffectId, u16 Duration, u8 Data, u8 Flag, u8 SaveNegates, u8 Saved, const u8 *Msg_in)
 {
+  POOL_TRACE("ApplyAffect");
   const u8 *Msg = Msg_in;
   farptr Existing = 0;
   u8 Unused = 0;
@@ -778,6 +813,7 @@ void ApplyAffect(PCharacter Who, u8 AffectId, u16 Duration, u8 Data, u8 Flag, u8
      with Flag 0. */
 u8 HealCharacter(PCharacter Who, u8 Amount, u8 Flag)
 {
+  POOL_TRACE("HealCharacter");
   u8 Result = 0;
   farptr Affect = 0;
   s32 t1;
@@ -807,6 +843,7 @@ u8 HealCharacter(PCharacter Who, u8 Amount, u8 Flag)
      monster) or 'gets back up'. False when it cannot be placed. */
 u8 ReviveCombatant(PCharacter Who, u8 HitPoints)
 {
+  POOL_TRACE("ReviveCombatant");
   u8 Result = 0;
   u8 Msg[41] = {0};
   if (PlaceCombatant(Who, CombatantX(Who), CombatantY(Who), 1)) {
@@ -833,5 +870,6 @@ u8 ReviveCombatant(PCharacter Who, u8 HitPoints)
 /* Initialisation part of unit OVL24. */
 void init_OVL24(void)
 {
+  POOL_TRACE("init");
   /* ovl24:1932. The unit's initialisation part is empty (push bp; mov bp, sp; pop bp; retf). */
 }

@@ -1,0 +1,21 @@
+# camp-save: load saved game A, make camp, view a character from the camp menu is not needed: save the game
+# to slot B (S, then the slot letter) so the game writes SAVE\SAVGAMB.DAT and the character files, then press
+# Enter on the camp menu, which asks whether to quit to DOS (the session ends there).
+# The camp screen is animated: its keys are `press`.
+clock 12:00:16.58
+wheel
+wait 20
+key L
+wait 20
+key A
+wait 300
+key E
+wait 100
+press S                  # camp: Save
+wait 150
+press B                  # slot B
+wait 300
+press ENTER              # camp menu: Exit asks "Quit to DOS?"
+wait 300
+shot quit-prompt
+quit

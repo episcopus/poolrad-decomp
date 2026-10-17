@@ -9,6 +9,7 @@
      manager. */
 s16 HeapErrorHandler(u16 Size)
 {
+  POOL_TRACE("HeapErrorHandler");
   s16 Result = 0;
   u8 Quit = 0;
   if (Size > 0) {
@@ -31,6 +32,7 @@ s16 HeapErrorHandler(u16 Size)
 /* Initialisation part of unit OVL00. */
 void init_OVL00(void)
 {
+  POOL_TRACE("init");
   /* Initialisation (ovl00:00AC): stores @HeapErrorHandler as the far pointer at DS:4414, the
      HeapError vector Turbo Pascal calls when an allocation fails (whitepaper 3.6). */
   HeapError = PROC_HeapErrorHandler;

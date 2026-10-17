@@ -14,6 +14,7 @@
      Globals: ItemTable. */
 void ApplyWeaponBonuses(PCharacter Who)
 {
+  POOL_TRACE("ApplyWeaponBonuses");
   PItem Weapon = 0;
   u8 ItemType = 0;
   s8 WeaponPlus = 0;
@@ -59,6 +60,7 @@ void ApplyWeaponBonuses(PCharacter Who)
      Globals: ItemTable. */
 void SetArmourMovement(PCharacter Who, PItem Item)
 {
+  POOL_TRACE("SetArmourMovement");
   s32 t1;
   if (ItemTable[(*FPD(TMenuLine (*), Item)).ItemType].Slot == ArmourItemKind) {
     t1 = (*FPD(TMenuLine (*), Item)).Weight;
@@ -88,6 +90,7 @@ void SetArmourMovement(PCharacter Who, PItem Item)
      Globals: ItemTable. */
 void AddReadiedItemBonus(PCharacter Who, PItem Item, TBonus (*Bonus), u8 (*Flag))
 {
+  POOL_TRACE("AddReadiedItemBonus");
   u8 Value = 0;
   u8 Kind = 0;
   Value = ItemTable[(*FPD(TMenuLine (*), Item)).ItemType].BonusClass;
@@ -128,6 +131,7 @@ void AddReadiedItemBonus(PCharacter Who, PItem Item, TBonus (*Bonus), u8 (*Flag)
      Globals: none beyond Who. */
 void CapMovementByLoad(PCharacter Who)
 {
+  POOL_TRACE("CapMovementByLoad");
   s16 Weight = 0;
   u8 NewMovement = 0;
   s32 t1;
@@ -168,6 +172,7 @@ void CapMovementByLoad(PCharacter Who)
      is set. */
 void FormatItemLine(s32 Value, PItem Item, u8 Col, u8 Row, u8 ShowReadied, u8 ShowText)
 {
+  POOL_TRACE("FormatItemLine");
   u8 I = 0;
   u8 Mask = 0;
   farptr Affect = 0;
@@ -206,30 +211,38 @@ void FormatItemLine(s32 Value, PItem Item, u8 Col, u8 Row, u8 ShowReadied, u8 Sh
     rtl_str_assign((*FPD(TMenuLine (*), Item)).Text, 40, rtl_str_cat(t3, 3, (const u8 *const[]){(*FPD(TMenuLine (*), Item)).Text, ByteToText(t2, (*FPD(TMenuLine (*), Item)).Count), S("\001 ")}));
   }
   Mask = 0;
-  I = 1;
-  if (I <= 3) for (;;) {
-    if ((((*FPD(TMenuLine (*), Item)).NameNum[I - 1] != 0)) && ((((((s16)((u16)(*FPD(TMenuLine (*), Item)).HiddenNames >> ((s16)(3 - I)))) & 1)) == 0))) {
-      Mask += (s16)(1 << ((s16)(I - 1)));
-    }
-    if (I == 3) break;
-    I++;
-  }
-  Plural = 0;
-  I = 3;
-  if (I >= 1) for (;;) {
-    if (((((s16)((u16)Mask >> ((s16)(I - 1)))) & 1)) > 0) {
-      rtl_str_assign((*FPD(TMenuLine (*), Item)).Text, 40, rtl_str_cat(t4, 2, (const u8 *const[]){(*FPD(TMenuLine (*), Item)).Text, ItemNameParts[(*FPD(TMenuLine (*), Item)).NameNum[I - 1]]}));
-      if ((((*FPD(TMenuLine (*), Item)).Count < 2)) || Plural) {
-        rtl_str_assign((*FPD(TMenuLine (*), Item)).Text, 40, rtl_str_cat(t5, 2, (const u8 *const[]){(*FPD(TMenuLine (*), Item)).Text, S("\001 ")}));
-      } else if ((((((((s16)(1 << ((s16)(I - 1)))) == Mask)) || (((((I == 1)) && ((Mask > ThirdNameBit))) && (((*FPD(TMenuLine (*), Item)).ItemType != PluralOnThirdPartType))))) || ((((I == 2)) && !(Mask & 1)))) || ((((I == 3)) && (((*FPD(TMenuLine (*), Item)).ItemType == PluralOnThirdPartType))))) || (((((((*FPD(TMenuLine (*), Item)).ItemType == Slot11ItemType)) || (((*FPD(TMenuLine (*), Item)).ItemType == Slot12ItemType)))) && (((*FPD(TMenuLine (*), Item)).NameNum[2] != SilverNameNum))))) {
-        rtl_str_assign((*FPD(TMenuLine (*), Item)).Text, 40, rtl_str_cat(t6, 2, (const u8 *const[]){(*FPD(TMenuLine (*), Item)).Text, S("\002s ")}));
-        Plural = 1;
-      } else {
-        rtl_str_assign((*FPD(TMenuLine (*), Item)).Text, 40, rtl_str_cat(t7, 2, (const u8 *const[]){(*FPD(TMenuLine (*), Item)).Text, S("\001 ")}));
+  {
+    if (1 <= 3) {
+      I = 1;
+      for (;;) {
+          if ((((*FPD(TMenuLine (*), Item)).NameNum[I - 1] != 0)) && ((((((s16)((u16)(*FPD(TMenuLine (*), Item)).HiddenNames >> ((s16)(3 - I)))) & 1)) == 0))) {
+            Mask += (s16)(1 << ((s16)(I - 1)));
+          }
+        if (I == 3) break;
+        I++;
       }
     }
-    if (I == 1) break;
-    I--;
+  }
+  Plural = 0;
+  {
+    if (3 >= 1) {
+      I = 3;
+      for (;;) {
+          if (((((s16)((u16)Mask >> ((s16)(I - 1)))) & 1)) > 0) {
+            rtl_str_assign((*FPD(TMenuLine (*), Item)).Text, 40, rtl_str_cat(t4, 2, (const u8 *const[]){(*FPD(TMenuLine (*), Item)).Text, ItemNameParts[(*FPD(TMenuLine (*), Item)).NameNum[I - 1]]}));
+            if ((((*FPD(TMenuLine (*), Item)).Count < 2)) || Plural) {
+              rtl_str_assign((*FPD(TMenuLine (*), Item)).Text, 40, rtl_str_cat(t5, 2, (const u8 *const[]){(*FPD(TMenuLine (*), Item)).Text, S("\001 ")}));
+            } else if ((((((((s16)(1 << ((s16)(I - 1)))) == Mask)) || (((((I == 1)) && ((Mask > ThirdNameBit))) && (((*FPD(TMenuLine (*), Item)).ItemType != PluralOnThirdPartType))))) || ((((I == 2)) && !(Mask & 1)))) || ((((I == 3)) && (((*FPD(TMenuLine (*), Item)).ItemType == PluralOnThirdPartType))))) || (((((((*FPD(TMenuLine (*), Item)).ItemType == Slot11ItemType)) || (((*FPD(TMenuLine (*), Item)).ItemType == Slot12ItemType)))) && (((*FPD(TMenuLine (*), Item)).NameNum[2] != SilverNameNum))))) {
+              rtl_str_assign((*FPD(TMenuLine (*), Item)).Text, 40, rtl_str_cat(t6, 2, (const u8 *const[]){(*FPD(TMenuLine (*), Item)).Text, S("\002s ")}));
+              Plural = 1;
+            } else {
+              rtl_str_assign((*FPD(TMenuLine (*), Item)).Text, 40, rtl_str_cat(t7, 2, (const u8 *const[]){(*FPD(TMenuLine (*), Item)).Text, S("\001 ")}));
+            }
+          }
+        if (I == 1) break;
+        I--;
+      }
+    }
   }
   if (ShowText) {
     DrawTextAt(Col, Row, LightGreen, (*FPD(TMenuLine (*), Item)).Text);
@@ -247,6 +260,7 @@ void FormatItemLine(s32 Value, PItem Item, u8 Col, u8 Row, u8 ShowReadied, u8 Sh
      and DrawWildernessScreen. Globals: ViewMode (read), PartyListHead (read). */
 void DrawPartyRoster(PCharacter Who)
 {
+  POOL_TRACE("DrawPartyRoster");
   PCharacter Member = 0;
   u8 Left = 0;
   u8 Row = 0;
@@ -380,6 +394,7 @@ void DrawPartyRoster(PCharacter Who)
      DrawCharacterPanel. */
 void DrawArmourClass(PCharacter Who, u8 Col, u8 Row)
 {
+  POOL_TRACE("DrawArmourClass");
   u8 ValueText[256] = {0};
   u8 Unused = 0;
   u8 t1[256];
@@ -397,6 +412,7 @@ void DrawArmourClass(PCharacter Who, u8 Col, u8 Row)
      DrawCharacterPanel. */
 void DrawHitPoints(PCharacter Who, u8 Col, u8 Row, u8 Highlight)
 {
+  POOL_TRACE("DrawHitPoints");
   u8 ValueColor = 0;
   u8 Unused = 0;
   u8 t1[256];
@@ -425,6 +441,7 @@ void DrawHitPoints(PCharacter Who, u8 Col, u8 Row, u8 Highlight)
      Side effects: video memory, the keyboard through ShowPagedText's paging. */
 void DrawCharacterPanel(PCharacter Who)
 {
+  POOL_TRACE("DrawCharacterPanel");
   u8 Color = 0;
   u8 Row = 0;
   ClearWindow(0x17, 1, 0x26, 0x15);
@@ -460,17 +477,22 @@ void DrawCharacterPanel(PCharacter Who)
      Globals: HelplessAffects (read). */
 u8 IsHelpless(farptr Who)
 {
+  POOL_TRACE("IsHelpless");
   u8 Result = 0;
   u8 I = 0;
   farptr Affect = 0;
   Result = 0;
-  I = 1;
-  if (I <= 4) for (;;) {
-    if (HasAffect(Who, HelplessAffects[I], &Affect)) {
-      Result = 1;
+  {
+    if (1 <= 4) {
+      I = 1;
+      for (;;) {
+          if (HasAffect(Who, HelplessAffects[I], &Affect)) {
+            Result = 1;
+          }
+        if (I == 4) break;
+        I++;
+      }
     }
-    if (I == 4) break;
-    I++;
   }
   return Result;
 }
@@ -506,6 +528,7 @@ u8 IsHelpless(farptr Who)
      and SweepAttacks. */
 void RecalcCombatValues(PCharacter Who)
 {
+  POOL_TRACE("RecalcCombatValues");
   u8 TripleIndex = 0;
   s8 BonusIndex = 0;
   PItem Item = 0;
@@ -517,11 +540,15 @@ void RecalcCombatValues(PCharacter Who)
   s8 MoneyKind = 0;
   u16 Weight = 0;
   s8 ItemKind = 0;
-  SlotIndex = 0;
-  if (SlotIndex <= 12) for (;;) {
-    (*FPD(TCharacter (*), Who)).SlotItems[SlotIndex] = 0;
-    if (SlotIndex == 12) break;
-    SlotIndex++;
+  {
+    if (0 <= 12) {
+      SlotIndex = 0;
+      for (;;) {
+          (*FPD(TCharacter (*), Who)).SlotItems[SlotIndex] = 0;
+        if (SlotIndex == 12) break;
+        SlotIndex++;
+      }
+    }
   }
   IgnoresWeight = 0;
   (*FPD(TCharacter (*), Who)).ItemCountC7 = 0;
@@ -580,25 +607,37 @@ void RecalcCombatValues(PCharacter Who)
     }
     Item = (*FPD(TMenuLine (*), Item)).Next;
   }
-  MoneyKind = 0;
-  if (MoneyKind <= 6) for (;;) {
-    (*FPD(TCharacter (*), Who)).CarriedWeight = (*FPD(TCharacter (*), Who)).CarriedWeight + (*FPD(TCharacter (*), Who)).Money[MoneyKind];
-    if (MoneyKind == 6) break;
-    MoneyKind++;
+  {
+    if (0 <= 6) {
+      MoneyKind = 0;
+      for (;;) {
+          (*FPD(TCharacter (*), Who)).CarriedWeight = (*FPD(TCharacter (*), Who)).CarriedWeight + (*FPD(TCharacter (*), Who)).Money[MoneyKind];
+        if (MoneyKind == 6) break;
+        MoneyKind++;
+      }
+    }
   }
-  TripleIndex = 1;
-  if (TripleIndex <= 2) for (;;) {
-    (*FPD(TCharacter (*), Who)).WeaponAttacks[TripleIndex - 1] = (*FPD(TCharacter (*), Who)).BaseAttacks[TripleIndex - 1];
-    (*FPD(TCharacter (*), Who)).WeaponDamage[TripleIndex - 1] = (*FPD(TCharacter (*), Who)).BaseDamage[TripleIndex - 1];
-    (*FPD(TCharacter (*), Who)).WeaponDamageBonus[TripleIndex - 1] = (*FPD(TCharacter (*), Who)).BaseDamageBonus[TripleIndex - 1];
-    if (TripleIndex == 2) break;
-    TripleIndex++;
+  {
+    if (1 <= 2) {
+      TripleIndex = 1;
+      for (;;) {
+          (*FPD(TCharacter (*), Who)).WeaponAttacks[TripleIndex - 1] = (*FPD(TCharacter (*), Who)).BaseAttacks[TripleIndex - 1];
+          (*FPD(TCharacter (*), Who)).WeaponDamage[TripleIndex - 1] = (*FPD(TCharacter (*), Who)).BaseDamage[TripleIndex - 1];
+          (*FPD(TCharacter (*), Who)).WeaponDamageBonus[TripleIndex - 1] = (*FPD(TCharacter (*), Who)).BaseDamageBonus[TripleIndex - 1];
+        if (TripleIndex == 2) break;
+        TripleIndex++;
+      }
+    }
   }
-  BonusIndex = 0;
-  if (BonusIndex <= 4) for (;;) {
-    Bonus.Values[BonusIndex] = 0;
-    if (BonusIndex == 4) break;
-    BonusIndex++;
+  {
+    if (0 <= 4) {
+      BonusIndex = 0;
+      for (;;) {
+          Bonus.Values[BonusIndex] = 0;
+        if (BonusIndex == 4) break;
+        BonusIndex++;
+      }
+    }
   }
   ArmourPlusFlag = 0;
   (*FPD(TCharacter (*), Who)).SaveBonus = 0;
@@ -637,11 +676,15 @@ void RecalcCombatValues(PCharacter Who)
     Bonus.BestValue = (*FPD(TCharacter (*), Who)).ArmourClassValue;
   }
   (*FPD(TCharacter (*), Who)).ArmourClassValue = 0;
-  BonusIndex = 0;
-  if (BonusIndex <= 4) for (;;) {
-    (*FPD(TCharacter (*), Who)).ArmourClassValue = (*FPD(TCharacter (*), Who)).ArmourClassValue + Bonus.Values[BonusIndex];
-    if (BonusIndex == 4) break;
-    BonusIndex++;
+  {
+    if (0 <= 4) {
+      BonusIndex = 0;
+      for (;;) {
+          (*FPD(TCharacter (*), Who)).ArmourClassValue = (*FPD(TCharacter (*), Who)).ArmourClassValue + Bonus.Values[BonusIndex];
+        if (BonusIndex == 4) break;
+        BonusIndex++;
+      }
+    }
   }
   (*FPD(TCharacter (*), Who)).RearArmourClassValue = ((Bonus.BestValue + Bonus.PlusSum) + Bonus.BestPlus) - 2;
   if ((((*FPD(TCharacter (*), Who)).ClassLevels[2] > 0)) && (((*FPD(TCharacter (*), Who)).Race > RaceMonster))) {
@@ -656,6 +699,7 @@ void RecalcCombatValues(PCharacter Who)
      hit-point values with it, and TwoDigitText (ovl20:0565) keeps the first two characters. */
 u8 *ByteToText(u8 *Result_out, u8 Value)
 {
+  POOL_TRACE("ByteToText");
   u8 *Result = Result_out;
   u8 Text[256] = {0};
   rtl_str_int(Text, 255, Value, 0);
@@ -669,6 +713,7 @@ u8 *ByteToText(u8 *Result_out, u8 Value)
      Globals: none. */
 u8 *WordToText(u8 *Result_out, u16 Value)
 {
+  POOL_TRACE("WordToText");
   u8 *Result = Result_out;
   u8 Text[256] = {0};
   rtl_str_int(Text, 255, Value, 0);
@@ -682,6 +727,7 @@ u8 *WordToText(u8 *Result_out, u16 Value)
      Globals: none. */
 u8 *LongIntToText(u8 *Result_out, s32 Value)
 {
+  POOL_TRACE("LongIntToText");
   u8 *Result = Result_out;
   u8 Text[256] = {0};
   rtl_str_int(Text, 255, Value, 0);
@@ -695,6 +741,7 @@ u8 *LongIntToText(u8 *Result_out, s32 Value)
      the accumulator's first byte, which it sums into the character's combat value. */
 u8 DexterityAdjustment(PCharacter Who)
 {
+  POOL_TRACE("DexterityAdjustment");
   u8 Result = 0;
   u8 Dex = 0;
   Dex = (*FPD(TCharacter (*), Who)).Dexterity;
@@ -755,6 +802,7 @@ u8 DexterityAdjustment(PCharacter Who)
      (2). ovl13 also calls it. Globals: none. */
 s8 DexterityAttackAdjustment(PCharacter Who)
 {
+  POOL_TRACE("DexterityAttackAdjustment");
   s8 Result = 0;
   u8 Dex = 0;
   Dex = (*FPD(TCharacter (*), Who)).Dexterity;
@@ -817,6 +865,7 @@ s8 DexterityAttackAdjustment(PCharacter Who)
      Globals: none. */
 u8 StrengthRowIndex(PCharacter Who)
 {
+  POOL_TRACE("StrengthRowIndex");
   u8 Result = 0;
   switch ((*FPD(TCharacter (*), Who)).Strength) {
   case 0:
@@ -994,6 +1043,7 @@ u8 StrengthRowIndex(PCharacter Who)
      unless Who^.StrengthBonusFlag (+$AA) is nonzero. Globals: none. */
 s8 StrengthAttackAdjustment(PCharacter Who)
 {
+  POOL_TRACE("StrengthAttackAdjustment");
   s8 Result = 0;
   u8 Row = 0;
   Result = 0;
@@ -1065,6 +1115,7 @@ s8 StrengthAttackAdjustment(PCharacter Who)
      unless Who^.StrengthBonusFlag (+$AA) is nonzero. Globals: none. */
 s8 StrengthDamageAdjustment(PCharacter Who)
 {
+  POOL_TRACE("StrengthDamageAdjustment");
   s8 Result = 0;
   u8 Row = 0;
   Result = 0;
@@ -1128,6 +1179,7 @@ s8 StrengthDamageAdjustment(PCharacter Who)
      Globals: none. */
 s16 StrengthWeightAllowance(PCharacter Who)
 {
+  POOL_TRACE("StrengthWeightAllowance");
   s16 Result = 0;
   u8 Row = 0;
   u8 Unused = 0;
@@ -1212,6 +1264,7 @@ s16 StrengthWeightAllowance(PCharacter Who)
      Spell. DealDamage calls it ("loses a pending spell"), ovl13 and ovl22 also call it. */
 void ForgetSpell(u8 Spell)
 {
+  POOL_TRACE("ForgetSpell");
   u8 I = 0;
   I = 0;
   while (I <= 0x14) {
@@ -1231,6 +1284,7 @@ void ForgetSpell(u8 Spell)
      Globals: none. */
 void RemoveInventoryItem(PCharacter Who, PItem Item)
 {
+  POOL_TRACE("RemoveInventoryItem");
   PItem Prev = 0;
   if (Item == 0) {
     ShowMessageLine(Yellow_RES12, S("\023Nil Item pointer..."));
@@ -1259,6 +1313,7 @@ void RemoveInventoryItem(PCharacter Who, PItem Item)
      Globals: none. */
 void AddItemCopy(PCharacter Who, PItem Item)
 {
+  POOL_TRACE("AddItemCopy");
   PItem Prev = 0;
   PItem NewItem = 0;
   NewItem = rtl_getmem(ItemListSize);
@@ -1281,6 +1336,7 @@ void AddItemCopy(PCharacter Who, PItem Item)
      Globals: none. */
 void ShowFlashMessage(const u8 *Text_in)
 {
+  POOL_TRACE("ShowFlashMessage");
   const u8 *Text = Text_in;
   ClearWindow(0, BottomRow, ScreenLastCol, BottomRow);
   DrawTextAt(0, BottomRow, LightGreen, Text);
@@ -1296,6 +1352,7 @@ void ShowFlashMessage(const u8 *Text_in)
      Side effects: video memory, the keyboard through ShowPagedText's paging. */
 void ShowCharacterMessage(PCharacter Who, const u8 *Text_in, u8 Row, u8 Wait)
 {
+  POOL_TRACE("ShowCharacterMessage");
   const u8 *Text = Text_in;
   u8 Top = 0;
   if (ViewMode == ViewModeCombat) {
@@ -1325,6 +1382,7 @@ void ShowCharacterMessage(PCharacter Who, const u8 *Text_in, u8 Row, u8 Wait)
      ShowCharacterMessage and by the camp, temple and resting screens to wipe a message. Globals: ViewMode. */
 void ClearCharacterMessage(void)
 {
+  POOL_TRACE("ClearCharacterMessage");
   if (ViewMode == ViewModeCombat) {
     ClearWindow(CombatMessageLeft, CombatMessageRow, CombatMessageRight, CombatMessageBottom);
   } else {
@@ -1340,6 +1398,7 @@ void ClearCharacterMessage(void)
      ovl21 and ovl22. Globals: none. */
 void DrawCharacterName(PCharacter Who, u8 Col, u8 Row, u8 AddPossessive)
 {
+  POOL_TRACE("DrawCharacterName");
   u8 Color = 0;
   if ((*FPD(TCharacter (*), Who)).Flag10D == 0) {
     Color = LightRed;
@@ -1367,6 +1426,7 @@ void DrawCharacterName(PCharacter Who, u8 Col, u8 Row, u8 AddPossessive)
      Globals: CombatAnimationPicture (read), PictureSlots (read), VideoAdapter (read). */
 void CopyPictureItem(u8 PicIndex, u8 Half, u8 ItemIndex, u8 Mirror)
 {
+  POOL_TRACE("CopyPictureItem");
   farptr Pic = 0;
   u16 PixelBytes = 0;
   u16 ItemBytes = 0;
@@ -1393,6 +1453,7 @@ void CopyPictureItem(u8 PicIndex, u8 Half, u8 ItemIndex, u8 Mirror)
      Called by ovl12, ovl13 and ovl22 (a combatant's icon into the battle picture). Globals: none. */
 void DrawCombatIcon(u8 PicIndex)
 {
+  POOL_TRACE("DrawCombatIcon");
   CopyPictureItem(PicIndex, 0, 0, 0);
   CopyPictureItem(PicIndex, 0, 1, 1);
   CopyPictureItem(PicIndex, 1, 2, 1);
@@ -1413,6 +1474,7 @@ void DrawCombatIcon(u8 PicIndex)
      Calls ovl30's line routines and ovl31's cursor/view routines. Side effects: video memory, timing. */
 void WalkCombatLine(s8 FromX, s8 FromY, s8 ToX, s8 ToY, u8 Count, u8 StepDelay)
 {
+  POOL_TRACE("WalkCombatLine");
   u8 Path[148] = {0};
   TLineState (*Line) = (TLineState (*))rtl_stack_alloc(26);
   u8 PadA = 0;
@@ -1573,6 +1635,7 @@ L_exit:
      DrawBuf, CombatantViewCol, CombatantViewRow. Side effects: video memory, sound, timing. */
 void ShowHitMessage(farptr Who, u8 AffectMessage, const u8 *Text_in)
 {
+  POOL_TRACE("ShowHitMessage");
   const u8 *Text = Text_in;
   s8 Col = 0;
   s8 Row = 0;
@@ -1580,7 +1643,6 @@ void ShowHitMessage(farptr Who, u8 AffectMessage, const u8 *Text_in)
   u8 Frame = 0;
   u8 Pass = 0;
   u8 FlashCount = 0;
-  u8 t1;
   if (ViewMode == ViewModeCombat) {
     SetSoundDriverIdle(SoundIdleOff);
     if (AffectMessage != 0) {
@@ -1605,20 +1667,28 @@ void ShowHitMessage(farptr Who, u8 AffectMessage, const u8 *Text_in)
     }
     Col = CombatantViewCol[CombatantIndex(Who) - 1] * CellPitch;
     Row = CombatantViewRow[CombatantIndex(Who) - 1] * CellPitch;
-    t1 = FlashCount;
-    Pass = 0;
-    if (Pass <= t1) for (;;) {
-      Frame = 0;
-      if (Frame <= 3) for (;;) {
-        DrawPictureItemClipped(Col, Row, Frame, (PictureMasked | PictureSaveBackground), CombatAnimationPicture, DrawBuf);
-        FlushPictureChanges();
-        rtl_Delay(FlashDelay);
-        DrawPictureItemClipped(Col, Row, 0, PictureRestore, IconBackgroundBuffer, DrawBuf);
-        if (Frame == 3) break;
-        Frame++;
+    {
+      u8 limit = FlashCount;
+      if (0 <= limit) {
+        Pass = 0;
+        for (;;) {
+            {
+              if (0 <= 3) {
+                Frame = 0;
+                for (;;) {
+                    DrawPictureItemClipped(Col, Row, Frame, (PictureMasked | PictureSaveBackground), CombatAnimationPicture, DrawBuf);
+                    FlushPictureChanges();
+                    rtl_Delay(FlashDelay);
+                    DrawPictureItemClipped(Col, Row, 0, PictureRestore, IconBackgroundBuffer, DrawBuf);
+                  if (Frame == 3) break;
+                  Frame++;
+                }
+              }
+            }
+          if (Pass == limit) break;
+          Pass++;
+        }
       }
-      if (Pass == t1) break;
-      Pass++;
     }
     SetSoundDriverIdle(SoundIdleDefault);
     FlushPictureChanges();
@@ -1637,6 +1707,7 @@ void ShowHitMessage(farptr Who, u8 AffectMessage, const u8 *Text_in)
      Globals: none. */
 u8 HasAffect(farptr Who, u8 AffectId, farptr (*Affect))
 {
+  POOL_TRACE("HasAffect");
   u8 Result = 0;
   u8 Found = 0;
   Found = 0;
@@ -1667,6 +1738,7 @@ u8 HasAffect(farptr Who, u8 AffectId, farptr (*Affect))
      and ovl13 call it. Globals: ViewMode (view mode), SideCounts. */
 void ApplyDamage(farptr Who, u8 Damage)
 {
+  POOL_TRACE("ApplyDamage");
   u8 Overkill = 0;
   u8 Remaining = 0;
   s32 t1;
@@ -1706,6 +1778,7 @@ void ApplyDamage(farptr Who, u8 Damage)
      call it. Globals: ViewMode (view mode), SelectedCharacter. */
 void ShowHealResult(farptr Who)
 {
+  POOL_TRACE("ShowHealResult");
   String40_RES06 Message = {0};
   if ((*FPD(TCharacter (*), Who)).HpCurrent == (*FPD(TCharacter (*), Who)).HpMax) {
     rtl_str_assign(Message, 40, S("\017is fully healed"));
@@ -1724,6 +1797,7 @@ void ShowHealResult(farptr Who)
      too. Globals: none. */
 u8 OpposingSide(farptr Who)
 {
+  POOL_TRACE("OpposingSide");
   u8 Result = 0;
   if ((*FPD(TCharacter (*), Who)).Side == SideParty) {
     Result = SideMonsters;
@@ -1740,6 +1814,7 @@ u8 OpposingSide(farptr Who)
      Globals: PartyListHead (read), SideCounts (write). */
 void RecountCombatSides(void)
 {
+  POOL_TRACE("RecountCombatSides");
   PCharacter Member = 0;
   SideCounts[0] = 0;
   SideCounts[1] = 0;
@@ -1762,36 +1837,43 @@ void RecountCombatSides(void)
      work through (ovl09:02EB, 0B3C). The result is that count; 0 when no enemy is in range. */
 u8 CollectEnemiesInRange(farptr Who, u8 Range)
 {
+  POOL_TRACE("CollectEnemiesInRange");
   u8 Result = 0;
   u8 Count = 0;
   u8 Found = 0;
   u8 Index = 0;
-  u8 t1;
-  u8 t2;
   ScanTargets(CombatantX(Who), CombatantY(Who), Range, OmniDir, CombatantKind(Who), CombatMap);
   Count = SortEntries[0].Val_;
   Found = 0;
   if (Count > 0) {
-    t1 = Count;
-    Index = 1;
-    if (Index <= t1) for (;;) {
-      if ((*FPD(TCharacter (*), CombatantRecord[SortEntries[Index].Head - 1])).Side == OpposingSide(Who)) {
-        Found++;
-        rtl_Move((void *)&SortEntries[Index], (void *)&SortEntries[Found], 3);
+    {
+      u8 limit = Count;
+      if (1 <= limit) {
+        Index = 1;
+        for (;;) {
+            if ((*FPD(TCharacter (*), CombatantRecord[SortEntries[Index].Head - 1])).Side == OpposingSide(Who)) {
+              Found++;
+              rtl_Move((void *)&SortEntries[Index], (void *)&SortEntries[Found], 3);
+            }
+          if (Index == limit) break;
+          Index++;
+        }
       }
-      if (Index == t1) break;
-      Index++;
     }
     Count = Found;
     SortEntries[0].Val_ = Found;
   }
   Result = Count;
-  t2 = Count;
-  Index = 1;
-  if (Index <= t2) for (;;) {
-    CombatantScanList[Index] = SortEntries[Index].Head;
-    if (Index == t2) break;
-    Index++;
+  {
+    u8 limit = Count;
+    if (1 <= limit) {
+      Index = 1;
+      for (;;) {
+          CombatantScanList[Index] = SortEntries[Index].Head;
+        if (Index == limit) break;
+        Index++;
+      }
+    }
   }
   return Result;
 }
@@ -1809,6 +1891,7 @@ u8 CollectEnemiesInRange(farptr Who, u8 Range)
      (or from record 1 when nothing was found), not from a defined value. */
 u8 DistanceToTarget(farptr Who, farptr Target)
 {
+  POOL_TRACE("DistanceToTarget");
   u8 Result = 0;
   TSortRec Saved[255] = {0};
   u8 Index = 0;
@@ -1833,6 +1916,7 @@ u8 DistanceToTarget(farptr Who, farptr Target)
      Globals: none. */
 u8 EndCombatTurn(farptr Who)
 {
+  POOL_TRACE("EndCombatTurn");
   u8 Result = 0;
   (*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).Initiative = 0;
   (*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).PendingSpell = 0;
@@ -1849,6 +1933,7 @@ u8 EndCombatTurn(farptr Who)
      EndCombatTurn gives, so the turn is over. Globals: none. */
 u8 GuardTurn(farptr Who)
 {
+  POOL_TRACE("GuardTurn");
   u8 Result = 0;
   Result = EndCombatTurn(Who);
   (*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).B7 = 1;
@@ -1868,6 +1953,7 @@ u8 GuardTurn(farptr Who)
      Globals: SpellTable, SelectedCharacter (read), ItemAffectUse (read). */
 u8 SpellCasterLevel(u8 Spell)
 {
+  POOL_TRACE("SpellCasterLevel");
   u8 Result = 0;
   switch (SpellTable[Spell].SpellClass) {
   case SpellClassCleric:
@@ -1899,6 +1985,7 @@ u8 SpellCasterLevel(u8 Spell)
      area view. Side effect: the screen (DrawWindow clears and frames each window). */
 void DrawViewWindows(u8 WithInner)
 {
+  POOL_TRACE("DrawViewWindows");
   DrawWindow(1, 1, 0x26, 0x16, 0, 0xF, S("\000"));
   DrawWindow(1, 0x11, 0x26, 0x16, 0, 0xF, S("\000"));
   DrawWindow(1, 1, 0xF, 0xF, 0, 0xF, S("\000"));
@@ -1919,6 +2006,7 @@ void DrawViewWindows(u8 WithInner)
      Globals: ViewMode (read), ShownHeadBank, ShownBodyBank, PictureAnimation, SelectedCharacter (read). */
 void RedrawView(void)
 {
+  POOL_TRACE("RedrawView");
   switch (ViewMode) {
   case ViewModePlain:
   {
@@ -1978,6 +2066,7 @@ void RedrawView(void)
      PartyFacing, ViewMode, GameVars2 (all read). Side effect: the screen. */
 void DrawLocationLine(void)
 {
+  POOL_TRACE("DrawLocationLine");
   s8 Col = 0;
   s8 Row = 0;
   u8 Hours[3] = {0};
@@ -2036,6 +2125,7 @@ void DrawLocationLine(void)
      Globals: ViewMode (write). Side effect: the screen. */
 void DrawWildernessScreen(void)
 {
+  POOL_TRACE("DrawWildernessScreen");
   ViewMode = ViewModeMap;
   DrawAdventureScreen();
   ShowAreaView();
@@ -2051,6 +2141,7 @@ void DrawWildernessScreen(void)
      PlayerTurn and the combat overlays. Globals: CombatMap (read). Side effect: the screen. */
 void DrawCombatScreen(void)
 {
+  POOL_TRACE("DrawCombatScreen");
   SwapPaletteColors0And8();
   DrawWindow(1, 1, 0x15, 0x15, 0, 0, S("\000"));
   DrawWindow(0x17, 1, 0x26, 0x15, 0, 0, S("\000"));
@@ -2071,6 +2162,7 @@ void DrawCombatScreen(void)
      Globals: ViewMode (read), PartyListHead (read). Side effects: the screen, the keyboard. */
 void SelectPartyMember(const u8 *Title_in, u8 WithExit, PCharacter (*Selected))
 {
+  POOL_TRACE("SelectPartyMember");
   const u8 *Title = Title_in;
   u8 Key = 0;
   u8 ExtKey = 0;
@@ -2132,6 +2224,7 @@ void SelectPartyMember(const u8 *Title_in, u8 WithExit, PCharacter (*Selected))
      Globals: ItemTable (read). */
 u8 IsRangedWeapon(farptr Who)
 {
+  POOL_TRACE("IsRangedWeapon");
   u8 Result = 0;
   if ((((*FPD(TCharacter (*), Who)).SlotItems[0] != 0)) && ((ItemTable[(*FPD(TMenuLine (*), (*FPD(TCharacter (*), Who)).SlotItems[0])).ItemType].Range > 1))) {
     Result = 1;
@@ -2148,6 +2241,7 @@ u8 IsRangedWeapon(farptr Who)
      Globals: ItemTable (read). */
 u8 RangedWeaponCanMelee(farptr Who)
 {
+  POOL_TRACE("RangedWeaponCanMelee");
   u8 Result = 0;
   if (IsRangedWeapon(Who) && ((((ItemTable[(*FPD(TMenuLine (*), (*FPD(TCharacter (*), Who)).SlotItems[0])).ItemType].Flags & ((WeaponFlagMelee | WeaponFlagStrength)))) == ((WeaponFlagMelee | WeaponFlagStrength))))) {
     Result = 1;
@@ -2166,6 +2260,7 @@ u8 RangedWeaponCanMelee(farptr Who)
      passes the aimed item to PerformAttack for the attack. Globals: ItemTable (read). */
 u8 ChooseAttackItem(farptr Who, farptr (*Aim))
 {
+  POOL_TRACE("ChooseAttackItem");
   u8 Result = 0;
   PItem Item = 0;
   u8 Flags = 0;
@@ -2207,6 +2302,7 @@ u8 ChooseAttackItem(farptr Who, farptr (*Aim))
      ClassIndex is the class index 0..7. Globals: none. */
 u8 IsMaxClassLevel(PCharacter Who, s8 ClassIndex)
 {
+  POOL_TRACE("IsMaxClassLevel");
   u8 Result = 0;
   s8 Level = 0;
   Result = 0;
@@ -2261,4 +2357,5 @@ u8 IsMaxClassLevel(PCharacter Who, s8 ClassIndex)
 /* Initialisation part of unit RES12. */
 void init_RES12(void)
 {
+  POOL_TRACE("init");
 }

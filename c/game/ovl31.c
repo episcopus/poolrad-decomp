@@ -6,6 +6,7 @@
      Called by every routine here that walks a footprint and by ovl30's ScanTargets. */
 u8 FootprintCell(u8 Kind, u8 Index, s8 (*DX), s8 (*DY))
 {
+  POOL_TRACE("FootprintCell");
   u8 Result = 0;
   Result = 0;
   if (Kind == 0) {
@@ -23,15 +24,19 @@ u8 FootprintCell(u8 Kind, u8 Index, s8 (*DX), s8 (*DY))
      cell minus the view origin. Called by ScrollViewTo after the view moved. */
 void UpdateViewPositions(void)
 {
+  POOL_TRACE("UpdateViewPositions");
   u8 I = 0;
-  u8 t1;
-  t1 = CombatantTable[0].Kind;
-  I = 1;
-  if (I <= t1) for (;;) {
-    CombatantViewCol[I - 1] = CombatantTable[I].X - (*FPD(TCombatMap (*), CombatMap)).ViewX;
-    CombatantViewRow[I - 1] = CombatantTable[I].Y - (*FPD(TCombatMap (*), CombatMap)).ViewY;
-    if (I == t1) break;
-    I++;
+  {
+    u8 limit = CombatantTable[0].Kind;
+    if (1 <= limit) {
+      I = 1;
+      for (;;) {
+          CombatantViewCol[I - 1] = CombatantTable[I].X - (*FPD(TCombatMap (*), CombatMap)).ViewX;
+          CombatantViewRow[I - 1] = CombatantTable[I].Y - (*FPD(TCombatMap (*), CombatMap)).ViewY;
+        if (I == limit) break;
+        I++;
+      }
+    }
   }
 }
 
@@ -41,6 +46,7 @@ void UpdateViewPositions(void)
      DrawCombatScreen. */
 void SwapPaletteColors0And8(void)
 {
+  POOL_TRACE("SwapPaletteColors0And8");
   switch (VideoAdapter) {
   case AdapterEga:
   {
@@ -55,6 +61,7 @@ void SwapPaletteColors0And8(void)
      SetPaletteRegister(8, 8), the counterpart of SwapPaletteColors0And8. Called by ovl08, ovl16 and ViewSelectedCharacter. */
 void RestorePaletteColors0And8(void)
 {
+  POOL_TRACE("RestorePaletteColors0And8");
   switch (VideoAdapter) {
   case AdapterEga:
   {
@@ -71,6 +78,7 @@ void RestorePaletteColors0And8(void)
      view, is drawn over it. Called by MoveCombatCursor. */
 void DrawCursorAt(s8 CellX, s8 CellY)
 {
+  POOL_TRACE("DrawCursorAt");
   s8 ViewCol = 0;
   s8 ViewRow = 0;
   s8 DX = 0;
@@ -80,18 +88,22 @@ void DrawCursorAt(s8 CellX, s8 CellY)
   u8 Tile = 0;
   ViewCol = CellX - (*FPD(TCombatMap (*), CombatMap)).ViewX;
   ViewRow = CellY - (*FPD(TCombatMap (*), CombatMap)).ViewY;
-  J = 0;
-  if (J <= FootprintCells) for (;;) {
-    if (FootprintCell((*FPD(TCombatMap (*), CombatMap)).CursorKind, J, &DX, &DY)) {
-      if (IsInView((s16)(ViewCol + DX), (s16)(ViewRow + DY))) {
-        DrawCellPicture((s16)(((s16)(ViewCol + DX)) * CellStep_OVL31), (s16)(((s16)(ViewRow + DY)) * CellStep_OVL31), CombatTiles[(*FPD(TCombatMap (*), CombatMap)).Cells[(s16)(CellY + DY)][(s16)(CellX + DX)]].Picture, 0);
-        if ((*FPD(TCombatMap (*), CombatMap)).ShowCursor != 0) {
-          DrawIcon((s16)(ViewCol + DX), (s16)(ViewRow + DY), 0, 0, CursorIcon);
-        }
+  {
+    if (0 <= FootprintCells) {
+      J = 0;
+      for (;;) {
+          if (FootprintCell((*FPD(TCombatMap (*), CombatMap)).CursorKind, J, &DX, &DY)) {
+            if (IsInView((s16)(ViewCol + DX), (s16)(ViewRow + DY))) {
+              DrawCellPicture((s16)(((s16)(ViewCol + DX)) * CellStep_OVL31), (s16)(((s16)(ViewRow + DY)) * CellStep_OVL31), CombatTiles[(*FPD(TCombatMap (*), CombatMap)).Cells[(s16)(CellY + DY)][(s16)(CellX + DX)]].Picture, 0);
+              if ((*FPD(TCombatMap (*), CombatMap)).ShowCursor != 0) {
+                DrawIcon((s16)(ViewCol + DX), (s16)(ViewRow + DY), 0, 0, CursorIcon);
+              }
+            }
+          }
+        if (J == FootprintCells) break;
+        J++;
       }
     }
-    if (J == FootprintCells) break;
-    J++;
   }
   GetMapCell(CellX, CellY, &Occupant, &Tile);
   if (Occupant > 0) {
@@ -106,6 +118,7 @@ void DrawCursorAt(s8 CellX, s8 CellY)
      leaves, and by ovl08, ovl13. */
 void RedrawMapCell(s8 CellX, s8 CellY)
 {
+  POOL_TRACE("RedrawMapCell");
   s8 ViewCol = 0;
   s8 ViewRow = 0;
   u8 Occupant = 0;
@@ -126,29 +139,37 @@ void RedrawMapCell(s8 CellX, s8 CellY)
      is placed or removed (PlaceCombatant, RemoveCombatant) and by ovl10, ovl13, ovl24. */
 void RebuildOccupancy(void)
 {
+  POOL_TRACE("RebuildOccupancy");
   u8 I = 0;
   u8 J = 0;
   s8 DX = 0;
   s8 DY = 0;
-  u8 t1;
   rtl_FillChar((void *)&CellOccupant, 1250, 0);
-  t1 = CombatantTable[0].Kind;
-  I = 1;
-  if (I <= t1) for (;;) {
-    if (CombatantTable[I].Kind > 0) {
-      J = 0;
-      if (J <= FootprintCells) for (;;) {
-        if (FootprintCell(CombatantTable[I].Kind, J, &DX, &DY)) {
-          CellOccupant[(s16)(CombatantTable[I].Y + DY)][(s16)(CombatantTable[I].X + DX)] = I;
-        }
-        if (J == FootprintCells) break;
-        J++;
+  {
+    u8 limit = CombatantTable[0].Kind;
+    if (1 <= limit) {
+      I = 1;
+      for (;;) {
+          if (CombatantTable[I].Kind > 0) {
+            {
+              if (0 <= FootprintCells) {
+                J = 0;
+                for (;;) {
+                    if (FootprintCell(CombatantTable[I].Kind, J, &DX, &DY)) {
+                      CellOccupant[(s16)(CombatantTable[I].Y + DY)][(s16)(CombatantTable[I].X + DX)] = I;
+                    }
+                  if (J == FootprintCells) break;
+                  J++;
+                }
+              }
+            }
+            CombatantViewCol[I - 1] = CombatantTable[I].X - (*FPD(TCombatMap (*), CombatMap)).ViewX;
+            CombatantViewRow[I - 1] = CombatantTable[I].Y - (*FPD(TCombatMap (*), CombatMap)).ViewY;
+          }
+        if (I == limit) break;
+        I++;
       }
-      CombatantViewCol[I - 1] = CombatantTable[I].X - (*FPD(TCombatMap (*), CombatMap)).ViewX;
-      CombatantViewRow[I - 1] = CombatantTable[I].Y - (*FPD(TCombatMap (*), CombatMap)).ViewY;
     }
-    if (I == t1) break;
-    I++;
   }
 }
 
@@ -156,6 +177,7 @@ void RebuildOccupancy(void)
      cell (CellX, CellY); both are 0 for a cell off the 50x25 map. Called here and by ovl13, ovl22. */
 void GetMapCell(s8 CellX, s8 CellY, u8 (*Occupant), u8 (*Tile))
 {
+  POOL_TRACE("GetMapCell");
   if (((((CellX >= 0)) && ((CellX <= MapLastCol))) && ((CellY >= 0))) && ((CellY <= MapLastRow))) {
     (*Tile) = (*FPD(TCombatMap (*), CombatMap)).Cells[CellY][CellX];
     (*Occupant) = CellOccupant[CellY][CellX];
@@ -171,6 +193,7 @@ void GetMapCell(s8 CellX, s8 CellY, u8 (*Occupant), u8 (*Tile))
      Called by RedrawMapCell, SetCombatantIcon, RemoveCombatant and ovl08, ovl13, ovl24. */
 void RedrawGround(s8 Col, s8 Row, u8 Occupant)
 {
+  POOL_TRACE("RedrawGround");
   s8 MapCol = 0;
   s8 MapRow = 0;
   s8 DX = 0;
@@ -189,15 +212,19 @@ void RedrawGround(s8 Col, s8 Row, u8 Occupant)
     MapCol = Col + (*FPD(TCombatMap (*), CombatMap)).ViewX;
     MapRow = Row + (*FPD(TCombatMap (*), CombatMap)).ViewY;
     Kind = CombatantTable[Occupant].Kind;
-    J = 0;
-    if (J <= FootprintCells) for (;;) {
-      if (FootprintCell(Kind, J, &DX, &DY)) {
-        if (IsInView((s16)(Col + DX), (s16)(Row + DY))) {
-          DrawCellPicture((s16)(((s16)(Col + DX)) * CellStep_OVL31), (s16)(((s16)(Row + DY)) * CellStep_OVL31), CombatTiles[(*FPD(TCombatMap (*), CombatMap)).Cells[(s16)(MapRow + DY)][(s16)(MapCol + DX)]].Picture, 0);
+    {
+      if (0 <= FootprintCells) {
+        J = 0;
+        for (;;) {
+            if (FootprintCell(Kind, J, &DX, &DY)) {
+              if (IsInView((s16)(Col + DX), (s16)(Row + DY))) {
+                DrawCellPicture((s16)(((s16)(Col + DX)) * CellStep_OVL31), (s16)(((s16)(Row + DY)) * CellStep_OVL31), CombatTiles[(*FPD(TCombatMap (*), CombatMap)).Cells[(s16)(MapRow + DY)][(s16)(MapCol + DX)]].Picture, 0);
+              }
+            }
+          if (J == FootprintCells) break;
+          J++;
         }
       }
-      if (J == FootprintCells) break;
-      J++;
     }
   } else if (IsInView(Col, Row)) {
     DrawCellPicture((s16)(Col * CellStep_OVL31), (s16)(Row * CellStep_OVL31), CombatTiles[(*FPD(TCombatMap (*), CombatMap)).Cells[MapRow][MapCol]].Picture, 0);
@@ -208,6 +235,7 @@ void RedrawGround(s8 Col, s8 Row, u8 Occupant)
      Called here and by ovl13, WalkCombatLine, WalkCombatLine. */
 u8 IsInView(s8 Col, s8 Row)
 {
+  POOL_TRACE("IsInView");
   u8 Result = 0;
   if (((((Col < 0)) || ((Col > ViewLast_OVL31))) || ((Row < 0))) || ((Row > ViewLast_OVL31))) {
     Result = 0;
@@ -222,6 +250,7 @@ u8 IsInView(s8 Col, s8 Row)
      QUIRK ovl31:071D: the frame holds two bytes no code uses (Spare). */
 u8 IsCombatantInView(PCharacter Who, u8 AllCells)
 {
+  POOL_TRACE("IsCombatantInView");
   u8 Result = 0;
   u8 J = 0;
   u8 Index = 0;
@@ -234,23 +263,27 @@ u8 IsCombatantInView(PCharacter Who, u8 AllCells)
     Result = 0;
     return Result;
   }
-  J = 0;
-  if (J <= FootprintCells) for (;;) {
-    if (FootprintCell(CombatantTable[Index].Kind, J, &DX, &DY)) {
-      if (!IsInView((s16)(CombatantViewCol[Index - 1] + DX), (s16)(CombatantViewRow[Index - 1] + DY))) {
-        Result = 0;
-        if (AllCells != 0) {
-          return Result;
-        }
-      } else {
-        Result = 1;
-        if (AllCells == 0) {
-          return Result;
-        }
+  {
+    if (0 <= FootprintCells) {
+      J = 0;
+      for (;;) {
+          if (FootprintCell(CombatantTable[Index].Kind, J, &DX, &DY)) {
+            if (!IsInView((s16)(CombatantViewCol[Index - 1] + DX), (s16)(CombatantViewRow[Index - 1] + DY))) {
+              Result = 0;
+              if (AllCells != 0) {
+                return Result;
+              }
+            } else {
+              Result = 1;
+              if (AllCells == 0) {
+                return Result;
+              }
+            }
+          }
+        if (J == FootprintCells) break;
+        J++;
       }
     }
-    if (J == FootprintCells) break;
-    J++;
   }
   return Result;
 }
@@ -263,6 +296,7 @@ u8 IsCombatantInView(PCharacter Who, u8 AllCells)
      Called by MoveCombatCursor. */
 u8 ScrollViewTo(s8 CellX, s8 CellY, u8 Margin)
 {
+  POOL_TRACE("ScrollViewTo");
   u8 Result = 0;
   u8 Reach = 0;
   u8 PicCol = 0;
@@ -311,22 +345,30 @@ u8 ScrollViewTo(s8 CellX, s8 CellY, u8 Margin)
   (*FPD(TCombatMap (*), CombatMap)).ViewY = MapRow - ViewCentre;
   PicRow = 0;
   MapRow = (*FPD(TCombatMap (*), CombatMap)).ViewY;
-  J = 0;
-  if (J <= ViewLast_OVL31) for (;;) {
-    PicCol = 0;
-    MapCol = (*FPD(TCombatMap (*), CombatMap)).ViewX;
-    I = 0;
-    if (I <= ViewLast_OVL31) for (;;) {
-      DrawCellPicture(PicCol, PicRow, CombatTiles[(*FPD(TCombatMap (*), CombatMap)).Cells[MapRow][MapCol]].Picture, 1);
-      PicCol += CellStep_OVL31;
-      MapCol++;
-      if (I == ViewLast_OVL31) break;
-      I++;
+  {
+    if (0 <= ViewLast_OVL31) {
+      J = 0;
+      for (;;) {
+          PicCol = 0;
+          MapCol = (*FPD(TCombatMap (*), CombatMap)).ViewX;
+          {
+            if (0 <= ViewLast_OVL31) {
+              I = 0;
+              for (;;) {
+                  DrawCellPicture(PicCol, PicRow, CombatTiles[(*FPD(TCombatMap (*), CombatMap)).Cells[MapRow][MapCol]].Picture, 1);
+                  PicCol += CellStep_OVL31;
+                  MapCol++;
+                if (I == ViewLast_OVL31) break;
+                I++;
+              }
+            }
+          }
+          PicRow += CellStep_OVL31;
+          MapRow++;
+        if (J == ViewLast_OVL31) break;
+        J++;
+      }
     }
-    PicRow += CellStep_OVL31;
-    MapRow++;
-    if (J == ViewLast_OVL31) break;
-    J++;
   }
   UpdateViewPositions();
   Result = 1;
@@ -341,25 +383,29 @@ u8 ScrollViewTo(s8 CellX, s8 CellY, u8 Margin)
      ovl13, ovl22) and here. */
 void MoveCombatCursor(s8 CellX, s8 CellY, u8 Margin, u8 Dir)
 {
+  POOL_TRACE("MoveCombatCursor");
   PCharacter Who = 0;
   u8 I = 0;
   s8 NewX = 0;
   s8 NewY = 0;
-  u8 t1;
   NewX = CellX + DirStepX[Dir];
   NewY = CellY + DirStepY[Dir];
   if (ScrollViewTo(NewX, NewY, Margin)) {
-    t1 = CombatantTable[0].Kind;
-    I = 1;
-    if (I <= t1) for (;;) {
-      Who = CombatantRecord[I - 1];
-      if ((((*FPD(TCharacter (*), Who)).Flag10D != 0)) && ((CombatantTable[I].Kind > 0))) {
-        if (IsCombatantInView(Who, 0)) {
-          DrawIcon(CombatantViewCol[I - 1], CombatantViewRow[I - 1], (*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).IconSet, 0, (*FPD(TCharacter (*), Who)).CombatIcon);
+    {
+      u8 limit = CombatantTable[0].Kind;
+      if (1 <= limit) {
+        I = 1;
+        for (;;) {
+            Who = CombatantRecord[I - 1];
+            if ((((*FPD(TCharacter (*), Who)).Flag10D != 0)) && ((CombatantTable[I].Kind > 0))) {
+              if (IsCombatantInView(Who, 0)) {
+                DrawIcon(CombatantViewCol[I - 1], CombatantViewRow[I - 1], (*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).IconSet, 0, (*FPD(TCharacter (*), Who)).CombatIcon);
+              }
+            }
+          if (I == limit) break;
+          I++;
         }
       }
-      if (I == t1) break;
-      I++;
     }
   }
   RedrawMapCell(CellX, CellY);
@@ -387,6 +433,7 @@ void MoveCombatCursor(s8 CellX, s8 CellY, u8 Margin, u8 Dir)
      unless NoDraw, draws it with Mirror and shows the frame. Called by ovl08, ovl09, ovl13, ovl22. */
 void SetCombatantIcon(PCharacter Who, u8 IconSet, u8 Mirror, u8 NoDraw)
 {
+  POOL_TRACE("SetCombatantIcon");
   u8 Index = 0;
   Index = CombatantIndex(Who);
   if (!IsCombatantInView(Who, 1)) {
@@ -409,6 +456,7 @@ void SetCombatantIcon(PCharacter Who, u8 IconSet, u8 Mirror, u8 NoDraw)
 /* ovl31:0BE7. The map column of combatant Who (CombatantTable). Called widely by the combat units. */
 s8 CombatantX(PCharacter Who)
 {
+  POOL_TRACE("CombatantX");
   s8 Result = 0;
   Result = CombatantTable[CombatantIndex(Who)].X;
   return Result;
@@ -417,6 +465,7 @@ s8 CombatantX(PCharacter Who)
 /* ovl31:0C0F. The map row of combatant Who (CombatantTable). Called widely by the combat units. */
 s8 CombatantY(PCharacter Who)
 {
+  POOL_TRACE("CombatantY");
   s8 Result = 0;
   Result = CombatantTable[CombatantIndex(Who)].Y;
   return Result;
@@ -426,6 +475,7 @@ s8 CombatantY(PCharacter Who)
      Called by ovl13, ovl24, res12. */
 u8 CombatantKind(PCharacter Who)
 {
+  POOL_TRACE("CombatantKind");
   u8 Result = 0;
   Result = CombatantTable[CombatantIndex(Who)].Kind;
   return Result;
@@ -436,6 +486,7 @@ u8 CombatantKind(PCharacter Who)
      the loop still looks at entry 1 and then runs on until I wraps round to 0. */
 u8 CombatantIndex(PCharacter Who)
 {
+  POOL_TRACE("CombatantIndex");
   u8 Result = 0;
   u8 Found = 0;
   u8 I = 0;
@@ -461,6 +512,7 @@ u8 CombatantIndex(PCharacter Who)
      cost 1 up; FirstProbeTile when no cell exists). Called by PlaceCombatant and ovl08, ovl10, ovl24. */
 void ProbeStep(PCharacter Who, u8 Dir, u8 (*Occupant), u8 (*Tile))
 {
+  POOL_TRACE("ProbeStep");
   u8 J = 0;
   u8 Index = 0;
   u8 CellWho = 0;
@@ -478,29 +530,33 @@ void ProbeStep(PCharacter Who, u8 Dir, u8 (*Occupant), u8 (*Tile))
   Index = CombatantIndex(Who);
   CellX = CombatantTable[Index].X;
   CellY = CombatantTable[Index].Y;
-  J = 0;
-  if (J <= FootprintCells) for (;;) {
-    if (FootprintCell(CombatantTable[Index].Kind, J, &DX, &DY)) {
-      NewX = (CellX + DX) + DirStepX[Dir];
-      NewY = (CellY + DY) + DirStepY[Dir];
-      GetMapCell(NewX, NewY, &CellWho, &CellTile);
-      if (CellWho == Index) {
-        CellWho = 0;
-      }
-      if (CellWho > 0) {
-        (*Occupant) = CellWho;
-      }
-      if (((CellTile == 0)) || (((*Tile) == 0))) {
-        (*Tile) = 0;
-      } else if (((CellTile == CloudTile)) || (((*Tile) == CloudTile))) {
-        (*Tile) = CloudTile;
-      } else if (CombatTiles[CellTile].Cost >= BestCost) {
-        BestCost = CombatTiles[CellTile].Cost;
-        (*Tile) = CellTile;
+  {
+    if (0 <= FootprintCells) {
+      J = 0;
+      for (;;) {
+          if (FootprintCell(CombatantTable[Index].Kind, J, &DX, &DY)) {
+            NewX = (CellX + DX) + DirStepX[Dir];
+            NewY = (CellY + DY) + DirStepY[Dir];
+            GetMapCell(NewX, NewY, &CellWho, &CellTile);
+            if (CellWho == Index) {
+              CellWho = 0;
+            }
+            if (CellWho > 0) {
+              (*Occupant) = CellWho;
+            }
+            if (((CellTile == 0)) || (((*Tile) == 0))) {
+              (*Tile) = 0;
+            } else if (((CellTile == CloudTile)) || (((*Tile) == CloudTile))) {
+              (*Tile) = CloudTile;
+            } else if (CombatTiles[CellTile].Cost >= BestCost) {
+              BestCost = CombatTiles[CellTile].Cost;
+              (*Tile) = CellTile;
+            }
+          }
+        if (J == FootprintCells) break;
+        J++;
       }
     }
-    if (J == FootprintCells) break;
-    J++;
   }
 }
 
@@ -517,6 +573,7 @@ void ProbeStep(PCharacter Who, u8 Dir, u8 (*Occupant), u8 (*Tile))
      QUIRK ovl31:0E14: the frame holds two bytes no code uses (Spare). */
 void RemoveCombatant(PCharacter Who)
 {
+  POOL_TRACE("RemoveCombatant");
   u8 Index = 0;
   u8 I = 0;
   s8 DX = 0;
@@ -543,13 +600,17 @@ void RemoveCombatant(PCharacter Who)
       MoveCombatCursor(CellX, CellY, CentreMargin, DirNone);
     }
     RedrawGround(0, 0, Index);
-    I = 0;
-    if (I <= FootprintCells) for (;;) {
-      if (FootprintCell(CombatantTable[Index].Kind, I, &DX, &DY)) {
-        DrawPictureItemClipped((s16)(((s16)(CombatantViewCol[Index - 1] + DX)) * CellStep_OVL31), (s16)(((s16)(CombatantViewRow[Index - 1] + DY)) * CellStep_OVL31), 0, DyingFlags, DyingPicture, DrawBuf);
+    {
+      if (0 <= FootprintCells) {
+        I = 0;
+        for (;;) {
+            if (FootprintCell(CombatantTable[Index].Kind, I, &DX, &DY)) {
+              DrawPictureItemClipped((s16)(((s16)(CombatantViewCol[Index - 1] + DX)) * CellStep_OVL31), (s16)(((s16)(CombatantViewRow[Index - 1] + DY)) * CellStep_OVL31), 0, DyingFlags, DyingPicture, DrawBuf);
+            }
+          if (I == FootprintCells) break;
+          I++;
+        }
       }
-      if (I == FootprintCells) break;
-      I++;
     }
     FlushPictureChanges();
     if ((*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).NoBody == 0) {
@@ -585,14 +646,13 @@ void RemoveCombatant(PCharacter Who)
      Called by ovl08, ovl22, ovl24. */
 u8 PlaceCombatant(PCharacter Who, u8 CellX, u8 CellY, u8 Restore)
 {
+  POOL_TRACE("PlaceCombatant");
   u8 Result = 0;
   u8 Index = 0;
   u8 I = 0;
   u8 Occupant = 0;
   u8 Tile = 0;
   u8 BodyThere = 0;
-  u8 t1;
-  u8 t2;
   if (ViewMode == ViewModeCombat) {
     Result = 0;
     Index = CombatantIndex(Who);
@@ -606,27 +666,35 @@ u8 PlaceCombatant(PCharacter Who, u8 CellX, u8 CellY, u8 Restore)
       Result = 1;
       if (Restore != 0) {
         if ((*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).NoBody == 0) {
-          t1 = BodyCount;
-          I = 1;
-          if (I <= t1) for (;;) {
-            if (BodyTable[I - 1].Who == Who) {
-              if (BodyTable[I - 1].Tile != BodyTile) {
-                Tile = BodyTable[I - 1].Tile;
+          {
+            u8 limit = BodyCount;
+            if (1 <= limit) {
+              I = 1;
+              for (;;) {
+                  if (BodyTable[I - 1].Who == Who) {
+                    if (BodyTable[I - 1].Tile != BodyTile) {
+                      Tile = BodyTable[I - 1].Tile;
+                    }
+                    rtl_FillChar((void *)&BodyTable[I - 1], 7, 0);
+                  }
+                if (I == limit) break;
+                I++;
               }
-              rtl_FillChar((void *)&BodyTable[I - 1], 7, 0);
             }
-            if (I == t1) break;
-            I++;
           }
           BodyThere = 0;
-          t2 = BodyCount;
-          I = 1;
-          if (I <= t2) for (;;) {
-            if ((((BodyTable[I - 1].Who != 0)) && ((BodyTable[I - 1].X == CellX))) && ((BodyTable[I - 1].Y == CellY))) {
-              BodyThere = 1;
+          {
+            u8 limit = BodyCount;
+            if (1 <= limit) {
+              I = 1;
+              for (;;) {
+                  if ((((BodyTable[I - 1].Who != 0)) && ((BodyTable[I - 1].X == CellX))) && ((BodyTable[I - 1].Y == CellY))) {
+                    BodyThere = 1;
+                  }
+                if (I == limit) break;
+                I++;
+              }
             }
-            if (I == t2) break;
-            I++;
           }
           if (!BodyThere) {
             (*FPD(TCombatMap (*), CombatMap)).Cells[CellY][CellX] = Tile;
@@ -646,6 +714,7 @@ u8 PlaceCombatant(PCharacter Who, u8 CellX, u8 CellY, u8 Restore)
      kind 1 and hidden for later moves. Called by ovl08, ovl12, ovl13, ovl24. */
 void ShowCursorOn(PCharacter Who, u8 Margin, u8 ShowCursor)
 {
+  POOL_TRACE("ShowCursorOn");
   (*FPD(TCombatMap (*), CombatMap)).ShowCursor = ShowCursor;
   (*FPD(TCombatMap (*), CombatMap)).CursorKind = CombatantTable[CombatantIndex(Who)].Kind;
   MoveCombatCursor(CombatantX(Who), CombatantY(Who), Margin, DirNone);
@@ -656,4 +725,5 @@ void ShowCursorOn(PCharacter Who, u8 Margin, u8 ShowCursor)
 /* Initialisation part of unit OVL31. */
 void init_OVL31(void)
 {
+  POOL_TRACE("init");
 }

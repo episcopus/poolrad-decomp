@@ -144,21 +144,37 @@ class StmtMixin:
             self.emit("} while (!%s);" % (code if (code.startswith("(") and self.balanced(code[1:-1])) else "(%s)" % code))
 
     def st_for(self, n):
+        """Turbo Pascal's loop: the limit is evaluated first, then the start; the control variable is not touched when
+        the loop does not run; after it ends the variable equals the limit (probed with make tpc)."""
         v = self.ex(N("name", name=n.var, line=n.line))
-        a = self.ex(n.start)
         b = self.ex(n.stop)
+        a = self.ex(n.start)
         op = ">=" if n.down else "<="
         step = "--" if n.down else "++"
-        limit = b.code
-        if b.val is None:
-            t = self.temp(decl(v.ty, "@") if v.ty.kind != "char" else "u8 @")
-            self.emit("%s = %s;" % (t, b.code))
-            limit = t
-        self.emit("%s = %s;" % (v.code, a.code))
-        self.emit("if (%s %s %s) for (;;) {" % (v.code, op, limit))
+        ct = ctype(v.ty) if v.ty.kind != "int" else ctype(v.ty)
+        self.emit("{")
+        self.ind += 1
+        if b.val is not None:
+            lim = b.code
+        else:
+            lim = "limit"
+            self.emit("%s limit = %s;" % (ct, b.code))
+        if a.val is not None:
+            first = a.code
+        else:
+            first = "first"
+            self.emit("%s first = %s;" % (ct, a.code))
+        self.emit("if (%s %s %s) {" % (first, op, lim))
+        self.emit("  %s = %s;" % (v.code, first))
+        self.emit("  for (;;) {")
+        self.ind += 2
         self.body_of(n.body)
-        self.emit("  if (%s == %s) break;" % (v.code, limit))
-        self.emit("  %s%s;" % (v.code, step))
+        self.ind -= 2
+        self.emit("    if (%s == %s) break;" % (v.code, lim))
+        self.emit("    %s%s;" % (v.code, step))
+        self.emit("  }")
+        self.emit("}")
+        self.ind -= 1
         self.emit("}")
 
     def st_case(self, n):

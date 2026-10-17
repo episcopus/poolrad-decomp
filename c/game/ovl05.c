@@ -12,6 +12,7 @@
      multiplication extended to LongInt. */
 void ComputeBattleExperience(s32 (*Xp))
 {
+  POOL_TRACE("ComputeBattleExperience");
   PCharacter Who = 0;
   s8 Kind = 0;
   s32 Total = 0;
@@ -28,11 +29,15 @@ void ComputeBattleExperience(s32 (*Xp))
       Item = (*FPD(TCharacter (*), Who)).Items;
       if ((((*FPD(TCharacter (*), Who)).Side == SideMonsters)) && (((*FPD(TCharacter (*), Who)).Status != StatusFled))) {
         MonstersLooted = 1;
-        Kind = 0;
-        if (Kind <= LastMoneyKind_OVL05) for (;;) {
-          PooledMoney[Kind] += (*FPD(TCharacter (*), Who)).Money[Kind];
-          if (Kind == LastMoneyKind_OVL05) break;
-          Kind++;
+        {
+          if (0 <= LastMoneyKind_OVL05) {
+            Kind = 0;
+            for (;;) {
+                PooledMoney[Kind] += (*FPD(TCharacter (*), Who)).Money[Kind];
+              if (Kind == LastMoneyKind_OVL05) break;
+              Kind++;
+            }
+          }
         }
         Total = ((*FPD(TCharacter (*), Who)).XpValue + Total) + ((*FPD(TCharacter (*), Who)).XpPerHp * (*FPD(TCharacter (*), Who)).HpB1);
         if ((*FPD(TGameVars (*), GameVars2))[739] != 1) {
@@ -84,6 +89,7 @@ void ComputeBattleExperience(s32 (*Xp))
      a third for the three-class ones (ClassCombo 8, 10..14, 16 and 9, 15). */
 void AwardExperience(s32 Xp)
 {
+  POOL_TRACE("AwardExperience");
   PCharacter Who = 0;
   s32 Gain = 0;
   Who = PartyListHead;
@@ -156,6 +162,7 @@ void AwardExperience(s32 Xp)
      Flag10D and the dying become unconscious. */
 void SettleBattleOutcome(void)
 {
+  POOL_TRACE("SettleBattleOutcome");
   PCharacter Who = 0;
   u8 Stop = 0;
   u8 Unused = 0;
@@ -272,6 +279,7 @@ void SettleBattleOutcome(void)
      receives <Xp>' or 'Each character receives <Xp>', 'experience points.', and waits for Enter. */
 void ShowBattleResult(s32 Xp)
 {
+  POOL_TRACE("ShowBattleResult");
   u8 XpText[11] = {0};
   u8 Line[256] = {0};
   u8 Key = 0;
@@ -313,6 +321,7 @@ void ShowBattleResult(s32 Xp)
      position between calls. */
 void ChooseLootItem(u8 (*Key), PMenuLine (*Item), PMenuLine (*Selected), s16 (*Choice))
 {
+  POOL_TRACE("ChooseLootItem");
   PMenuLine List = 0;
   u8 Unused[19] = {0};
   u8 Redraw = 0;
@@ -335,6 +344,7 @@ void ChooseLootItem(u8 (*Key), PMenuLine (*Item), PMenuLine (*Selected), s16 (*C
      Redraws the screen (RedrawView) at the end. */
 void TakeLootItems(void)
 {
+  POOL_TRACE("TakeLootItems");
   PMenuLine Chosen = 0;
   PMenuLine Prev = 0;
   u8 Key = 0;
@@ -381,6 +391,7 @@ void TakeLootItems(void)
      Exit or one of them runs out (G and O, in no menu text, go to UpdateSelectedCharacter as in the shop). */
 void TakeTreasure(u8 (*MoneyLeft), u8 (*ItemsLeft))
 {
+  POOL_TRACE("TakeTreasure");
   u8 Key = 0;
   u8 Done = 0;
   u8 ExtKey = 0;
@@ -441,6 +452,7 @@ void TakeTreasure(u8 (*MoneyLeft), u8 (*ItemsLeft))
      treasure?' and leaves on No. */
 void TreasureMenu(void)
 {
+  POOL_TRACE("TreasureMenu");
   u8 MoneyLeft = 0;
   u8 ItemsLeft = 0;
   u8 Unused = 0;
@@ -553,6 +565,7 @@ void TreasureMenu(void)
      state is freed. SelectedCharacter is the first member afterwards. */
 void RemoveBattleCombatants(void)
 {
+  POOL_TRACE("RemoveBattleCombatants");
   PCharacter Who = 0;
   PCharacter NextWho = 0;
   (*FPD(TGameVars (*), GameVars2))[712] = 0;
@@ -584,6 +597,7 @@ void RemoveBattleCombatants(void)
      QUIRK ovl05:13A5: the share of one kind is truncated to a Byte. */
 void TakeHirelingShares(void)
 {
+  POOL_TRACE("TakeHirelingShares");
   PCharacter Who = 0;
   u8 HirelingShares = 0;
   u8 TotalShares = 0;
@@ -609,15 +623,19 @@ void TakeHirelingShares(void)
     Who = (*FPD(TCharacter (*), Who)).Next;
   }
   if (HirelingShares > 0) {
-    Kind = 0;
-    if (Kind <= LastMoneyKind_OVL05) for (;;) {
-      if (PooledMoney[Kind] > 0) {
-        Share = (PooledMoney[Kind] / TotalShares);
-        PooledMoney[Kind] -= (s16)(HirelingShares * Share);
-        Taken = 1;
+    {
+      if (0 <= LastMoneyKind_OVL05) {
+        Kind = 0;
+        for (;;) {
+            if (PooledMoney[Kind] > 0) {
+              Share = (PooledMoney[Kind] / TotalShares);
+              PooledMoney[Kind] -= (s16)(HirelingShares * Share);
+              Taken = 1;
+            }
+          if (Kind == LastMoneyKind_OVL05) break;
+          Kind++;
+        }
       }
-      if (Kind == LastMoneyKind_OVL05) break;
-      Kind++;
     }
   }
   if (Taken) {
@@ -643,6 +661,7 @@ void TakeHirelingShares(void)
      VarNoItemLoot and VarFixedXpBattle. */
 void EndBattle(void)
 {
+  POOL_TRACE("EndBattle");
   PMenuLine Entry = 0;
   PMenuLine Doomed = 0;
   (*FPD(TGameVars (*), GameVars2))[711] = 0;
@@ -680,5 +699,6 @@ void EndBattle(void)
 /* Initialisation part of unit OVL05. */
 void init_OVL05(void)
 {
+  POOL_TRACE("init");
   /* ovl05:1671. The unit's initialisation part is empty (push bp; mov bp, sp; pop bp; retf). */
 }

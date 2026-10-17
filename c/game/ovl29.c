@@ -10,6 +10,7 @@
      uses (Unused). The map placed a second routine at ovl29:0143; it is this routine's tail. */
 void DrawWallMap(s8 Col, s8 Row, u8 Dir)
 {
+  POOL_TRACE("DrawWallMap");
   s8 PartyCol = 0;
   s8 PartyRow = 0;
   s8 ViewCol = 0;
@@ -36,31 +37,39 @@ void DrawWallMap(s8 Col, s8 Row, u8 Dir)
     TopRow = MapWindowHalf;
   }
   PartyRow = Row - TopRow;
-  ViewRow = 0;
-  if (ViewRow <= ViewLast) for (;;) {
-    MapRow = ViewRow + TopRow;
-    ViewCol = 0;
-    if (ViewCol <= ViewLast) for (;;) {
-      MapCol = ViewCol + LeftCol;
-      Symbol = WallSymbols;
-      if (WallIdAt(MapCol, MapRow, DirNorth) > 0) {
-        Symbol += WallBitNorth;
+  {
+    if (0 <= ViewLast) {
+      ViewRow = 0;
+      for (;;) {
+          MapRow = ViewRow + TopRow;
+          {
+            if (0 <= ViewLast) {
+              ViewCol = 0;
+              for (;;) {
+                  MapCol = ViewCol + LeftCol;
+                  Symbol = WallSymbols;
+                  if (WallIdAt(MapCol, MapRow, DirNorth) > 0) {
+                    Symbol += WallBitNorth;
+                  }
+                  if (WallIdAt(MapCol, MapRow, DirEast) > 0) {
+                    Symbol += WallBitEast;
+                  }
+                  if (WallIdAt(MapCol, MapRow, DirSouth) > 0) {
+                    Symbol += WallBitSouth;
+                  }
+                  if (WallIdAt(MapCol, MapRow, DirWest) > 0) {
+                    Symbol += WallBitWest;
+                  }
+                  Put8x8Symbol((s16)((ViewCol + ViewLeft_OVL29) - 1), (s16)((ViewRow + ViewLeft_OVL29) - 1), Symbol, DrawDirect, MapSymbolAttr);
+                if (ViewCol == ViewLast) break;
+                ViewCol++;
+              }
+            }
+          }
+        if (ViewRow == ViewLast) break;
+        ViewRow++;
       }
-      if (WallIdAt(MapCol, MapRow, DirEast) > 0) {
-        Symbol += WallBitEast;
-      }
-      if (WallIdAt(MapCol, MapRow, DirSouth) > 0) {
-        Symbol += WallBitSouth;
-      }
-      if (WallIdAt(MapCol, MapRow, DirWest) > 0) {
-        Symbol += WallBitWest;
-      }
-      Put8x8Symbol((s16)((ViewCol + ViewLeft_OVL29) - 1), (s16)((ViewRow + ViewLeft_OVL29) - 1), Symbol, DrawDirect, MapSymbolAttr);
-      if (ViewCol == ViewLast) break;
-      ViewCol++;
     }
-    if (ViewRow == ViewLast) break;
-    ViewRow++;
   }
   Put8x8Symbol((s16)((PartyCol + ViewLeft_OVL29) - 1), (s16)((PartyRow + ViewLeft_OVL29) - 1), (s16)((s16)((u16)Dir >> 1) + PartyArrow), DrawDirect, MapSymbolAttr);
   StepDisplay();
@@ -70,6 +79,7 @@ void DrawWallMap(s8 Col, s8 Row, u8 Dir)
      whitepaper 5.2). Called by ovl26 ShowAreaView with the wall view ids. */
 void SetWallDescriptors(u8 Wall1, u8 Wall2, u8 Wall3, u8 Wall4)
 {
+  POOL_TRACE("SetWallDescriptors");
   WallDescriptor1 = Wall1;
   WallDescriptor2 = Wall2;
   WallDescriptor3 = Wall3;
@@ -81,6 +91,7 @@ void SetWallDescriptors(u8 Wall1, u8 Wall2, u8 Wall3, u8 Wall4)
      structure, G=DrawBuf). Called by DrawWallView. */
 void DrawWallDescriptors(void)
 {
+  POOL_TRACE("DrawWallDescriptors");
   FillPictureRect(2, 0x10, 0xB, 0x2B, WallDescriptor1, rtl_far(&FillRectPalette), DrawBuf);
   FillPictureRect(2, 0x3B, 0xB, 1, WallDescriptor2, rtl_far(&FillRectPalette), DrawBuf);
   FillPictureRect(2, 0x3C, 0xB, 2, WallDescriptor3, rtl_far(&FillRectPalette), DrawBuf);
@@ -95,33 +106,42 @@ void DrawWallDescriptors(void)
      DrawWallView with the piece positions WallPieceCol/WallPieceRow, shifted per distance and side. */
 void DrawWallPiece(s8 Col, s8 Row, u8 Wall, u8 Piece)
 {
+  POOL_TRACE("DrawWallPiece");
   s16 LastCol = 0;
   s16 LastRow = 0;
   s16 TileCol = 0;
   s16 TileRow = 0;
   u8 Tile = 0;
-  s16 t1;
-  s16 t2;
   Tile = WallPieceFirstTile[Piece];
   LastCol = (WallPieceWidth[Piece] + Col) - 1;
   LastRow = (WallPieceHeight[Piece] + Row) - 1;
-  t1 = LastRow;
-  TileRow = Row;
-  if (TileRow <= t1) for (;;) {
-    t2 = LastCol;
-    TileCol = Col;
-    if (TileCol <= t2) for (;;) {
-      if (((((TileRow >= 0)) && ((TileRow <= ViewLast))) && ((TileCol >= 0))) && ((TileCol <= ViewLast))) {
-        if ((*FPD(TWallTiles (*), WallTiles))[Wall - 1][Tile] > 0) {
-          Put8x8Symbol((s16)((TileCol + ViewLeft_OVL29) - 1), (s16)((TileRow + ViewLeft_OVL29) - 1), (*FPD(TWallTiles (*), WallTiles))[Wall - 1][Tile], DrawDirect, WallTileAttr);
-        }
+  {
+    s16 limit = LastRow;
+    s16 first = Row;
+    if (first <= limit) {
+      TileRow = first;
+      for (;;) {
+          {
+            s16 limit = LastCol;
+            s16 first = Col;
+            if (first <= limit) {
+              TileCol = first;
+              for (;;) {
+                  if (((((TileRow >= 0)) && ((TileRow <= ViewLast))) && ((TileCol >= 0))) && ((TileCol <= ViewLast))) {
+                    if ((*FPD(TWallTiles (*), WallTiles))[Wall - 1][Tile] > 0) {
+                      Put8x8Symbol((s16)((TileCol + ViewLeft_OVL29) - 1), (s16)((TileRow + ViewLeft_OVL29) - 1), (*FPD(TWallTiles (*), WallTiles))[Wall - 1][Tile], DrawDirect, WallTileAttr);
+                    }
+                  }
+                  Tile++;
+                if (TileCol == limit) break;
+                TileCol++;
+              }
+            }
+          }
+        if (TileRow == limit) break;
+        TileRow++;
       }
-      Tile++;
-      if (TileCol == t2) break;
-      TileCol++;
     }
-    if (TileRow == t1) break;
-    TileRow++;
   }
 }
 
@@ -130,6 +150,7 @@ void DrawWallPiece(s8 Col, s8 Row, u8 Wall, u8 Piece)
      by DoorKindAt, WallIdAt, EventByteAt and DrawWallView. */
 u8 CellInRange(s8 Col, s8 Row)
 {
+  POOL_TRACE("CellInRange");
   u8 Result = 0;
   if (((((Col > 0xF)) || ((Col < 0))) || ((Row > 0xF))) || ((Row < 0))) {
     Result = 0;
@@ -147,6 +168,7 @@ u8 CellInRange(s8 Col, s8 Row)
      to the opposite edge (Col > 15 becomes 0, Col < 0 becomes 15, the same for Row). */
 u8 DoorKindAt(s8 Col, s8 Row, u8 Dir)
 {
+  POOL_TRACE("DoorKindAt");
   u8 Result = 0;
   u8 Kind = 0;
   if (!CellInRange(Col, Row) && ((((WallViewMode == 0)) || ((WallViewMode == 0xA))))) {
@@ -201,6 +223,7 @@ u8 DoorKindAt(s8 Col, s8 Row, u8 Dir)
      result unassigned. */
 u8 WallIdAt(s8 Col, s8 Row, u8 Dir)
 {
+  POOL_TRACE("WallIdAt");
   u8 Result = 0;
   if (!CellInRange(Col, Row) && ((((WallViewMode == 0)) || ((WallViewMode == 0xA))))) {
     Result = 0;
@@ -249,6 +272,7 @@ u8 WallIdAt(s8 Col, s8 Row, u8 Dir)
      DoorKindAt. */
 u8 EventByteAt(s8 Col, s8 Row)
 {
+  POOL_TRACE("EventByteAt");
   u8 Result = 0;
   if (!CellInRange(Col, Row) && ((((WallViewMode == 0)) || ((WallViewMode == 0xA))))) {
     Result = 0;
@@ -274,6 +298,7 @@ u8 EventByteAt(s8 Col, s8 Row)
      direct blit). No parameters. Called by DrawWallMap and DrawWallView. */
 void StepDisplay(void)
 {
+  POOL_TRACE("StepDisplay");
   FlushPictureChanges();
 }
 
@@ -292,6 +317,7 @@ void StepDisplay(void)
      movement loop (A key). QUIRK ovl29:05FD: two locals (Unused1, Unused2) are never used. */
 void DrawWallView(s8 Col0, s8 Row0, u8 Dir)
 {
+  POOL_TRACE("DrawWallView");
   u8 DirLeft = 0;
   u8 DirRight = 0;
   u8 DirBack = 0;
@@ -533,6 +559,7 @@ void DrawWallView(s8 Col0, s8 Row0, u8 Dir)
      tiles in range. QUIRK ovl29:101A: BlockId 0 becomes 10 inside the loop and back to 0 after it. */
 void LoadWallSet(u8 BlockId, u8 First)
 {
+  POOL_TRACE("LoadWallSet");
   u16 Size = 0;
   farptr Block = 0;
   u16 Offset = 0;
@@ -544,7 +571,6 @@ void LoadWallSet(u8 BlockId, u8 First)
   u8 Num[2] = {0};
   u8 Key = 0;
   u8 t1[256];
-  u16 t2;
   if (((First < 1)) || ((First > LastWallSlot))) {
     return;
   }
@@ -567,36 +593,48 @@ void LoadWallSet(u8 BlockId, u8 First)
   } while (!(Offset >= Size));
   rtl_freemem(Block, Size);
   Count = WallSet - 1;
-  t2 = Count;
-  WallSet = 1;
-  if (WallSet <= t2) for (;;) {
-    if (((u16)((First + WallSet) - 1) >= 1 && (u16)((First + WallSet) - 1) <= LastWallSlot)) {
-      WallSetSlotPairs[(u16)((First + WallSet) - 1)].A = 0xFFFF;
-      WallSetSlotPairs[(u16)((First + WallSet) - 1)].B = 0xFFFF;
-      Wall = 1;
-      if (Wall <= WallsPerSet) for (;;) {
-        Tile = 0;
-        if (Tile <= LastWallTile) for (;;) {
-          if ((*FPD(TWallSets (*), WallSets))[(u16)((First + WallSet) - 1) - 1][Wall - 1][Tile] >= WallSymbolFloor) {
-            (*FPD(TWallSets (*), WallSets))[(u16)((First + WallSet) - 1) - 1][Wall - 1][Tile] += Delta;
+  {
+    u16 limit = Count;
+    if (1 <= limit) {
+      WallSet = 1;
+      for (;;) {
+          if (((u16)((First + WallSet) - 1) >= 1 && (u16)((First + WallSet) - 1) <= LastWallSlot)) {
+            WallSetSlotPairs[(u16)((First + WallSet) - 1)].A = 0xFFFF;
+            WallSetSlotPairs[(u16)((First + WallSet) - 1)].B = 0xFFFF;
+            {
+              if (1 <= WallsPerSet) {
+                Wall = 1;
+                for (;;) {
+                    {
+                      if (0 <= LastWallTile) {
+                        Tile = 0;
+                        for (;;) {
+                            if ((*FPD(TWallSets (*), WallSets))[(u16)((First + WallSet) - 1) - 1][Wall - 1][Tile] >= WallSymbolFloor) {
+                              (*FPD(TWallSets (*), WallSets))[(u16)((First + WallSet) - 1) - 1][Wall - 1][Tile] += Delta;
+                            }
+                          if (Tile == LastWallTile) break;
+                          Tile++;
+                        }
+                      }
+                    }
+                  if (Wall == WallsPerSet) break;
+                  Wall++;
+                }
+              }
+            }
+            if (Count > 1) {
+              if (BlockId == 0) {
+                BlockId = 10;
+              }
+              Load8x8Bank((BlockId * 10) + WallSet, (u16)((First + WallSet) - 1));
+            } else {
+              Load8x8Bank(BlockId, (u16)((First + WallSet) - 1));
+            }
           }
-          if (Tile == LastWallTile) break;
-          Tile++;
-        }
-        if (Wall == WallsPerSet) break;
-        Wall++;
-      }
-      if (Count > 1) {
-        if (BlockId == 0) {
-          BlockId = 10;
-        }
-        Load8x8Bank((BlockId * 10) + WallSet, (u16)((First + WallSet) - 1));
-      } else {
-        Load8x8Bank(BlockId, (u16)((First + WallSet) - 1));
+        if (WallSet == limit) break;
+        WallSet++;
       }
     }
-    if (WallSet == t2) break;
-    WallSet++;
   }
   if (BlockId == 10) {
     BlockId = 0;
@@ -611,6 +649,7 @@ void LoadWallSet(u8 BlockId, u8 First)
      whitepaper 4.2.1), frees the block and records BlockId in GameVars^[VarGeoBlock]. */
 void Load3DMap(u8 BlockId)
 {
+  POOL_TRACE("Load3DMap");
   u16 Size = 0;
   farptr Block = 0;
   u16 Offset = 0;
@@ -641,5 +680,6 @@ void Load3DMap(u8 BlockId)
 /* Initialisation part of unit OVL29. */
 void init_OVL29(void)
 {
+  POOL_TRACE("init");
   /* Initialisation (ovl29:1206): empty (55 89 E5 5D CB). */
 }

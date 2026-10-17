@@ -4,6 +4,7 @@
      shorter. Called by ChooseFromList and its nested routines and by ovl16 (packet). */
 PMenuLine GetMenuLine(s16 Index, PMenuLine List)
 {
+  POOL_TRACE("GetMenuLine");
   PMenuLine Result = 0;
   PMenuLine Line = 0;
   s16 I = 0;
@@ -25,6 +26,7 @@ PMenuLine GetMenuLine(s16 Index, PMenuLine List)
      ChooseFromList. */
 s16 CountMenuLines(PMenuLine List)
 {
+  POOL_TRACE("CountMenuLines");
   s16 Result = 0;
   PMenuLine Line = 0;
   s16 N = 0;
@@ -72,24 +74,27 @@ static void ReadPromptChoice_SplitPromptWords(struct Frame_ReadPromptChoice *up,
   u8 I = 0;
   u8 Len = 0;
   u8 Spare = 0;
-  u8 t1;
   rtl_FillChar((void *)&up->Words, 40, 0);
   Count = 1;
   Len = Text[0];
-  t1 = Len;
-  I = 1;
-  if (I <= t1) for (;;) {
-    if ((Text[I] >= '0' && Text[I] <= '9') || (Text[I] >= 'A' && Text[I] <= 'Z')) {
-      if (up->Words[Count - 1].Start == 0) {
-        up->Words[Count - 1].Start = I;
-      } else {
-        up->Words[Count - 1].Stop = I - 2;
-        Count++;
-        up->Words[Count - 1].Start = I;
+  {
+    u8 limit = Len;
+    if (1 <= limit) {
+      I = 1;
+      for (;;) {
+          if ((Text[I] >= '0' && Text[I] <= '9') || (Text[I] >= 'A' && Text[I] <= 'Z')) {
+            if (up->Words[Count - 1].Start == 0) {
+              up->Words[Count - 1].Start = I;
+            } else {
+              up->Words[Count - 1].Stop = I - 2;
+              Count++;
+              up->Words[Count - 1].Start = I;
+            }
+          }
+        if (I == limit) break;
+        I++;
       }
     }
-    if (I == t1) break;
-    I++;
   }
   up->Words[Count - 1].Stop = Len;
   up->WordCount = Count;
@@ -101,20 +106,23 @@ static void ReadPromptChoice_SplitPromptWords(struct Frame_ReadPromptChoice *up,
 static void ReadPromptChoice_DrawPromptWords(struct Frame_ReadPromptChoice *up, u8 Chosen)
 {
   u8 I = 0;
-  u8 t1;
   if (up->PromptLen > 0) {
-    t1 = up->PromptLen;
-    I = 1;
-    if (I <= t1) for (;;) {
-      if ((((up->Words[Chosen - 1].Start <= I)) && ((up->Words[Chosen - 1].Stop >= I))) && ((up->HotColor != 0))) {
-        DrawGlyph((s16)((up->WordsCol + I) - 1), BottomRow, up->HotColor, 1, up->Prompt[I], 1);
-      } else if ((up->Prompt[I] >= '0' && up->Prompt[I] <= '9') || (up->Prompt[I] >= 'A' && up->Prompt[I] <= 'Z')) {
-        DrawGlyph((s16)((up->WordsCol + I) - 1), BottomRow, up->HotColor, 1, up->Prompt[I], 1);
-      } else {
-        DrawGlyph((s16)((up->WordsCol + I) - 1), BottomRow, up->WordColor, 1, up->Prompt[I], 1);
+    {
+      u8 limit = up->PromptLen;
+      if (1 <= limit) {
+        I = 1;
+        for (;;) {
+            if ((((up->Words[Chosen - 1].Start <= I)) && ((up->Words[Chosen - 1].Stop >= I))) && ((up->HotColor != 0))) {
+              DrawGlyph((s16)((up->WordsCol + I) - 1), BottomRow, up->HotColor, 1, up->Prompt[I], 1);
+            } else if ((up->Prompt[I] >= '0' && up->Prompt[I] <= '9') || (up->Prompt[I] >= 'A' && up->Prompt[I] <= 'Z')) {
+              DrawGlyph((s16)((up->WordsCol + I) - 1), BottomRow, up->HotColor, 1, up->Prompt[I], 1);
+            } else {
+              DrawGlyph((s16)((up->WordsCol + I) - 1), BottomRow, up->WordColor, 1, up->Prompt[I], 1);
+            }
+          if (I == limit) break;
+          I++;
+        }
       }
-      if (I == t1) break;
-      I++;
     }
     if ((s16)(up->WordsCol + up->PromptLen) < LastTextCol) {
       DrawGlyph((s16)(up->WordsCol + up->PromptLen), BottomRow, 0, (s16)(((LastTextCol - up->PromptLen) - up->WordsCol) + 1), Space, 1);
@@ -141,6 +149,7 @@ static void ReadPromptChoice_DrawPromptWords(struct Frame_ReadPromptChoice *up, 
      QUIRK ovl25:0530: the timeout counts from the last animation frame, not from the start. */
 u8 ReadPromptChoice(const u8 *Title_in, const u8 *Prompt_in, u8 TitleColor, u8 WordColor, u8 HotColor, u8 ExtKeys, u8 Animate, u8 (*ExtKey))
 {
+  POOL_TRACE("ReadPromptChoice");
   Frame_ReadPromptChoice fr;
   memset(&fr, 0, sizeof fr);
   rtl_str_assign(fr.Title, 40, Title_in);
@@ -151,7 +160,6 @@ u8 ReadPromptChoice(const u8 *Title_in, const u8 *Prompt_in, u8 TitleColor, u8 W
   fr.ExtKeys = ExtKeys;
   fr.Animate = Animate;
   fr.ExtKey = ExtKey;
-  u8 t1;
   LastPromptExtKey = 0;
   fr.AcceptsEnter = (((fr.WordColor != 0)) || ((fr.HotColor != 0)));
   ReadPromptChoice_SplitPromptWords(&fr, fr.Prompt);
@@ -235,20 +243,24 @@ u8 ReadPromptChoice(const u8 *Title_in, const u8 *Prompt_in, u8 TitleColor, u8 W
             if (fr.Key == ' ') {
               fr.Done = 1;
             } else {
-              t1 = fr.PromptLen;
-              fr.I = 1;
-              if (fr.I <= t1) for (;;) {
-                if (fr.Prompt[fr.I] == fr.Key) {
-                  fr.Done = 1;
-                  fr.J = 1;
-                  while (fr.Words[fr.J - 1].Start != fr.I) {
-                    fr.J++;
+              {
+                u8 limit = fr.PromptLen;
+                if (1 <= limit) {
+                  fr.I = 1;
+                  for (;;) {
+                      if (fr.Prompt[fr.I] == fr.Key) {
+                        fr.Done = 1;
+                        fr.J = 1;
+                        while (fr.Words[fr.J - 1].Start != fr.I) {
+                          fr.J++;
+                        }
+                        PromptWordChoice = fr.J;
+                        ReadPromptChoice_DrawPromptWords(&fr, PromptWordChoice);
+                      }
+                    if (fr.I == limit) break;
+                    fr.I++;
                   }
-                  PromptWordChoice = fr.J;
-                  ReadPromptChoice_DrawPromptWords(&fr, PromptWordChoice);
                 }
-                if (fr.I == t1) break;
-                fr.I++;
               }
             }
           }
@@ -278,6 +290,7 @@ u8 ReadPromptChoice(const u8 *Title_in, const u8 *Prompt_in, u8 TitleColor, u8 W
      the loader (ovl07, ovl11), the area keys and many other units before they draw a new prompt. */
 void ClearPromptLine(void)
 {
+  POOL_TRACE("ClearPromptLine");
   ClearTextCells(0, BottomRow, 0, TextCols);
 }
 
@@ -522,6 +535,7 @@ static void ChooseFromList_MoveListCursor(struct Frame_ChooseFromList *up, u8 Do
      Total) and the two counts are used for different checks. */
 u8 ChooseFromList(const u8 *Title_in, const u8 *Prompt_in, u8 HeadingColor, u8 LineColor, u8 HighlightColor, s8 Left, s8 Top, s8 Right, s8 Bottom, PMenuLine List, u8 WithExit, u8 (*Redraw), s16 (*Choice), PMenuLine (*Selected))
 {
+  POOL_TRACE("ChooseFromList");
   Frame_ChooseFromList fr;
   memset(&fr, 0, sizeof fr);
   rtl_str_assign(fr.Title, 40, Title_in);
@@ -660,6 +674,7 @@ u8 ChooseFromList(const u8 *Title_in, const u8 *Prompt_in, u8 HeadingColor, u8 L
      (AskCastAnyway, ChargeForCure) and ovl08, ovl13, ovl15, ovl16. */
 u8 AskYesNo(const u8 *Prompt_in, u8 TitleColor, u8 WordColor, u8 HotColor)
 {
+  POOL_TRACE("AskYesNo");
   const u8 *Prompt = Prompt_in;
   u8 Result = 0;
   u8 ExtKey = 0;
@@ -677,24 +692,28 @@ u8 AskYesNo(const u8 *Prompt_in, u8 TitleColor, u8 WordColor, u8 HotColor)
      the Temple (HealMenu), ovl03 and ovl16. */
 void NewMenuList(s16 Count, PMenuLine (*List))
 {
+  POOL_TRACE("NewMenuList");
   PMenuLine Line = 0;
   s16 I = 0;
-  s16 t1;
   (*List) = rtl_getmem(MenuLineBytes);
   (*FPD(TMenuLine (*), (*List))).Next = 0;
   (*FPD(TMenuLine (*), (*List))).Flag29 = 0;
   rtl_str_assign((*FPD(TMenuLine (*), (*List))).Text, 40, S("\000"));
   Line = (*List);
-  t1 = Count;
-  I = 2;
-  if (I <= t1) for (;;) {
-    (*FPD(TMenuLine (*), Line)).Next = rtl_getmem(MenuLineBytes);
-    Line = (*FPD(TMenuLine (*), Line)).Next;
-    (*FPD(TMenuLine (*), Line)).Next = 0;
-    (*FPD(TMenuLine (*), Line)).Flag29 = 0;
-    rtl_str_assign((*FPD(TMenuLine (*), Line)).Text, 40, S("\000"));
-    if (I == t1) break;
-    I++;
+  {
+    s16 limit = Count;
+    if (2 <= limit) {
+      I = 2;
+      for (;;) {
+          (*FPD(TMenuLine (*), Line)).Next = rtl_getmem(MenuLineBytes);
+          Line = (*FPD(TMenuLine (*), Line)).Next;
+          (*FPD(TMenuLine (*), Line)).Next = 0;
+          (*FPD(TMenuLine (*), Line)).Flag29 = 0;
+          rtl_str_assign((*FPD(TMenuLine (*), Line)).Text, 40, S("\000"));
+        if (I == limit) break;
+        I++;
+      }
+    }
   }
 }
 
@@ -702,6 +721,7 @@ void NewMenuList(s16 Count, PMenuLine (*List))
      QUIRK ovl25:11F3: List itself is left pointing at the freed first line. */
 void FreeMenuList(PMenuLine (*List))
 {
+  POOL_TRACE("FreeMenuList");
   PMenuLine Line = 0;
   PMenuLine Done = 0;
   Line = (*List);
@@ -715,4 +735,5 @@ void FreeMenuList(PMenuLine (*List))
 /* Initialisation part of unit OVL25. */
 void init_OVL25(void)
 {
+  POOL_TRACE("init");
 }

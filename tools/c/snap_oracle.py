@@ -51,7 +51,7 @@ def names() -> list[tuple[int, int, str]]:
     out = []
     for line in (ROOT / "c/game/globals.txt").read_text().split("\n"):
         if line.strip():
-            o, sz, nm = line.split()
+            o, sz, nm = line.split()[:3]
             out.append((int(o, 16), int(sz), nm))
     return sorted(out)
 
@@ -68,7 +68,9 @@ def name_of(off: int, table) -> str:
 def diff(a: str, b: str, limit: int = 40) -> int:
     table = names()
     da, db = Path(a + "-snap.dgroup").read_bytes(), Path(b + "-snap.dgroup").read_bytes()
-    bad = [i for i in range(0x10000) if da[i] != db[i] and not (STACK[0] <= i < STACK[1])]
+    import export_replay as ex
+    ranges = ex.STATIC_MASKS + ex.file_masks()
+    bad = [i for i in range(0x10000) if da[i] != db[i] and not any(lo <= i < hi for lo, hi in ranges)]
     print("DGROUP: %d bytes differ" % len(bad))
     groups: dict[str, list[int]] = {}
     for i in bad:

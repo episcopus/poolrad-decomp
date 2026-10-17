@@ -12,6 +12,7 @@
      character for the whole drawing. */
 void ShowCharacterSheet(void)
 {
+  POOL_TRACE("ShowCharacterSheet");
   u8 SpareFirst = 0;
   u8 Row = 0;
   u8 Col = 0;
@@ -46,60 +47,68 @@ void ShowCharacterSheet(void)
   DrawTextAt(1, ShowCharacterSheet_AlignmentRow, ShowCharacterSheet_TextColor, Text);
   rtl_str_assign(Text, 255, ClassNames[(*FPD(TCharacter (*), SheetCharacter)).ClassCombo]);
   DrawTextAt(1, ShowCharacterSheet_ClassRow, ShowCharacterSheet_TextColor, Text);
-  Stat = 0;
-  if (Stat <= 5) for (;;) {
-    switch (Stat) {
-    case 0:
-    {
-      rtl_str_assign(Text, 255, S("\004STR "));
-      break;
+  {
+    if (0 <= 5) {
+      Stat = 0;
+      for (;;) {
+          switch (Stat) {
+          case 0:
+          {
+            rtl_str_assign(Text, 255, S("\004STR "));
+            break;
+          }
+          case 1:
+          {
+            rtl_str_assign(Text, 255, S("\004INT "));
+            break;
+          }
+          case 2:
+          {
+            rtl_str_assign(Text, 255, S("\004WIS "));
+            break;
+          }
+          case 3:
+          {
+            rtl_str_assign(Text, 255, S("\004DEX "));
+            break;
+          }
+          case 4:
+          {
+            rtl_str_assign(Text, 255, S("\004CON "));
+            break;
+          }
+          case 5:
+          {
+            rtl_str_assign(Text, 255, S("\004CHA "));
+            break;
+          }
+          }
+          DrawTextAt(1, (s16)(Stat + ShowCharacterSheet_FirstAbilityRow), ShowCharacterSheet_StatLabelColor, Text);
+          ShowAbilityScore(Stat, 0);
+        if (Stat == 5) break;
+        Stat++;
+      }
     }
-    case 1:
-    {
-      rtl_str_assign(Text, 255, S("\004INT "));
-      break;
-    }
-    case 2:
-    {
-      rtl_str_assign(Text, 255, S("\004WIS "));
-      break;
-    }
-    case 3:
-    {
-      rtl_str_assign(Text, 255, S("\004DEX "));
-      break;
-    }
-    case 4:
-    {
-      rtl_str_assign(Text, 255, S("\004CON "));
-      break;
-    }
-    case 5:
-    {
-      rtl_str_assign(Text, 255, S("\004CHA "));
-      break;
-    }
-    }
-    DrawTextAt(1, (s16)(Stat + ShowCharacterSheet_FirstAbilityRow), ShowCharacterSheet_StatLabelColor, Text);
-    ShowAbilityScore(Stat, 0);
-    if (Stat == 5) break;
-    Stat++;
   }
   ShowCharacterMoney();
   DrawTextAt(1, ShowCharacterSheet_LevelRow, ShowCharacterSheet_TextColor, S("\005Level"));
   NeedSlash = 0;
   rtl_str_assign(Text, 255, S("\000"));
-  ClassSlot = 0;
-  if (ClassSlot <= 7) for (;;) {
-    if ((*FPD(TCharacter (*), SheetCharacter)).ClassLevels[ClassSlot] > 0) {
-      if (NeedSlash) {
-        rtl_str_assign(Text, 255, rtl_str_cat(t3, 2, (const u8 *const[]){Text, S("\001/")}));
+  {
+    if (0 <= 7) {
+      ClassSlot = 0;
+      for (;;) {
+          if ((*FPD(TCharacter (*), SheetCharacter)).ClassLevels[ClassSlot] > 0) {
+            if (NeedSlash) {
+              rtl_str_assign(Text, 255, rtl_str_cat(t3, 2, (const u8 *const[]){Text, S("\001/")}));
+            }
+            rtl_str_assign(Text, 255, rtl_str_cat(t5, 2, (const u8 *const[]){Text, ByteToText(t4, (*FPD(TCharacter (*), SheetCharacter)).ClassLevels[ClassSlot])}));
+            NeedSlash = 1;
+          }
+        if (ClassSlot == 7) break;
+        ClassSlot++;
       }
-      rtl_str_assign(Text, 255, rtl_str_cat(t5, 2, (const u8 *const[]){Text, ByteToText(t4, (*FPD(TCharacter (*), SheetCharacter)).ClassLevels[ClassSlot])}));
-      NeedSlash = 1;
     }
-    if (ClassSlot == 7) break;
-    ClassSlot++;
   }
   DrawTextAt(7, ShowCharacterSheet_LevelRow, ShowCharacterSheet_TextColor, Text);
   DrawTextAt(17, ShowCharacterSheet_LevelRow, ShowCharacterSheet_TextColor, rtl_str_cat(t7, 2, (const u8 *const[]){S("\004Exp "), LongIntToText(t6, (*FPD(TCharacter (*), SheetCharacter)).Experience)}));
@@ -130,22 +139,27 @@ void ShowCharacterSheet(void)
      a row, its name ending in column 19 and its amount in column 21. The Money entries are Words at +$88. */
 void ShowCharacterMoney(void)
 {
+  POOL_TRACE("ShowCharacterMoney");
   u8 Row = 0;
   s8 Kind = 0;
   String40_RES06 Name = {0};
   u8 t1[256];
   ClearWindow(ShowCharacterMoney_MoneyWindowLeft, ShowCharacterMoney_MoneyWindowTop, ShowCharacterMoney_MoneyWindowRight, ShowCharacterMoney_MoneyWindowBottom);
   Row = ShowCharacterMoney_MoneyWindowTop;
-  Kind = ShowCharacterMoney_LastMoneyKind;
-  if (Kind >= 0) for (;;) {
-    if ((*FPD(TCharacter (*), SelectedCharacter)).Money[Kind] > 0) {
-      rtl_str_assign(Name, 40, MoneyKindNames[Kind]);
-      DrawTextAt((s16)(ShowCharacterMoney_MoneyNameRight - Name[0]), Row, ShowCharacterMoney_MoneyColor, Name);
-      DrawTextAt(ShowCharacterMoney_MoneyAmountColumn, Row, ShowCharacterMoney_MoneyColor, WordToText(t1, (*FPD(TCharacter (*), SelectedCharacter)).Money[Kind]));
-      Row++;
+  {
+    if (ShowCharacterMoney_LastMoneyKind >= 0) {
+      Kind = ShowCharacterMoney_LastMoneyKind;
+      for (;;) {
+          if ((*FPD(TCharacter (*), SelectedCharacter)).Money[Kind] > 0) {
+            rtl_str_assign(Name, 40, MoneyKindNames[Kind]);
+            DrawTextAt((s16)(ShowCharacterMoney_MoneyNameRight - Name[0]), Row, ShowCharacterMoney_MoneyColor, Name);
+            DrawTextAt(ShowCharacterMoney_MoneyAmountColumn, Row, ShowCharacterMoney_MoneyColor, WordToText(t1, (*FPD(TCharacter (*), SelectedCharacter)).Money[Kind]));
+            Row++;
+          }
+        if (Kind == 0) break;
+        Kind--;
+      }
     }
-    if (Kind == 0) break;
-    Kind--;
   }
 }
 
@@ -157,6 +171,7 @@ void ShowCharacterMoney(void)
      (its call at ovl19:03F5) and by ovl16 (CreateCharacter, ModifyCharacter). */
 void ShowCombatStats(void)
 {
+  POOL_TRACE("ShowCombatStats");
   PCharacter Character = 0;
   u8 Row = 0;
   u8 Col = 0;
@@ -212,6 +227,7 @@ void ShowCombatStats(void)
      on row 7, two digits, 00 for 100. Called by ShowCharacterSheet for each of the six lines with Highlight False. */
 void ShowAbilityScore(s8 Index, u8 Highlight)
 {
+  POOL_TRACE("ShowAbilityScore");
   String40_RES06 Percentile = {0};
   u8 Col = 0;
   u8 Color = 0;
@@ -256,6 +272,7 @@ void ShowAbilityScore(s8 Index, u8 Highlight)
      it too. ViewedCharacter keeps a copy of SelectedCharacter (ovl19:0AD1). */
 void ViewSelectedCharacter(u8 (*Done))
 {
+  POOL_TRACE("ViewSelectedCharacter");
   u8 Key = 0;
   u8 Spare = 0;
   String40_RES06 Menu = {0};
@@ -281,21 +298,29 @@ void ViewSelectedCharacter(u8 (*Done))
     rtl_str_assign(Menu, 40, S("\000"));
     HasSpells = 0;
     HasMoney = 0;
-    Spell = 0;
-    if (Spell <= 20) for (;;) {
-      if ((*FPD(TCharacter (*), SheetCharacter)).Spells[Spell] > 0) {
-        HasSpells = 1;
+    {
+      if (0 <= 20) {
+        Spell = 0;
+        for (;;) {
+            if ((*FPD(TCharacter (*), SheetCharacter)).Spells[Spell] > 0) {
+              HasSpells = 1;
+            }
+          if (Spell == 20) break;
+          Spell++;
+        }
       }
-      if (Spell == 20) break;
-      Spell++;
     }
-    Kind = 0;
-    if (Kind <= 6) for (;;) {
-      if ((*FPD(TCharacter (*), SheetCharacter)).Money[Kind] > 0) {
-        HasMoney = 1;
+    {
+      if (0 <= 6) {
+        Kind = 0;
+        for (;;) {
+            if ((*FPD(TCharacter (*), SheetCharacter)).Money[Kind] > 0) {
+              HasMoney = 1;
+            }
+          if (Kind == 6) break;
+          Kind++;
+        }
       }
-      if (Kind == 6) break;
-      Kind++;
     }
     if ((*FPD(TCharacter (*), SheetCharacter)).Items != 0) {
       rtl_str_assign(Menu, 40, rtl_str_cat(t1, 2, (const u8 *const[]){Menu, S("\006Items ")}));
@@ -357,6 +382,7 @@ void ViewSelectedCharacter(u8 (*Done))
      Side effect: rows 21 and 22 (columns 1 to 38) are cleared on every path. */
 u8 CanGiveUpItem(PMenuLine Item)
 {
+  POOL_TRACE("CanGiveUpItem");
   u8 Result = 0;
   Result = 0;
   if ((*FPD(TMenuLine (*), Item)).Readied) {
@@ -393,6 +419,7 @@ u8 CanGiveUpItem(PMenuLine Item)
      a character whose Combat^.CanUseMagicItem is set. Trade is not offered in combat. */
 void RunItemMenu(u8 (*Done))
 {
+  POOL_TRACE("RunItemMenu");
   u8 Key = 0;
   String40_RES06 Menu = {0};
   u8 Spare = 0;
@@ -562,6 +589,7 @@ void RunItemMenu(u8 (*Done))
      (+$F4) but the message names SlotItems[9] (+$F0). */
 void ReadyItem(PMenuLine Item)
 {
+  POOL_TRACE("ReadyItem");
   u8 AffectOn = 0;
   u8 Reason = 0;
   u8 Slot = 0;
@@ -664,6 +692,7 @@ void ReadyItem(PMenuLine Item)
      SelectedCharacter (the giver). Side effects: the screen (RedrawView) and the messages. */
 void TradeItem(PMenuLine Item)
 {
+  POOL_TRACE("TradeItem");
   PCharacter Recipient = 0;
   Recipient = ViewedCharacter;
   RedrawView();
@@ -688,6 +717,7 @@ void TradeItem(PMenuLine Item)
      message (ShowFlashMessage). */
 void HalveItem(PMenuLine Item)
 {
+  POOL_TRACE("HalveItem");
   PMenuLine NewItem = 0;
   u8 Half = 0;
   u8 Rest = 0;
@@ -717,6 +747,7 @@ void HalveItem(PMenuLine Item)
      sides read Cursor), so they never reject a match; only the Affects[1] below 2 test (ovl19:19B4) does. */
 void JoinItem(PMenuLine Item)
 {
+  POOL_TRACE("JoinItem");
   PMenuLine Cursor = 0;
   PMenuLine Next = 0;
   PMenuLine Target = 0;
@@ -757,6 +788,7 @@ void JoinItem(PMenuLine Item)
      messages, the screen (the item line is on row 22, or 23 in combat). */
 void UseItem(PMenuLine Item, u8 (*Done))
 {
+  POOL_TRACE("UseItem");
   u8 Spell = 0;
   u16 Choice = 0;
   u8 Listed = 0;
@@ -826,6 +858,7 @@ void UseItem(PMenuLine Item, u8 (*Done))
      same kind for $1C, so the $1C branch (ovl19:1D46, the stack offer without the division) is never taken. */
 void SellItem(PMenuLine Item)
 {
+  POOL_TRACE("SellItem");
   u16 Offer = 0;
   u16 Platinum = 0;
   u16 Gold = 0;
@@ -877,6 +910,7 @@ void SellItem(PMenuLine Item)
      Side effects: rows 21 and 22 (columns 1 to 38) are cleared at the end; DelayByGameSpeed after a payment. */
 void IdentifyItem(PMenuLine Item, u8 (*Redraw))
 {
+  POOL_TRACE("IdentifyItem");
   s32 CharacterGold = 0;
   s32 PooledGold = 0;
   u8 Paid = 0;
@@ -933,6 +967,7 @@ void IdentifyItem(PMenuLine Item, u8 (*Redraw))
      byte the frame held before the call. */
 void TradeMoney(void)
 {
+  POOL_TRACE("TradeMoney");
   PCharacter Recipient = 0;
   s8 Kind = 0;
   s8 CoinKind = 0;
@@ -951,9 +986,8 @@ void TradeMoney(void)
   u8 Finished = 0;
   u8 Done = 0;
   u8 Redraw = 0;
-  u8 t1;
+  u8 t1[256];
   u8 t2[256];
-  u8 t3[256];
   do {
     Recipient = ViewedCharacter;
     RedrawView();
@@ -969,34 +1003,42 @@ void TradeMoney(void)
         Chosen = 0;
         Head = 0;
         Kinds = 0;
-        Kind = 0;
-        if (Kind <= TradeMoney_LastMoneyKind) for (;;) {
-          if ((*FPD(TCharacter (*), SelectedCharacter)).Money[Kind] != 0) {
-            Kinds++;
-            if (List == 0) {
-              List = rtl_getmem(MenuLineBytes);
-              (*FPD(TMenuLine (*), List)).Next = 0;
-            } else {
-              Chosen = List;
-              List = rtl_getmem(MenuLineBytes);
-              (*FPD(TMenuLine (*), List)).Next = Chosen;
+        {
+          if (0 <= TradeMoney_LastMoneyKind) {
+            Kind = 0;
+            for (;;) {
+                if ((*FPD(TCharacter (*), SelectedCharacter)).Money[Kind] != 0) {
+                  Kinds++;
+                  if (List == 0) {
+                    List = rtl_getmem(MenuLineBytes);
+                    (*FPD(TMenuLine (*), List)).Next = 0;
+                  } else {
+                    Chosen = List;
+                    List = rtl_getmem(MenuLineBytes);
+                    (*FPD(TMenuLine (*), List)).Next = Chosen;
+                  }
+                  rtl_str_int(Num, 15, (*FPD(TCharacter (*), SelectedCharacter)).Money[Kind], 0);
+                  Pad = TradeMoney_NameColumnWidth - MoneyKindNames[Kind][0];
+                  rtl_str_assign(Spaces, 4, S("\000"));
+                  Spaces[0] = (u8)Pad;
+                  {
+                    u8 limit = Pad;
+                    if (1 <= limit) {
+                      I = 1;
+                      for (;;) {
+                          Spaces[I] = ' ';
+                        if (I == limit) break;
+                        I++;
+                      }
+                    }
+                  }
+                  rtl_str_assign((*FPD(TMenuLine (*), List)).Text, 40, rtl_str_cat(t1, 4, (const u8 *const[]){Spaces, MoneyKindNames[Kind], S("\001 "), Num}));
+                  (*FPD(TMenuLine (*), List)).Flag29 = 0;
+                }
+              if (Kind == TradeMoney_LastMoneyKind) break;
+              Kind++;
             }
-            rtl_str_int(Num, 15, (*FPD(TCharacter (*), SelectedCharacter)).Money[Kind], 0);
-            Pad = TradeMoney_NameColumnWidth - MoneyKindNames[Kind][0];
-            rtl_str_assign(Spaces, 4, S("\000"));
-            Spaces[0] = (u8)Pad;
-            t1 = Pad;
-            I = 1;
-            if (I <= t1) for (;;) {
-              Spaces[I] = ' ';
-              if (I == t1) break;
-              I++;
-            }
-            rtl_str_assign((*FPD(TMenuLine (*), List)).Text, 40, rtl_str_cat(t2, 4, (const u8 *const[]){Spaces, MoneyKindNames[Kind], S("\001 "), Num}));
-            (*FPD(TMenuLine (*), List)).Flag29 = 0;
           }
-          if (Kind == TradeMoney_LastMoneyKind) break;
-          Kind++;
         }
         Head = List;
         Choice = 0;
@@ -1007,19 +1049,23 @@ void TradeMoney(void)
         } else {
           rtl_str_assign(Text, 255, S("\000"));
           CoinKind = MoneyKindOfLine((*FPD(TMenuLine (*), Chosen)).Text, &Text);
-          rtl_str_assign(Text, 255, rtl_str_cat(t3, 3, (const u8 *const[]){S("\011How much "), Text, S("\020will you trade\077 ")}));
+          rtl_str_assign(Text, 255, rtl_str_cat(t2, 3, (const u8 *const[]){S("\011How much "), Text, S("\020will you trade\077 ")}));
           Amount = ReadAmount((*FPD(TCharacter (*), SelectedCharacter)).Money[CoinKind], Text, TradeMoney_AmountColor);
           TransferMoney(&SelectedCharacter, &Recipient, Amount, CoinKind);
           Done = 1;
           Finished = 1;
-          Kind = 0;
-          if (Kind <= TradeMoney_LastMoneyKind) for (;;) {
-            if ((*FPD(TCharacter (*), SelectedCharacter)).Money[Kind] > 0) {
-              Finished = 0;
-              Done = 0;
+          {
+            if (0 <= TradeMoney_LastMoneyKind) {
+              Kind = 0;
+              for (;;) {
+                  if ((*FPD(TCharacter (*), SelectedCharacter)).Money[Kind] > 0) {
+                    Finished = 0;
+                    Done = 0;
+                  }
+                if (Kind == TradeMoney_LastMoneyKind) break;
+                Kind++;
+              }
             }
-            if (Kind == TradeMoney_LastMoneyKind) break;
-            Kind++;
           }
         }
         if (Head != 0) {
@@ -1040,6 +1086,7 @@ void TradeMoney(void)
      QUIRK ovl19:24EF: Kinds is incremented for every listed kind and never read. */
 void ChooseAndDropMoney(void)
 {
+  POOL_TRACE("ChooseAndDropMoney");
   s8 Kind = 0;
   s8 CoinKind = 0;
   u8 Pad = 0;
@@ -1056,43 +1103,50 @@ void ChooseAndDropMoney(void)
   u8 Text[256] = {0};
   u8 Key = 0;
   u16 Amount = 0;
-  u8 t1;
+  u8 t1[256];
   u8 t2[256];
-  u8 t3[256];
   do {
     ShowCharacterMoney();
     List = 0;
     Chosen = 0;
     Head = 0;
     Kinds = 0;
-    Kind = 0;
-    if (Kind <= ChooseAndDropMoney_LastMoneyKind) for (;;) {
-      if ((*FPD(TCharacter (*), SelectedCharacter)).Money[Kind] != 0) {
-        Kinds++;
-        if (List == 0) {
-          List = rtl_getmem(MenuLineBytes);
-          (*FPD(TMenuLine (*), List)).Next = 0;
-        } else {
-          Chosen = List;
-          List = rtl_getmem(MenuLineBytes);
-          (*FPD(TMenuLine (*), List)).Next = Chosen;
+    {
+      if (0 <= ChooseAndDropMoney_LastMoneyKind) {
+        Kind = 0;
+        for (;;) {
+            if ((*FPD(TCharacter (*), SelectedCharacter)).Money[Kind] != 0) {
+              Kinds++;
+              if (List == 0) {
+                List = rtl_getmem(MenuLineBytes);
+                (*FPD(TMenuLine (*), List)).Next = 0;
+              } else {
+                Chosen = List;
+                List = rtl_getmem(MenuLineBytes);
+                (*FPD(TMenuLine (*), List)).Next = Chosen;
+              }
+              rtl_str_int(Num, 15, (*FPD(TCharacter (*), SelectedCharacter)).Money[Kind], 0);
+              Pad = ChooseAndDropMoney_NameColumnWidth - MoneyKindNames[Kind][0];
+              rtl_str_assign(Spaces, 4, S("\000"));
+              Spaces[0] = (u8)Pad;
+              {
+                u8 limit = Pad;
+                if (1 <= limit) {
+                  I = 1;
+                  for (;;) {
+                      Spaces[I] = ' ';
+                    if (I == limit) break;
+                    I++;
+                  }
+                }
+              }
+              rtl_str_assign((*FPD(TMenuLine (*), List)).Text, 40, rtl_str_cat(t1, 4, (const u8 *const[]){Spaces, MoneyKindNames[Kind], S("\001 "), Num}));
+              (*FPD(TMenuLine (*), List)).Flag29 = 0;
+            }
+          if (Kind == ChooseAndDropMoney_LastMoneyKind) break;
+          Kind++;
         }
-        rtl_str_int(Num, 15, (*FPD(TCharacter (*), SelectedCharacter)).Money[Kind], 0);
-        Pad = ChooseAndDropMoney_NameColumnWidth - MoneyKindNames[Kind][0];
-        rtl_str_assign(Spaces, 4, S("\000"));
-        Spaces[0] = (u8)Pad;
-        t1 = Pad;
-        I = 1;
-        if (I <= t1) for (;;) {
-          Spaces[I] = ' ';
-          if (I == t1) break;
-          I++;
-        }
-        rtl_str_assign((*FPD(TMenuLine (*), List)).Text, 40, rtl_str_cat(t2, 4, (const u8 *const[]){Spaces, MoneyKindNames[Kind], S("\001 "), Num}));
-        (*FPD(TMenuLine (*), List)).Flag29 = 0;
       }
-      if (Kind == ChooseAndDropMoney_LastMoneyKind) break;
-      Kind++;
     }
     Head = List;
     Choice = 0;
@@ -1103,17 +1157,21 @@ void ChooseAndDropMoney(void)
     } else {
       rtl_str_assign(Text, 255, S("\000"));
       CoinKind = MoneyKindOfLine((*FPD(TMenuLine (*), Chosen)).Text, &Text);
-      rtl_str_assign(Text, 255, rtl_str_cat(t3, 3, (const u8 *const[]){S("\011How much "), Text, S("\017will you drop\077 ")}));
+      rtl_str_assign(Text, 255, rtl_str_cat(t2, 3, (const u8 *const[]){S("\011How much "), Text, S("\017will you drop\077 ")}));
       Amount = ReadAmount((*FPD(TCharacter (*), SelectedCharacter)).Money[CoinKind], Text, ChooseAndDropMoney_AmountColor);
       DropMoney(SelectedCharacter, Amount, CoinKind);
       Done = 1;
-      Kind = 0;
-      if (Kind <= ChooseAndDropMoney_LastMoneyKind) for (;;) {
-        if ((*FPD(TCharacter (*), SelectedCharacter)).Money[Kind] > 0) {
-          Done = 0;
+      {
+        if (0 <= ChooseAndDropMoney_LastMoneyKind) {
+          Kind = 0;
+          for (;;) {
+              if ((*FPD(TCharacter (*), SelectedCharacter)).Money[Kind] > 0) {
+                Done = 0;
+              }
+            if (Kind == ChooseAndDropMoney_LastMoneyKind) break;
+            Kind++;
+          }
         }
-        if (Kind == ChooseAndDropMoney_LastMoneyKind) break;
-        Kind++;
       }
     }
     if (Head != 0) {
@@ -1127,6 +1185,7 @@ void ChooseAndDropMoney(void)
      by its count only when the count is nonzero. The call to RecalcCombatValues occurs before the checks. */
 u8 WouldOverloadInventory(PCharacter Character, PMenuLine Item)
 {
+  POOL_TRACE("WouldOverloadInventory");
   u8 Result = 0;
   u8 Overloaded = 0;
   u16 AddedWeight = 0;
@@ -1151,6 +1210,7 @@ u8 WouldOverloadInventory(PCharacter Character, PMenuLine Item)
      select the head. */
 void UpdateSelectedCharacter(u8 Key)
 {
+  POOL_TRACE("UpdateSelectedCharacter");
   PCharacter Character = 0;
   Character = PartyListHead;
   if (Character != 0) {
@@ -1189,16 +1249,21 @@ void UpdateSelectedCharacter(u8 Key)
      only its low word (ovl04:0177). QUIRK ovl19:28BE: the frame reserves [bp-$A], which is never accessed. */
 s32 CharacterMoneyValueInGold(PCharacter Who)
 {
+  POOL_TRACE("CharacterMoneyValueInGold");
   s32 Result = 0;
   s32 TotalCopper = 0;
   s8 CoinIndex = 0;
   u8 UnusedFrameByte = 0;
   TotalCopper = 0;
-  CoinIndex = 0;
-  if (CoinIndex <= CharacterMoneyValueInGold_LastCoinIndex) for (;;) {
-    TotalCopper += CoinCopperValues[CoinIndex] * (*FPD(TCharacter (*), Who)).Money[CoinIndex];
-    if (CoinIndex == CharacterMoneyValueInGold_LastCoinIndex) break;
-    CoinIndex++;
+  {
+    if (0 <= CharacterMoneyValueInGold_LastCoinIndex) {
+      CoinIndex = 0;
+      for (;;) {
+          TotalCopper += CoinCopperValues[CoinIndex] * (*FPD(TCharacter (*), Who)).Money[CoinIndex];
+        if (CoinIndex == CharacterMoneyValueInGold_LastCoinIndex) break;
+        CoinIndex++;
+      }
+    }
   }
   Result = ((TotalCopper + CharacterMoneyValueInGold_HalfGoldCopperValue) / CoinCopperValues[3]);
   return Result;
@@ -1208,6 +1273,7 @@ s32 CharacterMoneyValueInGold(PCharacter Who)
      spell window; it then delegates selection to ovl22. */
 u8 ChooseSpellFromList(u8 SpellListKind, u8 DisplayMode, u16 (*Choice), u8 (*Listed))
 {
+  POOL_TRACE("ChooseSpellFromList");
   u8 Result = 0;
   String40_RES06 ModeDescription = {0};
   u8 t1[256];
@@ -1269,4 +1335,5 @@ u8 ChooseSpellFromList(u8 SpellListKind, u8 DisplayMode, u16 (*Choice), u8 (*Lis
 /* Initialisation part of unit OVL19. */
 void init_OVL19(void)
 {
+  POOL_TRACE("init");
 }

@@ -13,6 +13,7 @@
      the list head before the empty-list test, so a nil list reads through nil and the value is discarded. */
 void AdvanceAffectDurations(u8 Amount, s8 Index)
 {
+  POOL_TRACE("AdvanceAffectDurations");
   s8 UnitIndex = 0;
   u8 PartyIndex = 0;
   u8 AffectTimeStep = 0;
@@ -119,24 +120,29 @@ void AdvanceAffectDurations(u8 Amount, s8 Index)
      proven). */
 void CarryRestClock(TRestClock (*Clock))
 {
+  POOL_TRACE("CarryRestClock");
   s8 Digit = 0;
   PCharacter Who = 0;
-  Digit = 0;
-  if (Digit <= TopClockDigit) for (;;) {
-    if ((*Clock)[Digit] >= ClockRadix[Digit]) {
-      if (Digit != TopClockDigit) {
-        (*Clock)[(s8)(Digit + 1)]++;
-        (*Clock)[Digit] = (*Clock)[Digit] - ClockRadix[Digit];
-      } else {
-        Who = PartyListHead;
-        while (Who != 0) {
-          (*FPD(TCharacter (*), Who)).Age++;
-          Who = (*FPD(TCharacter (*), Who)).Next;
-        }
+  {
+    if (0 <= TopClockDigit) {
+      Digit = 0;
+      for (;;) {
+          if ((*Clock)[Digit] >= ClockRadix[Digit]) {
+            if (Digit != TopClockDigit) {
+              (*Clock)[(s8)(Digit + 1)]++;
+              (*Clock)[Digit] = (*Clock)[Digit] - ClockRadix[Digit];
+            } else {
+              Who = PartyListHead;
+              while (Who != 0) {
+                (*FPD(TCharacter (*), Who)).Age++;
+                Who = (*FPD(TCharacter (*), Who)).Next;
+              }
+            }
+          }
+        if (Digit == TopClockDigit) break;
+        Digit++;
       }
     }
-    if (Digit == TopClockDigit) break;
-    Digit++;
   }
 }
 
@@ -146,6 +152,7 @@ void CarryRestClock(TRestClock (*Clock))
      less. */
 void NormalizeRestTime(void)
 {
+  POOL_TRACE("NormalizeRestTime");
   CarryRestClock(&RestTime);
   if (RestTime[5] > 0) {
     RestTime[4] += (u16)(ClockRadix[4] * RestTime[5]);
@@ -167,29 +174,41 @@ void NormalizeRestTime(void)
      side effects through AdvanceAffectDurations. */
 void AdvanceGameClock(u8 Amount, s8 Index)
 {
+  POOL_TRACE("AdvanceGameClock");
   TRestClock Clock = {0};
   s8 Digit = 0;
   u8 Step = 0;
-  u8 t1;
-  Digit = 0;
-  if (Digit <= 6) for (;;) {
-    Clock[Digit] = (*FPD(TVmWords4900 (*), VarsAt4900))[(s16)(GameClockWord + Digit) - 18688];
-    if (Digit == 6) break;
-    Digit++;
+  {
+    if (0 <= 6) {
+      Digit = 0;
+      for (;;) {
+          Clock[Digit] = (*FPD(TVmWords4900 (*), VarsAt4900))[(s16)(GameClockWord + Digit) - 18688];
+        if (Digit == 6) break;
+        Digit++;
+      }
+    }
   }
-  t1 = Amount;
-  Step = 1;
-  if (Step <= t1) for (;;) {
-    Clock[Index]++;
-    CarryRestClock(&Clock);
-    if (Step == t1) break;
-    Step++;
+  {
+    u8 limit = Amount;
+    if (1 <= limit) {
+      Step = 1;
+      for (;;) {
+          Clock[Index]++;
+          CarryRestClock(&Clock);
+        if (Step == limit) break;
+        Step++;
+      }
+    }
   }
-  Digit = 0;
-  if (Digit <= 6) for (;;) {
-    (*FPD(TVmWords4900 (*), VarsAt4900))[(s16)(GameClockWord + Digit) - 18688] = Clock[Digit];
-    if (Digit == 6) break;
-    Digit++;
+  {
+    if (0 <= 6) {
+      Digit = 0;
+      for (;;) {
+          (*FPD(TVmWords4900 (*), VarsAt4900))[(s16)(GameClockWord + Digit) - 18688] = Clock[Digit];
+        if (Digit == 6) break;
+        Digit++;
+      }
+    }
   }
   AdvanceAffectDurations(Amount, Index);
 }
@@ -203,9 +222,9 @@ void AdvanceGameClock(u8 Amount, s8 Index)
      (NormalizeRestTime). */
 void SpendRestTime(u8 Amount, s8 Index)
 {
+  POOL_TRACE("SpendRestTime");
   s8 Lender = 0;
   s8 Digit = 0;
-  s8 t1;
   if (((((RestTime[4] != 0)) || ((RestTime[3] != 0))) || ((RestTime[2] != 0))) || ((RestTime[1] != 0))) {
     while (Amount > RestTime[Index]) {
       Lender = (s8)(Index + 1);
@@ -216,13 +235,18 @@ void SpendRestTime(u8 Amount, s8 Index)
         rtl_FillChar((void *)&RestTime, 14, 0);
         Amount = 0;
       } else {
-        t1 = (s8)(Index + 1);
-        Digit = Lender;
-        if (Digit >= t1) for (;;) {
-          RestTime[Digit]--;
-          RestTime[(s8)(Digit - 1)] += ClockRadix[(s8)(Digit - 1)];
-          if (Digit == t1) break;
-          Digit--;
+        {
+          s8 limit = (s8)(Index + 1);
+          s8 first = Lender;
+          if (first >= limit) {
+            Digit = first;
+            for (;;) {
+                RestTime[Digit]--;
+                RestTime[(s8)(Digit - 1)] += ClockRadix[(s8)(Digit - 1)];
+              if (Digit == limit) break;
+              Digit--;
+            }
+          }
         }
       }
     }
@@ -236,6 +260,7 @@ void SpendRestTime(u8 Amount, s8 Index)
      two characters: ByteToText gives its text, a '0' goes in front below 10, the first two are kept. */
 u8 *TwoDigitText(u8 *Result_out, u8 Number)
 {
+  POOL_TRACE("TwoDigitText");
   u8 *Result = Result_out;
   String40_RES06 Digits = {0};
   u8 t1[256];
@@ -257,28 +282,37 @@ u8 *TwoDigitText(u8 *Result_out, u8 Number)
      drawn, so Selected 0 (every caller but the menu) highlights nothing. */
 void ShowRestTime(s8 Selected)
 {
+  POOL_TRACE("ShowRestTime");
   s8 Digit = 0;
   u16 Colors[7] = {0};
   u8 Col = 0;
   u8 t1[256];
   u8 t2[256];
-  Digit = 0;
-  if (Digit <= 6) for (;;) {
-    Colors[Digit] = RestTextColor;
-    if (Digit == 6) break;
-    Digit++;
+  {
+    if (0 <= 6) {
+      Digit = 0;
+      for (;;) {
+          Colors[Digit] = RestTextColor;
+        if (Digit == 6) break;
+        Digit++;
+      }
+    }
   }
   Colors[Selected] = RestSelectedColor;
   DrawTextAt(RestLabelColumn, RestRow, RestTextColor, S("\012Rest Time:"));
   Col = RestFirstColumn;
-  Digit = DaysDigit;
-  if (Digit >= HoursDigit) for (;;) {
-    DrawTextAt((s16)(Col + 1), RestRow, Colors[Digit], TwoDigitText(t1, RestTime[Digit]));
-    /* Col + 1 + 1 + 1 is the original's expression for the colon column, one past the two digits */
-    DrawTextAt((s16)(((Col + 1) + 1) + 1), RestRow, RestTextColor, S("\001:"));
-    Col += 3;
-    if (Digit == HoursDigit) break;
-    Digit--;
+  {
+    if (DaysDigit >= HoursDigit) {
+      Digit = DaysDigit;
+      for (;;) {
+          DrawTextAt((s16)(Col + 1), RestRow, Colors[Digit], TwoDigitText(t1, RestTime[Digit]));
+          /* Col + 1 + 1 + 1 is the original's expression for the colon column, one past the two digits */
+          DrawTextAt((s16)(((Col + 1) + 1) + 1), RestRow, RestTextColor, S("\001:"));
+          Col += 3;
+        if (Digit == HoursDigit) break;
+        Digit--;
+      }
+    }
   }
   DrawTextAt((s16)(Col + 1), RestRow, Colors[2], TwoDigitText(t2, (u16)((MinutesPerTensDigit * RestTime[2]) + RestTime[1])));
 }
@@ -294,6 +328,7 @@ void ShowRestTime(s8 Selected)
      which ends the loop (07D5 jumps to 083D, not to the epilogue). */
 u8 RestTimeMenu(void)
 {
+  POOL_TRACE("RestTimeMenu");
   u8 Result = 0;
   u8 ExtendedKey = 0;
   u8 Key = 0;
@@ -396,6 +431,7 @@ u8 RestTimeMenu(void)
      character health; side effects are the screen and delay. */
 void CheckRestHealing(void)
 {
+  POOL_TRACE("CheckRestHealing");
   u8 Healed = 0;
   PCharacter Who = 0;
   RestHealCounter++;
@@ -428,6 +464,7 @@ void CheckRestHealing(void)
      spell, or 0 when none remains. Reads SpellTable and changes Who^.Spells and Handled; also draws text. */
 u8 ProcessMemorizedSpell(PCharacter Who, u8 (*Handled))
 {
+  POOL_TRACE("ProcessMemorizedSpell");
   u8 Result = 0;
   u8 SpellLevel = 0;
   u8 SpellIndex = 0;
@@ -457,6 +494,7 @@ u8 ProcessMemorizedSpell(PCharacter Who, u8 (*Handled))
      Who^.KnownSpells, the scroll and Handled; also changes the screen. */
 u8 ProcessPendingScribedSpell(PCharacter Who, u8 (*Handled))
 {
+  POOL_TRACE("ProcessPendingScribedSpell");
   u8 Result = 0;
   u8 SpellIndex = 0;
   u8 SpellNumber = 0;
@@ -495,6 +533,7 @@ u8 ProcessPendingScribedSpell(PCharacter Who, u8 (*Handled))
      changes RestStudyCountdowns, spell state and the screen through the study helpers. */
 void AdvanceRestStudies(void)
 {
+  POOL_TRACE("AdvanceRestStudies");
   u8 PartyIndex = 0;
   u8 SpellLevel = 0;
   PCharacter Who = 0;
@@ -526,6 +565,7 @@ void AdvanceRestStudies(void)
      RestStudyCountdowns. */
 void AdvanceRestHour(u8 (*State))
 {
+  POOL_TRACE("AdvanceRestHour");
   u8 PartyIndex = 0;
   u8 SpellLevel = 0;
   PCharacter Who = 0;
@@ -564,6 +604,7 @@ void AdvanceRestHour(u8 (*State))
      when a key is pending, and clears its window on exit. Result 1 means interrupted. */
 u8 RunRestPeriod(void)
 {
+  POOL_TRACE("RunRestPeriod");
   u8 Result = 0;
   PCharacter Who = 0;
   u8 FrameGap[5] = {0};
@@ -632,4 +673,5 @@ u8 RunRestPeriod(void)
 /* Initialisation part of unit OVL20. */
 void init_OVL20(void)
 {
+  POOL_TRACE("init");
 }

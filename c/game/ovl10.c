@@ -5,54 +5,63 @@
      tile $1C (d10 of 1..6) or $1D (7..10). Called last by both map builders. */
 void ScatterRareTiles(void)
 {
+  POOL_TRACE("ScatterRareTiles");
   s8 Col = 0;
   s8 Row = 0;
   u8 Roll = 0;
   s32 t1;
-  Col = 0;
-  if (Col <= MapLastCol_OVL10) for (;;) {
-    Row = 0;
-    if (Row <= MapLastRow_OVL10) for (;;) {
-      if (CombatTiles[(*FPD(TCombatMap (*), CombatMap)).Cells[Row][Col]].Picture == GroundPicture) {
-        Roll = RollDice(1, 100);
-        t1 = Roll;
-        if ((t1 >= 1 && t1 <= 97)) {
-        } else if (t1 == 98) {
-          (*FPD(TCombatMap (*), CombatMap)).Cells[Row][Col] = 0x1A;
-        } else if (t1 == 99) {
-          (*FPD(TCombatMap (*), CombatMap)).Cells[Row][Col] = 0x1B;
-        } else if (t1 == 100) {
-          if (WallViewMode != 0xA) {
-            if (RollDice(1, 100) == 1) {
-              switch (RollDice(1, 10)) {
-              case 1:
-              case 2:
-              case 3:
-              case 4:
-              case 5:
-              case 6:
-              {
-                (*FPD(TCombatMap (*), CombatMap)).Cells[Row][Col] = 0x1C;
-                break;
-              }
-              case 7:
-              case 8:
-              case 9:
-              case 10:
-              {
-                (*FPD(TCombatMap (*), CombatMap)).Cells[Row][Col] = 0x1D;
-                break;
-              }
+  {
+    if (0 <= MapLastCol_OVL10) {
+      Col = 0;
+      for (;;) {
+          {
+            if (0 <= MapLastRow_OVL10) {
+              Row = 0;
+              for (;;) {
+                  if (CombatTiles[(*FPD(TCombatMap (*), CombatMap)).Cells[Row][Col]].Picture == GroundPicture) {
+                    Roll = RollDice(1, 100);
+                    t1 = Roll;
+                    if ((t1 >= 1 && t1 <= 97)) {
+                    } else if (t1 == 98) {
+                      (*FPD(TCombatMap (*), CombatMap)).Cells[Row][Col] = 0x1A;
+                    } else if (t1 == 99) {
+                      (*FPD(TCombatMap (*), CombatMap)).Cells[Row][Col] = 0x1B;
+                    } else if (t1 == 100) {
+                      if (WallViewMode != 0xA) {
+                        if (RollDice(1, 100) == 1) {
+                          switch (RollDice(1, 10)) {
+                          case 1:
+                          case 2:
+                          case 3:
+                          case 4:
+                          case 5:
+                          case 6:
+                          {
+                            (*FPD(TCombatMap (*), CombatMap)).Cells[Row][Col] = 0x1C;
+                            break;
+                          }
+                          case 7:
+                          case 8:
+                          case 9:
+                          case 10:
+                          {
+                            (*FPD(TCombatMap (*), CombatMap)).Cells[Row][Col] = 0x1D;
+                            break;
+                          }
+                          }
+                        }
+                      }
+                    }
+                  }
+                if (Row == MapLastRow_OVL10) break;
+                Row++;
               }
             }
           }
-        }
+        if (Col == MapLastCol_OVL10) break;
+        Col++;
       }
-      if (Row == MapLastRow_OVL10) break;
-      Row++;
     }
-    if (Col == MapLastCol_OVL10) break;
-    Col++;
   }
 }
 
@@ -96,6 +105,7 @@ static u8 PassageKind_WallSideKind(struct Frame_PassageKind *up, s8 Col, s8 Row,
      directions for the placement groups. */
 u8 PassageKind(s8 Col, s8 Row, u8 Dir)
 {
+  POOL_TRACE("PassageKind");
   Frame_PassageKind fr;
   memset(&fr, 0, sizeof fr);
   fr.Col = Col;
@@ -141,25 +151,37 @@ static void BuildDungeonMap_DrawFloorAndWest(struct Frame_BuildDungeonMap *up)
 {
   u8 SubCol = 0;
   u8 SubRow = 0;
-  SubRow = 2;
-  if (SubRow <= 4) for (;;) {
-    SubCol = 0;
-    if (SubCol <= 5) for (;;) {
-      BuildDungeonMap_SetDungeonCell(up, SubCol, SubRow, GroundPicture);
-      if (SubCol == 5) break;
-      SubCol++;
+  {
+    if (2 <= 4) {
+      SubRow = 2;
+      for (;;) {
+          {
+            if (0 <= 5) {
+              SubCol = 0;
+              for (;;) {
+                  BuildDungeonMap_SetDungeonCell(up, SubCol, SubRow, GroundPicture);
+                if (SubCol == 5) break;
+                SubCol++;
+              }
+            }
+          }
+        if (SubRow == 4) break;
+        SubRow++;
+      }
     }
-    if (SubRow == 4) break;
-    SubRow++;
   }
   if (up->West == SideWall) {
-    SubRow = 2;
-    if (SubRow <= 4) for (;;) {
-      BuildDungeonMap_SetDungeonCell(up, (s16)(SubRow - 1), SubRow, 4);
-      BuildDungeonMap_SetDungeonCell(up, SubRow, SubRow, 3);
-      BuildDungeonMap_SetDungeonCell(up, (s16)(SubRow + 1), SubRow, 0xD);
-      if (SubRow == 4) break;
-      SubRow++;
+    {
+      if (2 <= 4) {
+        SubRow = 2;
+        for (;;) {
+            BuildDungeonMap_SetDungeonCell(up, (s16)(SubRow - 1), SubRow, 4);
+            BuildDungeonMap_SetDungeonCell(up, SubRow, SubRow, 3);
+            BuildDungeonMap_SetDungeonCell(up, (s16)(SubRow + 1), SubRow, 0xD);
+          if (SubRow == 4) break;
+          SubRow++;
+        }
+      }
     }
   } else if (up->West == SideDoor) {
     BuildDungeonMap_SetDungeonCell(up, 1, 2, 8);
@@ -208,164 +230,168 @@ static void BuildDungeonMap_DrawNorthWestCorner(struct Frame_BuildDungeonMap *up
   } else {
     OpenCorner = 0;
   }
-  K = 1;
-  if (K <= 4) for (;;) {
-    switch (K) {
-    case 1:
-    {
-      switch (up->North) {
-      case SideOpen:
-      {
-        switch (up->West) {
-        case SideOpen:
-        {
-          TopLeft = GroundPicture;
-          break;
-        }
-        case SideDoor:
-        {
-          TopLeft = 0xD;
-          break;
-        }
-        case SideWall:
-        {
-          if (OpenCorner != 0) {
-            TopLeft = 0;
-          } else {
-            TopLeft = 0xD;
+  {
+    if (1 <= 4) {
+      K = 1;
+      for (;;) {
+          switch (K) {
+          case 1:
+          {
+            switch (up->North) {
+            case SideOpen:
+            {
+              switch (up->West) {
+              case SideOpen:
+              {
+                TopLeft = GroundPicture;
+                break;
+              }
+              case SideDoor:
+              {
+                TopLeft = 0xD;
+                break;
+              }
+              case SideWall:
+              {
+                if (OpenCorner != 0) {
+                  TopLeft = 0;
+                } else {
+                  TopLeft = 0xD;
+                }
+                break;
+              }
+              }
+              break;
+            }
+            case SideDoor:
+            case SideWall:
+            {
+              if (up->West == SideOpen) {
+                if (OpenCorner != 0) {
+                  TopLeft = 0xF;
+                } else {
+                  TopLeft = 5;
+                }
+              } else if (OpenCorner != 0) {
+                TopLeft = 0x12;
+              } else {
+                TopLeft = 2;
+              }
+              break;
+            }
+            }
+            break;
           }
-          break;
-        }
-        }
-        break;
-      }
-      case SideDoor:
-      case SideWall:
-      {
-        if (up->West == SideOpen) {
-          if (OpenCorner != 0) {
-            TopLeft = 0xF;
-          } else {
-            TopLeft = 5;
+          case 2:
+          {
+            switch (up->North) {
+            case SideOpen:
+            {
+              TopRight = GroundPicture;
+              break;
+            }
+            case SideDoor:
+            {
+              TopRight = 0x11;
+              break;
+            }
+            case SideWall:
+            {
+              TopRight = 5;
+              break;
+            }
+            }
+            break;
           }
-        } else if (OpenCorner != 0) {
-          TopLeft = 0x12;
-        } else {
-          TopLeft = 2;
-        }
-        break;
+          case 3:
+          {
+            switch (up->West) {
+            case SideOpen:
+            {
+              if (up->North == SideOpen) {
+                BottomLeft = GroundPicture;
+              } else if (OpenCorner != 0) {
+                BottomLeft = 0x10;
+              } else {
+                BottomLeft = 0xA;
+              }
+              break;
+            }
+            case SideDoor:
+            {
+              if (OpenCorner != 0) {
+                BottomLeft = 0x14;
+              } else {
+                BottomLeft = 7;
+              }
+              break;
+            }
+            case SideWall:
+            {
+              if (OpenCorner != 0) {
+                BottomLeft = 1;
+              } else {
+                BottomLeft = 3;
+              }
+              break;
+            }
+            }
+            break;
+          }
+          case 4:
+          {
+            switch (up->West) {
+            case SideOpen:
+            case SideDoor:
+            {
+              switch (up->North) {
+              case SideOpen:
+              {
+                BottomRight = GroundPicture;
+                break;
+              }
+              case SideDoor:
+              {
+                BottomRight = 0x17;
+                break;
+              }
+              case SideWall:
+              {
+                BottomRight = 0xA;
+                break;
+              }
+              }
+              break;
+            }
+            case SideWall:
+            {
+              switch (up->North) {
+              case SideOpen:
+              {
+                BottomRight = 0xD;
+                break;
+              }
+              case SideDoor:
+              {
+                BottomRight = 0x15;
+                break;
+              }
+              case SideWall:
+              {
+                BottomRight = 6;
+                break;
+              }
+              }
+              break;
+            }
+            }
+            break;
+          }
+          }
+        if (K == 4) break;
+        K++;
       }
-      }
-      break;
     }
-    case 2:
-    {
-      switch (up->North) {
-      case SideOpen:
-      {
-        TopRight = GroundPicture;
-        break;
-      }
-      case SideDoor:
-      {
-        TopRight = 0x11;
-        break;
-      }
-      case SideWall:
-      {
-        TopRight = 5;
-        break;
-      }
-      }
-      break;
-    }
-    case 3:
-    {
-      switch (up->West) {
-      case SideOpen:
-      {
-        if (up->North == SideOpen) {
-          BottomLeft = GroundPicture;
-        } else if (OpenCorner != 0) {
-          BottomLeft = 0x10;
-        } else {
-          BottomLeft = 0xA;
-        }
-        break;
-      }
-      case SideDoor:
-      {
-        if (OpenCorner != 0) {
-          BottomLeft = 0x14;
-        } else {
-          BottomLeft = 7;
-        }
-        break;
-      }
-      case SideWall:
-      {
-        if (OpenCorner != 0) {
-          BottomLeft = 1;
-        } else {
-          BottomLeft = 3;
-        }
-        break;
-      }
-      }
-      break;
-    }
-    case 4:
-    {
-      switch (up->West) {
-      case SideOpen:
-      case SideDoor:
-      {
-        switch (up->North) {
-        case SideOpen:
-        {
-          BottomRight = GroundPicture;
-          break;
-        }
-        case SideDoor:
-        {
-          BottomRight = 0x17;
-          break;
-        }
-        case SideWall:
-        {
-          BottomRight = 0xA;
-          break;
-        }
-        }
-        break;
-      }
-      case SideWall:
-      {
-        switch (up->North) {
-        case SideOpen:
-        {
-          BottomRight = 0xD;
-          break;
-        }
-        case SideDoor:
-        {
-          BottomRight = 0x15;
-          break;
-        }
-        case SideWall:
-        {
-          BottomRight = 6;
-          break;
-        }
-        }
-        break;
-      }
-      }
-      break;
-    }
-    }
-    if (K == 4) break;
-    K++;
   }
   BuildDungeonMap_SetDungeonCell(up, 1, 0, TopLeft);
   BuildDungeonMap_SetDungeonCell(up, 2, 0, TopRight);
@@ -394,118 +420,122 @@ static void BuildDungeonMap_DrawNorthEastCorner(struct Frame_BuildDungeonMap *up
   } else {
     OpenCorner = 0;
   }
-  K = 1;
-  if (K <= 4) for (;;) {
-    switch (K) {
-    case 1:
-    {
-      switch (up->North) {
-      case SideOpen:
-      {
-        if (NorthEast == SideWall) {
-          TopLeft = 4;
-        } else {
-          TopLeft = GroundPicture;
-        }
-        break;
-      }
-      case SideDoor:
-      {
-        TopLeft = 0xF;
-        break;
-      }
-      case SideWall:
-      {
-        TopLeft = 5;
-        break;
-      }
-      }
-      break;
-    }
-    case 2:
-    {
-      if (up->North == SideOpen) {
-        switch (NorthEast) {
-        case SideOpen:
-        {
-          TopRight = GroundPicture;
-          break;
-        }
-        case SideDoor:
-        {
-          if (((up->East == SideOpen)) && ((EastNorth != SideOpen))) {
-            TopRight = 0x18;
-          } else {
-            TopRight = 1;
+  {
+    if (1 <= 4) {
+      K = 1;
+      for (;;) {
+          switch (K) {
+          case 1:
+          {
+            switch (up->North) {
+            case SideOpen:
+            {
+              if (NorthEast == SideWall) {
+                TopLeft = 4;
+              } else {
+                TopLeft = GroundPicture;
+              }
+              break;
+            }
+            case SideDoor:
+            {
+              TopLeft = 0xF;
+              break;
+            }
+            case SideWall:
+            {
+              TopLeft = 5;
+              break;
+            }
+            }
+            break;
           }
-          break;
-        }
-        case SideWall:
-        {
-          if (((up->East == SideOpen)) && ((EastNorth != SideOpen))) {
-            TopRight = 0xB;
-          } else {
-            TopRight = 3;
+          case 2:
+          {
+            if (up->North == SideOpen) {
+              switch (NorthEast) {
+              case SideOpen:
+              {
+                TopRight = GroundPicture;
+                break;
+              }
+              case SideDoor:
+              {
+                if (((up->East == SideOpen)) && ((EastNorth != SideOpen))) {
+                  TopRight = 0x18;
+                } else {
+                  TopRight = 1;
+                }
+                break;
+              }
+              case SideWall:
+              {
+                if (((up->East == SideOpen)) && ((EastNorth != SideOpen))) {
+                  TopRight = 0xB;
+                } else {
+                  TopRight = 3;
+                }
+                break;
+              }
+              }
+            } else if (up->East != SideOpen) {
+              TopRight = 9;
+            } else if (EastNorth != SideOpen) {
+              TopRight = 5;
+            } else if (OpenCorner != 0) {
+              TopRight = 0x11;
+            } else {
+              TopRight = 0x13;
+            }
+            break;
           }
-          break;
-        }
-        }
-      } else if (up->East != SideOpen) {
-        TopRight = 9;
-      } else if (EastNorth != SideOpen) {
-        TopRight = 5;
-      } else if (OpenCorner != 0) {
-        TopRight = 0x11;
-      } else {
-        TopRight = 0x13;
+          case 3:
+          {
+            switch (up->North) {
+            case SideOpen:
+            {
+              BottomLeft = GroundPicture;
+              break;
+            }
+            case SideDoor:
+            {
+              BottomLeft = 0x10;
+              break;
+            }
+            case SideWall:
+            {
+              BottomLeft = 0xA;
+              break;
+            }
+            }
+            break;
+          }
+          case 4:
+          {
+            if (up->North == SideOpen) {
+              if (NorthEast == SideOpen) {
+                BottomRight = GroundPicture;
+              } else if (up->East != SideOpen) {
+                BottomRight = 4;
+              } else if (EastNorth == SideOpen) {
+                BottomRight = 8;
+              } else {
+                BottomRight = 0xC;
+              }
+            } else if (up->East != SideOpen) {
+              BottomRight = 0xE;
+            } else if (EastNorth == SideOpen) {
+              BottomRight = 0x17;
+            } else {
+              BottomRight = 0xA;
+            }
+            break;
+          }
+          }
+        if (K == 4) break;
+        K++;
       }
-      break;
     }
-    case 3:
-    {
-      switch (up->North) {
-      case SideOpen:
-      {
-        BottomLeft = GroundPicture;
-        break;
-      }
-      case SideDoor:
-      {
-        BottomLeft = 0x10;
-        break;
-      }
-      case SideWall:
-      {
-        BottomLeft = 0xA;
-        break;
-      }
-      }
-      break;
-    }
-    case 4:
-    {
-      if (up->North == SideOpen) {
-        if (NorthEast == SideOpen) {
-          BottomRight = GroundPicture;
-        } else if (up->East != SideOpen) {
-          BottomRight = 4;
-        } else if (EastNorth == SideOpen) {
-          BottomRight = 8;
-        } else {
-          BottomRight = 0xC;
-        }
-      } else if (up->East != SideOpen) {
-        BottomRight = 0xE;
-      } else if (EastNorth == SideOpen) {
-        BottomRight = 0x17;
-      } else {
-        BottomRight = 0xA;
-      }
-      break;
-    }
-    }
-    if (K == 4) break;
-    K++;
   }
   BuildDungeonMap_SetDungeonCell(up, 5, 0, TopLeft);
   BuildDungeonMap_SetDungeonCell(up, 6, 0, TopRight);
@@ -521,26 +551,35 @@ static void BuildDungeonMap_DrawNorthEastCorner(struct Frame_BuildDungeonMap *up
      PartyMapColumn, PartyMapRow and the area map (through PassageKind), writes CombatMap^.Cells. */
 void BuildDungeonMap(void)
 {
+  POOL_TRACE("BuildDungeonMap");
   Frame_BuildDungeonMap fr;
   memset(&fr, 0, sizeof fr);
-  fr.CellRow = (-2);
-  if (fr.CellRow <= 2) for (;;) {
-    fr.CellCol = (-6);
-    if (fr.CellCol <= 6) for (;;) {
-      fr.MapX = PartyMapColumn + fr.CellCol;
-      fr.MapY = PartyMapRow + fr.CellRow;
-      fr.West = PassageKind(fr.MapX, fr.MapY, DirWest);
-      fr.North = PassageKind(fr.MapX, fr.MapY, DirNorth);
-      fr.East = PassageKind(fr.MapX, fr.MapY, DirEast);
-      BuildDungeonMap_DrawFloorAndWest(&fr);
-      BuildDungeonMap_DrawNorthSide(&fr);
-      BuildDungeonMap_DrawNorthWestCorner(&fr);
-      BuildDungeonMap_DrawNorthEastCorner(&fr);
-      if (fr.CellCol == 6) break;
-      fr.CellCol++;
+  {
+    if ((-2) <= 2) {
+      fr.CellRow = (-2);
+      for (;;) {
+          {
+            if ((-6) <= 6) {
+              fr.CellCol = (-6);
+              for (;;) {
+                  fr.MapX = PartyMapColumn + fr.CellCol;
+                  fr.MapY = PartyMapRow + fr.CellRow;
+                  fr.West = PassageKind(fr.MapX, fr.MapY, DirWest);
+                  fr.North = PassageKind(fr.MapX, fr.MapY, DirNorth);
+                  fr.East = PassageKind(fr.MapX, fr.MapY, DirEast);
+                  BuildDungeonMap_DrawFloorAndWest(&fr);
+                  BuildDungeonMap_DrawNorthSide(&fr);
+                  BuildDungeonMap_DrawNorthWestCorner(&fr);
+                  BuildDungeonMap_DrawNorthEastCorner(&fr);
+                if (fr.CellCol == 6) break;
+                fr.CellCol++;
+              }
+            }
+          }
+        if (fr.CellRow == 2) break;
+        fr.CellRow++;
+      }
     }
-    if (fr.CellRow == 2) break;
-    fr.CellRow++;
   }
   ScatterRareTiles();
 }
@@ -553,6 +592,7 @@ void BuildDungeonMap(void)
      the wilderness builders for every test. */
 u8 BlockTerrainFlags(void)
 {
+  POOL_TRACE("BlockTerrainFlags");
   u8 Result = 0;
   u8 Flags = 0;
   switch (CombatBlock) {
@@ -934,6 +974,7 @@ static void PlaceRiver_PlaceBridge(struct Frame_PlaceRiver *up, s8 Row, s8 Col)
      no bridge gets one on rows 7..15. */
 void PlaceRiver(void)
 {
+  POOL_TRACE("PlaceRiver");
   Frame_PlaceRiver fr;
   memset(&fr, 0, sizeof fr);
   fr.Chance = 0;
@@ -950,18 +991,22 @@ void PlaceRiver(void)
       fr.Col--;
     }
     fr.StartCol = fr.Col;
-    fr.Row = 0;
-    if (fr.Row <= MapLastRow_OVL10) for (;;) {
-      if (fr.Col <= MapLastCol_OVL10) {
-        (*FPD(TCombatMap (*), CombatMap)).Cells[fr.Row][fr.Col] = RiverWest;
-        (*FPD(TCombatMap (*), CombatMap)).Cells[fr.Row][(s16)(fr.Col + 1)] = RiverEast;
-        if (((RollDice(1, 20) == 1)) || (fr.Bridges & 1)) {
-          PlaceRiver_PlaceBridge(&fr, fr.Row, fr.Col);
+    {
+      if (0 <= MapLastRow_OVL10) {
+        fr.Row = 0;
+        for (;;) {
+            if (fr.Col <= MapLastCol_OVL10) {
+              (*FPD(TCombatMap (*), CombatMap)).Cells[fr.Row][fr.Col] = RiverWest;
+              (*FPD(TCombatMap (*), CombatMap)).Cells[fr.Row][(s16)(fr.Col + 1)] = RiverEast;
+              if (((RollDice(1, 20) == 1)) || (fr.Bridges & 1)) {
+                PlaceRiver_PlaceBridge(&fr, fr.Row, fr.Col);
+              }
+              fr.Col++;
+            }
+          if (fr.Row == MapLastRow_OVL10) break;
+          fr.Row++;
         }
-        fr.Col++;
       }
-      if (fr.Row == MapLastRow_OVL10) break;
-      fr.Row++;
     }
     if (fr.Bridges == 0) {
       fr.Row = (12 - RollDice(1, 9)) + 4;
@@ -980,6 +1025,7 @@ void PlaceRiver(void)
      for kinds below 5, the cell above tile Kind + $1F. */
 void PlaceTallFeatures(void)
 {
+  POOL_TRACE("PlaceTallFeatures");
   u8 Unused = 0;
   u8 Chance = 0;
   u8 Kind = 0;
@@ -1001,30 +1047,38 @@ void PlaceTallFeatures(void)
   if (((BlockTerrainFlags() & Flag3DTiles)) != 0) {
     Chance = 0;
   }
-  Col = 0;
-  if (Col <= MapLastCol_OVL10) for (;;) {
-    Row = 1;
-    if (Row <= MapLastRow_OVL10) for (;;) {
-      if ((((CombatTiles[(*FPD(TCombatMap (*), CombatMap)).Cells[Row][Col]].Picture == GroundPicture)) && ((CombatTiles[(*FPD(TCombatMap (*), CombatMap)).Cells[(s16)(Row - 1)][Col]].Picture == GroundPicture))) && ((RollDice(1, 100) <= Chance))) {
-        Kind = RollDice(1, 10);
-        if (Kind > 8) {
-          Kind = RollDice(1, 2) + 4;
-        } else {
-          Kind = (s16)((u16)((s16)(Kind + 1)) >> 1);
-        }
-        if (((BlockTerrainFlags() & FlagTallKinds4To6)) != 0) {
-          Kind = RollDice(1, 3) + 3;
-        }
-        (*FPD(TCombatMap (*), CombatMap)).Cells[Row][Col] = (Kind + FeatureBase) + 4;
-        if (Kind < 5) {
-          (*FPD(TCombatMap (*), CombatMap)).Cells[(s16)(Row - 1)][Col] = Kind + FeatureBase;
-        }
+  {
+    if (0 <= MapLastCol_OVL10) {
+      Col = 0;
+      for (;;) {
+          {
+            if (1 <= MapLastRow_OVL10) {
+              Row = 1;
+              for (;;) {
+                  if ((((CombatTiles[(*FPD(TCombatMap (*), CombatMap)).Cells[Row][Col]].Picture == GroundPicture)) && ((CombatTiles[(*FPD(TCombatMap (*), CombatMap)).Cells[(s16)(Row - 1)][Col]].Picture == GroundPicture))) && ((RollDice(1, 100) <= Chance))) {
+                    Kind = RollDice(1, 10);
+                    if (Kind > 8) {
+                      Kind = RollDice(1, 2) + 4;
+                    } else {
+                      Kind = (s16)((u16)((s16)(Kind + 1)) >> 1);
+                    }
+                    if (((BlockTerrainFlags() & FlagTallKinds4To6)) != 0) {
+                      Kind = RollDice(1, 3) + 3;
+                    }
+                    (*FPD(TCombatMap (*), CombatMap)).Cells[Row][Col] = (Kind + FeatureBase) + 4;
+                    if (Kind < 5) {
+                      (*FPD(TCombatMap (*), CombatMap)).Cells[(s16)(Row - 1)][Col] = Kind + FeatureBase;
+                    }
+                  }
+                if (Row == MapLastRow_OVL10) break;
+                Row++;
+              }
+            }
+          }
+        if (Col == MapLastCol_OVL10) break;
+        Col++;
       }
-      if (Row == MapLastRow_OVL10) break;
-      Row++;
     }
-    if (Col == MapLastCol_OVL10) break;
-    Col++;
   }
 }
 
@@ -1036,6 +1090,7 @@ void PlaceTallFeatures(void)
      the totals are the same. */
 void ScatterTerrainFeatures(void)
 {
+  POOL_TRACE("ScatterTerrainFeatures");
   u8 Chance3D = 0;
   u8 Chance37 = 0;
   u8 Chance2A = 0;
@@ -1065,41 +1120,49 @@ void ScatterTerrainFeatures(void)
     Chance2E = 0x19;
     Chance2A = 0xA;
   }
-  Col = 0;
-  if (Col <= MapLastCol_OVL10) for (;;) {
-    Row = 0;
-    if (Row <= MapLastRow_OVL10) for (;;) {
-      if (CombatTiles[(*FPD(TCombatMap (*), CombatMap)).Cells[Row][Col]].Picture == GroundPicture) {
-        Roll = RollDice(1, 0xFF);
-        if (Roll <= Chance3D) {
-          Roll = RollDice(1, 4);
-          if ((((Roll == 4)) && ((Row > 0))) && ((CombatTiles[(*FPD(TCombatMap (*), CombatMap)).Cells[(s16)(Row - 1)][Col]].Picture == GroundPicture))) {
-            (*FPD(TCombatMap (*), CombatMap)).Cells[(s16)(Row - 1)][Col] = 0x41;
-            (*FPD(TCombatMap (*), CombatMap)).Cells[Row][Col] = 0x40;
+  {
+    if (0 <= MapLastCol_OVL10) {
+      Col = 0;
+      for (;;) {
+          {
+            if (0 <= MapLastRow_OVL10) {
+              Row = 0;
+              for (;;) {
+                  if (CombatTiles[(*FPD(TCombatMap (*), CombatMap)).Cells[Row][Col]].Picture == GroundPicture) {
+                    Roll = RollDice(1, 0xFF);
+                    if (Roll <= Chance3D) {
+                      Roll = RollDice(1, 4);
+                      if ((((Roll == 4)) && ((Row > 0))) && ((CombatTiles[(*FPD(TCombatMap (*), CombatMap)).Cells[(s16)(Row - 1)][Col]].Picture == GroundPicture))) {
+                        (*FPD(TCombatMap (*), CombatMap)).Cells[(s16)(Row - 1)][Col] = 0x41;
+                        (*FPD(TCombatMap (*), CombatMap)).Cells[Row][Col] = 0x40;
+                      }
+                      if (Roll < 4) {
+                        (*FPD(TCombatMap (*), CombatMap)).Cells[Row][Col] = (Roll + FeatureBase) + 0x1D;
+                      }
+                    } else if (Roll <= (s16)(Chance37 + Chance3D)) {
+                      (*FPD(TCombatMap (*), CombatMap)).Cells[Row][Col] = (RollDice(1, 3) + FeatureBase) + 0x17;
+                    } else if (Roll <= (s16)((Chance2A + Chance3D) + Chance37)) {
+                      (*FPD(TCombatMap (*), CombatMap)).Cells[Row][Col] = (RollDice(1, 4) + FeatureBase) + 0xA;
+                    } else if (Roll <= (s16)(((Chance39 + Chance2A) + Chance3D) + Chance37)) {
+                      Roll = (((s16)(RollDice(1, 10) - 1)) / 3) + 1;
+                      (*FPD(TCombatMap (*), CombatMap)).Cells[Row][Col] = (Roll + FeatureBase) + 0x19;
+                    } else if (Roll <= (s16)((((Chance2E + Chance39) + Chance2A) + Chance3D) + Chance37)) {
+                      Roll = RollDice(1, 4);
+                      if (((Roll == 4)) && ((((BlockTerrainFlags() & FlagTallKinds4To6)) == 0))) {
+                        Roll = RollDice(1, 3);
+                      }
+                      (*FPD(TCombatMap (*), CombatMap)).Cells[Row][Col] = (Roll + FeatureBase) + 0xE;
+                    }
+                  }
+                if (Row == MapLastRow_OVL10) break;
+                Row++;
+              }
+            }
           }
-          if (Roll < 4) {
-            (*FPD(TCombatMap (*), CombatMap)).Cells[Row][Col] = (Roll + FeatureBase) + 0x1D;
-          }
-        } else if (Roll <= (s16)(Chance37 + Chance3D)) {
-          (*FPD(TCombatMap (*), CombatMap)).Cells[Row][Col] = (RollDice(1, 3) + FeatureBase) + 0x17;
-        } else if (Roll <= (s16)((Chance2A + Chance3D) + Chance37)) {
-          (*FPD(TCombatMap (*), CombatMap)).Cells[Row][Col] = (RollDice(1, 4) + FeatureBase) + 0xA;
-        } else if (Roll <= (s16)(((Chance39 + Chance2A) + Chance3D) + Chance37)) {
-          Roll = (((s16)(RollDice(1, 10) - 1)) / 3) + 1;
-          (*FPD(TCombatMap (*), CombatMap)).Cells[Row][Col] = (Roll + FeatureBase) + 0x19;
-        } else if (Roll <= (s16)((((Chance2E + Chance39) + Chance2A) + Chance3D) + Chance37)) {
-          Roll = RollDice(1, 4);
-          if (((Roll == 4)) && ((((BlockTerrainFlags() & FlagTallKinds4To6)) == 0))) {
-            Roll = RollDice(1, 3);
-          }
-          (*FPD(TCombatMap (*), CombatMap)).Cells[Row][Col] = (Roll + FeatureBase) + 0xE;
-        }
+        if (Col == MapLastCol_OVL10) break;
+        Col++;
       }
-      if (Row == MapLastRow_OVL10) break;
-      Row++;
     }
-    if (Col == MapLastCol_OVL10) break;
-    Col++;
   }
 }
 
@@ -1109,6 +1172,7 @@ void ScatterTerrainFeatures(void)
      features, the scattered features and the rare tiles. */
 void BuildWildernessMap(void)
 {
+  POOL_TRACE("BuildWildernessMap");
   s8 Col = 0;
   s8 Row = 0;
   u8 Unused[2] = {0};
@@ -1134,6 +1198,7 @@ void BuildWildernessMap(void)
      argument ($18, $21 or 5) is not read by that routine. */
 void CreateCombatMap(void)
 {
+  POOL_TRACE("CreateCombatMap");
   if (AreaViewKind == AreaViewDungeon) {
     Load24x24Set(S("\007DungCom"), 0, 0x18);
   } else {
@@ -1159,6 +1224,7 @@ void CreateCombatMap(void)
      ComputerRun in B84; Var2Morale is the morale source [I] (ovl09:10D7 reads B84 as morale). */
 void PrepareCombatants(void)
 {
+  POOL_TRACE("PrepareCombatants");
   PCharacter Who = 0;
   u8 Count = 0;
   u8 Morale = 0;
@@ -1189,6 +1255,7 @@ void PrepareCombatants(void)
      False. FindStartCell uses it to end a ring or a group. */
 u8 IsBeyondGrid(s8 Col, s8 Row)
 {
+  POOL_TRACE("IsBeyondGrid");
   u8 Result = 0;
   if (((((Col >= 0)) && ((Col < 11)))) || ((((Row >= 0)) && ((Row < 6))))) {
     Result = 0;
@@ -1207,6 +1274,7 @@ u8 IsBeyondGrid(s8 Col, s8 Row)
      otherwise valid cell, the attempted coordinates remain in CombatantTable[Index]. */
 u8 TryPlaceAt(u8 Index, s8 Col, s8 Row, s8 OriginCol, s8 OriginRow, u8 Group)
 {
+  POOL_TRACE("TryPlaceAt");
   u8 Result = 0;
   u8 Occupant = 0;
   u8 Tile = 0;
@@ -1239,6 +1307,7 @@ u8 TryPlaceAt(u8 Index, s8 Col, s8 Row, s8 OriginCol, s8 OriginRow, u8 Group)
      step that way. */
 u8 FindStartCell(u8 Index)
 {
+  POOL_TRACE("FindStartCell");
   u8 Result = 0;
   u8 Placed = 0;
   u8 First = 0;
@@ -1320,14 +1389,18 @@ u8 FindStartCell(u8 Index)
           MapX = SideOriginCol[PlacingSide] + PartyMapColumn;
           MapY = SideOriginRow[PlacingSide] + PartyMapRow;
           OpenSide = 0;
-          I = 1;
-          if (I <= 3) for (;;) {
-            Dir = FacingWallDirs[SideFacing[PlacingSide]][I];
-            if (((AreaViewKind > AreaViewDungeon)) || ((PassageKind(MapX, MapY, Dir) != SideWall))) {
-              OpenSide = 1;
+          {
+            if (1 <= 3) {
+              I = 1;
+              for (;;) {
+                  Dir = FacingWallDirs[SideFacing[PlacingSide]][I];
+                  if (((AreaViewKind > AreaViewDungeon)) || ((PassageKind(MapX, MapY, Dir) != SideWall))) {
+                    OpenSide = 1;
+                  }
+                if (I == 3) break;
+                I++;
+              }
             }
-            if (I == 3) break;
-            I++;
           }
           if (OpenSide != 0) {
             Ring++;
@@ -1381,6 +1454,7 @@ u8 FindStartCell(u8 Index)
      out of the list through RemoveSelectedCharacter; the list ends after the last character kept. */
 void PlaceAllCombatants(void)
 {
+  POOL_TRACE("PlaceAllCombatants");
   s8 Col = 0;
   s8 Row = 0;
   PCharacter Prev = 0;
@@ -1393,11 +1467,15 @@ void PlaceAllCombatants(void)
   RecountCombatSides();
   DroppedCount = 0;
   PlacedCount = 0;
-  Index = 1;
-  if (Index <= CombatantClearLoopLast) for (;;) {
-    CombatantTable[Index].Kind = 0;
-    if (Index == CombatantClearLoopLast) break;
-    Index++;
+  {
+    if (1 <= CombatantClearLoopLast) {
+      Index = 1;
+      for (;;) {
+          CombatantTable[Index].Kind = 0;
+        if (Index == CombatantClearLoopLast) break;
+        Index++;
+      }
+    }
   }
   RebuildOccupancy();
   SideOriginCol[0] = 0;
@@ -1406,41 +1484,61 @@ void PlaceAllCombatants(void)
   SideOriginCol[1] = SideOriginCol[0] + (DirStepX[PartyFacing] * (*FPD(TGameVars (*), GameVars2))[705]);
   SideOriginRow[1] = SideOriginRow[0] + (DirStepY[PartyFacing] * (*FPD(TGameVars (*), GameVars2))[705]);
   SideFacing[1] = (s16)((u16)((((s16)(PartyFacing + 4)) % 8)) >> 1);
-  PlacingSide = SideParty;
-  if (PlacingSide <= SideMonsters) for (;;) {
-    FirstRingCells[PlacingSide] = (s16)((u16)((s16)(SideCounts[PlacingSide] + 1)) >> 1);
-    if (PlacingSide == SideMonsters) break;
-    PlacingSide++;
-  }
-  PlacingSide = SideParty;
-  if (PlacingSide <= SideMonsters) for (;;) {
-    Group = 0;
-    if (Group <= 3) for (;;) {
-      if (Group == 1) {
-        Shape = 4;
-      } else {
-        Shape = SideFacing[PlacingSide];
+  {
+    if (SideParty <= SideMonsters) {
+      PlacingSide = SideParty;
+      for (;;) {
+          FirstRingCells[PlacingSide] = (s16)((u16)((s16)(SideCounts[PlacingSide] + 1)) >> 1);
+        if (PlacingSide == SideMonsters) break;
+        PlacingSide++;
       }
-      Row = 0;
-      if (Row <= GridLastRow) for (;;) {
-        Col = 0;
-        if (Col <= GridLastCol) for (;;) {
-          if (((PlacementShapes[Shape][Row].Lo_ > Col)) || ((PlacementShapes[Shape][Row].Hi_ < Col))) {
-            PlacementCells[PlacingSide][Group][Row][Col] = 0;
-          } else {
-            PlacementCells[PlacingSide][Group][Row][Col] = 1;
-          }
-          if (Col == GridLastCol) break;
-          Col++;
-        }
-        if (Row == GridLastRow) break;
-        Row++;
-      }
-      if (Group == 3) break;
-      Group++;
     }
-    if (PlacingSide == SideMonsters) break;
-    PlacingSide++;
+  }
+  {
+    if (SideParty <= SideMonsters) {
+      PlacingSide = SideParty;
+      for (;;) {
+          {
+            if (0 <= 3) {
+              Group = 0;
+              for (;;) {
+                  if (Group == 1) {
+                    Shape = 4;
+                  } else {
+                    Shape = SideFacing[PlacingSide];
+                  }
+                  {
+                    if (0 <= GridLastRow) {
+                      Row = 0;
+                      for (;;) {
+                          {
+                            if (0 <= GridLastCol) {
+                              Col = 0;
+                              for (;;) {
+                                  if (((PlacementShapes[Shape][Row].Lo_ > Col)) || ((PlacementShapes[Shape][Row].Hi_ < Col))) {
+                                    PlacementCells[PlacingSide][Group][Row][Col] = 0;
+                                  } else {
+                                    PlacementCells[PlacingSide][Group][Row][Col] = 1;
+                                  }
+                                if (Col == GridLastCol) break;
+                                Col++;
+                              }
+                            }
+                          }
+                        if (Row == GridLastRow) break;
+                        Row++;
+                      }
+                    }
+                  }
+                if (Group == 3) break;
+                Group++;
+              }
+            }
+          }
+        if (PlacingSide == SideMonsters) break;
+        PlacingSide++;
+      }
+    }
   }
   Index = 1;
   CombatantTable[0].Kind = 1;
@@ -1499,6 +1597,7 @@ void PlaceAllCombatants(void)
      DrawCombatScreen, runs HookBattleStart for each character, calls UpdateMonsterMorale and enters ViewModeCombat. */
 void StartBattle(void)
 {
+  POOL_TRACE("StartBattle");
   u8 Unused[10] = {0};
   PCharacter Who = 0;
   FreeSpriteList(rtl_far(&PictureAnimation));
@@ -1542,4 +1641,5 @@ void StartBattle(void)
 /* Initialisation part of unit OVL10. */
 void init_OVL10(void)
 {
+  POOL_TRACE("init");
 }

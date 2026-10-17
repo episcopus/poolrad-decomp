@@ -29,13 +29,13 @@ def differs(session: str, n: int, workdir: Path) -> dict:
     table = so.names()
     da, db = Path(a + "-snap.dgroup").read_bytes(), Path(b + "-snap.dgroup").read_bytes()
     names = set()
+    import export_replay as ex
+    ranges = ex.STATIC_MASKS + ex.file_masks()
     for i in range(0x10000):
-        if da[i] != db[i] and not (so.STACK[0] <= i < so.STACK[1]):
-            nm = so.name_of(i, table).split("+")[0]
-            if not nm.startswith(NOISE_PREFIX):
-                names.add(nm)
+        if da[i] != db[i] and not any(lo <= i < hi for lo, hi in ranges):
+            names.add(so.name_of(i, table).split("+")[0])
     ha, hb = Path(a + "-snap.heap").read_bytes(), Path(b + "-snap.heap").read_bytes()
-    heap = sum(1 for x, y in zip(ha[16:], hb[16:]) if x != y) + abs(len(ha) - len(hb))
+    heap = sum(1 for x, y in zip(ha, hb) if x != y) + abs(len(ha) - len(hb))
     pa, pb = Path(a + "-snap.planes").read_bytes(), Path(b + "-snap.planes").read_bytes()
     planes = sum(1 for x, y in zip(pa, pb) if x != y)
     return {"names": sorted(names), "heap": heap, "planes": planes}

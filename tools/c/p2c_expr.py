@@ -560,6 +560,9 @@ class ExprMixin:
                      for r in runs]
             return E("%s%s)" % (pre, " || ".join(conds) if conds else "0"), P.BOOLEAN)
         b = self.ex(s)
+        if b.ty.kind == "set" and b.ty.size() != 32:
+            first = P.set_first_byte(b.ty)
+            return E("rtl_set_in_at(%s, %d, %d, %s)" % (b.code, first, b.ty.size(), a.code), P.BOOLEAN)
         return E("rtl_set_in(%s, %s)" % (b.code, a.code), P.BOOLEAN)
 
     def ex_setlit(self, n):

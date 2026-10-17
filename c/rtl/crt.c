@@ -89,6 +89,7 @@ void rtl_MsDos(Registers *regs)
 /* The video BIOS: the calls the game makes (mode, page, palette). */
 void rtl_Intr(u8 n, Registers *r)
 {
+  r->Flags = 0x0202;                    /* what the BIOS returns: interrupts enabled, carry clear */
   if (n != 0x10) {
     return;
   }

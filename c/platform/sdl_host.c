@@ -2,7 +2,10 @@
  * Windows.
  *
  *   poolrad [--data DIR] [--save DIR] [--scale N] [--fullscreen] [--aspect 4:3|square] [--filter nearest|linear]
- *           [--sound speaker|tandy|off] [--volume 0-100] [--mute]
+ *           [--sound speaker|tandy|off] [--volume 0-100] [--mute] [--intro]
+ *
+ * The game starts at the main menu: the original's switch STING skips the title screens and the code wheel
+ * question; --intro plays them (and asks the question).
  *
  * The data directory is the original game's folder (GAME.OVR, the .DAX files, ITEMS ...). The game's own saved
  * files go to the save directory (a per-user folder by default), so the data folder is never changed.
@@ -393,6 +396,9 @@ static Uint64 pump_ns;
 static unsigned spin;
 static const char *shot_path;            /* --screenshot FILE MS: save the window to a BMP after MS ms and exit (tests) */
 static Uint64 shot_ms;
+static const char *inject_keys;          /* --inject L,A,...: key presses fed in at start-up, one every 700 ms (tests) */
+static Uint64 inject_next;
+static int show_intro;                   /* --intro: the title screens and the code wheel question */
 
 static Uint64 now_ns(void)
 {
@@ -419,9 +425,42 @@ static void run_timer(void)
   }
 }
 
+/* Test input: names of keys pushed as if typed. */
+static void inject(void)
+{
+  SDL_Event e;
+  char name[16];
+  const char *p = inject_keys;
+  size_t n;
+  SDL_Scancode sc = SDL_SCANCODE_UNKNOWN;
+  if (!p || !*p || now_ns() < inject_next) return;
+  n = strcspn(p, ",");
+  snprintf(name, sizeof name, "%.*s", (int)(n < 15 ? n : 15), p);
+  inject_keys = p[n] ? p + n + 1 : p + n;
+  inject_next = now_ns() + 700000000u;
+  if (strlen(name) == 1 && name[0] >= 'A' && name[0] <= 'Z') sc = (SDL_Scancode)(SDL_SCANCODE_A + (name[0] - 'A'));
+  else if (strlen(name) == 1 && name[0] >= '1' && name[0] <= '9') sc = (SDL_Scancode)(SDL_SCANCODE_1 + (name[0] - '1'));
+  else if (!strcmp(name, "ENTER")) sc = SDL_SCANCODE_RETURN;
+  else if (!strcmp(name, "ESC")) sc = SDL_SCANCODE_ESCAPE;
+  else if (!strcmp(name, "SPACE")) sc = SDL_SCANCODE_SPACE;
+  else if (!strcmp(name, "UP")) sc = SDL_SCANCODE_UP;
+  else if (!strcmp(name, "LEFT")) sc = SDL_SCANCODE_LEFT;
+  else if (!strcmp(name, "RIGHT")) sc = SDL_SCANCODE_RIGHT;
+  else if (!strcmp(name, "DOWN")) sc = SDL_SCANCODE_DOWN;
+  if (sc == SDL_SCANCODE_UNKNOWN) return;
+  SDL_zero(e);
+  e.type = SDL_EVENT_KEY_DOWN;
+  e.key.scancode = sc;
+  e.key.key = SDL_GetKeyFromScancode(sc, SDL_KMOD_NONE, false);
+  e.key.mod = SDL_KMOD_NONE;
+  e.key.down = true;
+  SDL_PushEvent(&e);
+}
+
 static void events(void)
 {
   SDL_Event e;
+  inject();
   while (SDL_PollEvent(&e)) {
     switch (e.type) {
     case SDL_EVENT_QUIT:
@@ -656,6 +695,8 @@ int main(int argc, char **argv)
       cfg.sound = s[0] == 't' || s[0] == 'T' ? 'T' : (s[0] == 'o' || s[0] == 'n' || s[0] == 'O' || s[0] == 'N' ? 'N' : 'P');
     } else if (strcmp(argv[i], "--volume") == 0 && i + 1 < argc) cfg.volume = atoi(argv[++i]);
     else if (strcmp(argv[i], "--mute") == 0) cfg.muted = 1;
+    else if (strcmp(argv[i], "--intro") == 0) show_intro = 1;
+    else if (strcmp(argv[i], "--inject") == 0 && i + 1 < argc) inject_keys = argv[++i];
     else if (strcmp(argv[i], "--screenshot") == 0 && i + 2 < argc) {
       shot_path = argv[++i];
       shot_ms = (Uint64)atol(argv[++i]);
@@ -663,7 +704,7 @@ int main(int argc, char **argv)
     else {
       fprintf(stderr,
               "usage: poolrad [--data DIR] [--save DIR] [--scale N] [--fullscreen|--windowed] [--aspect 4:3|square]\n"
-              "               [--filter nearest|linear] [--sound speaker|tandy|off] [--volume 0-100] [--mute]\n");
+              "               [--filter nearest|linear] [--sound speaker|tandy|off] [--volume 0-100] [--mute] [--intro]\n");
       return 2;
     }
   }
@@ -716,6 +757,10 @@ int main(int argc, char **argv)
   audio_start();
 
   rtl_init();
+  if (!show_intro) {
+    static const char *const sting[1] = {"STING"};
+    rtl_set_args(1, sting);               /* the game's own switch: no title screens, no code wheel question */
+  }
   pool_init_units();
   pool_main();
   platform_quit(0);

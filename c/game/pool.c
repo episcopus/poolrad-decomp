@@ -3,6 +3,7 @@
 /* The main program. */
 void pool_main(void)
 {
+  POOL_TRACE("pool_main");
   u8 t1[256];
   StartGame();
   if (rtl_str_cmp(rtl_paramstr(t1, 1), S("\005STING")) != 0) {

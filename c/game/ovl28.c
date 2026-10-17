@@ -8,6 +8,7 @@
      ShowHeadBodySprites inside this unit, and from ovl03, ShowEncounterPicture, ovl18 and ovl25 (the packet's callers). */
 void DrawSprite(s16 Col, s16 Row, u8 Direct, farptr Sprite)
 {
+  POOL_TRACE("DrawSprite");
   if (Sprite != 0) {
     if (Direct != 0) {
       DrawPictureItemClipped((s16)(Col - 1), (s16)(Row - 1), 0, 1, Sprite, DrawBuf);
@@ -22,6 +23,7 @@ void DrawSprite(s16 Col, s16 Row, u8 Direct, farptr Sprite)
      (through DrawSprite, the staging buffer path). Called by ShowHeadBodySprites. */
 void DrawHeadSprite(u8 Col, u8 Row, farptr Sprite)
 {
+  POOL_TRACE("DrawHeadSprite");
   DrawSprite(Col, Row, 0, Sprite);
 }
 
@@ -29,6 +31,7 @@ void DrawHeadSprite(u8 Col, u8 Row, farptr Sprite)
      staging buffer path). Called by ShowHeadBodySprites. */
 void DrawBodySprite(u8 Col, u8 Row, farptr Sprite)
 {
+  POOL_TRACE("DrawBodySprite");
   DrawSprite(Col, (s16)(Row + 5), 0, Sprite);
 }
 
@@ -60,6 +63,7 @@ void DrawBodySprite(u8 Col, u8 Row, farptr Sprite)
      LastSpriteFile, LastSpriteBank. Callers: ovl03:0856, ShowEncounterPicture, ovl18:0006, RedrawView (packet). */
 void LoadSpriteList(const u8 *Name_in, u8 Bank, u8 Mode, PSpriteList List)
 {
+  POOL_TRACE("LoadSpriteList");
   const u8 *Name = Name_in;
   u16 Size = 0;
   farptr Block = 0;
@@ -75,8 +79,6 @@ void LoadSpriteList(const u8 *Name_in, u8 Bank, u8 Mode, PSpriteList List)
   u8 PrevAllocated = 0;
   u8 Loaded = 0;
   u8 t1[256];
-  u8 t2;
-  u16 t3;
   if (((rtl_str_cmp(Name, LastSpriteFile) == 0)) && ((Bank == LastSpriteBank))) {
     return;
   }
@@ -100,55 +102,64 @@ void LoadSpriteList(const u8 *Name_in, u8 Bank, u8 Mode, PSpriteList List)
       Offset++;
       w1->Flag = 1;
       Loaded = 0;
-      t2 = w1->Count;
-      I = 1;
-      if (I <= t2) for (;;) {
-        rtl_Move((void *)&(*FPD(TByteArray_RES07 (*), Block))[Offset], (void *)&w1->Slots[I - 1].Data, 4);
-        Offset += 4;
-        rtl_Move((void *)&(*FPD(TByteArray_RES07 (*), Block))[Offset], (void *)&Height, 2);
-        Offset += 2;
-        rtl_Move((void *)&(*FPD(TByteArray_RES07 (*), Block))[Offset], (void *)&WidthCols, 2);
-        Offset += 2;
-        if (rtl_MaxAvail() >= FreeMemoryFloor) {
-          Loaded++;
-          AllocatePicture(Height, WidthCols, 1, Mode, (void *)&w1->Slots[I - 1].Sprite);
-          {
-            TSpritePicture *w2 = &(*FPD(TSpritePicture (*), w1->Slots[I - 1].Sprite));
-              rtl_Move((void *)&(*FPD(TByteArray_RES07 (*), Block))[Offset], (void *)&w2->X, 2);
+      {
+        u8 limit = w1->Count;
+        if (1 <= limit) {
+          I = 1;
+          for (;;) {
+              rtl_Move((void *)&(*FPD(TByteArray_RES07 (*), Block))[Offset], (void *)&w1->Slots[I - 1].Data, 4);
+              Offset += 4;
+              rtl_Move((void *)&(*FPD(TByteArray_RES07 (*), Block))[Offset], (void *)&Height, 2);
               Offset += 2;
-              rtl_Move((void *)&(*FPD(TByteArray_RES07 (*), Block))[Offset], (void *)&w2->Y, 2);
-              Offset += 3;
-              rtl_Move((void *)&(*FPD(TByteArray_RES07 (*), Block))[Offset], (void *)&w2->Palette, 8);
-              Offset += 8;
-          }
-          if (VideoAdapter == AdapterCga) {
-            Row = ((*FPD(TSpritePicture (*), w1->Slots[I - 1].Sprite)).ByteSize * 2) - 1;
-          } else {
-            Row = (*FPD(TSpritePicture (*), w1->Slots[I - 1].Sprite)).ByteSize - 1;
-          }
-          if (IsPicOrFinal) {
-            if (I == 1) {
-              Prev = rtl_getmem((u16)(Row + 1));
-              rtl_Move((void *)&(*FPD(TByteArray_RES07 (*), Block))[Offset], (void *)&(*FPD(TByteArray_RES07 (*), Prev)), (u16)(Row + 1));
-              PrevAllocated = 1;
-            } else {
-              t3 = (u16)(Offset + Row);
-              J = Offset;
-              if (J <= t3) for (;;) {
-                (*FPD(TByteArray_RES07 (*), Block))[J] = ((*FPD(TByteArray_RES07 (*), Block))[J] ^ (*FPD(TByteArray_RES07 (*), Prev))[(u16)(J - Offset)]);
-                if (J == t3) break;
-                J++;
+              rtl_Move((void *)&(*FPD(TByteArray_RES07 (*), Block))[Offset], (void *)&WidthCols, 2);
+              Offset += 2;
+              if (rtl_MaxAvail() >= FreeMemoryFloor) {
+                Loaded++;
+                AllocatePicture(Height, WidthCols, 1, Mode, (void *)&w1->Slots[I - 1].Sprite);
+                {
+                  TSpritePicture *w2 = &(*FPD(TSpritePicture (*), w1->Slots[I - 1].Sprite));
+                    rtl_Move((void *)&(*FPD(TByteArray_RES07 (*), Block))[Offset], (void *)&w2->X, 2);
+                    Offset += 2;
+                    rtl_Move((void *)&(*FPD(TByteArray_RES07 (*), Block))[Offset], (void *)&w2->Y, 2);
+                    Offset += 3;
+                    rtl_Move((void *)&(*FPD(TByteArray_RES07 (*), Block))[Offset], (void *)&w2->Palette, 8);
+                    Offset += 8;
+                }
+                if (VideoAdapter == AdapterCga) {
+                  Row = ((*FPD(TSpritePicture (*), w1->Slots[I - 1].Sprite)).ByteSize * 2) - 1;
+                } else {
+                  Row = (*FPD(TSpritePicture (*), w1->Slots[I - 1].Sprite)).ByteSize - 1;
+                }
+                if (IsPicOrFinal) {
+                  if (I == 1) {
+                    Prev = rtl_getmem((u16)(Row + 1));
+                    rtl_Move((void *)&(*FPD(TByteArray_RES07 (*), Block))[Offset], (void *)&(*FPD(TByteArray_RES07 (*), Prev)), (u16)(Row + 1));
+                    PrevAllocated = 1;
+                  } else {
+                    {
+                      u16 limit = (u16)(Offset + Row);
+                      u16 first = Offset;
+                      if (first <= limit) {
+                        J = first;
+                        for (;;) {
+                            (*FPD(TByteArray_RES07 (*), Block))[J] = ((*FPD(TByteArray_RES07 (*), Block))[J] ^ (*FPD(TByteArray_RES07 (*), Prev))[(u16)(J - Offset)]);
+                          if (J == limit) break;
+                          J++;
+                        }
+                      }
+                    }
+                  }
+                }
+                UnpackPicturePixels(Block, Offset, Mode, 0, w1->Slots[I - 1].Sprite);
+                if (((((Mode & 1)) > 0)) && ((VideoAdapter != AdapterCga))) {
+                  RemapPictureColors(rtl_far(&SpriteRemapFrom), rtl_far(&SpriteRemapTo), 0, 0, w1->Slots[I - 1].Sprite);
+                }
+                Offset += (u16)(Row + 1);
               }
-            }
+            if (I == limit) break;
+            I++;
           }
-          UnpackPicturePixels(Block, Offset, Mode, 0, w1->Slots[I - 1].Sprite);
-          if (((((Mode & 1)) > 0)) && ((VideoAdapter != AdapterCga))) {
-            RemapPictureColors(rtl_far(&SpriteRemapFrom), rtl_far(&SpriteRemapTo), 0, 0, w1->Slots[I - 1].Sprite);
-          }
-          Offset += (u16)(Row + 1);
         }
-        if (I == t2) break;
-        I++;
       }
       w1->Count = Loaded;
   }
@@ -165,15 +176,19 @@ void LoadSpriteList(const u8 *Name_in, u8 Bank, u8 Mode, PSpriteList List)
      LoadSpriteList. */
 void FreeSpriteList(PSpriteList Rec)
 {
-  s8 t1;
+  POOL_TRACE("FreeSpriteList");
   {
     TSpriteList *w1 = &(*FPD(TSpriteList (*), Rec));
-      t1 = w1->Count;
-      SharedLoopIndex = 1;
-      if (SharedLoopIndex <= t1) for (;;) {
-        ReleasePicture((void *)&w1->Slots[SharedLoopIndex - 1].Sprite);
-        if (SharedLoopIndex == t1) break;
-        SharedLoopIndex++;
+      {
+        s8 limit = w1->Count;
+        if (1 <= limit) {
+          SharedLoopIndex = 1;
+          for (;;) {
+              ReleasePicture((void *)&w1->Slots[SharedLoopIndex - 1].Sprite);
+            if (SharedLoopIndex == limit) break;
+            SharedLoopIndex++;
+          }
+        }
       }
   }
   rtl_FillChar((void *)&(*FPD(TSpriteList (*), Rec)), 66, 0);
@@ -188,6 +203,7 @@ void FreeSpriteList(PSpriteList Rec)
      (a port may drop them). Called by ovl16:33E7 and ovl19:031E. */
 void ShowHeadBodyWindow(void)
 {
+  POOL_TRACE("ShowHeadBodyWindow");
   u8 V1[4] = {0};
   u8 V2[4] = {0};
   if ((((*FPD(TCharacter (*), SelectedCharacter)).HeadBank == 0)) || (((*FPD(TCharacter (*), SelectedCharacter)).BodyBank == 0))) {
@@ -210,6 +226,7 @@ void ShowHeadBodyWindow(void)
      Called by ShowHeadBody, ShowHeadBodyWindow and RedrawView. */
 void LoadHeadBodySprites(u8 HeadBank, u8 BodyBank)
 {
+  POOL_TRACE("LoadHeadBodySprites");
   u8 Num[2] = {0};
   u8 t1[256];
   u8 t2[256];
@@ -236,6 +253,7 @@ void LoadHeadBodySprites(u8 HeadBank, u8 BodyBank)
      through ShowPicture. Called by ShowHeadBody, RedrawView and ShowHeadBodyWindow. */
 void ShowHeadBodySprites(u8 Col, u8 Row, u8 WithBody)
 {
+  POOL_TRACE("ShowHeadBodySprites");
   if (WithBody != 0) {
     DrawHeadSprite(Col, Row, HeadSpriteBank);
     DrawBodySprite(Col, Row, BodySpriteBank);
@@ -252,6 +270,7 @@ void ShowHeadBodySprites(u8 Col, u8 Row, u8 WithBody)
      A nil slot leaves early. Called by ShowEncounterPicture. */
 void Show3DSprite(u8 Slot, PSpriteList Rec)
 {
+  POOL_TRACE("Show3DSprite");
   TSpriteList List = {0};
   List = (*FPD(TSpriteList (*), Rec));
   if (((Slot < 1)) || ((Slot > Last3DSpriteSlot))) {
@@ -273,4 +292,5 @@ void Show3DSprite(u8 Slot, PSpriteList Rec)
 /* Initialisation part of unit OVL28. */
 void init_OVL28(void)
 {
+  POOL_TRACE("init");
 }

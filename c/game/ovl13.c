@@ -12,6 +12,7 @@
      local is declared and never read; it is what makes the frame 6 bytes. */
 void StartCombatantRound(PCharacter Who)
 {
+  POOL_TRACE("StartCombatantRound");
   u8 Unused = 0;
   {
     TCombatant *w1 = &(*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat));
@@ -57,6 +58,7 @@ void StartCombatantRound(PCharacter Who)
      fastest). */
 u8 ComputeMovement(PCharacter Who)
 {
+  POOL_TRACE("ComputeMovement");
   u8 Result = 0;
   u8 Moves = 0;
   Moves = (*FPD(TCharacter (*), Who)).Movement;
@@ -82,6 +84,7 @@ u8 ComputeMovement(PCharacter Who)
      and the target (5). Called for each of a combatant's attacks. */
 void RollAttackDamage(PCharacter Attacker, PCharacter Target, u8 Index)
 {
+  POOL_TRACE("RollAttackDamage");
   DamageAmount = RollDiceCounted((*FPD(TCharacter (*), Attacker)).WeaponAttacks[Index - 1], (*FPD(TCharacter (*), Attacker)).WeaponDamage[Index - 1]) + (*FPD(TCharacter (*), Attacker)).WeaponDamageBonus[Index - 1];
   if (DamageAmount < 0) {
     DamageAmount = 0;
@@ -108,6 +111,7 @@ void RollAttackDamage(PCharacter Attacker, PCharacter Target, u8 Index)
      target, the hit kind, the damage dealt, the number displayed and the hit flag. */
 void ShowAttackResult(PCharacter Attacker, PCharacter Target, u8 Kind, u8 DamageDealt, u8 Damage, u8 Hit)
 {
+  POOL_TRACE("ShowAttackResult");
   u8 Row = 0;
   u8 Text[81] = {0};
   u8 t1[256];
@@ -200,26 +204,30 @@ void ShowAttackResult(PCharacter Attacker, PCharacter Target, u8 Kind, u8 Damage
      character that is out of the fight (Flag10D 0). Called after a move (StepCombatant). */
 void GuardedEnemiesAttack(PCharacter Who)
 {
+  POOL_TRACE("GuardedEnemiesAttack");
   u8 Count = 0;
   u8 I = 0;
   PCharacter Enemy = 0;
   u8 Done = 0;
-  u8 t1;
   Count = CollectEnemiesInRange(Who, 1);
-  t1 = Count;
-  I = 1;
-  if (I <= t1) for (;;) {
-    if ((*FPD(TCharacter (*), Who)).Flag10D != 0) {
-      Enemy = CombatantRecord[CombatantScanList[I] - 1];
-      if ((((*FPD(TCombatant (*), (*FPD(TCharacter (*), Enemy)).Combat)).B7 != 0)) && !IsHelpless(Enemy)) {
-        MoveCombatCursor(CombatantX(Who), CombatantY(Who), 2, 8);
-        (*FPD(TCombatant (*), (*FPD(TCharacter (*), Enemy)).Combat)).B7 = 0;
-        NoteAttackBearing(Enemy, Who);
-        PerformAttack(Enemy, Who, 0, 0, &Done);
+  {
+    u8 limit = Count;
+    if (1 <= limit) {
+      I = 1;
+      for (;;) {
+          if ((*FPD(TCharacter (*), Who)).Flag10D != 0) {
+            Enemy = CombatantRecord[CombatantScanList[I] - 1];
+            if ((((*FPD(TCombatant (*), (*FPD(TCharacter (*), Enemy)).Combat)).B7 != 0)) && !IsHelpless(Enemy)) {
+              MoveCombatCursor(CombatantX(Who), CombatantY(Who), 2, 8);
+              (*FPD(TCombatant (*), (*FPD(TCharacter (*), Enemy)).Combat)).B7 = 0;
+              NoteAttackBearing(Enemy, Who);
+              PerformAttack(Enemy, Who, 0, 0, &Done);
+            }
+          }
+        if (I == limit) break;
+        I++;
       }
     }
-    if (I == t1) break;
-    I++;
   }
 }
 
@@ -233,6 +241,7 @@ void GuardedEnemiesAttack(PCharacter Who)
      helpless, its Moves become 0. Called by MoveCharacter (ovl08) and MoveStep (ovl09). */
 void StepCombatant(PCharacter Who, u8 Dir)
 {
+  POOL_TRACE("StepCombatant");
   u8 Step = 0;
   u8 Idx = 0;
   s8 NewX = 0;
@@ -292,6 +301,7 @@ void StepCombatant(PCharacter Who, u8 Dir)
      Globals: CombatantScanList, CombatantTable, DirStepX/DirStepY, CombatantRecord, CombatScratchFlag. */
 void PartingShots(PCharacter Who, u8 Dir)
 {
+  POOL_TRACE("PartingShots");
   u8 Enemies[12] = {0};
   farptr Affect = 0;
   u8 Found = 0;
@@ -307,100 +317,120 @@ void PartingShots(PCharacter Who, u8 Dir)
   u8 K = 0;
   PCharacter Enemy = 0;
   PCharacter SavedTarget = 0;
-  u8 t1;
-  u8 t2;
-  u8 t3;
-  u8 t4;
-  u8 t5;
   rtl_FillChar((void *)&Enemies, 12, 0);
   Idx = CombatantIndex(Who);
   Count = CollectEnemiesInRange(Who, 1);
   if (Count == 0) {
     return;
   }
-  t1 = Count;
-  I = 1;
-  if (I <= t1) for (;;) {
-    Enemies[I - 1] = CombatantScanList[I];
-    if (I == t1) break;
-    I++;
+  {
+    u8 limit = Count;
+    if (1 <= limit) {
+      I = 1;
+      for (;;) {
+          Enemies[I - 1] = CombatantScanList[I];
+        if (I == limit) break;
+        I++;
+      }
+    }
   }
   CombatantTable[Idx].X += DirStepX[Dir];
   CombatantTable[Idx].Y += DirStepY[Dir];
   CountAfter = CollectEnemiesInRange(Who, 1);
   CombatantTable[Idx].X -= DirStepX[Dir];
   CombatantTable[Idx].Y -= DirStepY[Dir];
-  t2 = Count;
-  I = 1;
-  if (I <= t2) for (;;) {
-    Found = 0;
-    t3 = CountAfter;
-    J = 1;
-    if (J <= t3) for (;;) {
-      if (CombatantScanList[J] == Enemies[I - 1]) {
-        Found = 1;
+  {
+    u8 limit = Count;
+    if (1 <= limit) {
+      I = 1;
+      for (;;) {
+          Found = 0;
+          {
+            u8 limit = CountAfter;
+            if (1 <= limit) {
+              J = 1;
+              for (;;) {
+                  if (CombatantScanList[J] == Enemies[I - 1]) {
+                    Found = 1;
+                  }
+                if (J == limit) break;
+                J++;
+              }
+            }
+          }
+          if (Found != 0) {
+            Enemies[I - 1] = 0;
+          }
+        if (I == limit) break;
+        I++;
       }
-      if (J == t3) break;
-      J++;
     }
-    if (Found != 0) {
-      Enemies[I - 1] = 0;
-    }
-    if (I == t2) break;
-    I++;
   }
-  t4 = Count;
-  I = 1;
-  if (I <= t4) for (;;) {
-    if (Enemies[I - 1] > 0) {
-      if ((*FPD(TCharacter (*), Who)).Flag10D != 0) {
-        DidAttack = 0;
-        Enemy = CombatantRecord[Enemies[I - 1] - 1];
-        if (!IsHelpless(Enemy)) {
-          if (AttackTargetAllowed(Enemy, Who)) {
-            if (!HasAffect(Enemy, AffectBloodDrain, &Affect)) {
-              if (!HasAffect(Enemy, AffectForcedAttack, &Affect)) {
-                t5 = (s16)((*FPD(TCombatant (*), (*FPD(TCharacter (*), Enemy)).Combat)).IconSet + PartingShotLastOffset);
-                K = (s16)((*FPD(TCombatant (*), (*FPD(TCharacter (*), Enemy)).Combat)).IconSet + PartingShotFirstOffset);
-                if (K <= t5) for (;;) {
-                  if (DidAttack == 0) {
-                    if ((((((*FPD(TCombatant (*), (*FPD(TCharacter (*), Enemy)).Combat)).Initiative > 0)) || (((*FPD(TCombatant (*), (*FPD(TCharacter (*), Enemy)).Combat)).BF == 0)))) || InDirArc(CombatantX(Enemy), CombatantY(Enemy), CombatantX(Who), CombatantY(Who), (K % Directions))) {
-                      Slot = 1;
-                      if ((*FPD(TCharacter (*), Enemy)).Attacks == 0) {
-                        Slot = 2;
-                      }
-                      SlotIndex = 1;
-                      if (SlotIndex <= 2) for (;;) {
-                        if ((*FPD(TCharacter (*), Enemy)).AttackSlots[SlotIndex - 1] > 0) {
-                          Slot = SlotIndex;
+  {
+    u8 limit = Count;
+    if (1 <= limit) {
+      I = 1;
+      for (;;) {
+          if (Enemies[I - 1] > 0) {
+            if ((*FPD(TCharacter (*), Who)).Flag10D != 0) {
+              DidAttack = 0;
+              Enemy = CombatantRecord[Enemies[I - 1] - 1];
+              if (!IsHelpless(Enemy)) {
+                if (AttackTargetAllowed(Enemy, Who)) {
+                  if (!HasAffect(Enemy, AffectBloodDrain, &Affect)) {
+                    if (!HasAffect(Enemy, AffectForcedAttack, &Affect)) {
+                      {
+                        u8 limit = (s16)((*FPD(TCombatant (*), (*FPD(TCharacter (*), Enemy)).Combat)).IconSet + PartingShotLastOffset);
+                        u8 first = (s16)((*FPD(TCombatant (*), (*FPD(TCharacter (*), Enemy)).Combat)).IconSet + PartingShotFirstOffset);
+                        if (first <= limit) {
+                          K = first;
+                          for (;;) {
+                              if (DidAttack == 0) {
+                                if ((((((*FPD(TCombatant (*), (*FPD(TCharacter (*), Enemy)).Combat)).Initiative > 0)) || (((*FPD(TCombatant (*), (*FPD(TCharacter (*), Enemy)).Combat)).BF == 0)))) || InDirArc(CombatantX(Enemy), CombatantY(Enemy), CombatantX(Who), CombatantY(Who), (K % Directions))) {
+                                  Slot = 1;
+                                  if ((*FPD(TCharacter (*), Enemy)).Attacks == 0) {
+                                    Slot = 2;
+                                  }
+                                  {
+                                    if (1 <= 2) {
+                                      SlotIndex = 1;
+                                      for (;;) {
+                                          if ((*FPD(TCharacter (*), Enemy)).AttackSlots[SlotIndex - 1] > 0) {
+                                            Slot = SlotIndex;
+                                          }
+                                        if (SlotIndex == 2) break;
+                                        SlotIndex++;
+                                      }
+                                    }
+                                  }
+                                  if ((*FPD(TCharacter (*), Enemy)).AttackSlots[Slot - 1] == 0) {
+                                    (*FPD(TCharacter (*), Enemy)).AttackSlots[Slot - 1] = 1;
+                                  }
+                                  (*FPD(TCombatant (*), (*FPD(TCharacter (*), Enemy)).Combat)).Pad4[0] = Slot;
+                                  SavedTarget = (*FPD(TCombatant (*), (*FPD(TCharacter (*), Enemy)).Combat)).Target;
+                                  PerformAttack(Enemy, Who, 1, 0, &CombatScratchFlag);
+                                  DidAttack = 1;
+                                  (*FPD(TCombatant (*), (*FPD(TCharacter (*), Enemy)).Combat)).Target = SavedTarget;
+                                  if ((*FPD(TCharacter (*), Who)).Flag10D != 0) {
+                                    DrawCharacterPanel(Who);
+                                  }
+                                }
+                              }
+                            if (K == limit) break;
+                            K++;
+                          }
                         }
-                        if (SlotIndex == 2) break;
-                        SlotIndex++;
-                      }
-                      if ((*FPD(TCharacter (*), Enemy)).AttackSlots[Slot - 1] == 0) {
-                        (*FPD(TCharacter (*), Enemy)).AttackSlots[Slot - 1] = 1;
-                      }
-                      (*FPD(TCombatant (*), (*FPD(TCharacter (*), Enemy)).Combat)).Pad4[0] = Slot;
-                      SavedTarget = (*FPD(TCombatant (*), (*FPD(TCharacter (*), Enemy)).Combat)).Target;
-                      PerformAttack(Enemy, Who, 1, 0, &CombatScratchFlag);
-                      DidAttack = 1;
-                      (*FPD(TCombatant (*), (*FPD(TCharacter (*), Enemy)).Combat)).Target = SavedTarget;
-                      if ((*FPD(TCharacter (*), Who)).Flag10D != 0) {
-                        DrawCharacterPanel(Who);
                       }
                     }
                   }
-                  if (K == t5) break;
-                  K++;
                 }
               }
             }
           }
-        }
+        if (I == limit) break;
+        I++;
       }
     }
-    if (I == t4) break;
-    I++;
   }
 }
 
@@ -412,6 +442,7 @@ void PartingShots(PCharacter Who, u8 Dir)
      Returns EndCombatTurn(Who), which ends the turn. Globals: none. */
 u8 TryFlee(PCharacter Who)
 {
+  POOL_TRACE("TryFlee");
   u8 Result = 0;
   u8 Escaped = 0;
   u8 Other = 0;
@@ -453,6 +484,7 @@ u8 TryFlee(PCharacter Who)
      or the player readies an item (ovl08:0207, ovl09:0942). Globals: HookedMoveOrAttacks, HookRunning, ItemTable. */
 void RefreshAttacks(PCharacter Who)
 {
+  POOL_TRACE("RefreshAttacks");
   u8 AttackCount = 0;
   u8 SavedAttacks = 0;
   u8 AmmoLimit = 0;
@@ -497,6 +529,7 @@ void RefreshAttacks(PCharacter Who)
      RefreshAttacks uses it as the round's attack count. */
 u8 AttacksThisRound(u8 DoubledAttacks)
 {
+  POOL_TRACE("AttacksThisRound");
   u8 Result = 0;
   u8 RoundAttacks = 0;
   RoundAttacks = DoubledAttacks;
@@ -520,32 +553,35 @@ u8 AttacksThisRound(u8 DoubledAttacks)
      CombatantRecord. */
 u8 SweepEnemies(PCharacter Who, PCharacter Target)
 {
+  POOL_TRACE("SweepEnemies");
   u8 Result = 0;
   u8 Count = 0;
   u8 Extra = 0;
   u8 I = 0;
   u8 SavedIndex = 0;
   PCharacter Enemy = 0;
-  u8 t1;
-  u8 t2;
   Result = 0;
   if ((*FPD(TCharacter (*), Who)).AttackSlots[0] < (*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).Pad4[1]) {
     if ((*FPD(TCharacter (*), Target)).HighestLevel == 0) {
       if (DistanceToTarget(Who, Target) == 1) {
         Count = CollectEnemiesInRange(Who, 1);
         Extra = 0;
-        t1 = Count;
-        I = 1;
-        if (I <= t1) for (;;) {
-          Enemy = CombatantRecord[CombatantScanList[I] - 1];
-          if (Enemy == Target) {
-            SavedIndex = I;
+        {
+          u8 limit = Count;
+          if (1 <= limit) {
+            I = 1;
+            for (;;) {
+                Enemy = CombatantRecord[CombatantScanList[I] - 1];
+                if (Enemy == Target) {
+                  SavedIndex = I;
+                }
+                if ((*FPD(TCharacter (*), Enemy)).HighestLevel == 0) {
+                  Extra++;
+                }
+              if (I == limit) break;
+              I++;
+            }
           }
-          if ((*FPD(TCharacter (*), Enemy)).HighestLevel == 0) {
-            Extra++;
-          }
-          if (I == t1) break;
-          I++;
         }
         if (Extra > (*FPD(TCharacter (*), Who)).AttackSlots[0]) {
           if (Extra > (*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).Pad4[1]) {
@@ -557,20 +593,24 @@ u8 SweepEnemies(PCharacter Who, PCharacter Target)
             CombatantScanList[SavedIndex] = CombatantScanList[1];
             CombatantScanList[1] = CombatantIndex(Target);
           }
-          t2 = Count;
-          I = 1;
-          if (I <= t2) for (;;) {
-            if (Extra > 0) {
-              if ((*FPD(TCharacter (*), CombatantRecord[CombatantScanList[I] - 1])).HighestLevel == 0) {
-                Enemy = CombatantRecord[CombatantScanList[I] - 1];
-                NoteAttackBearing(Who, Enemy);
-                (*FPD(TCharacter (*), Who)).AttackSlots[0] = 1;
-                PerformAttack(Who, Enemy, 0, 0, &CombatScratchFlag);
-                Extra--;
+          {
+            u8 limit = Count;
+            if (1 <= limit) {
+              I = 1;
+              for (;;) {
+                  if (Extra > 0) {
+                    if ((*FPD(TCharacter (*), CombatantRecord[CombatantScanList[I] - 1])).HighestLevel == 0) {
+                      Enemy = CombatantRecord[CombatantScanList[I] - 1];
+                      NoteAttackBearing(Who, Enemy);
+                      (*FPD(TCharacter (*), Who)).AttackSlots[0] = 1;
+                      PerformAttack(Who, Enemy, 0, 0, &CombatScratchFlag);
+                      Extra--;
+                    }
+                  }
+                if (I == limit) break;
+                I++;
               }
             }
-            if (I == t2) break;
-            I++;
           }
           Result = 1;
         }
@@ -591,6 +631,7 @@ u8 SweepEnemies(PCharacter Who, PCharacter Target)
      e17/e21/2FD3). Globals: HookVetoFlag. */
 u8 AttackTargetAllowed(PCharacter Who, PCharacter Target)
 {
+  POOL_TRACE("AttackTargetAllowed");
   u8 Result = 0;
   PCharacter SavedTarget = 0;
   Result = 0;
@@ -629,6 +670,7 @@ u8 AttackTargetAllowed(PCharacter Who, PCharacter Target)
      (ovl08:031A) and TryTurnUndead (ovl09:0203). Globals: TurnUndeadTable, CombatScratchFlag. */
 void TurnUndead(PCharacter Who)
 {
+  POOL_TRACE("TurnUndead");
   u8 Roll20 = 0;
   u8 Remaining = 0;
   u8 TurnsLeft = 0;
@@ -719,31 +761,35 @@ void TurnUndead(PCharacter Who)
      through it either way. Globals: CombatantScanList (the scan's combatant list), CombatantRecord. */
 u8 SelectTurnUndeadTarget(farptr Who, void *Selected)
 {
+  POOL_TRACE("SelectTurnUndeadTarget");
   u8 Result = 0;
   u8 Count = 0;
   u8 I = 0;
   s8 MinRow = 0;
   PCharacter Enemy = 0;
-  u8 t1;
   MinRow = UndeadRowCeiling;
   (*(PCharacter (*))Selected) = 0;
   Count = CollectEnemiesInRange(Who, AllEnemiesRange);
   Result = 0;
-  t1 = Count;
-  I = 1;
-  if (I <= t1) for (;;) {
-    Enemy = CombatantRecord[CombatantScanList[I] - 1];
-    if ((*FPD(TCombatant (*), (*FPD(TCharacter (*), Enemy)).Combat)).ForcedFlight == 0) {
-      if ((*FPD(TCharacter (*), Enemy)).Pad74[2] > 0) {
-        if ((*FPD(TCharacter (*), Enemy)).Pad74[2] < MinRow) {
-          MinRow = (*FPD(TCharacter (*), Enemy)).Pad74[2];
-          (*(PCharacter (*))Selected) = Enemy;
-          Result = 1;
-        }
+  {
+    u8 limit = Count;
+    if (1 <= limit) {
+      I = 1;
+      for (;;) {
+          Enemy = CombatantRecord[CombatantScanList[I] - 1];
+          if ((*FPD(TCombatant (*), (*FPD(TCharacter (*), Enemy)).Combat)).ForcedFlight == 0) {
+            if ((*FPD(TCharacter (*), Enemy)).Pad74[2] > 0) {
+              if ((*FPD(TCharacter (*), Enemy)).Pad74[2] < MinRow) {
+                MinRow = (*FPD(TCharacter (*), Enemy)).Pad74[2];
+                (*(PCharacter (*))Selected) = Enemy;
+                Result = 1;
+              }
+            }
+          }
+        if (I == limit) break;
+        I++;
       }
     }
-    if (I == t1) break;
-    I++;
   }
   return Result;
 }
@@ -766,6 +812,7 @@ u8 SelectTurnUndeadTarget(farptr Who, void *Selected)
      PerformAttack (ovl13:19D6). Globals: AttackRoll, AttackSlotCounts, DamageAmount, SoundNoAction, SoundAttackMissed. */
 void ResolveCombatantAttacks(PCharacter Attacker, PCharacter Target, u8 AttackKind, u8 (*Done))
 {
+  POOL_TRACE("ResolveCombatantAttacks");
   TItemRow Item = {0};
   u8 Landed = 0;
   u8 TargetDown = 0;
@@ -793,11 +840,15 @@ void ResolveCombatantAttacks(PCharacter Attacker, PCharacter Target, u8 AttackKi
     AttackSlotCounts[(*FPD(TCombatant (*), (*FPD(TCharacter (*), Attacker)).Combat)).Pad4[0]]++;
     ShowAttackResult(Attacker, Target, 3, (s16)((*FPD(TCharacter (*), Target)).HpCurrent + 5), 1, 1);
     ClearAttackerAffect(Attacker);
-    SlotIndex = 1;
-    if (SlotIndex <= 2) for (;;) {
-      (*FPD(TCharacter (*), Attacker)).AttackSlots[SlotIndex - 1] = 0;
-      if (SlotIndex == 2) break;
-      SlotIndex++;
+    {
+      if (1 <= 2) {
+        SlotIndex = 1;
+        for (;;) {
+            (*FPD(TCharacter (*), Attacker)).AttackSlots[SlotIndex - 1] = 0;
+          if (SlotIndex == 2) break;
+          SlotIndex++;
+        }
+      }
     }
     Landed = 1;
     (*Done) = 1;
@@ -835,41 +886,50 @@ void ResolveCombatantAttacks(PCharacter Attacker, PCharacter Target, u8 AttackKi
       HitKind = 2;
     }
     SlotCount = (*FPD(TCombatant (*), (*FPD(TCharacter (*), Attacker)).Combat)).Pad4[0];
-    SlotIndex = SlotCount;
-    if (SlotIndex >= 1) for (;;) {
-      while ((((*FPD(TCharacter (*), Attacker)).AttackSlots[SlotIndex - 1] > 0)) && ((TargetDown == 0))) {
-        (*FPD(TCharacter (*), Attacker)).AttackSlots[SlotIndex - 1]--;
-        (*FPD(TCombatant (*), (*FPD(TCharacter (*), Attacker)).Combat)).Pad4[0] = SlotIndex;
-        AttackSlotCounts[SlotIndex]++;
-        if (RollToHit(Attacker, Target, NeededRoll) || IsHelpless(Target)) {
-          AttackSlotRolls[SlotIndex]++;
-          PlaySound(SoundNoAction);
-          Landed = 1;
-          RollAttackDamage(Attacker, Target, SlotIndex);
-          ShowAttackResult(Attacker, Target, HitKind, DamageAmount, DamageAmount, 1);
-          if ((*FPD(TCharacter (*), Target)).Flag10D != 0) {
-            RunAffectHooks((s16)(SlotIndex + 1), Attacker);
-          }
-          if ((*FPD(TCharacter (*), Target)).Flag10D == 0) {
-            TargetDown = 1;
-          }
+    {
+      u8 first = SlotCount;
+      if (first >= 1) {
+        SlotIndex = first;
+        for (;;) {
+            while ((((*FPD(TCharacter (*), Attacker)).AttackSlots[SlotIndex - 1] > 0)) && ((TargetDown == 0))) {
+              (*FPD(TCharacter (*), Attacker)).AttackSlots[SlotIndex - 1]--;
+              (*FPD(TCombatant (*), (*FPD(TCharacter (*), Attacker)).Combat)).Pad4[0] = SlotIndex;
+              AttackSlotCounts[SlotIndex]++;
+              if (RollToHit(Attacker, Target, NeededRoll) || IsHelpless(Target)) {
+                AttackSlotRolls[SlotIndex]++;
+                PlaySound(SoundNoAction);
+                Landed = 1;
+                RollAttackDamage(Attacker, Target, SlotIndex);
+                ShowAttackResult(Attacker, Target, HitKind, DamageAmount, DamageAmount, 1);
+                if ((*FPD(TCharacter (*), Target)).Flag10D != 0) {
+                  RunAffectHooks((s16)(SlotIndex + 1), Attacker);
+                }
+                if ((*FPD(TCharacter (*), Target)).Flag10D == 0) {
+                  TargetDown = 1;
+                }
+              }
+            }
+          if (SlotIndex == 1) break;
+          SlotIndex--;
         }
       }
-      if (SlotIndex == 1) break;
-      SlotIndex--;
     }
     if (Landed == 0) {
       PlaySound(SoundAttackMissed);
       ShowAttackResult(Attacker, Target, HitKind, 0, 0, 0);
     }
     (*Done) = 1;
-    SlotIndex = 1;
-    if (SlotIndex <= 2) for (;;) {
-      if ((*FPD(TCharacter (*), Attacker)).AttackSlots[SlotIndex - 1] > 0) {
-        (*Done) = 0;
+    {
+      if (1 <= 2) {
+        SlotIndex = 1;
+        for (;;) {
+            if ((*FPD(TCharacter (*), Attacker)).AttackSlots[SlotIndex - 1] > 0) {
+              (*Done) = 0;
+            }
+          if (SlotIndex == 2) break;
+          SlotIndex++;
+        }
       }
-      if (SlotIndex == 2) break;
-      SlotIndex++;
     }
     (*FPD(TCombatant (*), (*FPD(TCharacter (*), Attacker)).Combat)).Pad4[1] = 0;
   }
@@ -885,6 +945,7 @@ void ResolveCombatantAttacks(PCharacter Attacker, PCharacter Target, u8 AttackKi
      ovl09 AiTurn, GuardedEnemiesAttack, SweepEnemies). */
 void NoteAttackBearing(PCharacter Attacker, PCharacter Target)
 {
+  POOL_TRACE("NoteAttackBearing");
   u8 Error = 0;
   u8 Bearing = 0;
   (*FPD(TCombatant (*), (*FPD(TCharacter (*), Target)).Combat)).BF++;
@@ -912,6 +973,7 @@ void NoteAttackBearing(PCharacter Attacker, PCharacter Target)
      PooledItems, LootListBoundary, AttackSlotCounts. */
 void PerformAttack(PCharacter Who, PCharacter Target, u8 AttackKind, farptr AimedItem, u8 (*Done))
 {
+  POOL_TRACE("PerformAttack");
   PMenuLine NewItem = 0;
   PCharacter SavedSelection = 0;
   u8 Bearing = 0;
@@ -978,6 +1040,7 @@ void PerformAttack(PCharacter Who, PCharacter Target, u8 AttackKind, farptr Aime
      NeededRoll. Globals: ItemTable. */
 void AddRangePenalty(PCharacter Attacker, PCharacter Target, u8 (*NeededRoll))
 {
+  POOL_TRACE("AddRangePenalty");
   s8 RangeBand = 0;
   s8 Distance = 0;
   Distance = DistanceToTarget(Attacker, Target);
@@ -1012,6 +1075,7 @@ void AddRangePenalty(PCharacter Attacker, PCharacter Target, u8 (*NeededRoll))
      BodyCount. */
 u8 FindNearbyTarget(PCharacter Who, void *Selected)
 {
+  POOL_TRACE("FindNearbyTarget");
   u8 Result = 0;
   PCharacter SelectedWho = 0;
   s8 CellX = 0;
@@ -1022,41 +1086,48 @@ u8 FindNearbyTarget(PCharacter Who, void *Selected)
   u8 BodyIndex = 0;
   u8 Occupant = 0;
   u8 Tile = 0;
-  u8 t1;
-  s32 t2;
+  s32 t1;
   SelectedWho = 0;
   FoundIndex = 0;
   BestHp = 0xFF;
-  Dir = 0;
-  if (Dir <= 8) for (;;) {
-    CellX = CombatantX(Who) + DirStepX[Dir];
-    CellY = CombatantY(Who) + DirStepY[Dir];
-    GetMapCell(CellX, CellY, &Occupant, &Tile);
-    if (Occupant > 0) {
-      (*(PCharacter (*))Selected) = CombatantRecord[Occupant - 1];
-      if ((((*FPD(TCharacter (*), (*(PCharacter (*))Selected))).Side == (*FPD(TCharacter (*), Who)).Side)) && (((*FPD(TCharacter (*), (*(PCharacter (*))Selected))).HpCurrent < (*FPD(TCharacter (*), (*(PCharacter (*))Selected))).HpMax))) {
-        if ((((*FPD(TCharacter (*), (*(PCharacter (*))Selected))).HpCurrent < BestHp)) || (((((*(PCharacter (*))Selected) == Who)) && (((*FPD(TCharacter (*), (*(PCharacter (*))Selected))).HpCurrent < (s16)((u16)(*FPD(TCharacter (*), (*(PCharacter (*))Selected))).HpMax >> 1)))))) {
-          SelectedWho = (*(PCharacter (*))Selected);
-          BestHp = (*FPD(TCharacter (*), (*(PCharacter (*))Selected))).HpCurrent;
-        }
-      }
-    } else if (Tile == BodyTile) {
-      t1 = BodyCount;
-      BodyIndex = 1;
-      if (BodyIndex <= t1) for (;;) {
-        if (BodyTable[BodyIndex - 1].Who != 0) {
-          if (!((t2 = (*FPD(TCharacter (*), BodyTable[BodyIndex - 1].Who)).Status, (t2 >= 6 && t2 <= 8)))) {
-            if (((BodyTable[BodyIndex - 1].X == CellX)) && ((BodyTable[BodyIndex - 1].Y == CellY))) {
-              FoundIndex = BodyIndex;
+  {
+    if (0 <= 8) {
+      Dir = 0;
+      for (;;) {
+          CellX = CombatantX(Who) + DirStepX[Dir];
+          CellY = CombatantY(Who) + DirStepY[Dir];
+          GetMapCell(CellX, CellY, &Occupant, &Tile);
+          if (Occupant > 0) {
+            (*(PCharacter (*))Selected) = CombatantRecord[Occupant - 1];
+            if ((((*FPD(TCharacter (*), (*(PCharacter (*))Selected))).Side == (*FPD(TCharacter (*), Who)).Side)) && (((*FPD(TCharacter (*), (*(PCharacter (*))Selected))).HpCurrent < (*FPD(TCharacter (*), (*(PCharacter (*))Selected))).HpMax))) {
+              if ((((*FPD(TCharacter (*), (*(PCharacter (*))Selected))).HpCurrent < BestHp)) || (((((*(PCharacter (*))Selected) == Who)) && (((*FPD(TCharacter (*), (*(PCharacter (*))Selected))).HpCurrent < (s16)((u16)(*FPD(TCharacter (*), (*(PCharacter (*))Selected))).HpMax >> 1)))))) {
+                SelectedWho = (*(PCharacter (*))Selected);
+                BestHp = (*FPD(TCharacter (*), (*(PCharacter (*))Selected))).HpCurrent;
+              }
+            }
+          } else if (Tile == BodyTile) {
+            {
+              u8 limit = BodyCount;
+              if (1 <= limit) {
+                BodyIndex = 1;
+                for (;;) {
+                    if (BodyTable[BodyIndex - 1].Who != 0) {
+                      if (!((t1 = (*FPD(TCharacter (*), BodyTable[BodyIndex - 1].Who)).Status, (t1 >= 6 && t1 <= 8)))) {
+                        if (((BodyTable[BodyIndex - 1].X == CellX)) && ((BodyTable[BodyIndex - 1].Y == CellY))) {
+                          FoundIndex = BodyIndex;
+                        }
+                      }
+                    }
+                  if (BodyIndex == limit) break;
+                  BodyIndex++;
+                }
+              }
             }
           }
-        }
-        if (BodyIndex == t1) break;
-        BodyIndex++;
+        if (Dir == 8) break;
+        Dir++;
       }
     }
-    if (Dir == 8) break;
-    Dir++;
   }
   if (((BestHp < FindNearbyTarget_ChosenHpLimit)) || ((FoundIndex == 0))) {
     (*(PCharacter (*))Selected) = SelectedWho;
@@ -1085,13 +1156,13 @@ u8 FindNearbyTarget(PCharacter Who, void *Selected)
      Pad2[6] nibble is 8..14). Globals: SelectedCharacter, SpellAimX, SpellAimY. */
 u8 FindSpellTarget(u8 Spell, u8 Automatic, u8 AimFlag, TSpellTarget (*Target))
 {
+  POOL_TRACE("FindSpellTarget");
   u8 Result = 0;
   u8 Chosen = 0;
   u8 Valid = 0;
   PCharacter SavedTarget = 0;
   u8 I = 0;
   u8 Attempts = 0;
-  u8 t1;
   Chosen = 0;
   if (Automatic == 0) {
     RunAimTargets(SelectedCharacter, SpellAreaSize(Spell), 0, AimFlag, &Chosen, (void *)&(*Target));
@@ -1112,24 +1183,32 @@ u8 FindSpellTarget(u8 Spell, u8 Automatic, u8 AimFlag, TSpellTarget (*Target))
           SavedTarget = (*FPD(TCombatant (*), (*FPD(TCharacter (*), SelectedCharacter)).Combat)).Target;
           if (SpellTable[Spell].PadB[4] > 0) {
             ScanTargets(CombatantX(SavedTarget), CombatantY(SavedTarget), SpellTable[Spell].PadB[4], 0xFF, 1, CombatMap);
-            t1 = SortEntries[0].Val_;
-            I = 1;
-            if (I <= t1) for (;;) {
-              if ((*FPD(TCharacter (*), CombatantRecord[SortEntries[I].Head - 1])).Side != OpposingSide(SelectedCharacter)) {
-                Valid = 0;
+            {
+              u8 limit = SortEntries[0].Val_;
+              if (1 <= limit) {
+                I = 1;
+                for (;;) {
+                    if ((*FPD(TCharacter (*), CombatantRecord[SortEntries[I].Head - 1])).Side != OpposingSide(SelectedCharacter)) {
+                      Valid = 0;
+                    }
+                  if (I == limit) break;
+                  I++;
+                }
               }
-              if (I == t1) break;
-              I++;
             }
           }
           if (IsHelpless(SavedTarget)) {
-            I = 1;
-            if (I <= 4) for (;;) {
-              if (SpellTable[Spell].AffectId == HelplessAffects[I]) {
-                Valid = 0;
+            {
+              if (1 <= 4) {
+                I = 1;
+                for (;;) {
+                    if (SpellTable[Spell].AffectId == HelplessAffects[I]) {
+                      Valid = 0;
+                    }
+                  if (I == 4) break;
+                  I++;
+                }
               }
-              if (I == 4) break;
-              I++;
             }
           }
           if (Valid != 0) {
@@ -1170,14 +1249,12 @@ u8 FindSpellTarget(u8 Spell, u8 Automatic, u8 AimFlag, TSpellTarget (*Target))
      SpellAppliedToArea. */
 void SelectSpellTargets(u8 Spell, u8 Automatic, u8 (*Done))
 {
+  POOL_TRACE("SelectSpellTargets");
   u8 TargetsLeft = 0;
   u8 Count = 0;
   u8 J = 0;
   TSpellTarget Target = {0};
   u8 Duplicate = 0;
-  u8 t1;
-  u8 t2;
-  u8 t3;
   (*Done) = 1;
   SpellTargetCount = 0;
   SpellAppliedToArea = 0;
@@ -1201,12 +1278,16 @@ void SelectSpellTargets(u8 Spell, u8 Automatic, u8 (*Done))
            this branch is taken only when the low nibble is $F; an area spell aimed at nothing
            with Combat^.Target nil scans only the centre cell. */
         ScanTargets(SpellAimX, SpellAimY, (s16)((u16)((SpellTable[Spell].Pad2[4] & 0xF)) >> 4), 0xFF, 1, CombatMap);
-        t1 = SortEntries[0].Val_;
-        Count = 1;
-        if (Count <= t1) for (;;) {
-          SpellTargets[Count] = CombatantRecord[SortEntries[Count].Head - 1];
-          if (Count == t1) break;
-          Count++;
+        {
+          u8 limit = SortEntries[0].Val_;
+          if (1 <= limit) {
+            Count = 1;
+            for (;;) {
+                SpellTargets[Count] = CombatantRecord[SortEntries[Count].Head - 1];
+              if (Count == limit) break;
+              Count++;
+            }
+          }
         }
         SpellTargetCount = SortEntries[0].Val_;
         SpellAppliedToArea = 1;
@@ -1226,12 +1307,16 @@ void SelectSpellTargets(u8 Spell, u8 Automatic, u8 (*Done))
   {
     if (FindSpellTarget(Spell, Automatic, 1, &Target)) {
       ScanTargets(SpellAimX, SpellAimY, (SpellTable[Spell].Pad2[4] & 7), 0xFF, 1, CombatMap);
-      t2 = SortEntries[0].Val_;
-      Count = 1;
-      if (Count <= t2) for (;;) {
-        SpellTargets[Count] = CombatantRecord[SortEntries[Count].Head - 1];
-        if (Count == t2) break;
-        Count++;
+      {
+        u8 limit = SortEntries[0].Val_;
+        if (1 <= limit) {
+          Count = 1;
+          for (;;) {
+              SpellTargets[Count] = CombatantRecord[SortEntries[Count].Head - 1];
+            if (Count == limit) break;
+            Count++;
+          }
+        }
       }
       SpellTargetCount = SortEntries[0].Val_;
       SpellAppliedToArea = 1;
@@ -1248,14 +1333,18 @@ void SelectSpellTargets(u8 Spell, u8 Automatic, u8 (*Done))
       while (TargetsLeft > 0) {
         if (FindSpellTarget(Spell, Automatic, 0, &Target)) {
           Duplicate = 0;
-          t3 = Count;
-          J = 1;
-          if (J <= t3) for (;;) {
-            if (SpellTargets[J] == Target.Who) {
-              Duplicate = 1;
+          {
+            u8 limit = Count;
+            if (1 <= limit) {
+              J = 1;
+              for (;;) {
+                  if (SpellTargets[J] == Target.Who) {
+                    Duplicate = 1;
+                  }
+                if (J == limit) break;
+                J++;
+              }
             }
-            if (J == t3) break;
-            J++;
           }
           if (Duplicate == 0) {
             Count++;
@@ -1293,6 +1382,7 @@ void SelectSpellTargets(u8 Spell, u8 Automatic, u8 (*Done))
      local down one byte and is what makes the frame $1A. Globals: SelectedCharacter. */
 void CastCombatSpell(u8 SpellNumber, u8 NoRedraw, u8 (*Done))
 {
+  POOL_TRACE("CastCombatSpell");
   u8 Spell = 0;
   u8 Unused = 0;
   u8 CastTime = 0;
@@ -1348,6 +1438,7 @@ void CastCombatSpell(u8 SpellNumber, u8 NoRedraw, u8 (*Done))
      attack kind 2. Globals: none. */
 u8 IsBackstab(PCharacter Who, PCharacter Target)
 {
+  POOL_TRACE("IsBackstab");
   u8 Result = 0;
   PItem Weapon = 0;
   PItem SlotTwo = 0;
@@ -1384,6 +1475,7 @@ u8 IsBackstab(PCharacter Who, PCharacter Target)
      direction (ovl09:07F2, 0B3C). */
 u8 BearingTo(farptr Who, farptr Target)
 {
+  POOL_TRACE("BearingTo");
   u8 Result = 0;
   u8 Dir = 0;
   s8 WhoX = 0;
@@ -1411,6 +1503,7 @@ u8 BearingTo(farptr Who, farptr Target)
      PixelBytes is worked out and never read. */
 void ShowAttackAnimation(PCharacter Who, PCharacter Target, PItem Item)
 {
+  POOL_TRACE("ShowAttackAnimation");
   u8 PicIndex = 0;
   u8 Frames = 0;
   u8 Bearing = 0;
@@ -1490,6 +1583,7 @@ void ShowAttackAnimation(PCharacter Who, PCharacter Target, PItem Item)
      EndCombatRound (ovl08:0880, every round). Globals: PartyListHead (read), SecondMoraleByte (written). */
 void UpdateMonsterMorale(void)
 {
+  POOL_TRACE("UpdateMonsterMorale");
   u16 TotalMaxHp = 0;
   u16 TotalCurrentHp = 0;
   PCharacter Who = 0;
@@ -1518,6 +1612,7 @@ void UpdateMonsterMorale(void)
      of Who's own Movement. Globals: PartyListHead (read). */
 u8 FastestEnemyMovement(farptr Who)
 {
+  POOL_TRACE("FastestEnemyMovement");
   u8 Result = 0;
   u8 Best = 0;
   u8 Moves = 0;
@@ -1548,6 +1643,7 @@ u8 FastestEnemyMovement(farptr Who)
      Globals: AllyAttackConfirmed, GameVars2 and PartyListHead (read and written). */
 u8 ConfirmAttackTarget(PCharacter Who, PCharacter Target)
 {
+  POOL_TRACE("ConfirmAttackTarget");
   u8 Result = 0;
   PCharacter Member = 0;
   if (((OpposingSide(Target) == (*FPD(TCharacter (*), Who)).Side)) || (((*FPD(TCharacter (*), Who)).Quick != 0))) {
@@ -1583,6 +1679,7 @@ u8 ConfirmAttackTarget(PCharacter Who, PCharacter Target)
      Globals: none. QUIRK ovl13:2ACF: Bearing is worked out and never read. */
 u8 ShowAimPrompt(PCharacter Who, PCharacter Target, u8 Range, u8 ShowRange, u8 Unused)
 {
+  POOL_TRACE("ShowAimPrompt");
   u8 Result = 0;
   u8 Aim[41] = {0};
   u8 ExtKey = 0;
@@ -1632,6 +1729,7 @@ u8 ShowAimPrompt(PCharacter Who, PCharacter Target, u8 Range, u8 ShowRange, u8 U
      QUIRK ovl13:2C3D: the byte local is declared and never read; it makes the frame 6 bytes. */
 void ResolveAimedAttack(PCharacter Who, PCharacter Target, u8 Automatic, u8 (*Done), TSpellTarget (*Aim))
 {
+  POOL_TRACE("ResolveAimedAttack");
   u8 Unused = 0;
   farptr AimItem = 0;
   AimItem = 0;
@@ -1687,6 +1785,7 @@ void ResolveAimedAttack(PCharacter Who, PCharacter Target, u8 Automatic, u8 (*Do
      Globals: CombatMap, BodyCount, BodyTable, CombatantRecord, CombatTiles, DirStepX, DirStepY, CombatScratchFlag. */
 void RunAimCursor(PCharacter Who, PCharacter Target, u8 Range, u8 Automatic, u8 AimFlag, u8 (*Done), TSpellTarget (*Aim))
 {
+  POOL_TRACE("RunAimCursor");
   u8 AimText[41] = {0};
   u8 Key = 0;
   farptr AimItem = 0;
@@ -1702,8 +1801,7 @@ void RunAimCursor(PCharacter Who, PCharacter Target, u8 Range, u8 Automatic, u8 
   u8 Valid = 0;
   u8 t1[256];
   u8 t2[256];
-  u8 t3;
-  u8 t4[256];
+  u8 t3[256];
   rtl_FillChar((void *)&(*Aim), 7, 0);
   CurX = CombatantX(Target);
   CurY = CombatantY(Target);
@@ -1748,14 +1846,18 @@ void RunAimCursor(PCharacter Who, PCharacter Target, u8 Range, u8 Automatic, u8 
       if (Occupant > 0) {
         Target = CombatantRecord[Occupant - 1];
       } else if (Tile == BodyTile) {
-        t3 = BodyCount;
-        I = 1;
-        if (I <= t3) for (;;) {
-          if (((BodyTable[I - 1].X == CurX)) && ((BodyTable[I - 1].Y == CurY))) {
-            Target = BodyTable[I - 1].Who;
+        {
+          u8 limit = BodyCount;
+          if (1 <= limit) {
+            I = 1;
+            for (;;) {
+                if (((BodyTable[I - 1].X == CurX)) && ((BodyTable[I - 1].Y == CurY))) {
+                  Target = BodyTable[I - 1].Who;
+                }
+              if (I == limit) break;
+              I++;
+            }
           }
-          if (I == t3) break;
-          I++;
         }
       }
     }
@@ -1785,7 +1887,7 @@ void RunAimCursor(PCharacter Who, PCharacter Target, u8 Range, u8 Automatic, u8 
     }
     rtl_str_assign(AimText, 40, S("\013Center Exit"));
     if (Valid) {
-      rtl_str_assign(AimText, 40, rtl_str_cat(t4, 2, (const u8 *const[]){S("\007Target "), AimText}));
+      rtl_str_assign(AimText, 40, rtl_str_cat(t3, 2, (const u8 *const[]){S("\007Target "), AimText}));
     }
     Key = ReadPromptChoice(S("\022(Use Cursor keys) "), AimText, 0xD, 0xA, 0xF, 1, 0, &CombatScratchFlag);
     switch ((u8)Key) {
@@ -1903,15 +2005,18 @@ typedef struct Frame_RunAimTargets {
 static void RunAimTargets_ListAimTargets(struct Frame_RunAimTargets *up, PCharacter Who)
 {
   u8 I = 0;
-  u8 t1;
   ScanTargets(CombatantX(Who), CombatantY(Who), 0x7F, 0xFF, CombatantKind(Who), CombatMap);
   up->Count = SortEntries[0].Val_;
-  t1 = up->Count;
-  I = 1;
-  if (I <= t1) for (;;) {
-    up->Targets[I - 1] = SortEntries[I];
-    if (I == t1) break;
-    I++;
+  {
+    u8 limit = up->Count;
+    if (1 <= limit) {
+      I = 1;
+      for (;;) {
+          up->Targets[I - 1] = SortEntries[I];
+        if (I == limit) break;
+        I++;
+      }
+    }
   }
 }
 
@@ -1960,6 +2065,7 @@ static PCharacter RunAimTargets_StepAimCursor(struct Frame_RunAimTargets *up, u8
      CombatantRecord, SortEntries (the scan table ListAimTargets copies into Targets). */
 void RunAimTargets(PCharacter Who, u8 Range, u8 Automatic, u8 AimFlag, u8 (*Done), void *Aim)
 {
+  POOL_TRACE("RunAimTargets");
   Frame_RunAimTargets fr;
   memset(&fr, 0, sizeof fr);
   fr.Who = Who;
@@ -2053,6 +2159,7 @@ void RunAimTargets(PCharacter Who, u8 Range, u8 Automatic, u8 AimFlag, u8 (*Done
      QuickTurn, MoveStep and AiTurn. Globals: CombatantScanList (the scan list), CombatantRecord, CombatMap (Head6). */
 u8 ChooseCombatTarget(PCharacter Who, u8 Range, u8 ThroughWalls, u8 ForgetTarget)
 {
+  POOL_TRACE("ChooseCombatTarget");
   u8 Result = 0;
   u8 Count = 0;
   u8 Attempts = 0;
@@ -2061,7 +2168,6 @@ u8 ChooseCombatTarget(PCharacter Who, u8 Range, u8 ThroughWalls, u8 ForgetTarget
   u8 Found = 0;
   u8 Searched = 0;
   PCharacter Target = 0;
-  u8 t1;
   Searched = 0;
   Found = 0;
   Retry = 0;
@@ -2089,14 +2195,18 @@ u8 ChooseCombatTarget(PCharacter Who, u8 Range, u8 ThroughWalls, u8 ForgetTarget
           (*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).Target = Target;
         } else {
           CombatantScanList[Index] = 0;
-          t1 = Count;
-          Index = 1;
-          if (Index <= t1) for (;;) {
-            if (CombatantScanList[Index] > 0) {
-              Found = 1;
+          {
+            u8 limit = Count;
+            if (1 <= limit) {
+              Index = 1;
+              for (;;) {
+                  if (CombatantScanList[Index] > 0) {
+                    Found = 1;
+                  }
+                if (Index == limit) break;
+                Index++;
+              }
             }
-            if (Index == t1) break;
-            Index++;
           }
           if (Found) {
             Found = 0;
@@ -2126,6 +2236,7 @@ u8 ChooseCombatTarget(PCharacter Who, u8 Range, u8 ThroughWalls, u8 ForgetTarget
      or when the affect is removed, so Affect and Mode are not read. Globals: AttackRoll (read). */
 void RakeAttack(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("RakeAttack");
   u8 Done = 0;
   if (AttackSlotRolls[1] != 2) {
     return;
@@ -2155,6 +2266,7 @@ void RakeAttack(PCharacter Who, PAffect Affect, u8 Mode)
      CombatantRecord. */
 void ForcedAttack(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("ForcedAttack");
   u8 Done = 0;
   u8 Unused = 0;
   AttackTarget = CombatantRecord[(*FPD(TAffect (*), Affect)).Data - 1];
@@ -2191,6 +2303,7 @@ void ForcedAttack(PCharacter Who, PAffect Affect, u8 Mode)
      PartyListHead, CombatMap, CombatantTable. */
 u8 GodsIntervene(void)
 {
+  POOL_TRACE("GodsIntervene");
   u8 Result = 0;
   u8 Done = 0;
   PCharacter Who = 0;
@@ -2220,4 +2333,5 @@ u8 GodsIntervene(void)
 /* Initialisation part of unit OVL13. */
 void init_OVL13(void)
 {
+  POOL_TRACE("init");
 }

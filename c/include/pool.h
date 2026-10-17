@@ -35,7 +35,16 @@ extern u8 pool_arena[POOL_ARENA_SIZE];
 #define POOL_LINEAR(p) ((((u32)(p) >> 16) << 4) + ((u32)(p) & 0xFFFFu))
 #define FPD(T, p) ((T)(pool_arena + POOL_LINEAR(p)))
 
-#define S(x) ((const u8 *)(x))           /* a Pascal string literal: length byte first */
+#define S(x) ((const u8 *)(x))
+
+/* Every translated routine announces itself, so a run can be compared call by call with the original's
+ * (tools/c/call_trace.py); empty unless built with -DPOOL_TRACE_CALLS (cmake -DPOOLRAD_TRACE=ON). */
+#ifdef POOL_TRACE_CALLS
+void pool_trace(const char *name);
+#define POOL_TRACE(n) pool_trace(n)
+#else
+#define POOL_TRACE(n) ((void)0)
+#endif           /* a Pascal string literal: length byte first */
 
 /* ---- files (sizes as Turbo Pascal's FileRec and TextRec) ---------------------------------------------- */
 enum { fmClosed = 0xD7B0, fmInput = 0xD7B1, fmOutput = 0xD7B2, fmInOut = 0xD7B3 };
@@ -118,6 +127,7 @@ void rtl_str_val(const u8 *s, void *v, int size, int is_signed, void *code);
 u8 rtl_upcase(u8 c);
 u8 rtl_lowercase(u8 c);
 u8 *rtl_paramstr(u8 *dst, int n);
+void rtl_set_args(int n, const char *const *args);        /* the game's ParamStr(1..n) */
 u16 rtl_ParamCount(void);
 
 /* ---- sets (32 bytes, bit n of byte n/8) ----------------------------------------------------------------- */
@@ -125,6 +135,7 @@ void rtl_set_clear(u8 *s, int n);
 void rtl_set_add(u8 *s, int v);
 void rtl_set_range(u8 *s, int lo, int hi);
 int rtl_set_in(const u8 *s, int v);
+int rtl_set_in_at(const u8 *s, int first_byte, int nbytes, int v);   /* a set stored from the byte of its lowest member */
 u8 *rtl_set_union(u8 *d, const u8 *a, const u8 *b, int n);
 u8 *rtl_set_diff(u8 *d, const u8 *a, const u8 *b, int n);
 u8 *rtl_set_inter(u8 *d, const u8 *a, const u8 *b, int n);

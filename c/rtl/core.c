@@ -13,7 +13,8 @@ u8 pool_arena[POOL_ARENA_SIZE];
 extern const u32 pool_image_org;
 extern const u32 pool_image_size;
 extern const u8 pool_image[];
-extern void (*const pool_procs[])(void);
+typedef struct ProcEntry { u32 id; void (*fn)(void); } ProcEntry;
+extern const ProcEntry pool_procs[];
 extern const u32 pool_proc_count;
 
 void rtl_fatal(const char *fmt, ...)
@@ -204,10 +205,16 @@ void rtl_stack_release(u16 mark)
 /* ---- procedure pointers ------------------------------------------------------------------------------------- */
 void (*rtl_proc(farptr id))(void)
 {
-  if (id == 0 || id >= pool_proc_count) {
-    rtl_fatal("call through a bad procedure pointer %08X", (unsigned)id);
+  u32 lo = 0, hi = pool_proc_count;
+  while (lo < hi) {                                  /* the table is sorted by id */
+    u32 mid = (lo + hi) / 2;
+    if (pool_procs[mid].id == id) {
+      return pool_procs[mid].fn;
+    }
+    if (pool_procs[mid].id < id) lo = mid + 1; else hi = mid;
   }
-  return pool_procs[id];
+  rtl_fatal("call through a bad procedure pointer %08X", (unsigned)id);
+  return 0;
 }
 
 /* ---- numbers ------------------------------------------------------------------------------------------------ */
@@ -439,22 +446,47 @@ u8 rtl_lowercase(u8 c)
   return (c >= 'A' && c <= 'Z') ? (u8)(c + 32) : c;
 }
 
+/* The game's own command line: ParamStr(1) = 'STING' skips the title screens and the code wheel question. */
+static const char *game_args[8];
+static int game_argc;
+
+void rtl_set_args(int n, const char *const *args)
+{
+  int i;
+  game_argc = n > 8 ? 8 : n;
+  for (i = 0; i < game_argc; i++) {
+    game_args[i] = args[i];
+  }
+}
+
 u8 *rtl_paramstr(u8 *dst, int n)
 {
-  dst[0] = 0;
-  (void)n;
+  size_t len = (n >= 1 && n <= game_argc) ? strlen(game_args[n - 1]) : 0;
+  if (len > 255) len = 255;
+  if (n == 0) {
+    memcpy(dst + 1, "POOL.EXE", 8);
+    dst[0] = 8;
+    return dst;
+  }
+  dst[0] = (u8)len;
+  if (len) memcpy(dst + 1, game_args[n - 1], len);
   return dst;
 }
 
 u16 rtl_ParamCount(void)
 {
-  return 0;
+  return (u16)game_argc;
 }
 
 /* ---- sets --------------------------------------------------------------------------------------------------- */
 void rtl_set_clear(u8 *s, int n) { memset(s, 0, n); }
 void rtl_set_add(u8 *s, int v) { s[(v >> 3) & 31] |= (u8)(1u << (v & 7)); }
 void rtl_set_range(u8 *s, int lo, int hi) { int i; for (i = lo; i <= hi; i++) rtl_set_add(s, i); }
+int rtl_set_in_at(const u8 *s, int first, int n, int v)
+{
+  int b = (v >> 3) - first;
+  return v >= 0 && b >= 0 && b < n && ((s[b] >> (v & 7)) & 1);
+}
 int rtl_set_in(const u8 *s, int v) { return v >= 0 && v < 256 && ((s[v >> 3] >> (v & 7)) & 1); }
 u8 *rtl_set_union(u8 *d, const u8 *a, const u8 *b, int n) { int i; for (i = 0; i < n; i++) d[i] = a[i] | b[i]; return d; }
 u8 *rtl_set_diff(u8 *d, const u8 *a, const u8 *b, int n) { int i; for (i = 0; i < n; i++) d[i] = a[i] & (u8)~b[i]; return d; }

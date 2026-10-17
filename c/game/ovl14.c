@@ -5,6 +5,7 @@
      on the Exit path with the party cell and icon set. */
 void ClearIconBits(s8 Col, s8 Row, s8 Icon)
 {
+  POOL_TRACE("ClearIconBits");
   switch (Icon) {
   case 6:
   {
@@ -34,6 +35,7 @@ void ClearIconBits(s8 Col, s8 Row, s8 Icon)
      nothing. The counterpart of ClearIconBits. Called by the Bash and Pick commands. */
 void SetIconBits(s8 Col, s8 Row, s8 Icon)
 {
+  POOL_TRACE("SetIconBits");
   if (((((Col < 0)) || ((Col > 0xF))) || ((Row < 0))) || ((Row > 0xF))) {
   } else {
     switch (Icon) {
@@ -66,6 +68,7 @@ void SetIconBits(s8 Col, s8 Row, s8 Icon)
      found and Knock when flag 5 is found. */
 u8 AnyMemberHasClassLevel(s8 Which)
 {
+  POOL_TRACE("AnyMemberHasClassLevel");
   u8 Result = 0;
   PCharacter Rec = 0;
   u8 Found = 0;
@@ -88,6 +91,7 @@ u8 AnyMemberHasClassLevel(s8 Which)
      and returns 1, else 0. */
 u8 DoBash(void)
 {
+  POOL_TRACE("DoBash");
   u8 Result = 0;
   PCharacter Rec = 0;
   u8 Done = 0;
@@ -349,6 +353,7 @@ u8 DoBash(void)
      set +4 mod 8), clears the DoorMenuFlags[1] menu flag, and returns 1, else 0. */
 u8 DoPick(void)
 {
+  POOL_TRACE("DoPick");
   u8 Result = 0;
   PCharacter Rec = 0;
   u8 Done = 0;
@@ -378,6 +383,7 @@ u8 DoPick(void)
      when no slot holds it. */
 u8 FindSpellSlot(u8 Code, PCharacter Rec)
 {
+  POOL_TRACE("FindSpellSlot");
   u8 Result = 0;
   u8 Slot = 0;
   Slot = 0;
@@ -396,6 +402,7 @@ u8 FindSpellSlot(u8 Code, PCharacter Rec)
      or nil when none does. */
 PCharacter FindMemberWithSpell(u8 Code)
 {
+  POOL_TRACE("FindMemberWithSpell");
   PCharacter Result = 0;
   PCharacter Rec = 0;
   Rec = PartyListHead;
@@ -410,6 +417,7 @@ PCharacter FindMemberWithSpell(u8 Code)
      record holding it and returns True, or returns False when no record holds it. */
 u8 DoKnock(void)
 {
+  POOL_TRACE("DoKnock");
   u8 Result = 0;
   PCharacter Rec = 0;
   Rec = FindMemberWithSpell(KnockSpell);
@@ -429,6 +437,7 @@ u8 DoKnock(void)
      by the icon set. */
 void ClampPartyPosition(void)
 {
+  POOL_TRACE("ClampPartyPosition");
   s16 Col = 0;
   s16 Row = 0;
   s16 Icon = 0;
@@ -466,6 +475,7 @@ void ClampPartyPosition(void)
      Called by DoWildernessMenu. */
 void MoveParty(void)
 {
+  POOL_TRACE("MoveParty");
   PlaySound(SoundStep);
   PartyMapColumn += DirStepX[PartyFacing];
   PartyMapRow += DirStepY[PartyFacing];
@@ -498,6 +508,7 @@ void MoveParty(void)
      is 0) or move there; anything else moves there with a sound. Called by DoWildernessMenu. */
 void CheckMapCell(void)
 {
+  POOL_TRACE("CheckMapCell");
   s8 MapCol = 0;
   s8 GridCol = 0;
   s8 GridRow = 0;
@@ -586,6 +597,7 @@ void CheckMapCell(void)
      window and returns the key. Also clears GameVars2^[713] on entry. */
 u8 HandleWildernessKeys(void)
 {
+  POOL_TRACE("HandleWildernessKeys");
   u8 Result = 0;
   u8 Redraw = 0;
   u8 Key = 0;
@@ -785,6 +797,7 @@ u8 HandleWildernessKeys(void)
      on success it moves the party (MoveParty), then always tidies the sprite banks. */
 void DoWildernessMenu(void)
 {
+  POOL_TRACE("DoWildernessMenu");
   u8 Done = 0;
   u8 MenuFlag = 0;
   u8 Menu[41] = {0};
@@ -915,6 +928,7 @@ void DoWildernessMenu(void)
 /* Initialisation part of unit OVL14. */
 void init_OVL14(void)
 {
+  POOL_TRACE("init");
   /* ovl14:10A7. The unit's initialisation part is empty: the compiler emits only `55 89 E5 5D CB`
      (push bp; mov bp, sp; pop bp; retf, the frame with no body), so the wilderness unit runs no code
      at start-up. */

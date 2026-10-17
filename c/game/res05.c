@@ -4,6 +4,7 @@
      8-byte granularity the same way. LoadDaxBlock frees its packed buffer with it. */
 void FreeHeapBlock(farptr (*Block), u16 Size)
 {
+  POOL_TRACE("FreeHeapBlock");
   rtl_freemem((*Block), (((u16)(Size + 7)) & 0xFFF8));
 }
 
@@ -11,6 +12,7 @@ void FreeHeapBlock(farptr (*Block), u16 Size)
      allocates its packed buffer with it. */
 void AllocHeapBlock(farptr (*Block), u16 Size)
 {
+  POOL_TRACE("AllocHeapBlock");
   (*Block) = rtl_getmem((((u16)(Size + 7)) & 0xFFF8));
 }
 
@@ -20,6 +22,7 @@ void AllocHeapBlock(farptr (*Block), u16 Size)
      VideoAdapter 1 the same two calls are repeated on the page in FillTextPage with the colour as it is. */
 void WriteCharsAt(u8 Col, u8 Row, u8 Color, u8 Count, u8 Ch)
 {
+  POOL_TRACE("WriteCharsAt");
   Regs.AH = BiosSetCursor;
   Regs.BH = TextPage;
   Regs.DH = Row;
@@ -54,18 +57,22 @@ void WriteCharsAt(u8 Col, u8 Row, u8 Color, u8 Count, u8 Ch)
      time through WriteCharsAt. */
 void WriteTextAt(u8 Col, u8 Row, u8 Color, const u8 *Text_in)
 {
+  POOL_TRACE("WriteTextAt");
   const u8 *Text = Text_in;
   u8 Len = 0;
   u8 I = 0;
-  u8 t1;
   Len = Text[0];
-  t1 = Len;
-  I = 1;
-  if (I <= t1) for (;;) {
-    WriteCharsAt(Col, Row, Color, 1, Text[I]);
-    Col++;
-    if (I == t1) break;
-    I++;
+  {
+    u8 limit = Len;
+    if (1 <= limit) {
+      I = 1;
+      for (;;) {
+          WriteCharsAt(Col, Row, Color, 1, Text[I]);
+          Col++;
+        if (I == limit) break;
+        I++;
+      }
+    }
   }
 }
 
@@ -73,6 +80,7 @@ void WriteTextAt(u8 Col, u8 Row, u8 Color, const u8 *Text_in)
      (character $DB through WriteCharsAt). */
 void FillBlocksAt(u8 Col, u8 Row, u8 Color, u8 Count)
 {
+  POOL_TRACE("FillBlocksAt");
   WriteCharsAt(Col, Row, Color, Count, SolidBlock);
 }
 
@@ -80,6 +88,7 @@ void FillBlocksAt(u8 Col, u8 Row, u8 Color, u8 Count)
      clears the row again with black blocks. QUIRK 0802:01D4: the key is stored and never read. */
 void ShowBottomMessage(u8 Color, const u8 *Message_in)
 {
+  POOL_TRACE("ShowBottomMessage");
   const u8 *Message = Message_in;
   u8 Key = 0;
   FillBlocksAt(0, BottomRow, Black, RowWidth);
@@ -92,6 +101,7 @@ void ShowBottomMessage(u8 Color, const u8 *Message_in)
      "Please insert overlay disk." and waits for a key. res08's initialisation calls it. */
 void WaitForOverlayDisk(void)
 {
+  POOL_TRACE("WaitForOverlayDisk");
   u8 Key = 0;
   u8 Found = 0;
   do {
@@ -108,6 +118,7 @@ void WaitForOverlayDisk(void)
      Returns 1 when the file was found and GameFile is open, 0 otherwise. */
 u8 OpenGameFile(const u8 *FileName_in, const u8 *DiskPrompt_in, u8 NoPrompt, FileRec (*GameFile))
 {
+  POOL_TRACE("OpenGameFile");
   const u8 *FileName = FileName_in;
   const u8 *DiskPrompt = DiskPrompt_in;
   u8 Result = 0;
@@ -131,6 +142,7 @@ u8 OpenGameFile(const u8 *FileName_in, const u8 *DiskPrompt_in, u8 NoPrompt, Fil
      empty. */
 u8 FileExists(const u8 *FileName_in)
 {
+  POOL_TRACE("FileExists");
   const u8 *FileName = FileName_in;
   u8 Result = 0;
   FileRec Probe = {0};
@@ -147,6 +159,7 @@ u8 FileExists(const u8 *FileName_in)
      and a match that a deletion moves under the current position is not seen. */
 u8 *DeleteAllOccurrences(u8 *Result_out, const u8 *Text_in, const u8 *Pattern_in)
 {
+  POOL_TRACE("DeleteAllOccurrences");
   u8 Text[256];
   rtl_str_assign(Text, 255, Text_in);
   const u8 *Pattern = Pattern_in;
@@ -154,18 +167,21 @@ u8 *DeleteAllOccurrences(u8 *Result_out, const u8 *Text_in, const u8 *Pattern_in
   u8 LastStart = 0;
   u8 PatternLen = 0;
   u8 I = 0;
-  u8 t1;
-  u8 t2[256];
+  u8 t1[256];
   PatternLen = Pattern[0];
   LastStart = (Text[0] - PatternLen) + 1;
-  t1 = LastStart;
-  I = 1;
-  if (I <= t1) for (;;) {
-    if (rtl_str_cmp(rtl_str_copy(t2, Text, I, PatternLen), Pattern) == 0) {
-      rtl_str_delete(Text, I, PatternLen);
+  {
+    u8 limit = LastStart;
+    if (1 <= limit) {
+      I = 1;
+      for (;;) {
+          if (rtl_str_cmp(rtl_str_copy(t1, Text, I, PatternLen), Pattern) == 0) {
+            rtl_str_delete(Text, I, PatternLen);
+          }
+        if (I == limit) break;
+        I++;
+      }
     }
-    if (I == t1) break;
-    I++;
   }
   rtl_str_assign(Result, 255, Text);
   return Result;
@@ -175,6 +191,7 @@ u8 *DeleteAllOccurrences(u8 *Result_out, const u8 *Text_in, const u8 *Pattern_in
      BadNameChars (space . * , ? / \ : ; |), keeps the first 8 characters and makes them upper case. */
 u8 *MakeDosFileName(u8 *Result_out, const u8 *Name_in)
 {
+  POOL_TRACE("MakeDosFileName");
   u8 Name[256];
   rtl_str_assign(Name, 255, Name_in);
   u8 *Result = Result_out;
@@ -182,20 +199,27 @@ u8 *MakeDosFileName(u8 *Result_out, const u8 *Name_in)
   u8 t1[256];
   u8 t2[256];
   u8 t3[256];
-  u8 t4;
-  I = 1;
-  if (I <= 10) for (;;) {
-    rtl_str_assign(Name, 255, DeleteAllOccurrences(t1, Name, rtl_str_char(t2, BadNameChars[I])));
-    if (I == 10) break;
-    I++;
+  {
+    if (1 <= 10) {
+      I = 1;
+      for (;;) {
+          rtl_str_assign(Name, 255, DeleteAllOccurrences(t1, Name, rtl_str_char(t2, BadNameChars[I])));
+        if (I == 10) break;
+        I++;
+      }
+    }
   }
   rtl_str_assign(Name, 255, rtl_str_copy(t3, Name, 1, 8));
-  t4 = Name[0];
-  I = 1;
-  if (I <= t4) for (;;) {
-    Name[I] = rtl_upcase(Name[I]);
-    if (I == t4) break;
-    I++;
+  {
+    u8 limit = Name[0];
+    if (1 <= limit) {
+      I = 1;
+      for (;;) {
+          Name[I] = rtl_upcase(Name[I]);
+        if (I == limit) break;
+        I++;
+      }
+    }
   }
   rtl_str_assign(Result, 40, Name);
   return Result;
@@ -208,6 +232,7 @@ u8 *MakeDosFileName(u8 *Result_out, const u8 *Name_in)
      1,245 blocks of the shipped DAX files contain neither code (a scan with tools/re/dax.py). */
 void UnpackRle(farptr (*Source), farptr (*Dest), u16 (*PackedSize), u16 (*UnpackedSize))
 {
+  POOL_TRACE("UnpackRle");
   u16 InPos = 0;
   u16 OutPos = 0;
   s8 Code = 0;
@@ -236,6 +261,7 @@ void UnpackRle(farptr (*Source), farptr (*Dest), u16 (*PackedSize), u16 (*Unpack
      the word itself and seeks DataFile there. Returns False when the file was not found. */
 u8 OpenDaxFile(const u8 *Name_in, const u8 *Ext_in, u16 (*HeaderSize), FileRec (*DataFile), FileRec (*IndexFile))
 {
+  POOL_TRACE("OpenDaxFile");
   const u8 *Name = Name_in;
   const u8 *Ext = Ext_in;
   u8 Result = 0;
@@ -261,6 +287,7 @@ u8 OpenDaxFile(const u8 *Name_in, const u8 *Ext_in, u16 (*HeaderSize), FileRec (
      opened, with I/O checks (LoadDaxBlock). */
 void CloseDaxFile(FileRec (*DataFile), FileRec (*IndexFile))
 {
+  POOL_TRACE("CloseDaxFile");
   rtl_close(&(*DataFile));
   rtl_close(&(*IndexFile));
 }
@@ -273,6 +300,7 @@ void CloseDaxFile(FileRec (*DataFile), FileRec (*IndexFile))
      and Block is nil. */
 void LoadDaxBlock(const u8 *Name_in, const u8 *Ext_in, u8 BlockId, u16 (*Size), farptr (*Block))
 {
+  POOL_TRACE("LoadDaxBlock");
   const u8 *Name = Name_in;
   const u8 *Ext = Ext_in;
   u16 PackedSize = 0;
@@ -321,6 +349,7 @@ void LoadDaxBlock(const u8 *Name_in, const u8 *Ext_in, u8 BlockId, u16 (*Size), 
      RestoreTileSet copies SavedTileSet back. ovl07 and ovl17 call this. */
 void SelectTileSet(u8 NewSet)
 {
+  POOL_TRACE("SelectTileSet");
   SavedTileSet = TileSet;
   TileSet = NewSet;
 }
@@ -328,10 +357,12 @@ void SelectTileSet(u8 NewSet)
 /* 0802:095D. Puts back the TileSet that SelectTileSet saved in SavedTileSet. ovl17 calls this. */
 void RestoreTileSet(void)
 {
+  POOL_TRACE("RestoreTileSet");
   TileSet = SavedTileSet;
 }
 
 /* Initialisation part of unit RES05. */
 void init_RES05(void)
 {
+  POOL_TRACE("init");
 }

@@ -6,6 +6,7 @@
      pass 40, 24 or 5 as Unused; this routine never reads it. */
 void Load24x24Set(const u8 *SetName_in, u8 Index, u8 Unused)
 {
+  POOL_TRACE("Load24x24Set");
   const u8 *SetName = SetName_in;
   farptr Loaded = 0;
   u16 CopyBytes = 0;
@@ -32,6 +33,7 @@ void Load24x24Set(const u8 *SetName_in, u8 Index, u8 Unused)
      DrawPictureItem. Unused is never read (DrawAreaView passes 1, ovl31 passes 0). */
 void DrawCellPicture(s8 PicCol, s8 PicRow, u8 PicCode, u8 Unused)
 {
+  POOL_TRACE("DrawCellPicture");
   if (PicCode > PicIndexMask) {
     DrawPictureItem(PicCol, PicRow, (PicCode & PicIndexMask), NoBlitFlags, SqrPaciBank2, DrawBuf);
   } else {
@@ -44,6 +46,7 @@ void DrawCellPicture(s8 PicCol, s8 PicRow, u8 PicCode, u8 Unused)
      record, stride 8. QUIRK ovl32:0151: UnusedWord is allocated and never read or written. */
 void FreePictureSlot(u8 Slot)
 {
+  POOL_TRACE("FreePictureSlot");
   u16 UnusedWord = 0;
   if (PictureSlots[Slot].FirstPic != 0) {
     ReleasePicture((void *)&PictureSlots[Slot].FirstPic);
@@ -62,6 +65,7 @@ void FreePictureSlot(u8 Slot)
      loads COMSPR pictures 0 to 11 into slots 13 to 24 and picture 25 into slot 25 with it. */
 void LoadPictureSlot(const u8 *SetName_in, u8 Block, u8 Slot)
 {
+  POOL_TRACE("LoadPictureSlot");
   u8 SetName[256];
   rtl_str_assign(SetName, 255, SetName_in);
   u8 Suffix[2] = {0};
@@ -109,6 +113,7 @@ void LoadPictureSlot(const u8 *SetName_in, u8 Block, u8 Slot)
      marker cell, the icon set PartyFacing, and the walk frame split into half and picture. */
 void DrawIcon(s8 CellCol, s8 CellRow, u8 IconSet, u8 Mirror, u8 PicIndex)
 {
+  POOL_TRACE("DrawIcon");
   farptr Dest = 0;
   if (PictureSlots[PicIndex].Pics[Mirror] != 0) {
     {
@@ -133,4 +138,5 @@ void DrawIcon(s8 CellCol, s8 CellRow, u8 IconSet, u8 Mirror, u8 PicIndex)
 /* Initialisation part of unit OVL32. */
 void init_OVL32(void)
 {
+  POOL_TRACE("init");
 }

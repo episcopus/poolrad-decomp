@@ -34,12 +34,53 @@ from oracle import golden, replay  # noqa: E402
 KINDS = {"int16.00": 0, "int16.01": 1, "int21.2C": 2, "int21.2A": 3, "in040": 4, "in3DA": 5}
 
 
+# DGROUP bytes that are the runtime's own bookkeeping, not game state: the overlay manager's variables, the exit and
+# error variables, the stack segment inside DGROUP and the Crt/System tail (saved vectors, Input and Output); the
+# Flags word of the Regs variable (what an INT returns there is the caller's own flags), and the
+# file records (handle numbers and buffers differ) are masked too, from c/game/globals.txt. The C replay applies
+# the same ranges (c/platform/replay.c).
+STATIC_MASKS = [(0x43DC, 0x4400), (0x4418, 0x4428), (0x8760, 0xC760), (0x84F0, 0x10000),
+                (0x4A14, 0x4A16)]      # Regs.Flags: the caller's flags at the INT instruction, left by compiled code
+
+
+def file_masks() -> list[tuple[int, int]]:
+    out = []
+    for line in (ROOT / "c/game/globals.txt").read_text().splitlines():
+        f = line.split()
+        if len(f) >= 4 and f[3] == "file":
+            out.append((int(f[0], 16), int(f[0], 16) + int(f[1])))
+    return out
+
+
+def masked_digest(m, ranges) -> str:
+    import hashlib
+    from oracle import state
+    ds = state.dgroup_seg()
+    data = bytearray(m.read(ds, 0, 0x10000))
+    for lo, hi in ranges:
+        data[lo:hi] = bytes(hi - lo)
+    h = hashlib.sha256()
+    h.update(b"MASKED")
+    h.update(bytes(data))
+    h.update(b"heap")
+    h.update(state.heap_bytes(m, ds))
+    h.update(m.ega.planes_digest().encode())
+    return h.hexdigest()
+
+
 class OrderedRecorder(replay.Recorder):
-    """The recorder of the oracle, plus the order of all reads."""
+    """The recorder of the oracle, plus the order of all reads and a digest of the game's state at each checkpoint."""
 
     def __init__(self, m):
         self.order = []
+        self.masked = {}
+        self.ranges = STATIC_MASKS + file_masks()
         super().__init__(m)
+
+    def _checkpoint(self, label, at=None):
+        super()._checkpoint(label, at)
+        at = self.streams.total if at is None else at
+        self.masked[(at, label)] = masked_digest(self.m, self.ranges)
 
     def note(self, kind, value):
         self.order.append((kind, value, self.m.irq0_raised))
@@ -71,8 +112,16 @@ def pinned_digest(dos_path: str):
     return hashlib.sha256(here.read_bytes()).hexdigest() if here.is_file() else None
 
 
+def known_differences() -> dict:
+    import tomllib
+    d = tomllib.loads((ROOT / "tools/c/known_differences.toml").read_text())
+    return {f["name"].upper(): [tuple(r) for r in f["ranges"]] for f in d.get("file", [])}
+
+
 def lines(summary, recording, rec) -> list[str]:
     out = ["RPL 1", "H %d" % len(rec.order)]
+    for lo, hi in rec.ranges:
+        out.append("M %d %d" % (lo, hi))
     run = None
     for kind, value, irq in rec.order:
         k = KINDS.get(kind, 9)
@@ -93,9 +142,21 @@ def lines(summary, recording, rec) -> list[str]:
         out.append("R %d %d %d %d %d %d %d %d" % (*run[0], run[1]))
     for at, cps in sorted(recording.checkpoints.items()):
         for c in cps:
-            out.append("C %d %s %s %s %d" % (at, c["label"], c["screen"], c["canonical_nostack"], c["random_calls"]))
+            out.append("C %d %s %s %s %d" % (at, c["label"], c["screen"], rec.masked[(at, c["label"])], c["random_calls"]))
     out.append("F %d" % recording.final["random_calls"])
+    known = known_differences()
+    layer = summary["_machine"].vfs.layer
     for path, digest in sorted(recording.final["written_files"].items()):
+        if digest == pinned_digest(path):
+            continue                          # opened for update but not changed: nothing was written
+        if path in known:
+            import hashlib
+            data = bytearray(layer[path])
+            for lo, hi in known[path]:
+                data[lo:hi] = bytes(len(data[lo:hi]))
+            out.append("Z %s %s" % (path, " ".join("%d %d" % r for r in known[path])))
+            out.append("W %s %s" % (path, hashlib.sha256(bytes(data)).hexdigest()))
+            continue
         if digest == pinned_digest(path):
             continue                          # opened for update but not changed: nothing was written
         out.append("W %s %s" % (path, digest))

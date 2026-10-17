@@ -16,7 +16,7 @@ q = '$(subst ','\'',$(1))'
         packet claim lock locks unlock handoff handoffs handoff-done integrate start-run stop-run run-add run-status heartbeat agents watch-agents worker inbox \
         agent-control agent-step safety-check merge-check hooks match-gate merge-driver \
         agent-register agent-usage agent-meter performance learn learning-check expert-budget expert-request expert-take expert-step expert-finish expert-result experts expert-scan expert-candidates task-approve \
-        oracle-run oracle-dosbox timing-scan golden match test test-slow check review-pass rebuild dgroup stub-order rebuild-golden rebuild-diff sound-golden skeleton stubs readability rename host coco3
+        oracle-run oracle-dosbox timing-scan golden match test test-slow check review-pass rebuild dgroup stub-order rebuild-golden rebuild-diff sound-golden skeleton stubs readability rename host c-translate c-golden c-sound coco3
 
 help:
 	@echo "Available now:  setup doctor inputs unexepack overlays map dax smoke"
@@ -285,5 +285,13 @@ skeleton:          ## write src/<ID>.PAS for a unit with no source yet: UNIT=<id
 
 stubs:             ## check every {@stub} header against re/symbols.toml (signature, name): UNIT="<id ...>" (no UNIT: every unit); WRITE=1 rewrites
 	$(PY) tools/match/stubs.py $(if $(WRITE),--write) $(UNIT)
-host:        ; $(call todo,Phase 7 (C translation; see branch track-c-hybrid),7.4)
+host:              ## Phase 7: build the C translation (the game `poolrad` and the test tool `poolrad_replay`) with CMake
+	cmake -S . -B build/cmake -DCMAKE_BUILD_TYPE=Release
+	cmake --build build/cmake -j
+c-translate:       ## Phase 7: translate src/*.PAS into c/game (tools/c/pas2c.py)
+	$(PY) tools/c/pas2c.py
+c-golden:          ## Phase 7: play the sessions on the C translation and compare with the original: SESSION=name (default all)
+	$(PY) tools/c/c_golden.py $(foreach s,$(SESSION),--session $(s))
+c-sound:           ## Phase 7: the C sound driver's hardware trace against the oracle's (after `make host`)
+	$(PY) tools/c/sound_check.py
 coco3:       ; $(call todo,Phase 8,11)

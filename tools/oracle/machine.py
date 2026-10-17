@@ -171,7 +171,13 @@ class Machine:
         return bytes(self.uc.mem_read(self.linear(seg, off), n))
 
     def write(self, seg, off, data: bytes) -> None:
-        self.uc.mem_write(self.linear(seg, off), bytes(data))
+        """A write from the host (a DOS read, a service). Code the guest already ran from this memory may sit in
+        Unicorn's translation cache; a host write does not invalidate it, so the stale translation would run after an
+        overlay buffer was reloaded (found by the C translation's session camp-rest-combat, Phase 7)."""
+        lin = self.linear(seg, off)
+        self.uc.mem_write(lin, bytes(data))
+        if len(data) > 1:
+            self.uc.ctl_remove_cache(lin, lin + len(data))
 
     def cstring(self, seg, off, limit=256) -> bytes:
         out = bytearray()

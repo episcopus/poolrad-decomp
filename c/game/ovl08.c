@@ -5,6 +5,7 @@
      @ChooseSpellTargets. Called once by RunCombat. The word local is unused; it is there so the frame matches. */
 void EndCombat(void)
 {
+  POOL_TRACE("EndCombat");
   PCombatNode Next = 0;
   u16 Unused = 0;
   while (CloudList != 0) {
@@ -26,6 +27,7 @@ void EndCombat(void)
      local is unused; it is there so the frame matches. Called by RunAreaEventCommand. */
 void RunCombat(void)
 {
+  POOL_TRACE("RunCombat");
   u8 Done = 0;
   PCharacter Who = 0;
   u8 Unused = 0;
@@ -60,6 +62,7 @@ void RunCombat(void)
      initiative above 0 any more, which ends the round in RunCombat. */
 void PickNextCombatant(PCharacter (*Best))
 {
+  POOL_TRACE("PickNextCombatant");
   u8 BestInit = 0;
   u8 BestRoll = 0;
   u8 Roll = 0;
@@ -92,6 +95,7 @@ void PickNextCombatant(PCharacter (*Best))
      An initiative of InitiativeQuickAll (the Alt-Q fight) counts as $13. */
 void CombatTurn(PCharacter Who)
 {
+  POOL_TRACE("CombatTurn");
   u16 Unused = 0;
   (*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).BF = 0;
   (*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).B12 = 0;
@@ -128,6 +132,7 @@ void CombatTurn(PCharacter Who)
      character is shown again. Done is the turn-ended flag the commands set. */
 void PlayerTurn(PCharacter Who)
 {
+  POOL_TRACE("PlayerTurn");
   u8 Cmd = 0;
   u8 Done = 0;
   PCharacter Member = 0;
@@ -262,6 +267,7 @@ void PlayerTurn(PCharacter Who)
      holds ReadPromptChoice's key flag. */
 void CombatMenu(PCharacter Who, u8 (*Cmd))
 {
+  POOL_TRACE("CombatMenu");
   u8 Menu[41] = {0};
   u8 I = 0;
   u8 Flag = 0;
@@ -283,13 +289,17 @@ void CombatMenu(PCharacter Who, u8 (*Cmd))
     rtl_str_assign(Menu, 40, rtl_str_cat(t3, 2, (const u8 *const[]){Menu, S("\004Use ")}));
   }
   Flag = 0;
-  I = 0;
-  if (I <= 20) for (;;) {
-    if ((*FPD(TCharacter (*), Who)).Spells[I] > 0) {
-      Flag = 1;
+  {
+    if (0 <= 20) {
+      I = 0;
+      for (;;) {
+          if ((*FPD(TCharacter (*), Who)).Spells[I] > 0) {
+            Flag = 1;
+          }
+        if (I == 20) break;
+        I++;
+      }
     }
-    if (I == 20) break;
-    I++;
   }
   if ((((Flag != 0)) && (((*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).CanCast != 0))) && (((*FPD(TGameVars (*), GameVars))[229] == 0))) {
     rtl_str_assign(Menu, 40, rtl_str_cat(t4, 2, (const u8 *const[]){Menu, S("\005Cast ")}));
@@ -315,6 +325,7 @@ void CombatMenu(PCharacter Who, u8 (*Cmd))
      counted but never used. */
 void EndCombatRound(u8 (*Done))
 {
+  POOL_TRACE("EndCombatRound");
   PCharacter Who = 0;
   u8 Unused = 0;
   u8 Index = 0;
@@ -360,6 +371,7 @@ void EndCombatRound(u8 (*Done))
      left become 0. */
 void MoveCharacter(PCharacter Who, u8 (*Done))
 {
+  POOL_TRACE("MoveCharacter");
   u8 SavedMoves = 0;
   u8 SavedIconSet = 0;
   u8 Col = 0;
@@ -485,6 +497,7 @@ void MoveCharacter(PCharacter Who, u8 (*Done))
      either SweepEnemies ends the turn (Done := 1) or NoteAttackBearing and PerformAttack carry the attack out. */
 void MeleeAttack(PCharacter Attacker, PCharacter Target, u8 (*Done))
 {
+  POOL_TRACE("MeleeAttack");
   if (IsRangedWeapon(Attacker) && !RangedWeaponCanMelee(Attacker)) {
     ShowFlashMessage(S("\024Not with that weapon"));
   } else if (ConfirmAttackTarget(Attacker, Target)) {
@@ -504,6 +517,7 @@ void MeleeAttack(PCharacter Attacker, PCharacter Target, u8 (*Done))
      Exit. Repeats until Exit, Esc or a command that ends the turn. */
 void EndTurnMenu(PCharacter Who, u8 (*Done))
 {
+  POOL_TRACE("EndTurnMenu");
   u8 Menu[41] = {0};
   u8 Key = 0;
   u8 t1[256];
@@ -560,6 +574,7 @@ void EndTurnMenu(PCharacter Who, u8 (*Done))
      StatusUnconscious, the bleeding count reset and the message is bandaged (ShowCharacterMessage). */
 u8 BandageDying(u8 DoIt)
 {
+  POOL_TRACE("BandageDying");
   u8 Result = 0;
   PCharacter Who = 0;
   u8 Found = 0;
@@ -585,6 +600,7 @@ u8 BandageDying(u8 DoIt)
      GameSpeed), Faster (while above 0, lowers it) and Exit; repeats until Exit or Esc. */
 void GameSpeedMenu(void)
 {
+  POOL_TRACE("GameSpeedMenu");
   u8 Menu[41] = {0};
   u8 Title[41] = {0};
   u8 Key = 0;
@@ -624,6 +640,7 @@ void GameSpeedMenu(void)
      its remembered Combat^.Target when that target is on its own side. */
 void SetQuickCombat(PCharacter Who)
 {
+  POOL_TRACE("SetQuickCombat");
   (*FPD(TCharacter (*), Who)).Quick = 1;
   if ((*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).Target != 0) {
     if ((*FPD(TCharacter (*), (*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).Target)).Side == (*FPD(TCharacter (*), Who)).Side) {
@@ -635,4 +652,5 @@ void SetQuickCombat(PCharacter Who)
 /* Initialisation part of unit OVL08. */
 void init_OVL08(void)
 {
+  POOL_TRACE("init");
 }

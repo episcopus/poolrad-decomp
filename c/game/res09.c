@@ -8,10 +8,9 @@
      DrawWindow. */
 void DrawWindowFrame(s8 LeftCol, s8 TopRow, s8 RightCol, s8 BottomRow, u8 FrameSet)
 {
+  POOL_TRACE("DrawWindowFrame");
   s8 Edge = 0;
   u16 TileBase = 0;
-  s8 t1;
-  s8 t2;
   LeftCol--;
   TopRow--;
   RightCol++;
@@ -21,21 +20,31 @@ void DrawWindowFrame(s8 LeftCol, s8 TopRow, s8 RightCol, s8 BottomRow, u8 FrameS
   Put8x8Symbol(RightCol, TopRow, (u16)(TileBase + TileCorner), 0, 0);
   Put8x8Symbol(LeftCol, BottomRow, (u16)(TileBase + TileCorner), 0, 0);
   Put8x8Symbol(RightCol, BottomRow, (u16)(TileBase + TileCorner), 0, 0);
-  t1 = (s16)(RightCol - 1);
-  Edge = (s16)(LeftCol + 1);
-  if (Edge <= t1) for (;;) {
-    Put8x8Symbol(Edge, TopRow, (u16)(TileBase + TileHorizontal), 0, 0);
-    Put8x8Symbol(Edge, BottomRow, (u16)(TileBase + TileHorizontal), 0, 0);
-    if (Edge == t1) break;
-    Edge++;
+  {
+    s8 limit = (s16)(RightCol - 1);
+    s8 first = (s16)(LeftCol + 1);
+    if (first <= limit) {
+      Edge = first;
+      for (;;) {
+          Put8x8Symbol(Edge, TopRow, (u16)(TileBase + TileHorizontal), 0, 0);
+          Put8x8Symbol(Edge, BottomRow, (u16)(TileBase + TileHorizontal), 0, 0);
+        if (Edge == limit) break;
+        Edge++;
+      }
+    }
   }
-  t2 = (s16)(BottomRow - 1);
-  Edge = (s16)(TopRow + 1);
-  if (Edge <= t2) for (;;) {
-    Put8x8Symbol(LeftCol, Edge, (u16)(TileBase + TileVertical), 0, 0);
-    Put8x8Symbol(RightCol, Edge, (u16)(TileBase + TileVertical), 0, 0);
-    if (Edge == t2) break;
-    Edge++;
+  {
+    s8 limit = (s16)(BottomRow - 1);
+    s8 first = (s16)(TopRow + 1);
+    if (first <= limit) {
+      Edge = first;
+      for (;;) {
+          Put8x8Symbol(LeftCol, Edge, (u16)(TileBase + TileVertical), 0, 0);
+          Put8x8Symbol(RightCol, Edge, (u16)(TileBase + TileVertical), 0, 0);
+        if (Edge == limit) break;
+        Edge++;
+      }
+    }
   }
 }
 
@@ -46,26 +55,30 @@ void DrawWindowFrame(s8 LeftCol, s8 TopRow, s8 RightCol, s8 BottomRow, u8 FrameS
      exit test is unsigned). Side effect: video memory. Called by DrawWindow. */
 void ClearWindow(s8 LeftCol, s8 TopRow, s8 RightCol, s8 BottomRow)
 {
+  POOL_TRACE("ClearWindow");
   s16 TopCode = 0;
   s16 BottomCode = 0;
   s16 LeftCode = 0;
   s16 Width = 0;
   u16 Row = 0;
-  u16 t1;
-  u16 t2;
   switch (VideoAdapter) {
   case AdapterCga:
   {
     TopCode = TopRow * ScanlinesPerTextRow;
     BottomCode = (BottomRow * ScanlinesPerTextRow) + LastTextScanline;
     Width = ((s16)((RightCol - LeftCol) + 1)) * BytesPerTextColumn;
-    t1 = BottomCode;
-    Row = TopCode;
-    if (Row <= t1) for (;;) {
-      rtl_FillChar((void *)&VideoText0[Row][(s16)(LeftCol * BytesPerTextColumn)], Width, 0);
-      rtl_FillChar((void *)&VideoText1[Row][(s16)(LeftCol * BytesPerTextColumn)], Width, 0);
-      if (Row == t1) break;
-      Row++;
+    {
+      u16 limit = BottomCode;
+      u16 first = TopCode;
+      if (first <= limit) {
+        Row = first;
+        for (;;) {
+            rtl_FillChar((void *)&VideoText0[Row][(s16)(LeftCol * BytesPerTextColumn)], Width, 0);
+            rtl_FillChar((void *)&VideoText1[Row][(s16)(LeftCol * BytesPerTextColumn)], Width, 0);
+          if (Row == limit) break;
+          Row++;
+        }
+      }
     }
     break;
   }
@@ -81,15 +94,20 @@ void ClearWindow(s8 LeftCol, s8 TopRow, s8 RightCol, s8 BottomRow)
     BottomCode = (BottomRow * GraphRowsPerTextRow) + LastGraphRow;
     LeftCode = LeftCol * BytesPerGraphColumn;
     Width = ((s16)((RightCol - LeftCol) + 1)) * BytesPerGraphColumn;
-    t2 = BottomCode;
-    Row = TopCode;
-    if (Row <= t2) for (;;) {
-      rtl_FillChar((void *)&VideoGrf0[Row][LeftCode], Width, 0);
-      rtl_FillChar((void *)&VideoGrf1[Row][LeftCode], Width, 0);
-      rtl_FillChar((void *)&VideoGrf2[Row][LeftCode], Width, 0);
-      rtl_FillChar((void *)&VideoGrf3[Row][LeftCode], Width, 0);
-      if (Row == t2) break;
-      Row++;
+    {
+      u16 limit = BottomCode;
+      u16 first = TopCode;
+      if (first <= limit) {
+        Row = first;
+        for (;;) {
+            rtl_FillChar((void *)&VideoGrf0[Row][LeftCode], Width, 0);
+            rtl_FillChar((void *)&VideoGrf1[Row][LeftCode], Width, 0);
+            rtl_FillChar((void *)&VideoGrf2[Row][LeftCode], Width, 0);
+            rtl_FillChar((void *)&VideoGrf3[Row][LeftCode], Width, 0);
+          if (Row == limit) break;
+          Row++;
+        }
+      }
     }
     break;
   }
@@ -105,6 +123,7 @@ void ClearWindow(s8 LeftCol, s8 TopRow, s8 RightCol, s8 BottomRow)
      ([bp-$29]). Side effect: the screen. Called from ovl01/02/03/04/05/06 and res12. */
 void DrawWindow(s8 LeftCol, s8 TopRow, s8 RightCol, s8 BottomRow, u8 FrameSet, u8 TextColor, const u8 *Text_in)
 {
+  POOL_TRACE("DrawWindow");
   const u8 *Text = Text_in;
   ClearWindow(LeftCol, TopRow, RightCol, BottomRow);
   DrawWindowFrame(LeftCol, TopRow, RightCol, BottomRow, FrameSet);
@@ -116,4 +135,5 @@ void DrawWindow(s8 LeftCol, s8 TopRow, s8 RightCol, s8 BottomRow, u8 FrameSet, u
 /* Initialisation part of unit RES09. */
 void init_RES09(void)
 {
+  POOL_TRACE("init");
 }

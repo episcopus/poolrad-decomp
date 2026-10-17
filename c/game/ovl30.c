@@ -4,6 +4,7 @@
      zero. Called by MonsterBreath, SetupLine and WalkCombatLine. */
 s16 SignOf(s16 N)
 {
+  POOL_TRACE("SignOf");
   s16 Result = 0;
   if (N < 0) {
     Result = (-1);
@@ -20,34 +21,42 @@ s16 SignOf(s16 N)
      < Val[I] and Val[J] mod 2 <= Val[I] mod 2. Called by ScanTargets. */
 void SortTable(void)
 {
+  POOL_TRACE("SortTable");
   u8 I = 0;
   u8 J = 0;
   u8 ValJ = 0;
   u8 ValI = 0;
   TSortRec Swap_ = {0};
-  u8 t1;
-  u8 t2;
   if (SortEntries[0].Val_ <= 1) {
     return;
   }
-  t1 = (s16)(SortEntries[0].Val_ - 1);
-  I = 1;
-  if (I <= t1) for (;;) {
-    t2 = SortEntries[0].Val_;
-    J = (s16)(I + 1);
-    if (J <= t2) for (;;) {
-      ValI = SortEntries[I].Val_;
-      ValJ = SortEntries[J].Val_;
-      if (((SortEntries[J].Key < SortEntries[I].Key)) || (((((SortEntries[J].Key == SortEntries[I].Key)) && ((ValJ < ValI))) && ((((ValJ % 2)) <= ((ValI % 2))))))) {
-        Swap_ = SortEntries[I];
-        SortEntries[I] = SortEntries[J];
-        SortEntries[J] = Swap_;
+  {
+    u8 limit = (s16)(SortEntries[0].Val_ - 1);
+    if (1 <= limit) {
+      I = 1;
+      for (;;) {
+          {
+            u8 limit = SortEntries[0].Val_;
+            u8 first = (s16)(I + 1);
+            if (first <= limit) {
+              J = first;
+              for (;;) {
+                  ValI = SortEntries[I].Val_;
+                  ValJ = SortEntries[J].Val_;
+                  if (((SortEntries[J].Key < SortEntries[I].Key)) || (((((SortEntries[J].Key == SortEntries[I].Key)) && ((ValJ < ValI))) && ((((ValJ % 2)) <= ((ValI % 2))))))) {
+                    Swap_ = SortEntries[I];
+                    SortEntries[I] = SortEntries[J];
+                    SortEntries[J] = Swap_;
+                  }
+                if (J == limit) break;
+                J++;
+              }
+            }
+          }
+        if (I == limit) break;
+        I++;
       }
-      if (J == t2) break;
-      J++;
     }
-    if (I == t1) break;
-    I++;
   }
 }
 
@@ -57,6 +66,7 @@ void SortTable(void)
      Called by CastLineBeam, WalkLine and WalkCombatLine. */
 void SetupLine(PLineState Line)
 {
+  POOL_TRACE("SetupLine");
   {
     TLineState *w1 = &(*FPD(TLineState (*), Line));
       w1->First = 0;
@@ -87,6 +97,7 @@ void SetupLine(PLineState Line)
      Called by CastLineBeam, WalkLine and WalkCombatLine. */
 u8 StepLine(PLineState Line)
 {
+  POOL_TRACE("StepLine");
   u8 Result = 0;
   s8 StepX = 0;
   s8 StepY = 0;
@@ -139,6 +150,7 @@ u8 StepLine(PLineState Line)
      RunAimCursor and ScanTargets. */
 u8 WalkLine(s8 X1, s8 Y1, s8 (*Ex), s8 (*Ey), u16 (*StepCount), PMapRows Map)
 {
+  POOL_TRACE("WalkLine");
   u8 Result = 0;
   TLineState (*Line) = (TLineState (*))rtl_stack_alloc(26);
   TLineState (*Bound) = (TLineState (*))rtl_stack_alloc(26);
@@ -189,6 +201,7 @@ L_exit:
      Called by BearingTo, CastChosenSpell (which loops Dir upward to aim at a point) and ScanTargets. */
 u8 InDirArc(s8 FromX, s8 FromY, s8 ToX, s8 ToY, u8 Dir)
 {
+  POOL_TRACE("InDirArc");
   u8 Result = 0;
   s8 BaseX = 0;
   s8 BaseY = 0;
@@ -266,6 +279,7 @@ u8 InDirArc(s8 FromX, s8 FromY, s8 ToX, s8 ToY, u8 Dir)
      ovl09, ovl13, ovl24 and res12. */
 void ScanTargets(s8 FromX, s8 FromY, u16 MaxSteps, u8 Dir, u8 Base, farptr Map)
 {
+  POOL_TRACE("ScanTargets");
   u8 I = 0;
   u8 L2 = 0;
   u8 J = 0;
@@ -283,80 +297,99 @@ void ScanTargets(s8 FromX, s8 FromY, u16 MaxSteps, u8 Dir, u8 Base, farptr Map)
   s8 TargY[4] = {0};
   u16 StepCount = 0;
   u16 Best = 0;
-  u8 t1;
-  J = 0;
-  if (J <= 3) for (;;) {
-    if (FootprintCell(Base, J, &LocX, &LocY)) {
-      CandX[J] = FromX + LocX;
-      CandY[J] = FromY + LocY;
-    } else {
-      CandX[J] = (-1);
+  {
+    if (0 <= 3) {
+      J = 0;
+      for (;;) {
+          if (FootprintCell(Base, J, &LocX, &LocY)) {
+            CandX[J] = FromX + LocX;
+            CandY[J] = FromY + LocY;
+          } else {
+            CandX[J] = (-1);
+          }
+        if (J == 3) break;
+        J++;
+      }
     }
-    if (J == 3) break;
-    J++;
   }
   SortEntries[0].Val_ = 0;
-  t1 = CombatantTable[0].Kind;
-  I = 1;
-  if (I <= t1) for (;;) {
-    if (CombatantTable[I].Kind > 0) {
-      Found = 0;
-      Best = 0xFF;
-      K = 0;
-      if (K <= 3) for (;;) {
-        if (FootprintCell(CombatantTable[I].Kind, K, &LocX, &LocY)) {
-          TargX[K] = CombatantTable[I].X + LocX;
-          TargY[K] = CombatantTable[I].Y + LocY;
-        } else {
-          TargX[K] = (-1);
-        }
-        if (K == 3) break;
-        K++;
-      }
-      K = 0;
-      if (K <= 3) for (;;) {
-        if (TargX[K] >= 0) {
-          J = 0;
-          if (J <= 3) for (;;) {
-            if (CandX[J] >= 0) {
-              if (InDirArc(CandX[J], CandY[J], TargX[K], TargY[K], Dir)) {
-                Ex = TargX[K];
-                Ey = TargY[K];
-                StepCount = MaxSteps;
-                if (WalkLine(CandX[J], CandY[J], &Ex, &Ey, &StepCount, Map)) {
-                  Found = 1;
-                  if (StepCount < Best) {
-                    Best = StepCount;
-                    BestJ = J;
-                    BestK = K;
-                  }
+  {
+    u8 limit = CombatantTable[0].Kind;
+    if (1 <= limit) {
+      I = 1;
+      for (;;) {
+          if (CombatantTable[I].Kind > 0) {
+            Found = 0;
+            Best = 0xFF;
+            {
+              if (0 <= 3) {
+                K = 0;
+                for (;;) {
+                    if (FootprintCell(CombatantTable[I].Kind, K, &LocX, &LocY)) {
+                      TargX[K] = CombatantTable[I].X + LocX;
+                      TargY[K] = CombatantTable[I].Y + LocY;
+                    } else {
+                      TargX[K] = (-1);
+                    }
+                  if (K == 3) break;
+                  K++;
                 }
               }
             }
-            if (J == 3) break;
-            J++;
+            {
+              if (0 <= 3) {
+                K = 0;
+                for (;;) {
+                    if (TargX[K] >= 0) {
+                      {
+                        if (0 <= 3) {
+                          J = 0;
+                          for (;;) {
+                              if (CandX[J] >= 0) {
+                                if (InDirArc(CandX[J], CandY[J], TargX[K], TargY[K], Dir)) {
+                                  Ex = TargX[K];
+                                  Ey = TargY[K];
+                                  StepCount = MaxSteps;
+                                  if (WalkLine(CandX[J], CandY[J], &Ex, &Ey, &StepCount, Map)) {
+                                    Found = 1;
+                                    if (StepCount < Best) {
+                                      Best = StepCount;
+                                      BestJ = J;
+                                      BestK = K;
+                                    }
+                                  }
+                                }
+                              }
+                            if (J == 3) break;
+                            J++;
+                          }
+                        }
+                      }
+                    }
+                  if (K == 3) break;
+                  K++;
+                }
+              }
+            }
+            if (Found) {
+              SortEntries[0].Val_++;
+              SortEntries[SortEntries[0].Val_].Head = I;
+              SortEntries[SortEntries[0].Val_].Key = Best;
+              L2 = 0;
+              if (Dir < 8) {
+                L2 = Dir;
+              } else {
+                while (!InDirArc(CandX[BestJ], CandY[BestJ], TargX[BestK], TargY[BestK], L2)) {
+                  L2++;
+                }
+              }
+              SortEntries[SortEntries[0].Val_].Val_ = L2;
+            }
           }
-        }
-        if (K == 3) break;
-        K++;
-      }
-      if (Found) {
-        SortEntries[0].Val_++;
-        SortEntries[SortEntries[0].Val_].Head = I;
-        SortEntries[SortEntries[0].Val_].Key = Best;
-        L2 = 0;
-        if (Dir < 8) {
-          L2 = Dir;
-        } else {
-          while (!InDirArc(CandX[BestJ], CandY[BestJ], TargX[BestK], TargY[BestK], L2)) {
-            L2++;
-          }
-        }
-        SortEntries[SortEntries[0].Val_].Val_ = L2;
+        if (I == limit) break;
+        I++;
       }
     }
-    if (I == t1) break;
-    I++;
   }
   SortTable();
 }
@@ -364,4 +397,5 @@ void ScanTargets(s8 FromX, s8 FromY, u16 MaxSteps, u8 Dir, u8 Base, farptr Map)
 /* Initialisation part of unit OVL30. */
 void init_OVL30(void)
 {
+  POOL_TRACE("init");
 }

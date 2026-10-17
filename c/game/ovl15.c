@@ -7,6 +7,7 @@
      the largest value. */
 u16 StudyRestMinutes(PCharacter Who)
 {
+  POOL_TRACE("StudyRestMinutes");
   u16 Result = 0;
   u8 MaxMemLevel = 0;
   u8 MaxScribeLevel = 0;
@@ -20,32 +21,40 @@ u16 StudyRestMinutes(PCharacter Who)
   MaxScribeLevel = 0;
   MemSum = 0;
   ScribeSum = 0;
-  I = 0;
-  if (I <= LastSpellSlot) for (;;) {
-    if ((*FPD(TCharacter (*), Who)).Spells[I] > SpellMask) {
-      Level = SpellTable[((*FPD(TCharacter (*), Who)).Spells[I] & SpellMask)].Level;
-      if (Level > MaxMemLevel) {
-        MaxMemLevel = Level;
+  {
+    if (0 <= LastSpellSlot) {
+      I = 0;
+      for (;;) {
+          if ((*FPD(TCharacter (*), Who)).Spells[I] > SpellMask) {
+            Level = SpellTable[((*FPD(TCharacter (*), Who)).Spells[I] & SpellMask)].Level;
+            if (Level > MaxMemLevel) {
+              MaxMemLevel = Level;
+            }
+            MemSum += Level;
+          }
+        if (I == LastSpellSlot) break;
+        I++;
       }
-      MemSum += Level;
     }
-    if (I == LastSpellSlot) break;
-    I++;
   }
   Item = (*FPD(TCharacter (*), Who)).Items;
   while (Item != 0) {
     if (IsScroll(Item)) {
-      I = 1;
-      if (I <= ScrollSpells) for (;;) {
-        if ((*FPD(TMenuLine (*), Item)).Affects[I - 1] > SpellMask) {
-          Level = SpellTable[((*FPD(TMenuLine (*), Item)).Affects[I - 1] & SpellMask)].Level;
-          if (Level > MaxScribeLevel) {
-            MaxScribeLevel = Level;
+      {
+        if (1 <= ScrollSpells) {
+          I = 1;
+          for (;;) {
+              if ((*FPD(TMenuLine (*), Item)).Affects[I - 1] > SpellMask) {
+                Level = SpellTable[((*FPD(TMenuLine (*), Item)).Affects[I - 1] & SpellMask)].Level;
+                if (Level > MaxScribeLevel) {
+                  MaxScribeLevel = Level;
+                }
+                ScribeSum += Level;
+              }
+            if (I == ScrollSpells) break;
+            I++;
           }
-          ScribeSum += Level;
         }
-        if (I == ScrollSpells) break;
-        I++;
       }
     }
     Item = (*FPD(TMenuLine (*), Item)).Next;
@@ -66,14 +75,19 @@ u16 StudyRestMinutes(PCharacter Who)
      and RestHours is cleared. The answer No to 'Memorize These Spells?' and CancelPartyStudy. */
 void CancelMemorizing(PCharacter Who)
 {
+  POOL_TRACE("CancelMemorizing");
   u8 I = 0;
-  I = 0;
-  if (I <= LastSpellSlot) for (;;) {
-    if ((*FPD(TCharacter (*), Who)).Spells[I] > SpellMask) {
-      (*FPD(TCharacter (*), Who)).Spells[I] = 0;
+  {
+    if (0 <= LastSpellSlot) {
+      I = 0;
+      for (;;) {
+          if ((*FPD(TCharacter (*), Who)).Spells[I] > SpellMask) {
+            (*FPD(TCharacter (*), Who)).Spells[I] = 0;
+          }
+        if (I == LastSpellSlot) break;
+        I++;
+      }
     }
-    if (I == LastSpellSlot) break;
-    I++;
   }
   (*FPD(TCharacter (*), Who)).RestHours = 0;
 }
@@ -83,16 +97,21 @@ void CancelMemorizing(PCharacter Who)
      CancelPartyStudy. */
 void CancelScribing(PCharacter Who)
 {
+  POOL_TRACE("CancelScribing");
   u8 I = 0;
   PItem Item = 0;
   Item = (*FPD(TCharacter (*), Who)).Items;
   while (Item != 0) {
     if (IsScroll(Item)) {
-      I = 1;
-      if (I <= ScrollSpells) for (;;) {
-        (*FPD(TMenuLine (*), Item)).Affects[I - 1] = ((*FPD(TMenuLine (*), Item)).Affects[I - 1] & SpellMask);
-        if (I == ScrollSpells) break;
-        I++;
+      {
+        if (1 <= ScrollSpells) {
+          I = 1;
+          for (;;) {
+              (*FPD(TMenuLine (*), Item)).Affects[I - 1] = ((*FPD(TMenuLine (*), Item)).Affects[I - 1] & SpellMask);
+            if (I == ScrollSpells) break;
+            I++;
+          }
+        }
       }
     }
     Item = (*FPD(TMenuLine (*), Item)).Next;
@@ -104,6 +123,7 @@ void CancelScribing(PCharacter Who)
      survives the camp. */
 void CancelPartyStudy(void)
 {
+  POOL_TRACE("CancelPartyStudy");
   PCharacter Who = 0;
   Who = PartyListHead;
   while (Who != 0) {
@@ -118,17 +138,22 @@ void CancelPartyStudy(void)
      class and level in its Spells slots, memorized or still being memorized. */
 u8 SpellSlotsLeft(s8 SpellLevel, s8 SpellClass)
 {
+  POOL_TRACE("SpellSlotsLeft");
   u8 Result = 0;
   u8 Count = 0;
   u8 I = 0;
   Count = 0;
-  I = 0;
-  if (I <= LastSpellSlot) for (;;) {
-    if (((((*FPD(TCharacter (*), SelectedCharacter)).Spells[I] > 0)) && ((SpellTable[((*FPD(TCharacter (*), SelectedCharacter)).Spells[I] & SpellMask)].Level == SpellLevel))) && ((SpellTable[((*FPD(TCharacter (*), SelectedCharacter)).Spells[I] & SpellMask)].SpellClass == SpellClass))) {
-      Count++;
+  {
+    if (0 <= LastSpellSlot) {
+      I = 0;
+      for (;;) {
+          if (((((*FPD(TCharacter (*), SelectedCharacter)).Spells[I] > 0)) && ((SpellTable[((*FPD(TCharacter (*), SelectedCharacter)).Spells[I] & SpellMask)].Level == SpellLevel))) && ((SpellTable[((*FPD(TCharacter (*), SelectedCharacter)).Spells[I] & SpellMask)].SpellClass == SpellClass))) {
+            Count++;
+          }
+        if (I == LastSpellSlot) break;
+        I++;
+      }
     }
-    if (I == LastSpellSlot) break;
-    I++;
   }
   Result = (*FPD(TCharacter (*), SelectedCharacter)).SpellSlots[SpellClass][SpellLevel - 1] - Count;
   return Result;
@@ -141,6 +166,7 @@ u8 SpellSlotsLeft(s8 SpellLevel, s8 SpellClass)
      (ShowCharacterMessage). */
 u8 MayUseMagic(u8 Action)
 {
+  POOL_TRACE("MayUseMagic");
   u8 Result = 0;
   String40_RES06 Reason = {0};
   u8 t1[256];
@@ -184,6 +210,7 @@ u8 MayUseMagic(u8 Action)
      (RedrawView) when something was shown. The camp's Magic menu and ovl14's wilderness keys. */
 void CastSpells(void)
 {
+  POOL_TRACE("CastSpells");
   u16 Choice = 0;
   u8 Listed = 0;
   u8 Redraw = 0;
@@ -219,6 +246,7 @@ void CastSpells(void)
      False, showing nothing, when the character has no spell slot at all. */
 u8 ShowSpellSlotsLeft(void)
 {
+  POOL_TRACE("ShowSpellSlotsLeft");
   u8 Result = 0;
   String40_RES06 Line = {0};
   u8 Counts[3][2][3] = {0};
@@ -230,55 +258,71 @@ u8 ShowSpellSlotsLeft(void)
   u8 Any = 0;
   u8 t1[256];
   Any = 0;
-  SpellClass = ClassCleric;
-  if (SpellClass <= SpellBookMage) for (;;) {
-    HasClass[SpellClass] = 0;
-    SpellLevel = 1;
-    if (SpellLevel <= SpellLevels) for (;;) {
-      rtl_str_assign(Counts[SpellLevel - 1][SpellClass], 2, ByteToText(t1, SpellSlotsLeft(SpellLevel, SpellClass)));
-      if ((*FPD(TCharacter (*), SelectedCharacter)).SpellSlots[SpellClass][SpellLevel - 1] == 0) {
-        rtl_str_assign(Counts[SpellLevel - 1][SpellClass], 2, S("\001 "));
-      } else {
-        HasClass[SpellClass] = 1;
-        Any = 1;
+  {
+    if (ClassCleric <= SpellBookMage) {
+      SpellClass = ClassCleric;
+      for (;;) {
+          HasClass[SpellClass] = 0;
+          {
+            if (1 <= SpellLevels) {
+              SpellLevel = 1;
+              for (;;) {
+                  rtl_str_assign(Counts[SpellLevel - 1][SpellClass], 2, ByteToText(t1, SpellSlotsLeft(SpellLevel, SpellClass)));
+                  if ((*FPD(TCharacter (*), SelectedCharacter)).SpellSlots[SpellClass][SpellLevel - 1] == 0) {
+                    rtl_str_assign(Counts[SpellLevel - 1][SpellClass], 2, S("\001 "));
+                  } else {
+                    HasClass[SpellClass] = 1;
+                    Any = 1;
+                  }
+                if (SpellLevel == SpellLevels) break;
+                SpellLevel++;
+              }
+            }
+          }
+        if (SpellClass == SpellBookMage) break;
+        SpellClass++;
       }
-      if (SpellLevel == SpellLevels) break;
-      SpellLevel++;
     }
-    if (SpellClass == SpellBookMage) break;
-    SpellClass++;
   }
   if (Any) {
     ShowCharacterMessage(SelectedCharacter, S("\015can memorize:"), MessageColor, 0);
     Row = 3;
-    SpellClass = ClassCleric;
-    if (SpellClass <= SpellBookMage) for (;;) {
-      if (HasClass[SpellClass]) {
-        switch (SpellClass) {
-        case ClassCleric:
-        {
-          rtl_str_assign(Line, 40, S("\022    Cleric Spells:"));
-          break;
+    {
+      if (ClassCleric <= SpellBookMage) {
+        SpellClass = ClassCleric;
+        for (;;) {
+            if (HasClass[SpellClass]) {
+              switch (SpellClass) {
+              case ClassCleric:
+              {
+                rtl_str_assign(Line, 40, S("\022    Cleric Spells:"));
+                break;
+              }
+              case SpellBookMage:
+              {
+                rtl_str_assign(Line, 40, S("\022Magic-User Spells:"));
+                break;
+              }
+              }
+              DrawTextAt(1, (s16)(Row + 0x11), TextColor, Line);
+              Col = 0x13;
+              {
+                if (1 <= SpellLevels) {
+                  SpellLevel = 1;
+                  for (;;) {
+                      DrawTextAt((s16)(Col + 1), (s16)(Row + 0x11), TextColor, Counts[SpellLevel - 1][SpellClass]);
+                      Col += 3;
+                    if (SpellLevel == SpellLevels) break;
+                    SpellLevel++;
+                  }
+                }
+              }
+              Row++;
+            }
+          if (SpellClass == SpellBookMage) break;
+          SpellClass++;
         }
-        case SpellBookMage:
-        {
-          rtl_str_assign(Line, 40, S("\022Magic-User Spells:"));
-          break;
-        }
-        }
-        DrawTextAt(1, (s16)(Row + 0x11), TextColor, Line);
-        Col = 0x13;
-        SpellLevel = 1;
-        if (SpellLevel <= SpellLevels) for (;;) {
-          DrawTextAt((s16)(Col + 1), (s16)(Row + 0x11), TextColor, Counts[SpellLevel - 1][SpellClass]);
-          Col += 3;
-          if (SpellLevel == SpellLevels) break;
-          SpellLevel++;
-        }
-        Row++;
       }
-      if (SpellClass == SpellBookMage) break;
-      SpellClass++;
     }
   }
   Result = Any;
@@ -291,6 +335,7 @@ u8 ShowSpellSlotsLeft(void)
      calls DrawLocationLine. */
 void RestParty(u8 (*EndCamp))
 {
+  POOL_TRACE("RestParty");
   PCharacter Who = 0;
   u16 MaxMinutes = 0;
   u16 Minutes = 0;
@@ -316,23 +361,33 @@ void RestParty(u8 (*EndCamp))
      slots first) with an exchange sort; MemorizeSpells calls it after adding a spell. */
 void SortMemorizedSpells(void)
 {
+  POOL_TRACE("SortMemorizedSpells");
   u8 I = 0;
   u8 J = 0;
   u8 Spell = 0;
-  I = 0;
-  if (I <= 19) for (;;) {
-    J = I;
-    if (J <= LastSpellSlot) for (;;) {
-      if ((((*FPD(TCharacter (*), SelectedCharacter)).Spells[I] & SpellMask)) > (((*FPD(TCharacter (*), SelectedCharacter)).Spells[J] & SpellMask))) {
-        Spell = (*FPD(TCharacter (*), SelectedCharacter)).Spells[I];
-        (*FPD(TCharacter (*), SelectedCharacter)).Spells[I] = (*FPD(TCharacter (*), SelectedCharacter)).Spells[J];
-        (*FPD(TCharacter (*), SelectedCharacter)).Spells[J] = Spell;
+  {
+    if (0 <= 19) {
+      I = 0;
+      for (;;) {
+          {
+            u8 first = I;
+            if (first <= LastSpellSlot) {
+              J = first;
+              for (;;) {
+                  if ((((*FPD(TCharacter (*), SelectedCharacter)).Spells[I] & SpellMask)) > (((*FPD(TCharacter (*), SelectedCharacter)).Spells[J] & SpellMask))) {
+                    Spell = (*FPD(TCharacter (*), SelectedCharacter)).Spells[I];
+                    (*FPD(TCharacter (*), SelectedCharacter)).Spells[I] = (*FPD(TCharacter (*), SelectedCharacter)).Spells[J];
+                    (*FPD(TCharacter (*), SelectedCharacter)).Spells[J] = Spell;
+                  }
+                if (J == LastSpellSlot) break;
+                J++;
+              }
+            }
+          }
+        if (I == 19) break;
+        I++;
       }
-      if (J == LastSpellSlot) break;
-      J++;
     }
-    if (I == 19) break;
-    I++;
   }
 }
 
@@ -344,6 +399,7 @@ void SortMemorizedSpells(void)
      the list of spells being memorized; No cancels them. */
 void MemorizeSpells(void)
 {
+  POOL_TRACE("MemorizeSpells");
   u8 Done = 0;
   u8 Listed = 0;
   u8 Redraw = 0;
@@ -409,6 +465,7 @@ void MemorizeSpells(void)
      scroll spell byte holding it. After a choice it asks 'Scribe these spells? '; No cancels. */
 void ScribeScrolls(void)
 {
+  POOL_TRACE("ScribeScrolls");
   u8 Done = 0;
   u8 Listed = 0;
   u8 Redraw = 0;
@@ -453,14 +510,18 @@ void ScribeScrolls(void)
         Found = 0;
         while (((Item != 0)) && !Found) {
           if (IsScroll(Item)) {
-            I = 1;
-            if (I <= ScrollSpells) for (;;) {
-              if ((((*FPD(TMenuLine (*), Item)).Affects[I - 1] > SpellMask)) && (((((*FPD(TMenuLine (*), Item)).Affects[I - 1] & SpellMask)) == Spell))) {
-                ShowFlashMessage(S("\"You are already scibing that spell"));
-                Found = 1;
+            {
+              if (1 <= ScrollSpells) {
+                I = 1;
+                for (;;) {
+                    if ((((*FPD(TMenuLine (*), Item)).Affects[I - 1] > SpellMask)) && (((((*FPD(TMenuLine (*), Item)).Affects[I - 1] & SpellMask)) == Spell))) {
+                      ShowFlashMessage(S("\"You are already scibing that spell"));
+                      Found = 1;
+                    }
+                  if (I == ScrollSpells) break;
+                  I++;
+                }
               }
-              if (I == ScrollSpells) break;
-              I++;
             }
           }
           Item = (*FPD(TMenuLine (*), Item)).Next;
@@ -545,6 +606,7 @@ static void DisplaySpellEffects_AddDisplayLine(struct Frame_DisplaySpellEffects 
      byte (Count is at [bp-$13], Found at [bp-$15]). */
 void DisplaySpellEffects(void)
 {
+  POOL_TRACE("DisplaySpellEffects");
   Frame_DisplaySpellEffects fr;
   memset(&fr, 0, sizeof fr);
   u8 t1[256];
@@ -717,6 +779,7 @@ void DisplaySpellEffects(void)
      redraws the character (DrawPartyRoster). */
 void CampMagicMenu(u8 (*EndCamp))
 {
+  POOL_TRACE("CampMagicMenu");
   u8 Key = 0;
   u8 ExtKey = 0;
   Key = ' ';
@@ -762,6 +825,7 @@ void CampMagicMenu(u8 (*EndCamp))
      Party Order menu's G key once a character is picked. */
 void MoveMemberUp(void)
 {
+  POOL_TRACE("MoveMemberUp");
   PCharacter Before = 0;
   PCharacter Who = 0;
   PCharacter After = 0;
@@ -799,6 +863,7 @@ void MoveMemberUp(void)
      member after it, and the last member goes to the front. The Party Order menu's O key. */
 void MoveMemberDown(void)
 {
+  POOL_TRACE("MoveMemberDown");
   PCharacter Before = 0;
   PCharacter After = 0;
   Before = PartyListHead;
@@ -830,6 +895,7 @@ void MoveMemberDown(void)
      down (MoveMemberDown). */
 void PartyOrderMenu(void)
 {
+  POOL_TRACE("PartyOrderMenu");
   u8 Picked = 0;
   u8 ExtKey = 0;
   u8 Key = 0;
@@ -874,6 +940,7 @@ void PartyOrderMenu(void)
      cleared; on No 'Breathes A sigh of relief'. */
 void DropPartyMember(void)
 {
+  POOL_TRACE("DropPartyMember");
   if ((((*FPD(TCharacter (*), SelectedCharacter)).Next == 0)) && ((SelectedCharacter == PartyListHead))) {
     if (AskYesNo(S("\015quit TO DOS: "), AskColor, WordColor, HotColor) == KeyYes) {
       RemoveSelectedCharacter(0, 1);
@@ -904,6 +971,7 @@ void DropPartyMember(void)
      bounds themselves; the prompt only offers them inside 0..9. */
 void CampSpeedMenu(void)
 {
+  POOL_TRACE("CampSpeedMenu");
   u8 Key = 0;
   u8 ExtKey = 0;
   String40_RES06 Prompt = {0};
@@ -963,6 +1031,7 @@ void CampSpeedMenu(void)
      toggles the monster pictures (ShowMonsterPics) and the portraits (ShowPortraits). */
 void AlterMenu(void)
 {
+  POOL_TRACE("AlterMenu");
   u8 Key = 0;
   u8 Choice = 0;
   u8 ExtKey = 0;
@@ -1042,6 +1111,7 @@ void AlterMenu(void)
      that ends the camp (RunRestPeriod). */
 void MakeCamp(u8 (*EndCamp))
 {
+  POOL_TRACE("MakeCamp");
   u8 SavedMode = 0;
   u8 Key = 0;
   u8 ViewFlag = 0;
@@ -1105,4 +1175,5 @@ void MakeCamp(u8 (*EndCamp))
 /* Initialisation part of unit OVL15. */
 void init_OVL15(void)
 {
+  POOL_TRACE("init");
 }

@@ -24,6 +24,7 @@
      Escape. */
 u8 PickSpellFromMenu(u8 Mode, u16 (*Choice))
 {
+  POOL_TRACE("PickSpellFromMenu");
   u8 Result = 0;
   PMenuLine Selected = 0;
   PMenuLine WalkPtr = 0;
@@ -118,6 +119,7 @@ u8 PickSpellFromMenu(u8 Mode, u16 (*Choice))
      and AddItemSpells. */
 void AddSpellMenuLine(u8 Spell)
 {
+  POOL_TRACE("AddSpellMenuLine");
   PMenuLine Line = 0;
   s8 Count = 0;
   s8 PrevLevel = 0;
@@ -170,21 +172,26 @@ void AddSpellMenuLine(u8 Spell)
      (Kind 2) and AddScrollSpells. */
 void AddItemSpells(u8 Pending)
 {
+  POOL_TRACE("AddItemSpells");
   u8 I = 0;
   farptr Affect = 0;
   if (HasAffect(SelectedCharacter, AddItemSpells_ReadMagicAffect, &Affect) || (((((*FPD(TCharacter (*), SelectedCharacter)).ClassLevels[0] > 0)) && ((ItemTable[(*FPD(TMenuLine (*), CurrentItem)).ItemType].Slot == AddItemSpells_ClericScrollClass))))) {
     (*FPD(TMenuLine (*), CurrentItem)).HiddenNames = 0;
   }
   if ((*FPD(TMenuLine (*), CurrentItem)).HiddenNames == 0) {
-    I = 1;
-    if (I <= 3) for (;;) {
-      if (((((Pending != 0)) && (((*FPD(TMenuLine (*), CurrentItem)).Affects[I - 1] > AddItemSpells_PendingSpell)))) || ((((Pending == 0)) && (((*FPD(TMenuLine (*), CurrentItem)).Affects[I - 1] > 0))))) {
-        AddSpellMenuLine((*FPD(TMenuLine (*), CurrentItem)).Affects[I - 1]);
-        SpellMenuItems[SpellMenuItemCount] = CurrentItem;
-        SpellMenuItemCount++;
+    {
+      if (1 <= 3) {
+        I = 1;
+        for (;;) {
+            if (((((Pending != 0)) && (((*FPD(TMenuLine (*), CurrentItem)).Affects[I - 1] > AddItemSpells_PendingSpell)))) || ((((Pending == 0)) && (((*FPD(TMenuLine (*), CurrentItem)).Affects[I - 1] > 0))))) {
+              AddSpellMenuLine((*FPD(TMenuLine (*), CurrentItem)).Affects[I - 1]);
+              SpellMenuItems[SpellMenuItemCount] = CurrentItem;
+              SpellMenuItemCount++;
+            }
+          if (I == 3) break;
+          I++;
+        }
       }
-      if (I == 3) break;
-      I++;
     }
   }
 }
@@ -196,12 +203,17 @@ void AddItemSpells(u8 Pending)
      (Pending 0) and "to be scribed" (Pending 1) lists. */
 void AddScrollSpells(u8 Pending)
 {
+  POOL_TRACE("AddScrollSpells");
   u8 I = 0;
-  I = 0;
-  if (I <= 0x30) for (;;) {
-    SpellMenuItems[I] = 0;
-    if (I == 0x30) break;
-    I++;
+  {
+    if (0 <= 0x30) {
+      I = 0;
+      for (;;) {
+          SpellMenuItems[I] = 0;
+        if (I == 0x30) break;
+        I++;
+      }
+    }
   }
   SpellMenuItemCount = 0;
   CurrentItem = (*FPD(TCharacter (*), SelectedCharacter)).Items;
@@ -222,50 +234,67 @@ void AddScrollSpells(u8 Pending)
      Called by ovl19:299C ChooseSpellFromList. */
 u8 BuildSpellList(u8 Kind)
 {
+  POOL_TRACE("BuildSpellList");
   u8 Result = 0;
   u8 I = 0;
   Result = 0;
   SpellMenuList = 0;
-  I = 0;
-  if (I <= 0x14) for (;;) {
-    SpellMenuSpells[I] = 0;
-    if (I == 0x14) break;
-    I++;
+  {
+    if (0 <= 0x14) {
+      I = 0;
+      for (;;) {
+          SpellMenuSpells[I] = 0;
+        if (I == 0x14) break;
+        I++;
+      }
+    }
   }
   switch (Kind) {
   case 0:
   {
-    I = 0;
-    if (I <= 0x14) for (;;) {
-      if ((((*FPD(TCharacter (*), SelectedCharacter)).Spells[I] > 0)) && (((*FPD(TCharacter (*), SelectedCharacter)).Spells[I] < BuildSpellList_PendingSpell))) {
-        AddSpellMenuLine((*FPD(TCharacter (*), SelectedCharacter)).Spells[I]);
+    {
+      if (0 <= 0x14) {
+        I = 0;
+        for (;;) {
+            if ((((*FPD(TCharacter (*), SelectedCharacter)).Spells[I] > 0)) && (((*FPD(TCharacter (*), SelectedCharacter)).Spells[I] < BuildSpellList_PendingSpell))) {
+              AddSpellMenuLine((*FPD(TCharacter (*), SelectedCharacter)).Spells[I]);
+            }
+          if (I == 0x14) break;
+          I++;
+        }
       }
-      if (I == 0x14) break;
-      I++;
     }
     break;
   }
   case 5:
   {
-    I = 0;
-    if (I <= 0x14) for (;;) {
-      if ((*FPD(TCharacter (*), SelectedCharacter)).Spells[I] > SpellMask) {
-        AddSpellMenuLine((*FPD(TCharacter (*), SelectedCharacter)).Spells[I]);
+    {
+      if (0 <= 0x14) {
+        I = 0;
+        for (;;) {
+            if ((*FPD(TCharacter (*), SelectedCharacter)).Spells[I] > SpellMask) {
+              AddSpellMenuLine((*FPD(TCharacter (*), SelectedCharacter)).Spells[I]);
+            }
+          if (I == 0x14) break;
+          I++;
+        }
       }
-      if (I == 0x14) break;
-      I++;
     }
     break;
   }
   case 1:
   {
-    I = 1;
-    if (I <= 0x37) for (;;) {
-      if ((*FPD(TCharacter (*), SelectedCharacter)).KnownSpells[I - 1] != 0) {
-        AddSpellMenuLine(I);
+    {
+      if (1 <= 0x37) {
+        I = 1;
+        for (;;) {
+            if ((*FPD(TCharacter (*), SelectedCharacter)).KnownSpells[I - 1] != 0) {
+              AddSpellMenuLine(I);
+            }
+          if (I == 0x37) break;
+          I++;
+        }
       }
-      if (I == 0x37) break;
-      I++;
     }
     break;
   }
@@ -286,13 +315,17 @@ u8 BuildSpellList(u8 Kind)
   }
   case 4:
   {
-    I = 1;
-    if (I <= 0x38) for (;;) {
-      if ((((*FPD(TCharacter (*), SelectedCharacter)).SpellSlots[SpellTable[I].SpellClass][SpellTable[I].Level - 1] > 0)) && (((*FPD(TCharacter (*), SelectedCharacter)).KnownSpells[I - 1] == 0))) {
-        AddSpellMenuLine(I);
+    {
+      if (1 <= 0x38) {
+        I = 1;
+        for (;;) {
+            if ((((*FPD(TCharacter (*), SelectedCharacter)).SpellSlots[SpellTable[I].SpellClass][SpellTable[I].Level - 1] > 0)) && (((*FPD(TCharacter (*), SelectedCharacter)).KnownSpells[I - 1] == 0))) {
+              AddSpellMenuLine(I);
+            }
+          if (I == 0x38) break;
+          I++;
+        }
       }
-      if (I == 0x38) break;
-      I++;
     }
     break;
   }
@@ -311,6 +344,7 @@ u8 BuildSpellList(u8 Kind)
      (ovl09:02EB) and ovl13:1E16. */
 u8 SpellAreaSize(u8 Spell)
 {
+  POOL_TRACE("SpellAreaSize");
   u8 Result = 0;
   u8 Area = 0;
   if (!ItemAffectUse) {
@@ -339,6 +373,7 @@ u8 SpellAreaSize(u8 Spell)
      CastEnlarge, CastHoldPerson, CastStrength, CastMonsterStrength. */
 u16 SpellAffectDuration(u8 Spell)
 {
+  POOL_TRACE("SpellAffectDuration");
   u16 Result = 0;
   u16 Value = 0;
   switch (Spell) {
@@ -393,12 +428,12 @@ u16 SpellAffectDuration(u8 Spell)
      real or computed. */
 void ApplySpellToTargets(u8 Spell, u8 CasterLevel, u8 Flag, u8 Damage, u8 Kind, const u8 *Message_in)
 {
+  POOL_TRACE("ApplySpellToTargets");
   const u8 *Message = Message_in;
   u8 Level = 0;
   u8 I = 0;
   PCharacter Target = 0;
   u8 Saved = 0;
-  u8 t1;
   if (Damage == 0) {
     DamageKind = 0;
   } else {
@@ -412,33 +447,37 @@ void ApplySpellToTargets(u8 Spell, u8 CasterLevel, u8 Flag, u8 Damage, u8 Kind, 
   } else {
     Level = CasterLevel;
   }
-  t1 = SpellTargetCount;
-  I = 1;
-  if (I <= t1) for (;;) {
-    if (SpellTargets[I] != 0) {
-      Target = SpellTargets[I];
-      if (SpellTable[Spell].Pad2[6] == 0) {
-        Saved = 0;
-      } else {
-        Saved = SavingThrow(Target, SpellTable[Spell].Pad2[7], 0);
-      }
-      if (SpellTable[CastingSpell].Pad2[0] == 0xFF) {
-        RecalcCombatValues(Target);
-        RunAffectHooks(0xB, Target);
-        if (!RollToHit(SelectedCharacter, Target, (*FPD(TCharacter (*), Target)).ArmourClassValue)) {
-          Damage = 0;
-          Saved = 1;
-        }
-      }
-      if (Damage > 0) {
-        DealDamage(Target, Damage, SpellTable[Spell].Pad2[6], Saved);
-      }
-      if (SpellTable[Spell].AffectId > 0) {
-        ApplyAffect(Target, SpellTable[Spell].AffectId, SpellAffectDuration(Spell), Level, Flag, SpellTable[Spell].Pad2[6], Saved, Message);
+  {
+    u8 limit = SpellTargetCount;
+    if (1 <= limit) {
+      I = 1;
+      for (;;) {
+          if (SpellTargets[I] != 0) {
+            Target = SpellTargets[I];
+            if (SpellTable[Spell].Pad2[6] == 0) {
+              Saved = 0;
+            } else {
+              Saved = SavingThrow(Target, SpellTable[Spell].Pad2[7], 0);
+            }
+            if (SpellTable[CastingSpell].Pad2[0] == 0xFF) {
+              RecalcCombatValues(Target);
+              RunAffectHooks(0xB, Target);
+              if (!RollToHit(SelectedCharacter, Target, (*FPD(TCharacter (*), Target)).ArmourClassValue)) {
+                Damage = 0;
+                Saved = 1;
+              }
+            }
+            if (Damage > 0) {
+              DealDamage(Target, Damage, SpellTable[Spell].Pad2[6], Saved);
+            }
+            if (SpellTable[Spell].AffectId > 0) {
+              ApplyAffect(Target, SpellTable[Spell].AffectId, SpellAffectDuration(Spell), Level, Flag, SpellTable[Spell].Pad2[6], Saved, Message);
+            }
+          }
+        if (I == limit) break;
+        I++;
       }
     }
-    if (I == t1) break;
-    I++;
   }
   DamageKind = 0;
 }
@@ -454,6 +493,7 @@ void ApplySpellToTargets(u8 Spell, u8 CasterLevel, u8 Flag, u8 Damage, u8 Kind, 
      stores @ChooseSpellTargets). */
 void ChooseSpellTargets(u8 Spell, u8 Unused, u8 (*Done))
 {
+  POOL_TRACE("ChooseSpellTargets");
   PCharacter Spare = 0;
   if (PickedSpellCharacter == 0) {
     PickedSpellCharacter = SelectedCharacter;
@@ -512,6 +552,7 @@ void ChooseSpellTargets(u8 Spell, u8 Unused, u8 (*Done))
      SpellHandlers table. */
 void CastChosenSpell(u8 Spell, u8 Quick, u8 Announce, u8 (*Done))
 {
+  POOL_TRACE("CastChosenSpell");
   u8 OK = 0;
   u8 Unused = 0;
   s8 CasterX = 0;
@@ -610,18 +651,22 @@ void CastChosenSpell(u8 Spell, u8 Quick, u8 Announce, u8 (*Done))
      Called by the cast handlers of spells 1 and 2 (Bless and Curse). */
 void ApplySpellToSide(u8 Side, const u8 *Message_in)
 {
+  POOL_TRACE("ApplySpellToSide");
   const u8 *Message = Message_in;
   u8 I = 0;
-  u8 t1;
   SpellAppliedToArea = 1;
-  t1 = SpellTargetCount;
-  I = 1;
-  if (I <= t1) for (;;) {
-    if ((((*FPD(TCharacter (*), SpellTargets[I])).Side != Side)) || (((((CastingSpell == 1)) && ((ViewMode == 5))) && ((CollectEnemiesInRange(SpellTargets[I], 1) > 0))))) {
-      SpellTargets[I] = 0;
+  {
+    u8 limit = SpellTargetCount;
+    if (1 <= limit) {
+      I = 1;
+      for (;;) {
+          if ((((*FPD(TCharacter (*), SpellTargets[I])).Side != Side)) || (((((CastingSpell == 1)) && ((ViewMode == 5))) && ((CollectEnemiesInRange(SpellTargets[I], 1) > 0))))) {
+            SpellTargets[I] = 0;
+          }
+        if (I == limit) break;
+        I++;
+      }
     }
-    if (I == t1) break;
-    I++;
   }
   ApplySpellToTargets(CastingSpell, 0, 0, 0, 0, Message);
 }
@@ -631,6 +676,7 @@ void ApplySpellToSide(u8 Side, const u8 *Message_in)
      per-spell handlers in SpellHandlers (SpellHandlers[1], filled by InitSpellHandlers). */
 void CastBless(void)
 {
+  POOL_TRACE("CastBless");
   ApplySpellToSide((*FPD(TCharacter (*), SelectedCharacter)).Side, S("\012is Blessed"));
 }
 
@@ -639,6 +685,7 @@ void CastBless(void)
      'is Cursed'. One of the per-spell handlers in SpellHandlers (SpellHandlers[2]). */
 void CastCurse(void)
 {
+  POOL_TRACE("CastCurse");
   ApplySpellToSide(OpposingSide(SelectedCharacter), S("\011is Cursed"));
 }
 
@@ -648,6 +695,7 @@ void CastCurse(void)
      per-spell handlers in SpellHandlers (SpellHandlers[3], filled by InitSpellHandlers). */
 void CastCureLightWounds(void)
 {
+  POOL_TRACE("CastCureLightWounds");
   if (SpellTargetCount == 0) {
     return;
   }
@@ -662,6 +710,7 @@ void CastCureLightWounds(void)
      in SpellHandlers (SpellHandlers[4], filled by InitSpellHandlers). */
 void CastCauseLightWounds(void)
 {
+  POOL_TRACE("CastCauseLightWounds");
   ApplySpellToTargets(CastingSpell, 0, 0, RollDiceCounted(1, 8), 8, S("\000"));
 }
 
@@ -672,6 +721,7 @@ void CastCauseLightWounds(void)
      (SpellHandlers[5], [11], [18], [22] and [29]; the table is filled by InitSpellHandlers). */
 void CastDetectionSpell(void)
 {
+  POOL_TRACE("CastDetectionSpell");
   ApplySpellToTargets(CastingSpell, 0, 0, 0, 0, S("\013is affected"));
 }
 
@@ -682,6 +732,7 @@ void CastDetectionSpell(void)
      filled by InitSpellHandlers). */
 void CastProtection(void)
 {
+  POOL_TRACE("CastProtection");
   ApplySpellToTargets(CastingSpell, 0, 0, 0, 0, S("\014is protected"));
 }
 
@@ -691,6 +742,7 @@ void CastProtection(void)
      (SpellHandlers[8], filled by InitSpellHandlers). */
 void CastResistCold(void)
 {
+  POOL_TRACE("CastResistCold");
   ApplySpellToTargets(CastingSpell, 0, 0, 0, 0, S("\021is cold-resistant"));
 }
 
@@ -700,6 +752,7 @@ void CastResistCold(void)
      (SpellHandlers[9], filled by InitSpellHandlers). */
 void CastBurningHands(void)
 {
+  POOL_TRACE("CastBurningHands");
   ApplySpellToTargets(CastingSpell, 0, 0, SpellCasterLevel(CastingSpell), CastBurningHands_DamageKindFire, S("\000"));
 }
 
@@ -713,6 +766,7 @@ void CastBurningHands(void)
      changes the affect list of the target through CallAffectHandler. */
 void CastCharmPerson(void)
 {
+  POOL_TRACE("CastCharmPerson");
   farptr Affect = 0;
   PCharacter Target = 0;
   Target = FirstSpellTarget;
@@ -736,6 +790,7 @@ void CastCharmPerson(void)
      InitSpellHandlers). */
 void CastEnlarge(void)
 {
+  POOL_TRACE("CastEnlarge");
   u8 Code = 0;
   SpellWorkByteA = ExceptionalStrength;
   switch (SpellCasterLevel(CastingSpell)) {
@@ -782,6 +837,7 @@ void CastEnlarge(void)
      A target that saves, or that carries no strength affect, is left alone. Reads SpellTargetCount and FirstSpellTarget. */
 void CastReduce(void)
 {
+  POOL_TRACE("CastReduce");
   if (SpellTargetCount > 0) {
     if (!SavingThrow(FirstSpellTarget, CastReduce_SaveKind, 0)) {
       if (CureAffect(FirstSpellTarget, CastReduce_StrengthAffect)) {
@@ -798,6 +854,7 @@ void CastReduce(void)
      Reads FirstSpellTarget and CastingSpell. */
 void CastFriends(void)
 {
+  POOL_TRACE("CastFriends");
   u8 OldCharisma = 0;
   OldCharisma = (*FPD(TCharacter (*), FirstSpellTarget)).Charisma;
   (*FPD(TCharacter (*), FirstSpellTarget)).Charisma += RollDice(CastFriends_DiceCount, CastFriends_DiceSides);
@@ -813,6 +870,7 @@ void CastFriends(void)
      (one point per missile) to the chosen targets, with no message. Reads CastingSpell. */
 void CastMagicMissile(void)
 {
+  POOL_TRACE("CastMagicMissile");
   u8 Level = 0;
   Level = SpellCasterLevel(CastingSpell);
   ApplySpellToTargets(CastingSpell, 0, 0, (s16)(RollDiceCounted((Level / CastMagicMissile_LevelsPerMissile), CastMagicMissile_MissileSides) + (Level / CastMagicMissile_LevelsPerMissile)), CastMagicMissile_DamageKind, S("\000"));
@@ -823,6 +881,7 @@ void CastMagicMissile(void)
      targets with the message 'is shielded', no damage or flag of its own. Reads CastingSpell. */
 void CastShield(void)
 {
+  POOL_TRACE("CastShield");
   ApplySpellToTargets(CastingSpell, 0, 0, 0, 0, S("\013is shielded"));
 }
 
@@ -831,6 +890,7 @@ void CastShield(void)
      kept in LastDiceCount) of electrical damage to the chosen targets, with no message. Reads CastingSpell. */
 void CastShockingGrasp(void)
 {
+  POOL_TRACE("CastShockingGrasp");
   /* QUIRK ovl22:14D7: TP 6.0 evaluates the right operand of `+` first when both are calls, so the
      original's SpellCasterLevel-before-RollDiceCounted order needs the sum written with the level on the
      right; the add is commutative and the bytes match only this way. */
@@ -848,60 +908,64 @@ void CastShockingGrasp(void)
      and the target list. */
 void CastSleep(void)
 {
+  POOL_TRACE("CastSleep");
   u8 I = 0;
   farptr Affect = 0;
-  u8 t1;
   SpellAppliedToArea = 1;
   SpellWorkByteA = RollDice(CastSleep_PoolDiceCount, CastSleep_PoolDiceSides);
-  t1 = SpellTargetCount;
-  I = 1;
-  if (I <= t1) for (;;) {
-    switch ((*FPD(TCharacter (*), SpellTargets[I])).HighestLevel) {
-    case 0:
-    case 1:
-    {
-      SpellWorkByteB = CastSleep_CostLevel0;
-      break;
-    }
-    case 2:
-    {
-      SpellWorkByteB = CastSleep_CostLevel2;
-      break;
-    }
-    case 3:
-    {
-      SpellWorkByteB = CastSleep_CostLevel3;
-      break;
-    }
-    case 4:
-    {
-      SpellWorkByteB = CastSleep_CostLevel4;
-      break;
-    }
-    case 5:
-    {
-      if ((*FPD(TCharacter (*), SpellTargets[I])).Race == 0) {
-        SpellWorkByteB = CastSleep_CostLevel5Small;
-      } else {
-        SpellWorkByteB = CastSleep_CostLevel5Large;
+  {
+    u8 limit = SpellTargetCount;
+    if (1 <= limit) {
+      I = 1;
+      for (;;) {
+          switch ((*FPD(TCharacter (*), SpellTargets[I])).HighestLevel) {
+          case 0:
+          case 1:
+          {
+            SpellWorkByteB = CastSleep_CostLevel0;
+            break;
+          }
+          case 2:
+          {
+            SpellWorkByteB = CastSleep_CostLevel2;
+            break;
+          }
+          case 3:
+          {
+            SpellWorkByteB = CastSleep_CostLevel3;
+            break;
+          }
+          case 4:
+          {
+            SpellWorkByteB = CastSleep_CostLevel4;
+            break;
+          }
+          case 5:
+          {
+            if ((*FPD(TCharacter (*), SpellTargets[I])).Race == 0) {
+              SpellWorkByteB = CastSleep_CostLevel5Small;
+            } else {
+              SpellWorkByteB = CastSleep_CostLevel5Large;
+            }
+            break;
+          }
+          default:
+          {
+            SpellWorkByteB = CastSleep_CostLevel5Large;
+          }
+          }
+          /* QUIRK ovl22:15FE: the guard is written positive on purpose; the equivalent negative
+             `(Status = Animated) or HasAffect(...) or (pool < cost)` then-drop-else-Dec form compiles with
+             the two branches laid out the other way round (probe PRB26.PAS) and does not match. */
+          if (((((*FPD(TCharacter (*), SpellTargets[I])).Status != StatusAnimated)) && !HasAffect(SpellTargets[I], CastSleep_SleepAffect, &Affect)) && ((SpellWorkByteA >= SpellWorkByteB))) {
+            SpellWorkByteA -= SpellWorkByteB;
+          } else {
+            SpellTargets[I] = 0;
+          }
+        if (I == limit) break;
+        I++;
       }
-      break;
     }
-    default:
-    {
-      SpellWorkByteB = CastSleep_CostLevel5Large;
-    }
-    }
-    /* QUIRK ovl22:15FE: the guard is written positive on purpose; the equivalent negative
-       `(Status = Animated) or HasAffect(...) or (pool < cost)` then-drop-else-Dec form compiles with
-       the two branches laid out the other way round (probe PRB26.PAS) and does not match. */
-    if (((((*FPD(TCharacter (*), SpellTargets[I])).Status != StatusAnimated)) && !HasAffect(SpellTargets[I], CastSleep_SleepAffect, &Affect)) && ((SpellWorkByteA >= SpellWorkByteB))) {
-      SpellWorkByteA -= SpellWorkByteB;
-    } else {
-      SpellTargets[I] = 0;
-    }
-    if (I == t1) break;
-    I++;
   }
   ApplySpellToTargets(CastingSpell, 0, 0, 0, 0, S("\014falls asleep"));
 }
@@ -917,6 +981,7 @@ void CastSleep(void)
      SpellTargetCount, SpellTargets, CastingSpell and SelectedCharacter. */
 void CastHoldPerson(void)
 {
+  POOL_TRACE("CastHoldPerson");
   PCharacter Target = 0;
   u8 Saved = 0;
   u8 I = 0;
@@ -943,25 +1008,30 @@ void CastHoldPerson(void)
     break;
   }
   }
-  I = SpellTargetCount;
-  if (I >= 1) for (;;) {
-    if (SpellTargets[I] != 0) {
-      Target = SpellTargets[I];
-      if (I < SpellTargetCount) {
-        SetSoundDriverIdle(SoundIdleOff);
-        PlaySound(SoundSpellDefault);
-        DrawCombatIcon(CastHoldPerson_AnimationKind);
-        WalkCombatLine(CombatantX(SelectedCharacter), CombatantY(SelectedCharacter), CombatantX(Target), CombatantY(Target), CastHoldPerson_AimStep, CastHoldPerson_AimWidth);
-        SetSoundDriverIdle(SoundIdleDefault);
+  {
+    u8 first = SpellTargetCount;
+    if (first >= 1) {
+      I = first;
+      for (;;) {
+          if (SpellTargets[I] != 0) {
+            Target = SpellTargets[I];
+            if (I < SpellTargetCount) {
+              SetSoundDriverIdle(SoundIdleOff);
+              PlaySound(SoundSpellDefault);
+              DrawCombatIcon(CastHoldPerson_AnimationKind);
+              WalkCombatLine(CombatantX(SelectedCharacter), CombatantY(SelectedCharacter), CombatantX(Target), CombatantY(Target), CastHoldPerson_AimStep, CastHoldPerson_AimWidth);
+              SetSoundDriverIdle(SoundIdleDefault);
+            }
+            Saved = SavingThrow(Target, SpellTable[CastingSpell].Pad2[7], SaveBonus);
+            if ((((*FPD(TCharacter (*), Target)).CreatureType > CastHoldPerson_FriendlyType)) || (((*FPD(TCharacter (*), Target)).CombatSize > CastHoldPerson_FriendlySize))) {
+              Saved = 1;
+            }
+            ApplyAffect(Target, SpellTable[CastingSpell].AffectId, SpellAffectDuration(CastingSpell), SpellCasterLevel(CastingSpell), 0, SpellTable[CastingSpell].Pad2[6], Saved, S("\007is held"));
+          }
+        if (I == 1) break;
+        I--;
       }
-      Saved = SavingThrow(Target, SpellTable[CastingSpell].Pad2[7], SaveBonus);
-      if ((((*FPD(TCharacter (*), Target)).CreatureType > CastHoldPerson_FriendlyType)) || (((*FPD(TCharacter (*), Target)).CombatSize > CastHoldPerson_FriendlySize))) {
-        Saved = 1;
-      }
-      ApplyAffect(Target, SpellTable[CastingSpell].AffectId, SpellAffectDuration(CastingSpell), SpellCasterLevel(CastingSpell), 0, SpellTable[CastingSpell].Pad2[6], Saved, S("\007is held"));
     }
-    if (I == 1) break;
-    I--;
   }
 }
 
@@ -972,6 +1042,7 @@ void CastHoldPerson(void)
      SpellHandlers (whitepaper 5.22.2). */
 void CastResistFire(void)
 {
+  POOL_TRACE("CastResistFire");
   ApplySpellToTargets(CastingSpell, 0, 0, 0, 0, S("\021is fire resistant"));
 }
 
@@ -982,6 +1053,7 @@ void CastResistFire(void)
      SpellHandlers (whitepaper 5.22.2). */
 void CastSilence(void)
 {
+  POOL_TRACE("CastSilence");
   ApplySpellToTargets(CastingSpell, 0, 0, 0, 0, S("\013is silenced"));
 }
 
@@ -995,6 +1067,7 @@ void CastSilence(void)
      units. Reads FirstSpellTarget and CastingSpell. */
 void CastSlowPoison(void)
 {
+  POOL_TRACE("CastSlowPoison");
   farptr Affect = 0;
   PCharacter Target = 0;
   Target = FirstSpellTarget;
@@ -1021,6 +1094,7 @@ void CastSlowPoison(void)
      SpellWorkByteA, SpellTargetCount and the target list. */
 void CastSnakeCharm(void)
 {
+  POOL_TRACE("CastSnakeCharm");
   PCharacter Current = 0;
   SpellWorkByteA = (*FPD(TCharacter (*), SelectedCharacter)).HpCurrent;
   SpellTargetCount = 0;
@@ -1044,6 +1118,7 @@ void CastSnakeCharm(void)
      which is the spell's hammer. Reads CastingSpell and FirstSpellTarget. */
 void CastSpiritualHammer(void)
 {
+  POOL_TRACE("CastSpiritualHammer");
   ApplySpellToTargets(CastingSpell, 0, RunsHandlerOnRemove, 0, 0, S("\000"));
   CallAffectHandler(CastSpiritualHammer_SpiritualHammerAffect, FirstSpellTarget, 0, ModeApply);
 }
@@ -1055,6 +1130,7 @@ void CastSpiritualHammer(void)
      else to do. Reads CastingSpell. */
 void CastInvisibility(void)
 {
+  POOL_TRACE("CastInvisibility");
   ApplySpellToTargets(CastingSpell, 0, 0, 0, 0, S("\014is invisible"));
 }
 
@@ -1065,6 +1141,7 @@ void CastInvisibility(void)
      door code looks for Knock among the memorized spells. Reads CastingSpell. */
 void CastKnock(void)
 {
+  POOL_TRACE("CastKnock");
   ApplySpellToTargets(CastingSpell, 0, 0, 0, 0, S("\013Knock-Knock"));
 }
 
@@ -1075,6 +1152,7 @@ void CastKnock(void)
      Data. Reads CastingSpell. */
 void CastMirrorImage(void)
 {
+  POOL_TRACE("CastMirrorImage");
   ApplySpellToTargets(CastingSpell, RollDice(CastMirrorImage_ImagesCount, CastMirrorImage_ImagesSides), 0, 0, 0, S("\015is duplicated"));
 }
 
@@ -1085,6 +1163,7 @@ void CastMirrorImage(void)
      CastingSpell. */
 void CastRayOfEnfeeblement(void)
 {
+  POOL_TRACE("CastRayOfEnfeeblement");
   ApplySpellToTargets(CastingSpell, 0, 0, 0, 0, S("\013is weakened"));
 }
 
@@ -1102,6 +1181,7 @@ void CastRayOfEnfeeblement(void)
      SpellAppliedToArea, CloudList, the combat map and the affects of the targets. */
 void CastStinkingCloud(void)
 {
+  POOL_TRACE("CastStinkingCloud");
   PCombatNode Cloud = 0;
   PCombatNode Node = 0;
   u8 Occupant[4] = {0};
@@ -1111,7 +1191,6 @@ void CastStinkingCloud(void)
   u8 Level = 0;
   u8 I = 0;
   u8 Dir = 0;
-  u8 t1;
   SpellAppliedToArea = 1;
   Level = SpellCasterLevel(CastingSpell);
   Count = 0;
@@ -1135,61 +1214,77 @@ void CastStinkingCloud(void)
   (*FPD(TCombatNode (*), Node)).Kind = Count;
   (*FPD(TCombatNode (*), Node)).X = SpellAimX;
   (*FPD(TCombatNode (*), Node)).Y = SpellAimY;
-  I = 1;
-  if (I <= 4) for (;;) {
-    Dir = SpellNamesPrefix.AimDirs[I - 1];
-    GetMapCell((s16)(SpellAimX + DirStepX[Dir]), (s16)(SpellAimY + DirStepY[Dir]), &Occupant[I - 1], &Tile);
-    if (((Tile > 0)) && ((CombatTiles[Tile].Cost < CastStinkingCloud_RefusedTileCost))) {
-      (*FPD(TCombatNode (*), Node)).Arms[I - 1] = 1;
-    } else {
-      (*FPD(TCombatNode (*), Node)).Arms[I - 1] = 0;
-    }
-    if (Tile == CloudTile) {
-      Cloud = CloudList;
-      while (Cloud != 0) {
-        if (Cloud != Node) {
-          J = 1;
-          if (J <= 4) for (;;) {
-            if ((*FPD(TCombatNode (*), Cloud)).Arms[J - 1] != 0) {
-              if (((((s16)((*FPD(TCombatNode (*), Cloud)).X + DirStepX[SpellNamesPrefix.AimDirs[J - 1]]) == (s16)(SpellAimX + DirStepX[Dir]))) && (((s16)((*FPD(TCombatNode (*), Cloud)).Y + DirStepY[SpellNamesPrefix.AimDirs[J - 1]]) == (s16)(SpellAimY + DirStepY[Dir])))) && (((*FPD(TCombatNode (*), Cloud)).Tiles[J - 1] != CloudTile))) {
-                Tile = (*FPD(TCombatNode (*), Cloud)).Tiles[J - 1];
+  {
+    if (1 <= 4) {
+      I = 1;
+      for (;;) {
+          Dir = SpellNamesPrefix.AimDirs[I - 1];
+          GetMapCell((s16)(SpellAimX + DirStepX[Dir]), (s16)(SpellAimY + DirStepY[Dir]), &Occupant[I - 1], &Tile);
+          if (((Tile > 0)) && ((CombatTiles[Tile].Cost < CastStinkingCloud_RefusedTileCost))) {
+            (*FPD(TCombatNode (*), Node)).Arms[I - 1] = 1;
+          } else {
+            (*FPD(TCombatNode (*), Node)).Arms[I - 1] = 0;
+          }
+          if (Tile == CloudTile) {
+            Cloud = CloudList;
+            while (Cloud != 0) {
+              if (Cloud != Node) {
+                {
+                  if (1 <= 4) {
+                    J = 1;
+                    for (;;) {
+                        if ((*FPD(TCombatNode (*), Cloud)).Arms[J - 1] != 0) {
+                          if (((((s16)((*FPD(TCombatNode (*), Cloud)).X + DirStepX[SpellNamesPrefix.AimDirs[J - 1]]) == (s16)(SpellAimX + DirStepX[Dir]))) && (((s16)((*FPD(TCombatNode (*), Cloud)).Y + DirStepY[SpellNamesPrefix.AimDirs[J - 1]]) == (s16)(SpellAimY + DirStepY[Dir])))) && (((*FPD(TCombatNode (*), Cloud)).Tiles[J - 1] != CloudTile))) {
+                            Tile = (*FPD(TCombatNode (*), Cloud)).Tiles[J - 1];
+                          }
+                        }
+                      if (J == 4) break;
+                      J++;
+                    }
+                  }
+                }
+              }
+              Cloud = (*FPD(TCombatNode (*), Cloud)).Next;
+            }
+          } else if (Tile == BodyTile) {
+            {
+              u8 limit = BodyCount;
+              if (1 <= limit) {
+                J = 1;
+                for (;;) {
+                    if (((BodyTable[J - 1].X == (s16)(SpellAimX + DirStepX[Dir]))) && ((BodyTable[J - 1].Y == (s16)(SpellAimY + DirStepY[Dir])))) {
+                      Tile = BodyTable[J - 1].Tile;
+                    }
+                  if (J == limit) break;
+                  J++;
+                }
               }
             }
-            if (J == 4) break;
-            J++;
           }
-        }
-        Cloud = (*FPD(TCombatNode (*), Cloud)).Next;
-      }
-    } else if (Tile == BodyTile) {
-      t1 = BodyCount;
-      J = 1;
-      if (J <= t1) for (;;) {
-        if (((BodyTable[J - 1].X == (s16)(SpellAimX + DirStepX[Dir]))) && ((BodyTable[J - 1].Y == (s16)(SpellAimY + DirStepY[Dir])))) {
-          Tile = BodyTable[J - 1].Tile;
-        }
-        if (J == t1) break;
-        J++;
+          (*FPD(TCombatNode (*), Node)).Tiles[I - 1] = Tile;
+          if ((*FPD(TCombatNode (*), Node)).Arms[I - 1] != 0) {
+            (*FPD(TCombatMap (*), CombatMap)).Cells[(s16)(SpellAimY + DirStepY[Dir])][(s16)(SpellAimX + DirStepX[Dir])] = CloudTile;
+          }
+        if (I == 4) break;
+        I++;
       }
     }
-    (*FPD(TCombatNode (*), Node)).Tiles[I - 1] = Tile;
-    if ((*FPD(TCombatNode (*), Node)).Arms[I - 1] != 0) {
-      (*FPD(TCombatMap (*), CombatMap)).Cells[(s16)(SpellAimY + DirStepY[Dir])][(s16)(SpellAimX + DirStepX[Dir])] = CloudTile;
-    }
-    if (I == 4) break;
-    I++;
   }
   ShowCharacterMessage(SelectedCharacter, S("\027Creates a noxious cloud"), CastStinkingCloud_MessageColor, 0);
   MoveCombatCursor(SpellAimX, SpellAimY, CastStinkingCloud_AimCursorMargin, CastStinkingCloud_AimCursorDir);
   DelayByGameSpeed();
   ClearCharacterMessage();
-  I = 1;
-  if (I <= 4) for (;;) {
-    if (Occupant[I - 1] > 0) {
-      ApplyCloudTile(CombatantRecord[Occupant[I - 1] - 1]);
+  {
+    if (1 <= 4) {
+      I = 1;
+      for (;;) {
+          if (Occupant[I - 1] > 0) {
+            ApplyCloudTile(CombatantRecord[Occupant[I - 1] - 1]);
+          }
+        if (I == 4) break;
+        I++;
+      }
     }
-    if (I == 4) break;
-    I++;
   }
 }
 
@@ -1202,6 +1297,7 @@ void CastStinkingCloud(void)
      spell's duration. Reads FirstSpellTarget and CastingSpell. */
 void CastStrength(void)
 {
+  POOL_TRACE("CastStrength");
   PCharacter Target = 0;
   u8 Percent = 0;
   u8 Bonus = 0;
@@ -1250,6 +1346,7 @@ void CastStrength(void)
      SelectedCharacter and ViewMode; changes SpellAppliedToArea, SpellTargetCount and the corpse records. */
 void CastAnimateDead(void)
 {
+  POOL_TRACE("CastAnimateDead");
   u8 I = 0;
   u8 SaveData = 0;
   u8 Level = 0;
@@ -1271,11 +1368,15 @@ void CastAnimateDead(void)
           (*FPD(TCharacter (*), Current)).Pad74[2] = CastAnimateDead_AnimatedMark;
           (*FPD(TCharacter (*), Current)).SweepAttacks = 0;
           (*FPD(TCharacter (*), Current)).BaseMovement = 6;
-          I = 0;
-          if (I <= CastAnimateDead_MaxSpellSlot) for (;;) {
-            (*FPD(TCharacter (*), Current)).Spells[I] = 0;
-            if (I == CastAnimateDead_MaxSpellSlot) break;
-            I++;
+          {
+            if (0 <= CastAnimateDead_MaxSpellSlot) {
+              I = 0;
+              for (;;) {
+                  (*FPD(TCharacter (*), Current)).Spells[I] = 0;
+                if (I == CastAnimateDead_MaxSpellSlot) break;
+                I++;
+              }
+            }
           }
           if ((*FPD(TCharacter (*), Current)).B84 > CastAnimateDead_AiThreshold) {
             (*FPD(TCharacter (*), Current)).B84 = CastAnimateDead_HirelingMorale;
@@ -1304,6 +1405,7 @@ void CastAnimateDead(void)
      through ShowHitMessage. Reads FirstSpellTarget. */
 void CastCureBlindness(void)
 {
+  POOL_TRACE("CastCureBlindness");
   if (CureAffect(FirstSpellTarget, CastCureBlindness_BlindnessAffect)) {
     ShowHitMessage(FirstSpellTarget, CastCureBlindness_ShowAbout, S("\007can see"));
   }
@@ -1316,6 +1418,7 @@ void CastCureBlindness(void)
      nothing else to do. Reads CastingSpell. */
 void CastCauseBlindness(void)
 {
+  POOL_TRACE("CastCauseBlindness");
   ApplySpellToTargets(CastingSpell, 0, 0, 0, 0, S("\010is blind"));
 }
 
@@ -1327,6 +1430,7 @@ void CastCauseBlindness(void)
      Cure Disease) and CastMonsterHeal. */
 u8 CureDiseaseAffects(void)
 {
+  POOL_TRACE("CureDiseaseAffects");
   u8 Result = 0;
   Result = 0;
   RemovingAffects = 1;
@@ -1353,6 +1457,7 @@ u8 CureDiseaseAffects(void)
      takes no result). QUIRK ovl22:232F: the Boolean local Cured is written and never read. */
 void CastCureDisease(void)
 {
+  POOL_TRACE("CastCureDisease");
   u8 Cured = 0;
   Cured = CureDiseaseAffects();
 }
@@ -1364,6 +1469,7 @@ void CastCureDisease(void)
      Temple's Cure Disease and CureDiseaseAffects clear). Reads CastingSpell. */
 void CastCauseDisease(void)
 {
+  POOL_TRACE("CastCauseDisease");
   ApplySpellToTargets(CastingSpell, 0, RunsHandlerOnRemove, 0, 0, S("\013is diseased"));
 }
 
@@ -1381,44 +1487,48 @@ void CastCauseDisease(void)
      changes SpellAppliedToArea, SpellWorkByteA, SpellWorkByteB and the target's affect list. */
 void CastDispelMagic(void)
 {
+  POOL_TRACE("CastDispelMagic");
   u8 I = 0;
   u8 Level = 0;
   PCharacter Target = 0;
   u8 Dispelled = 0;
   PAffect Affect = 0;
   PAffect Next = 0;
-  u8 t1;
   SpellAppliedToArea = 1;
   Level = SpellCasterLevel(CastingSpell);
-  t1 = SpellTargetCount;
-  I = 1;
-  if (I <= t1) for (;;) {
-    Dispelled = 0;
-    Target = FirstSpellTarget;
-    Affect = (*FPD(TCharacter (*), Target)).Affects;
-    while (Affect != 0) {
-      Next = (*FPD(TAffect (*), Affect)).Next;
-      if ((*FPD(TAffect (*), Affect)).Data < CastDispelMagic_MaxAffectData) {
-        SpellWorkByteB = ((*FPD(TAffect (*), Affect)).Data & CastDispelMagic_LevelMask);
-        if (Level > SpellWorkByteB) {
-          SpellWorkByteA = (((s16)(Level - SpellWorkByteB)) * CastDispelMagic_LevelStep) + CastDispelMagic_BaseChance;
-        } else if (Level < SpellWorkByteB) {
-          SpellWorkByteA = CastDispelMagic_BaseChance - (((s16)(SpellWorkByteB - Level)) * CastDispelMagic_LevelPenalty);
-        } else {
-          SpellWorkByteA = CastDispelMagic_BaseChance;
-        }
-        if (RollDice(1, CastDispelMagic_DiceSides) <= SpellWorkByteA) {
-          RemoveAffect(Target, (*FPD(TAffect (*), Affect)).Id, Affect);
-          Dispelled = 1;
-        }
+  {
+    u8 limit = SpellTargetCount;
+    if (1 <= limit) {
+      I = 1;
+      for (;;) {
+          Dispelled = 0;
+          Target = FirstSpellTarget;
+          Affect = (*FPD(TCharacter (*), Target)).Affects;
+          while (Affect != 0) {
+            Next = (*FPD(TAffect (*), Affect)).Next;
+            if ((*FPD(TAffect (*), Affect)).Data < CastDispelMagic_MaxAffectData) {
+              SpellWorkByteB = ((*FPD(TAffect (*), Affect)).Data & CastDispelMagic_LevelMask);
+              if (Level > SpellWorkByteB) {
+                SpellWorkByteA = (((s16)(Level - SpellWorkByteB)) * CastDispelMagic_LevelStep) + CastDispelMagic_BaseChance;
+              } else if (Level < SpellWorkByteB) {
+                SpellWorkByteA = CastDispelMagic_BaseChance - (((s16)(SpellWorkByteB - Level)) * CastDispelMagic_LevelPenalty);
+              } else {
+                SpellWorkByteA = CastDispelMagic_BaseChance;
+              }
+              if (RollDice(1, CastDispelMagic_DiceSides) <= SpellWorkByteA) {
+                RemoveAffect(Target, (*FPD(TAffect (*), Affect)).Id, Affect);
+                Dispelled = 1;
+              }
+            }
+            Affect = Next;
+          }
+          if (Dispelled) {
+            ShowHitMessage(Target, CastDispelMagic_ShowAbout, S("\013is affected"));
+          }
+        if (I == limit) break;
+        I++;
       }
-      Affect = Next;
     }
-    if (Dispelled) {
-      ShowHitMessage(Target, CastDispelMagic_ShowAbout, S("\013is affected"));
-    }
-    if (I == t1) break;
-    I++;
   }
 }
 
@@ -1430,6 +1540,7 @@ void CastDispelMagic(void)
      Charm Person and Animate Dead). Reads CastingSpell and SelectedCharacter; changes the targets' affects. */
 void CastPrayer(void)
 {
+  POOL_TRACE("CastPrayer");
   /* QUIRK ovl22:24F1: the original sign-extends Side with cwde, so it is read as a ShortInt even
      though TCharacter.Side is a Byte. */
   ApplySpellToTargets(CastingSpell, (s16)(SpellCasterLevel(CastingSpell) + ((*FPD(TCharacter (*), SelectedCharacter)).Side * CastPrayer_SideScale)), 0, 0, 0, S("\012is praying"));
@@ -1444,6 +1555,7 @@ void CastPrayer(void)
      finds, saying ''s item is un-cursed'. Reads FirstSpellTarget; changes the character's affects and its items. */
 void CastRemoveCurse(void)
 {
+  POOL_TRACE("CastRemoveCurse");
   PItem Item = 0;
   u8 UnCursed = 0;
   if (CureAffect(FirstSpellTarget, AffectBestowCurse)) {
@@ -1471,6 +1583,7 @@ void CastRemoveCurse(void)
      Reads CastingSpell. */
 void CastBestowCurse(void)
 {
+  POOL_TRACE("CastBestowCurse");
   ApplySpellToTargets(CastingSpell, 0, 0, 0, 0, S("\020has been cursed!"));
 }
 
@@ -1480,6 +1593,7 @@ void CastBestowCurse(void)
      own affect does the blinking, so the handler has nothing else to do. Reads CastingSpell. */
 void CastBlink(void)
 {
+  POOL_TRACE("CastBlink");
   ApplySpellToTargets(CastingSpell, 0, 0, 0, 0, S("\013is blinking"));
 }
 
@@ -1493,9 +1607,9 @@ void CastBlink(void)
      (the d6 per level), fire damage and no message. Called through SpellHandlers[47] and [64]. */
 void CastFireball(void)
 {
+  POOL_TRACE("CastFireball");
   u8 Level = 0;
   u8 I = 0;
-  u8 t1;
   SpellAppliedToArea = 1;
   if (CastingSpell == CastFireball_MonsterFireball) {
     Level = (RollDice(CastFireball_LevelDiceCount, CastFireball_LevelDiceSides) * CastFireball_LevelScale) + 1;
@@ -1504,12 +1618,16 @@ void CastFireball(void)
   }
   if ((*FPD(TGameVars (*), GameVars))[230] == 0) {
     ScanTargets(SpellAimX, SpellAimY, CastFireball_ScanSteps, OmniDir, CastFireball_FootprintBase, CombatMap);
-    t1 = SortEntries[0].Val_;
-    I = 1;
-    if (I <= t1) for (;;) {
-      SpellTargets[I] = CombatantRecord[SortEntries[I].Head - 1];
-      if (I == t1) break;
-      I++;
+    {
+      u8 limit = SortEntries[0].Val_;
+      if (1 <= limit) {
+        I = 1;
+        for (;;) {
+            SpellTargets[I] = CombatantRecord[SortEntries[I].Head - 1];
+          if (I == limit) break;
+          I++;
+        }
+      }
     }
     SpellTargetCount = SortEntries[0].Val_;
   }
@@ -1527,36 +1645,43 @@ void CastFireball(void)
      spells' SpellTable affect ids), so each removes the opposite spell from the side before it casts. */
 void ApplySpellToSideUpToLevel(u8 Affect, u8 Side, const u8 *Message_in)
 {
+  POOL_TRACE("ApplySpellToSideUpToLevel");
   const u8 *Message = Message_in;
   u8 Level = 0;
   u8 I = 0;
-  u8 t1;
-  u8 t2;
   SpellAppliedToArea = 1;
   Level = SpellCasterLevel(CastingSpell);
-  t1 = SpellTargetCount;
-  I = 1;
-  if (I <= t1) for (;;) {
-    if ((((*FPD(TCharacter (*), SpellTargets[I])).Side == Side)) && ((Level > 0))) {
-      Level--;
-      if (CureAffect(SpellTargets[I], Affect)) {
-        SpellTargets[I] = 0;
+  {
+    u8 limit = SpellTargetCount;
+    if (1 <= limit) {
+      I = 1;
+      for (;;) {
+          if ((((*FPD(TCharacter (*), SpellTargets[I])).Side == Side)) && ((Level > 0))) {
+            Level--;
+            if (CureAffect(SpellTargets[I], Affect)) {
+              SpellTargets[I] = 0;
+            }
+          } else {
+            SpellTargets[I] = 0;
+          }
+        if (I == limit) break;
+        I++;
       }
-    } else {
-      SpellTargets[I] = 0;
     }
-    if (I == t1) break;
-    I++;
   }
   ApplySpellToTargets(CastingSpell, 0, 0, 0, 0, Message);
-  t2 = SpellTargetCount;
-  I = 1;
-  if (I <= t2) for (;;) {
-    if (SpellTargets[I] != 0) {
-      RunAffectHooks(ApplySpellToSideUpToLevel_AffectHooks, SpellTargets[I]);
+  {
+    u8 limit = SpellTargetCount;
+    if (1 <= limit) {
+      I = 1;
+      for (;;) {
+          if (SpellTargets[I] != 0) {
+            RunAffectHooks(ApplySpellToSideUpToLevel_AffectHooks, SpellTargets[I]);
+          }
+        if (I == limit) break;
+        I++;
+      }
     }
-    if (I == t2) break;
-    I++;
   }
 }
 
@@ -1567,6 +1692,7 @@ void ApplySpellToSideUpToLevel(u8 Affect, u8 Side, const u8 *Message_in)
      'is Hasted'. One of the per-spell handlers in SpellHandlers (SpellHandlers[48]). */
 void CastHaste(void)
 {
+  POOL_TRACE("CastHaste");
   ApplySpellToSideUpToLevel(CastHaste_SlowAffect, (*FPD(TCharacter (*), SelectedCharacter)).Side, S("\011is Hasted"));
 }
 
@@ -1579,6 +1705,7 @@ void CastHaste(void)
      Bolt handler CastLightningBolt among them). */
 void DamageTargetInCell(u8 CellX, u8 CellY, u8 Damage, u8 SaveKind_, u8 (*Blocked))
 {
+  POOL_TRACE("DamageTargetInCell");
   PCharacter Target = 0;
   u8 Occupant = 0;
   u8 Tile = 0;
@@ -1613,6 +1740,7 @@ void DamageTargetInCell(u8 CellX, u8 CellY, u8 Damage, u8 SaveKind_, u8 (*Blocke
      Called by CastLightningBolt (Lightning Bolt), CastMonsterBeam and MonsterBreath (the dragon breath). */
 void CastLineBeam(u8 Range, u8 Damage, u8 SaveKind_, u8 Bounce)
 {
+  POOL_TRACE("CastLineBeam");
   TLineState (*Line) = (TLineState (*))rtl_stack_alloc(26);
   TLineState (*Line2) = (TLineState (*))rtl_stack_alloc(26);
   s8 CasterX = 0;
@@ -1704,6 +1832,7 @@ L_exit:
      once. Reads CastingSpell. Called through SpellHandlers[51] (InitSpellHandlers). */
 void CastLightningBolt(void)
 {
+  POOL_TRACE("CastLightningBolt");
   u8 Damage = 0;
   u8 Blocked = 0;
   Damage = RollDice(SpellCasterLevel(CastingSpell), CastLightningBolt_LevelDiceSides);
@@ -1719,6 +1848,7 @@ void CastLightningBolt(void)
      SelectedCharacter. */
 void CastSlow(void)
 {
+  POOL_TRACE("CastSlow");
   ApplySpellToSideUpToLevel(CastSlow_HasteAffect, OpposingSide(SelectedCharacter), S("\011is Slowed"));
 }
 
@@ -1736,6 +1866,7 @@ void CastSlow(void)
      levels, hit points, class level and Experience. */
 void CastRestoration(void)
 {
+  POOL_TRACE("CastRestoration");
   PCharacter Target = 0;
   u8 PerLevel = 0;
   s8 MaxLevel = 0;
@@ -1757,16 +1888,20 @@ void CastRestoration(void)
   BestXp = CastRestoration_MaxExperience;
   /* QUIRK ovl22:2CAE: BestClass is never initialized, only set by an accepted class; a character with
      no class that can advance would advance whatever class the stale local names. */
-  Class = 0;
-  if (Class <= CastRestoration_LastClass) for (;;) {
-    Level = (*FPD(TCharacter (*), Target)).ClassLevels[Class];
-    if ((((((Level > 0)) && ((Level <= MaxLevel))) && ((ExperienceTable[Class][(s8)(Level + 1)] > 0))) && ((ExperienceTable[Class][(s8)(Level + 1)] < BestXp))) && !IsMaxClassLevel(Target, Class)) {
-      MaxLevel = Level;
-      BestClass = Class;
-      BestXp = ExperienceTable[Class][(s8)(Level + 1)];
+  {
+    if (0 <= CastRestoration_LastClass) {
+      Class = 0;
+      for (;;) {
+          Level = (*FPD(TCharacter (*), Target)).ClassLevels[Class];
+          if ((((((Level > 0)) && ((Level <= MaxLevel))) && ((ExperienceTable[Class][(s8)(Level + 1)] > 0))) && ((ExperienceTable[Class][(s8)(Level + 1)] < BestXp))) && !IsMaxClassLevel(Target, Class)) {
+            MaxLevel = Level;
+            BestClass = Class;
+            BestXp = ExperienceTable[Class][(s8)(Level + 1)];
+          }
+        if (Class == CastRestoration_LastClass) break;
+        Class++;
+      }
     }
-    if (Class == CastRestoration_LastClass) break;
-    Class++;
   }
   (*FPD(TCharacter (*), Target)).ClassLevels[BestClass]++;
   if ((*FPD(TCharacter (*), Target)).Experience < BestXp) {
@@ -1783,6 +1918,7 @@ void CastRestoration(void)
      affected target carries the spell's own (haste) affect. It is CastHaste's single-target sibling. */
 void CastMonsterHaste(void)
 {
+  POOL_TRACE("CastMonsterHaste");
   if (!CureAffect(FirstSpellTarget, CastMonsterHaste_SlowAffect)) {
     ApplySpellToTargets(CastingSpell, 0, 0, 0, 0, S("\011is Speedy"));
   }
@@ -1796,6 +1932,7 @@ void CastMonsterHaste(void)
      cure applies, heals 1d4 + 8 hit points through HealCharacter and reports 'is Healed'. */
 void CastMonsterHeal(void)
 {
+  POOL_TRACE("CastMonsterHeal");
   u8 Spare = 0;
   if (CureAffect(FirstSpellTarget, CastMonsterHeal_PoisonedAffect)) {
     RemovingAffects = 1;
@@ -1816,6 +1953,7 @@ void CastMonsterHeal(void)
      RaiseStrength) for the current spell's own duration (SpellAffectDuration). */
 void CastMonsterStrength(void)
 {
+  POOL_TRACE("CastMonsterStrength");
   u8 Code = 0;
   if (RaiseStrength(FirstSpellTarget, CastMonsterStrength_MonsterStrength, CastMonsterStrength_NoPercent, &Code)) {
     ShowCharacterMessage(FirstSpellTarget, S("\013is stronger"), CastMonsterStrength_MessageColor, TimedMessage);
@@ -1830,6 +1968,7 @@ void CastMonsterStrength(void)
      cells of 20 points away from the caster, no bounce. */
 void CastMonsterBeam(void)
 {
+  POOL_TRACE("CastMonsterBeam");
   u8 Blocked = 0;
   DamageTargetInCell(SpellAimX, SpellAimY, (s16)(RollDice(CastMonsterBeam_StrikeDiceCount, CastMonsterBeam_StrikeDiceSides) + CastMonsterBeam_StrikeBase), SaveKindSpell, &Blocked);
   CastLineBeam(CastMonsterBeam_BeamReach, CastMonsterBeam_BeamDamage, SaveKindSpell, CastMonsterBeam_NoBounce);
@@ -1841,6 +1980,7 @@ void CastMonsterBeam(void)
      paralyzing (as CastCauseBlindness does the blinding). Reads CastingSpell. */
 void CastMonsterParalyze(void)
 {
+  POOL_TRACE("CastMonsterParalyze");
   ApplySpellToTargets(CastingSpell, 0, 0, 0, 0, S("\014is paralyzed"));
 }
 
@@ -1853,6 +1993,7 @@ void CastMonsterParalyze(void)
      Reads FirstSpellTarget. */
 void CastMonsterHealWounds(void)
 {
+  POOL_TRACE("CastMonsterHealWounds");
   if (HealCharacter(FirstSpellTarget, (s16)(RollDice(2, 4) + 2), 0)) {
     ShowHitMessage(FirstSpellTarget, 1, S("\011is Healed"));
   }
@@ -1864,6 +2005,7 @@ void CastMonsterHealWounds(void)
      work (as CastDetectionSpell and CastCauseBlindness leave it to the affect). Reads CastingSpell. */
 void CastMonsterInvisibility(void)
 {
+  POOL_TRACE("CastMonsterInvisibility");
   ApplySpellToTargets(CastingSpell, 0, 0, 0, 0, S("\014is invisible"));
 }
 
@@ -1875,6 +2017,7 @@ void CastMonsterInvisibility(void)
      Reads CastingSpell; changes LastDiceCount. */
 void CastMonsterMagicDamage(void)
 {
+  POOL_TRACE("CastMonsterMagicDamage");
   ApplySpellToTargets(CastingSpell, 0, 0, (s16)(RollDiceCounted(CastMonsterMagicDamage_DiceCount, CastMonsterMagicDamage_DiceSides) + CastMonsterMagicDamage_DamageBonus), CastMonsterMagicDamage_DamageKind, S("\000"));
 }
 
@@ -1886,6 +2029,7 @@ void CastMonsterMagicDamage(void)
      (spell 65). */
 void CastMonsterNoEffect(void)
 {
+  POOL_TRACE("CastMonsterNoEffect");
 }
 
 /* ovl22:30A2 (e62). Cast handler of the monster-only spell 67 (SpellHandlers element 67, whose
@@ -1895,6 +2039,7 @@ void CastMonsterNoEffect(void)
      'is Reading'. */
 void CastMonsterReadMagic(void)
 {
+  POOL_TRACE("CastMonsterReadMagic");
   ApplySpellToTargets(CastingSpell, 0xFF, 1, 0, 0, S("\012is Reading"));
 }
 
@@ -1913,6 +2058,7 @@ void CastMonsterReadMagic(void)
      breathing monster, Affect its breath affect, Unused is never read (QUIRK ovl22:30D9). */
 void MonsterBreath(PCharacter Who, PAffect Affect, u8 Unused)
 {
+  POOL_TRACE("MonsterBreath");
   u8 Blocked = 0;
   s8 CasterX = 0;
   s8 CasterY = 0;
@@ -1952,6 +2098,7 @@ void MonsterBreath(PCharacter Who, PAffect Affect, u8 Unused)
      ProcessPendingScribedSpell, UseMagicItem and the inventory. */
 u8 IsScroll(PItem Item)
 {
+  POOL_TRACE("IsScroll");
   u8 Result = 0;
   if ((((Item != 0)) && ((ItemTable[(*FPD(TMenuLine (*), Item)).ItemType].Slot > IsScroll_NotAScrollBelow))) && ((ItemTable[(*FPD(TMenuLine (*), Item)).ItemType].Slot < IsScroll_NotAScrollAbove))) {
     Result = 1;
@@ -1970,18 +2117,23 @@ u8 IsScroll(PItem Item)
      calls it too. Nothing happens when the spell is not on the scroll (Slot stays 0). */
 void ConsumeScrollSpell(PCharacter Who, PItem Item, u8 Spell)
 {
+  POOL_TRACE("ConsumeScrollSpell");
   u8 SpellNumber = 0;
   u8 I = 0;
   u8 Slot = 0;
   SpellNumber = (Spell & SpellMask);
   Slot = 0;
-  I = 1;
-  if (I <= 3) for (;;) {
-    if ((((*FPD(TMenuLine (*), Item)).Affects[I - 1] & SpellMask)) == SpellNumber) {
-      Slot = I;
+  {
+    if (1 <= 3) {
+      I = 1;
+      for (;;) {
+          if ((((*FPD(TMenuLine (*), Item)).Affects[I - 1] & SpellMask)) == SpellNumber) {
+            Slot = I;
+          }
+        if (I == 3) break;
+        I++;
+      }
     }
-    if (I == 3) break;
-    I++;
   }
   if (Slot == 0) {
     return;
@@ -2003,6 +2155,7 @@ void ConsumeScrollSpell(PCharacter Who, PItem Item, u8 Spell)
      entry at 3379 was invented inside this routine; make match WRITE=1 removed it. */
 void ShowSpellMessage(PCharacter Who, const u8 *Message_in, u8 Spell)
 {
+  POOL_TRACE("ShowSpellMessage");
   const u8 *Message = Message_in;
   u8 t1[256];
   if (ViewMode == ViewModeCombat) {
@@ -2030,6 +2183,7 @@ void ShowSpellMessage(PCharacter Who, const u8 *Message_in, u8 Spell)
      PickedSpellCharacter, and sets RedrawItemWindow to 1. */
 void InitSpellHandlers(void)
 {
+  POOL_TRACE("InitSpellHandlers");
   SpellTargetPicker = PROC_ChooseSpellTargets;
   RemovingAffects = 0;
   ItemAffectUse = 0;
@@ -2108,4 +2262,5 @@ void InitSpellHandlers(void)
 /* Initialisation part of unit OVL22. */
 void init_OVL22(void)
 {
+  POOL_TRACE("init");
 }

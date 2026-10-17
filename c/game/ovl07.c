@@ -7,50 +7,54 @@
      (DecodeString), and a string address (type $81) copied into it (ReadVmString). */
 void DecodeOperands(u8 Count)
 {
+  POOL_TRACE("DecodeOperands");
   u8 I = 0;
   u8 StrIndex = 0;
   u16 Value = 0;
   u16 Len = 0;
-  u8 t1;
   StrIndex = 0;
-  t1 = Count;
-  I = 1;
-  if (I <= t1) for (;;) {
-    OperandType[I] = (*FPD(TEclCode (*), EclCode))[(u16)(EclPC + 1) - 39168];
-    OperandLow[I] = (*FPD(TEclCode (*), EclCode))[(u16)(EclPC + 2) - 39168];
-    EclPC = EclPC + 2;
-    switch (OperandType[I]) {
-    case 1:
-    case 2:
-    case 3:
-    {
-      EclPC++;
-      OperandHigh[I] = (*FPD(TEclCode (*), EclCode))[EclPC - 39168];
-      break;
-    }
-    case 0x80:
-    {
-      StrIndex++;
-      Len = OperandLow[I];
-      if (Len > 0) {
-        DecodeString(Len, StrIndex);
-      } else {
-        rtl_str_assign(EclStrings[StrIndex], 255, S("\000"));
+  {
+    u8 limit = Count;
+    if (1 <= limit) {
+      I = 1;
+      for (;;) {
+          OperandType[I] = (*FPD(TEclCode (*), EclCode))[(u16)(EclPC + 1) - 39168];
+          OperandLow[I] = (*FPD(TEclCode (*), EclCode))[(u16)(EclPC + 2) - 39168];
+          EclPC = EclPC + 2;
+          switch (OperandType[I]) {
+          case 1:
+          case 2:
+          case 3:
+          {
+            EclPC++;
+            OperandHigh[I] = (*FPD(TEclCode (*), EclCode))[EclPC - 39168];
+            break;
+          }
+          case 0x80:
+          {
+            StrIndex++;
+            Len = OperandLow[I];
+            if (Len > 0) {
+              DecodeString(Len, StrIndex);
+            } else {
+              rtl_str_assign(EclStrings[StrIndex], 255, S("\000"));
+            }
+            break;
+          }
+          case 0x81:
+          {
+            StrIndex++;
+            EclPC++;
+            OperandHigh[I] = (*FPD(TEclCode (*), EclCode))[EclPC - 39168];
+            Value = MakeWord(OperandLow[I], OperandHigh[I]);
+            ReadVmString(StrIndex, Value);
+            break;
+          }
+          }
+        if (I == limit) break;
+        I++;
       }
-      break;
     }
-    case 0x81:
-    {
-      StrIndex++;
-      EclPC++;
-      OperandHigh[I] = (*FPD(TEclCode (*), EclCode))[EclPC - 39168];
-      Value = MakeWord(OperandLow[I], OperandHigh[I]);
-      ReadVmString(StrIndex, Value);
-      break;
-    }
-    }
-    if (I == t1) break;
-    I++;
   }
   EclPC++;
 }
@@ -60,6 +64,7 @@ void DecodeOperands(u8 Count)
      QUIRK ovl07:01AD: other types leave the result unassigned. */
 u16 OperandValue(s8 N)
 {
+  POOL_TRACE("OperandValue");
   u16 Result = 0;
   u8 Unused[6] = {0};
   u8 Lo_ = 0;
@@ -97,6 +102,7 @@ u16 OperandValue(s8 N)
      GameVars2. */
 void InitScript(void)
 {
+  POOL_TRACE("InitScript");
   u8 Unused = 0;
   u16 I = 0;
   CloseUpShown = 0;
@@ -129,17 +135,25 @@ void InitScript(void)
   EclInitialEntry = MakeWord(OperandLow[1], OperandHigh[1]);
   (*FPD(TGameVars (*), GameVars))[230] = 1;
   if (SkipAreaScriptLoad == 0) {
-    I = 1;
-    if (I <= 0x20) for (;;) {
-      (*FPD(TVmWords4900 (*), VarsAt4900))[(u16)(I + 0x49FF) - 18688] = 0;
-      if (I == 0x20) break;
-      I++;
+    {
+      if (1 <= 0x20) {
+        I = 1;
+        for (;;) {
+            (*FPD(TVmWords4900 (*), VarsAt4900))[(u16)(I + 0x49FF) - 18688] = 0;
+          if (I == 0x20) break;
+          I++;
+        }
+      }
     }
-    I = 0;
-    if (I <= 9) for (;;) {
-      (*FPD(TVmWords6B00 (*), VarsAt6B00))[(u16)(I + 0x6E79) - 27392] = 0;
-      if (I == 9) break;
-      I++;
+    {
+      if (0 <= 9) {
+        I = 0;
+        for (;;) {
+            (*FPD(TVmWords6B00 (*), VarsAt6B00))[(u16)(I + 0x6E79) - 27392] = 0;
+          if (I == 9) break;
+          I++;
+        }
+      }
     }
   } else {
     SkipAreaScriptLoad = 0;
@@ -152,6 +166,7 @@ void InitScript(void)
      block and clears the prompt line. */
 void LoadEcl(u8 BlockId)
 {
+  POOL_TRACE("LoadEcl");
   u8 Unused[4] = {0};
   u8 Num[2] = {0};
   u16 Size = 0;
@@ -174,6 +189,7 @@ void LoadEcl(u8 BlockId)
      and returns it with its item list and its affect list. */
 void LoadCharacter(u8 Kind, PCharacter (*Who), PItem (*Items), farptr (*Affects))
 {
+  POOL_TRACE("LoadCharacter");
   u8 Unused[4] = {0};
   (*Who) = 0;
   (*Who) = rtl_getmem(285);
@@ -188,6 +204,7 @@ void LoadCharacter(u8 Kind, PCharacter (*Who), PItem (*Items), farptr (*Affects)
      in word $2C1 of GameVars2. */
 u8 OpenStepsAhead(s8 Col, s8 Row, u8 Dir)
 {
+  POOL_TRACE("OpenStepsAhead");
   u8 Result = 0;
   u8 Done = 0;
   u8 Steps = 0;
@@ -237,6 +254,7 @@ u8 OpenStepsAhead(s8 Col, s8 Row, u8 Dir)
      with the body (ShowHeadBodySprites). Clears CloseUpHidden. Called by ovl03 and ShowEncounterPicture. */
 void ShowHeadBody(u8 HeadBank, u8 BodyBank)
 {
+  POOL_TRACE("ShowHeadBody");
   CloseUpHidden = 0;
   ShownHeadBank = HeadBank;
   ShownBodyBank = BodyBank;
@@ -253,6 +271,7 @@ void ShowHeadBody(u8 HeadBank, u8 BodyBank)
      view first when only the sprite was shown. */
 void ShowEncounterPicture(u8 SpriteBank, u8 PicBank, u8 Distance, TPictureShown (*Shown))
 {
+  POOL_TRACE("ShowEncounterPicture");
   u8 Unused[8] = {0};
   u8 Slot = 0;
   if ((((*Shown)[1] == 0)) && (((*Shown)[0] != 0))) {
@@ -304,6 +323,7 @@ void ShowEncounterPicture(u8 SpriteBank, u8 PicBank, u8 Distance, TPictureShown 
      OperandLow and OperandHigh). */
 u16 MakeWord(u8 Lo_, u8 Hi_)
 {
+  POOL_TRACE("MakeWord");
   u16 Result = 0;
   Result = (Hi_ * 256) + Lo_;
   return Result;
@@ -313,6 +333,7 @@ u16 MakeWord(u8 Lo_, u8 Hi_)
      are themselves (space, digits, punctuation), codes 1..$1F become $41..$5F (the letters). */
 u8 SixBitChar(u8 Code)
 {
+  POOL_TRACE("SixBitChar");
   u8 Result = 0;
   if (Code > 0x1F) {
     Result = (u8)Code;
@@ -329,6 +350,7 @@ u8 SixBitChar(u8 Code)
      variables ReadVmWord and WriteVmWord handle one by one). */
 u8 MemRegion(u16 Addr)
 {
+  POOL_TRACE("MemRegion");
   u8 Result = 0;
   Result = RegionSpecial;
   if (((Addr >= 0x4900)) && ((Addr <= 0x4CFF))) {
@@ -350,6 +372,7 @@ u8 MemRegion(u16 Addr)
      of the list when Who is not in it. */
 u8 PartyIndexOf(PCharacter Who)
 {
+  POOL_TRACE("PartyIndexOf");
   u8 Result = 0;
   u8 Index = 0;
   PCharacter Member = 0;
@@ -376,6 +399,7 @@ u8 PartyIndexOf(PCharacter Who)
      QUIRK ovl07:095A: address $6C0D sets Found but leaves the result unassigned. */
 u16 GetCharacterVar(u16 Addr, u8 (*Found))
 {
+  POOL_TRACE("GetCharacterVar");
   u16 Result = 0;
   u8 Index = 0;
   (*Found) = 1;
@@ -594,6 +618,7 @@ u16 GetCharacterVar(u16 Addr, u8 (*Found))
      spell slots into the bytes that follow. */
 void SetCharacterVar(u16 Addr, u16 Value)
 {
+  POOL_TRACE("SetCharacterVar");
   u8 Index = 0;
   s32 t1;
   Addr = Addr - 0x6B00;
@@ -680,6 +705,7 @@ void SetCharacterVar(u16 Addr, u16 Value)
      variables at the special addresses (the party's position and marker, the special view codes). */
 void WriteVmWord(u16 Addr, u16 Value)
 {
+  POOL_TRACE("WriteVmWord");
   u8 Region = 0;
   u8 Done = 0;
   Region = MemRegion(Addr);
@@ -819,6 +845,7 @@ void WriteVmWord(u16 Addr, u16 Value)
      addresses it does not know leave the result unassigned. */
 u16 ReadVmWord(u16 Addr)
 {
+  POOL_TRACE("ReadVmWord");
   u16 Result = 0;
   u8 Region = 0;
   u8 Found = 0;
@@ -923,25 +950,26 @@ u16 ReadVmWord(u16 Addr)
      selected character's name instead (up to 15 characters). Nothing for the special addresses. */
 void WriteVmString(u16 Addr, const u8 *Text_in)
 {
+  POOL_TRACE("WriteVmString");
   const u8 *Text = Text_in;
   u8 Region = 0;
   u8 Len = 0;
   u8 I = 0;
-  u8 t1;
-  u8 t2;
-  u8 t3;
-  u8 t4;
   Region = MemRegion(Addr);
   Len = Text[0];
   switch (Region) {
   case RegionGameVars:
   {
-    t1 = (s16)(Len - 1);
-    I = 0;
-    if (I <= t1) for (;;) {
-      (*FPD(TVmWords4900 (*), VarsAt4900))[(u16)(I + Addr) - 18688] = Text[(s16)(I + 1)];
-      if (I == t1) break;
-      I++;
+    {
+      u8 limit = (s16)(Len - 1);
+      if (0 <= limit) {
+        I = 0;
+        for (;;) {
+            (*FPD(TVmWords4900 (*), VarsAt4900))[(u16)(I + Addr) - 18688] = Text[(s16)(I + 1)];
+          if (I == limit) break;
+          I++;
+        }
+      }
     }
     (*FPD(TVmWords4900 (*), VarsAt4900))[(u16)(Len + Addr) - 18688] = 0;
     break;
@@ -951,12 +979,16 @@ void WriteVmString(u16 Addr, const u8 *Text_in)
     if (Addr == 0x6B00) {
       rtl_str_assign((*FPD(TCharacter (*), SelectedCharacter)).Name, 15, Text);
     } else {
-      t2 = (s16)(Len - 1);
-      I = 0;
-      if (I <= t2) for (;;) {
-        (*FPD(TVmWords6B00 (*), VarsAt6B00))[(u16)(I + Addr) - 27392] = Text[(s16)(I + 1)];
-        if (I == t2) break;
-        I++;
+      {
+        u8 limit = (s16)(Len - 1);
+        if (0 <= limit) {
+          I = 0;
+          for (;;) {
+              (*FPD(TVmWords6B00 (*), VarsAt6B00))[(u16)(I + Addr) - 27392] = Text[(s16)(I + 1)];
+            if (I == limit) break;
+            I++;
+          }
+        }
       }
       (*FPD(TVmWords6B00 (*), VarsAt6B00))[(u16)(Len + Addr) - 27392] = 0;
     }
@@ -964,24 +996,32 @@ void WriteVmString(u16 Addr, const u8 *Text_in)
   }
   case RegionWords9700:
   {
-    t3 = (s16)(Len - 1);
-    I = 0;
-    if (I <= t3) for (;;) {
-      (*FPD(TVmWords9700 (*), VarsAt9700))[(u16)(I + Addr) - 38656] = Text[(s16)(I + 1)];
-      if (I == t3) break;
-      I++;
+    {
+      u8 limit = (s16)(Len - 1);
+      if (0 <= limit) {
+        I = 0;
+        for (;;) {
+            (*FPD(TVmWords9700 (*), VarsAt9700))[(u16)(I + Addr) - 38656] = Text[(s16)(I + 1)];
+          if (I == limit) break;
+          I++;
+        }
+      }
     }
     (*FPD(TVmWords9700 (*), VarsAt9700))[(u16)(Len + Addr) - 38656] = 0;
     break;
   }
   case RegionCode:
   {
-    t4 = (s16)(Len - 1);
-    I = 0;
-    if (I <= t4) for (;;) {
-      (*FPD(TEclCode (*), EclCode))[(u16)(I + Addr) - 39168] = Text[(s16)(I + 1)];
-      if (I == t4) break;
-      I++;
+    {
+      u8 limit = (s16)(Len - 1);
+      if (0 <= limit) {
+        I = 0;
+        for (;;) {
+            (*FPD(TEclCode (*), EclCode))[(u16)(I + Addr) - 39168] = Text[(s16)(I + 1)];
+          if (I == limit) break;
+          I++;
+        }
+      }
     }
     (*FPD(TEclCode (*), EclCode))[(u16)(Len + Addr) - 39168] = 0;
     break;
@@ -994,6 +1034,7 @@ void WriteVmString(u16 Addr, const u8 *Text_in)
      SixBitChar turns each nonzero code into a character, code 0 is skipped. */
 void DecodeString(u8 Len, u8 Index)
 {
+  POOL_TRACE("DecodeString");
   u8 Count = 0;
   u8 Unused = 0;
   u8 Cur = 0;
@@ -1063,6 +1104,7 @@ void DecodeString(u8 Len, u8 Index)
      EclStrings[Index]; address $6B00 is the selected character's name. */
 void ReadVmString(u8 Index, u16 Addr)
 {
+  POOL_TRACE("ReadVmString");
   u8 Region = 0;
   u8 I = 0;
   u8 t1[256];
@@ -1122,25 +1164,29 @@ void ReadVmString(u8 Index, u16 Addr)
      as well ('0'..'9' become 'P'..'Y'). */
 void ParseHotkeys(u8 (*Text)[256], String40_RES06 (*Keys))
 {
+  POOL_TRACE("ParseHotkeys");
   u8 I = 0;
-  u8 t1;
-  s32 t2;
+  s32 t1;
+  u8 t2[256];
   u8 t3[256];
-  u8 t4[256];
   rtl_str_assign((*Keys), 40, S("\000"));
-  t1 = (*Text)[0];
-  I = 1;
-  if (I <= t1) for (;;) {
-    if ((t2 = (*Text)[I]), ((t2 >= '0' && t2 <= '9') || (t2 >= 'A' && t2 <= 'Z'))) {
-      (*Text)[I] = (u8)(s16)((*Text)[I] + 0x20);
+  {
+    u8 limit = (*Text)[0];
+    if (1 <= limit) {
+      I = 1;
+      for (;;) {
+          if ((t1 = (*Text)[I]), ((t1 >= '0' && t1 <= '9') || (t1 >= 'A' && t1 <= 'Z'))) {
+            (*Text)[I] = (u8)(s16)((*Text)[I] + 0x20);
+          }
+          if ((*Text)[I] == HotkeyMark) {
+            rtl_str_delete((*Text), I, 1);
+            (*Text)[I] = rtl_upcase((*Text)[I]);
+            rtl_str_assign((*Keys), 40, rtl_str_cat(t3, 2, (const u8 *const[]){(*Keys), rtl_str_char(t2, (*Text)[I])}));
+          }
+        if (I == limit) break;
+        I++;
+      }
     }
-    if ((*Text)[I] == HotkeyMark) {
-      rtl_str_delete((*Text), I, 1);
-      (*Text)[I] = rtl_upcase((*Text)[I]);
-      rtl_str_assign((*Keys), 40, rtl_str_cat(t4, 2, (const u8 *const[]){(*Keys), rtl_str_char(t3, (*Text)[I])}));
-    }
-    if (I == t1) break;
-    I++;
   }
 }
 
@@ -1152,6 +1198,7 @@ void ParseHotkeys(u8 (*Text)[256], String40_RES06 (*Keys))
      before asking again. Callers: ovl03, the Temple, the treasure menu and the shop. */
 u8 AskMenu(const u8 *Title_in, const u8 *Text_in, u8 TitleColor, u8 WordColor, u8 HotColor, u8 AcceptEnter, u8 Animate)
 {
+  POOL_TRACE("AskMenu");
   const u8 *Title = Title_in;
   u8 Text[256];
   rtl_str_assign(Text, 255, Text_in);
@@ -1196,6 +1243,7 @@ u8 AskMenu(const u8 *Title_in, const u8 *Text_in, u8 TitleColor, u8 WordColor, u
      returns is dropped (only the var results Redraw, Choice and Selected matter). Called by ovl03. */
 void AskListMenu(const u8 *Title_in, const u8 *Text_in, u8 HeadingColor, u8 LineColor, u8 HighlightColor, s8 Left, s8 Top, s8 Right, s8 Bottom, PMenuLine List, u8 WithExit, u8 (*Redraw), s16 (*Choice), PMenuLine (*Selected))
 {
+  POOL_TRACE("AskListMenu");
   const u8 *Title = Title_in;
   u8 Text[256];
   rtl_str_assign(Text, 255, Text_in);
@@ -1208,6 +1256,7 @@ void AskListMenu(const u8 *Title_in, const u8 *Text_in, u8 HeadingColor, u8 Line
 /* ovl07:1815. CompareStrings: sets the six comparison flags CompareFlags for Left against Right. */
 void CompareStrings(const u8 *Left_in, const u8 *Right_in)
 {
+  POOL_TRACE("CompareStrings");
   const u8 *Left = Left_in;
   const u8 *Right = Right_in;
   rtl_FillChar((void *)&CompareFlags, 6, 0);
@@ -1235,6 +1284,7 @@ void CompareStrings(const u8 *Left_in, const u8 *Right_in)
      (unsigned). */
 void CompareWords(u16 Left, u16 Right)
 {
+  POOL_TRACE("CompareWords");
   rtl_FillChar((void *)&CompareFlags, 6, 0);
   if (Left == Right) {
     CompareFlags[0] = 1;
@@ -1260,6 +1310,7 @@ void CompareWords(u16 Left, u16 Right)
      and jumps to the address of decoded operand N. */
 void ScriptGosub(u8 N)
 {
+  POOL_TRACE("ScriptGosub");
   if (ReturnStack == 0) {
     ReturnStack = rtl_getmem(6);
     (*FPD(TReturnEntry (*), ReturnStack)).Next = 0;
@@ -1277,6 +1328,7 @@ void ScriptGosub(u8 N)
      (EventByteAt into PartyCellEventByte) and the wall it faces (WallIdAt into PartyCellWallId). */
 void StepPartyForward(void)
 {
+  POOL_TRACE("StepPartyForward");
   switch (PartyFacing) {
   case DirNorth:
   {
@@ -1326,6 +1378,7 @@ void StepPartyForward(void)
      icon, no affects and a copy of every item. */
 void SetupDuel(s8 WithCopy)
 {
+  POOL_TRACE("SetupDuel");
   PCharacter Member = 0;
   PCharacter Copy_ = 0;
   PCharacter Original = 0;
@@ -1382,6 +1435,7 @@ void SetupDuel(s8 WithCopy)
      truncated. */
 void ScaleMoney(double Factor, PCharacter Who)
 {
+  POOL_TRACE("ScaleMoney");
   (*FPD(TCharacter (*), Who)).Money[0] = rtl_trunc(((double)(*FPD(TCharacter (*), Who)).Money[0] * Factor));
   (*FPD(TCharacter (*), Who)).Money[1] = rtl_trunc(((double)(*FPD(TCharacter (*), Who)).Money[1] * Factor));
   (*FPD(TCharacter (*), Who)).Money[2] = rtl_trunc(((double)(*FPD(TCharacter (*), Who)).Money[2] * Factor));
@@ -1397,6 +1451,7 @@ void ScaleMoney(double Factor, PCharacter Who)
      items after a heavy one keep the lower chance. */
 void LoseItems(u8 Chance, PCharacter Who)
 {
+  POOL_TRACE("LoseItems");
   u8 Roll = 0;
   PItem Item = 0;
   PItem NextItem = 0;
@@ -1429,6 +1484,7 @@ void LoseItems(u8 Chance, PCharacter Who)
      an opcode without operands is one byte. */
 void SkipCommand(void)
 {
+  POOL_TRACE("SkipCommand");
   CurrentOpcode = (*FPD(TEclCode (*), EclCode))[EclPC - 39168];
   switch (CurrentOpcode) {
   case 1:
@@ -1517,6 +1573,7 @@ void SkipCommand(void)
      each doubled by affect $27 or else halved by affect $2A (HasAffect). */
 void MovementRange(u8 (*Fastest), u8 (*Slowest))
 {
+  POOL_TRACE("MovementRange");
   PCharacter Member = 0;
   farptr Affect = 0;
   u8 Value = 0;
@@ -1547,6 +1604,7 @@ void MovementRange(u8 (*Fastest), u8 (*Slowest))
      the selected character. */
 void DamageWithMessage(u16 Damage, PCharacter Who)
 {
+  POOL_TRACE("DamageWithMessage");
   u8 Unused = 0;
   u8 Text[256] = {0};
   u8 Num[4] = {0};
@@ -1580,4 +1638,5 @@ void DamageWithMessage(u16 Damage, PCharacter Who)
 /* Initialisation part of unit OVL07. */
 void init_OVL07(void)
 {
+  POOL_TRACE("init");
 }

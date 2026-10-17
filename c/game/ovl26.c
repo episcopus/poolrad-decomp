@@ -13,6 +13,7 @@
      on the screen, through DrawIcon and the display step FlushPictureChanges that drawing units call. */
 void DrawPartyMarker(void)
 {
+  POOL_TRACE("DrawPartyMarker");
   s8 MarkerCol = 0;
   s8 MarkerRow = 0;
   MarkerCol = MapBaseX[AreaViewKind] + (*FPD(TGameVars (*), GameVars))[195];
@@ -156,6 +157,7 @@ static u8 ShowAreaView_WallDesc4FromCode(struct Frame_ShowAreaView *up, u8 Speci
      carry 4 parameter bytes and live in the code right before this routine. */
 void ShowAreaView(void)
 {
+  POOL_TRACE("ShowAreaView");
   Frame_ShowAreaView fr;
   memset(&fr, 0, sizeof fr);
   fr.ViewKind = AreaViewKind;
@@ -211,6 +213,7 @@ void ShowAreaView(void)
 /* Initialisation part of unit OVL26. */
 void init_OVL26(void)
 {
+  POOL_TRACE("init");
   /* ovl26:02A0. The unit's initialisation part is empty: the compiler emits only `55 89 E5 5D CB`
      (push bp; mov bp, sp; pop bp; retf, the frame with no body), so the area view unit runs no code
      at start-up. */

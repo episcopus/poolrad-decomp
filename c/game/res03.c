@@ -5,6 +5,7 @@
      wraps above 10 minutes; only the hours term is a Longint product. */
 s32 TimeInHundredths(void)
 {
+  POOL_TRACE("TimeInHundredths");
   s32 Result = 0;
   u16 Hour = 0;
   u16 Minute = 0;
@@ -20,6 +21,7 @@ s32 TimeInHundredths(void)
      ends at once. */
 void WaitHundredths(u16 Hundredths)
 {
+  POOL_TRACE("WaitHundredths");
   s32 Target = 0;
   s32 Now = 0;
   Target = TimeInHundredths() + Hundredths;
@@ -38,6 +40,7 @@ void WaitHundredths(u16 Hundredths)
      this call: started first, then after BriefSoundTime both devices are silenced and it stops. */
 void PlaySound(u16 Sound_)
 {
+  POOL_TRACE("PlaySound");
   if (SoundMode == SoundSilent) {
     return;
   }
@@ -92,6 +95,7 @@ void PlaySound(u16 Sound_)
      res08's initialisation and by ReadGameKey when Ctrl-S resumes the sound. */
 void SilenceSound(void)
 {
+  POOL_TRACE("SilenceSound");
   SoundModeBeforePause = SoundMode;
   if (SoundMode == SoundSilent) {
     return;
@@ -108,6 +112,7 @@ void SilenceSound(void)
      (StartGame), 0 and 10 (RemoveCombatant). */
 void SetSoundDriverIdle(u16 Idle)
 {
+  POOL_TRACE("SetSoundDriverIdle");
   if (SoundMode == SoundSilent) {
     return;
   }
@@ -124,4 +129,5 @@ void SetSoundDriverIdle(u16 Idle)
 /* Initialisation part of unit RES03. */
 void init_RES03(void)
 {
+  POOL_TRACE("init");
 }

@@ -94,9 +94,16 @@ class Ty:
 
 
 def set_bytes(t: Ty) -> int:
+    """Turbo Pascal stores a set from the byte holding its lowest member to the byte holding its highest."""
     base = t.elem
     hi = base.hi if base.is_ordinal else 255
-    return (hi // 8) + 1 if hi >= 0 else 1
+    lo = base.lo if base.is_ordinal else 0
+    return (hi // 8) - (lo // 8) + 1 if hi >= 0 else 1
+
+
+def set_first_byte(t: Ty) -> int:
+    base = t.elem
+    return (base.lo // 8) if base.is_ordinal and base.lo > 0 else 0
 
 
 def make_int(name, lo, hi, cname):

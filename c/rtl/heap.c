@@ -1,6 +1,12 @@
-/* heap.c: the Turbo Pascal heap: HeapOrg, HeapPtr, HeapEnd and a free list, kept in DGROUP where the game can
- * read them (it lowers HeapEnd at start up). Blocks are 8 byte units; a free block holds its successor and its
- * size in its first eight bytes. */
+/* heap.c: the Turbo Pascal 6.0 heap manager, byte for byte as the System unit has it (0AF8:0308 HeapAllocate,
+ * 0AF8:03D3 HeapFree, 0AF8:0432 HeapMergeFree, 0AF8:0491 HeapRoundSize), so heap pointers, and everything the game
+ * writes that contains them (saved games, character files), come out as in the original.
+ *
+ * HeapOrg, HeapPtr, HeapEnd and FreeList live in DGROUP (the game reads and lowers HeapEnd). Blocks are multiples of
+ * 8 bytes and pointers have an offset of 0 or 8. The free list is ordered by address; each free block holds
+ * [+0] the pointer to the next block, [+4] its size as an offset (0 or 8) and [+6] its size in paragraphs. The list
+ * ends with a pointer whose segment is HeapPtr's (the end marker: an empty list is FreeList = HeapPtr). A block
+ * taken from the top of the heap makes the last link point at the new HeapPtr. */
 #include "pool.h"
 
 #define V32(off) (*(u32 *)(pool_ds + (off)))
@@ -13,106 +19,132 @@
 static u32 lin(farptr p) { return POOL_LINEAR(p); }
 static farptr far_of(u32 l) { return POOL_FARPTR(l >> 4, l & 15u); }
 
-typedef struct FreeBlock {
-  farptr next;
-  u32 size;
-} FreeBlock;
+static u32 rd32(u32 l) { u32 v; memcpy(&v, pool_arena + l, 4); return v; }
+static void wr32(u32 l, u32 v) { memcpy(pool_arena + l, &v, 4); }
+static u32 blk_size(u32 b) { u16 ofs, paras; memcpy(&ofs, pool_arena + b + 4, 2); memcpy(&paras, pool_arena + b + 6, 2); return (u32)paras * 16u + ofs; }
+static void set_size(u32 b, u32 bytes)
+{
+  u16 ofs = (u16)(bytes & 15u), paras = (u16)(bytes >> 4);
+  memcpy(pool_arena + b + 4, &ofs, 2);
+  memcpy(pool_arena + b + 6, &paras, 2);
+}
 
-static FreeBlock *blk(u32 l) { return (FreeBlock *)(pool_arena + l); }
+/* the cell that holds the first link of the free list: FreeList itself (its "size" is FreeZero, zero) */
+#define HEAD_CELL (POOL_DS_LINEAR + 0x440Cu)
+
+static int at_end(farptr p)
+{
+  return (p >> 16) == (HEAP_PTR >> 16);
+}
 
 farptr rtl_getmem(u16 size)
 {
-  u32 n, prev = 0, cur;
+  u32 n, prev, cur;
   if (size == 0) {
     return 0;
   }
-  n = ((u32)size + 7u) & ~7u;
   for (;;) {
-    for (cur = FREE_LIST ? lin(FREE_LIST) : 0; cur; prev = cur, cur = blk(cur)->next ? lin(blk(cur)->next) : 0) {
-      u32 sz = blk(cur)->size;
+    n = ((u32)size + 7u) & ~7u;
+    prev = HEAD_CELL;
+    for (;;) {
+      farptr next = rd32(prev);
+      u32 sz;
+      if (at_end(next)) {                              /* no block fits: take the space from the top */
+        u32 at = lin(next), top = at + n;
+        if (top <= lin(HEAP_END)) {
+          HEAP_PTR = far_of(top);
+          wr32(prev, HEAP_PTR);
+          if (HEAP_ERROR) {
+            ((int (*)(u16))rtl_proc(HEAP_ERROR))(0);   /* the System unit calls HeapError(0) here, a no-op for the game */
+          }
+          return far_of(at);
+        }
+        break;
+      }
+      cur = lin(next);
+      sz = blk_size(cur);
       if (sz >= n) {
-        farptr next = blk(cur)->next;
+        farptr nxt = rd32(cur);
         if (sz == n) {
-          if (prev) blk(prev)->next = next; else FREE_LIST = next;
-        } else {                                 /* the allocation takes the front of the block */
+          wr32(prev, nxt);
+        } else {                                        /* the allocation takes the front of the block */
           u32 rest = cur + n;
-          blk(rest)->next = next;
-          blk(rest)->size = sz - n;
-          if (prev) blk(prev)->next = far_of(rest); else FREE_LIST = far_of(rest);
+          wr32(rest, nxt);
+          set_size(rest, sz - n);
+          wr32(prev, far_of(rest));
         }
         return far_of(cur);
       }
-      if (prev == cur) break;
-    }
-    if (lin(HEAP_PTR) + n <= lin(HEAP_END)) {
-      u32 at = lin(HEAP_PTR);
-      HEAP_PTR = far_of(at + n);
-      return far_of(at);
+      prev = cur;
     }
     if (HEAP_ERROR) {
       int r = ((int (*)(u16))rtl_proc(HEAP_ERROR))(size);
-      if (r == 0) {
+      if ((r & 0xFF) == 0) {
         rtl_fatal("runtime error 203: heap overflow");
       }
-      if (r == 1) {
+      if ((r & 0xFF) == 1) {
         return 0;
       }
-      continue;                                  /* r = 2: try again */
+      continue;                                         /* 2 or more: try again */
     }
     rtl_fatal("runtime error 203: heap overflow");
   }
 }
 
+/* HeapMergeFree(next, blk): blk lies below next; join them when they touch, else link blk to next. When blk ends at
+ * the heap top, HeapPtr falls to blk instead. */
+static void merge_free(u32 next, u32 blk)
+{
+  u32 end = blk + blk_size(blk);
+  if (end != next) {
+    wr32(blk, far_of(next));
+    return;
+  }
+  if (next == lin(HEAP_PTR)) {
+    HEAP_PTR = far_of(blk);
+    return;
+  }
+  wr32(blk, rd32(next));                               /* blk.next := next.next; blk.size := blk.size + next.size */
+  set_size(blk, blk_size(blk) + blk_size(next));
+}
+
 void rtl_freemem(farptr p, u16 size)
 {
-  u32 n, at, prev = 0, cur;
-  if (p == 0 || size == 0) {
+  u32 n, at, prev, cur;
+  if (size == 0) {
     return;
+  }
+  if ((p & 0xFFFFu) & 0xFFF7u) {
+    rtl_fatal("runtime error 204: invalid pointer operation");
+  }
+  at = lin(p);
+  if (at < lin(HEAP_ORG) || at >= lin(HEAP_PTR)) {
+    rtl_fatal("runtime error 204: invalid pointer operation");
   }
   n = ((u32)size + 7u) & ~7u;
-  at = lin(p);
-  if (at + n == lin(HEAP_PTR)) {                 /* the top of the heap: lower HeapPtr and absorb free blocks below */
-    HEAP_PTR = far_of(at);
-    for (;;) {
-      u32 last = 0, l;
-      cur = 0;
-      for (l = FREE_LIST ? lin(FREE_LIST) : 0; l; last = l, l = blk(l)->next ? lin(blk(l)->next) : 0) {
-        if (l + blk(l)->size == lin(HEAP_PTR)) {
-          cur = l;
-          prev = last;
-          break;
-        }
-      }
-      if (!cur) {
-        break;
-      }
-      if (prev) blk(prev)->next = blk(cur)->next; else FREE_LIST = blk(cur)->next;
-      HEAP_PTR = far_of(cur);
-    }
-    return;
+  set_size(at, n);
+  prev = HEAD_CELL;
+  cur = lin(rd32(prev));
+  /* walk to the first block above `at` (the end marker counts as above everything) */
+  while (!at_end(rd32(prev)) && cur < at) {
+    prev = cur;
+    cur = lin(rd32(prev));
   }
-  /* insert in address order and merge with the neighbours */
-  for (cur = FREE_LIST ? lin(FREE_LIST) : 0; cur && cur < at; prev = cur, cur = blk(cur)->next ? lin(blk(cur)->next) : 0) {
+  if (cur == at) {
+    rtl_fatal("runtime error 204: invalid pointer operation");
   }
-  blk(at)->size = n;
-  blk(at)->next = cur ? far_of(cur) : 0;
-  if (prev) blk(prev)->next = far_of(at); else FREE_LIST = far_of(at);
-  if (cur && at + n == cur) {
-    blk(at)->size += blk(cur)->size;
-    blk(at)->next = blk(cur)->next;
-  }
-  if (prev && prev + blk(prev)->size == at) {
-    blk(prev)->size += blk(at)->size;
-    blk(prev)->next = blk(at)->next;
-  }
+  merge_free(cur, at);                                  /* with the block above (or the heap top) */
+  merge_free(at, prev);                                 /* the block below, or the list head */
 }
 
 s32 rtl_MemAvail(void)
 {
   s32 total = (s32)(lin(HEAP_END) - lin(HEAP_PTR));
-  u32 l;
-  for (l = FREE_LIST ? lin(FREE_LIST) : 0; l; l = blk(l)->next ? lin(blk(l)->next) : 0) {
-    total += (s32)blk(l)->size;
+  farptr next = rd32(HEAD_CELL);
+  while (!at_end(next)) {
+    u32 b = lin(next);
+    total += (s32)blk_size(b);
+    next = rd32(b);
   }
   return total;
 }
@@ -120,11 +152,13 @@ s32 rtl_MemAvail(void)
 s32 rtl_MaxAvail(void)
 {
   s32 best = (s32)(lin(HEAP_END) - lin(HEAP_PTR));
-  u32 l;
-  for (l = FREE_LIST ? lin(FREE_LIST) : 0; l; l = blk(l)->next ? lin(blk(l)->next) : 0) {
-    if ((s32)blk(l)->size > best) {
-      best = (s32)blk(l)->size;
+  farptr next = rd32(HEAD_CELL);
+  while (!at_end(next)) {
+    u32 b = lin(next);
+    if ((s32)blk_size(b) > best) {
+      best = (s32)blk_size(b);
     }
+    next = rd32(b);
   }
   return best;
 }

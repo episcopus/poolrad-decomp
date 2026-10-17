@@ -10,6 +10,7 @@
      cursor at column 1, row 17 (GlyphCol, GlyphRow). */
 void EndCommand(void)
 {
+  POOL_TRACE("EndCommand");
   if (PictureFrameDirty != 0) {
     DrawWindow(PictureFrameLeft, PictureFrameTop, PictureFrameRight, PictureFrameBottom, 0, 0xF, S("\000"));
     if ((*FPD(TGameVars (*), GameVars))[230] != 0) {
@@ -40,6 +41,7 @@ void EndCommand(void)
      it pushes the return address). */
 void GotoCommand(void)
 {
+  POOL_TRACE("GotoCommand");
   DecodeOperands(1);
   EclPC = MakeWord(OperandLow[1], OperandHigh[1]);
 }
@@ -49,6 +51,7 @@ void GotoCommand(void)
      jumps there. */
 void GosubCommand(void)
 {
+  POOL_TRACE("GosubCommand");
   DecodeOperands(1);
   ScriptGosub(1);
 }
@@ -59,6 +62,7 @@ void GosubCommand(void)
      CompareStrings; otherwise the two word values are compared with CompareWords. */
 void CompareCommand(void)
 {
+  POOL_TRACE("CompareCommand");
   u16 LeftWord = 0;
   u16 RightWord = 0;
   u8 Left[256] = {0};
@@ -82,17 +86,22 @@ void CompareCommand(void)
      while division takes the first over the second. */
 void ArithmeticCommand(void)
 {
+  POOL_TRACE("ArithmeticCommand");
   u16 Target = 0;
   u16 Values[2] = {0};
   s8 I = 0;
   u16 Answer = 0;
   u8 Unused = 0;
   DecodeOperands(3);
-  I = 1;
-  if (I <= 2) for (;;) {
-    Values[I - 1] = OperandValue(I);
-    if (I == 2) break;
-    I++;
+  {
+    if (1 <= 2) {
+      I = 1;
+      for (;;) {
+          Values[I - 1] = OperandValue(I);
+        if (I == 2) break;
+        I++;
+      }
+    }
   }
   Target = MakeWord(OperandLow[3], OperandHigh[3]);
   switch (CurrentOpcode) {
@@ -128,6 +137,7 @@ void ArithmeticCommand(void)
      255 is not raised, so the roll can only be 0 to 254. */
 void RandomCommand(void)
 {
+  POOL_TRACE("RandomCommand");
   u8 Range = 0;
   u8 Roll = 0;
   u16 Target = 0;
@@ -146,6 +156,7 @@ void RandomCommand(void)
      WriteVmString from EclStrings[1]; a value is stored as a word with WriteVmWord. */
 void StoreCommand(void)
 {
+  POOL_TRACE("StoreCommand");
   u16 Value = 0;
   u16 Target = 0;
   DecodeOperands(2);
@@ -169,6 +180,7 @@ void StoreCommand(void)
      cleared when that member is ReselectCharacter. */
 void SelectCharacterCommand(void)
 {
+  POOL_TRACE("SelectCharacterCommand");
   PCharacter Member = 0;
   u8 Unused = 0;
   u8 Position = 0;
@@ -209,6 +221,7 @@ void SelectCharacterCommand(void)
      flags are PictureShown (PictureShownFlags). */
 void ShowEncounterCommand(void)
 {
+  POOL_TRACE("ShowEncounterCommand");
   u16 Unused = 0;
   DecodeOperands(3);
   EncounterSpriteBank = OperandValue(1);
@@ -232,6 +245,7 @@ void ShowEncounterCommand(void)
      and restored, and EncounterMembersAdded is set. */
 void AddEncounterGroupCommand(void)
 {
+  POOL_TRACE("AddEncounterGroupCommand");
   u8 Kind = 0;
   u8 Count = 0;
   u8 PictureBlock = 0;
@@ -329,6 +343,7 @@ void AddEncounterGroupCommand(void)
      It has no operands and always moves EclPC past the command. */
 void ApproachEncounterCommand(void)
 {
+  POOL_TRACE("ApproachEncounterCommand");
   if ((*FPD(TGameVars (*), GameVars2))[705] > 0) {
     (*FPD(TGameVars (*), GameVars2))[705]--;
     ShowEncounterPicture(EncounterSpriteBank, EncounterPicBank, (u8)(*FPD(TGameVars (*), GameVars2))[705], &PictureShown);
@@ -346,6 +361,7 @@ void ApproachEncounterCommand(void)
      and BODY pictures (ShowHeadBody). Purpose of PreviousAreaViewKind unknown: the loader sets it to 1 (ovl11:03EB). */
 void ShowCloseUpCommand(void)
 {
+  POOL_TRACE("ShowCloseUpCommand");
   u8 PicBank = 0;
   DecodeOperands(1);
   PicBank = OperandValue(1);
@@ -379,6 +395,7 @@ void ShowCloseUpCommand(void)
      number from 0 to 65536. */
 void ReadNumberCommand(void)
 {
+  POOL_TRACE("ReadNumberCommand");
   u8 Prompt[2] = {0};
   u16 Number = 0;
   u16 Target = 0;
@@ -396,6 +413,7 @@ void ReadNumberCommand(void)
      script's string is never empty. */
 void ReadStringCommand(void)
 {
+  POOL_TRACE("ReadStringCommand");
   u8 Prompt[2] = {0};
   u16 Target = 0;
   u8 Answer[256] = {0};
@@ -419,6 +437,7 @@ void ReadStringCommand(void)
      glyph. */
 void ShowTextCommand(void)
 {
+  POOL_TRACE("ShowTextCommand");
   u8 t1[256];
   DecodeOperands(1);
   EclWindowCleared = 0;
@@ -443,6 +462,7 @@ void ShowTextCommand(void)
      freed). An empty stack leaves EclPC just past the command. */
 void ReturnCommand(void)
 {
+  POOL_TRACE("ReturnCommand");
   EclPC++;
   if (ReturnStack != 0) {
     EclPC = (*FPD(TReturnEntry (*), ReturnStack)).ReturnPC;
@@ -459,16 +479,21 @@ void ReturnCommand(void)
      handler at ovl03:0B52) test these flags. */
 void CompareBothPairsCommand(void)
 {
+  POOL_TRACE("CompareBothPairsCommand");
   u16 Values[4] = {0};
   u8 I = 0;
   u8 Unused = 0;
   rtl_FillChar((void *)&CompareFlags, 6, 0);
   DecodeOperands(4);
-  I = 1;
-  if (I <= 4) for (;;) {
-    Values[I - 1] = OperandValue(I);
-    if (I == 4) break;
-    I++;
+  {
+    if (1 <= 4) {
+      I = 1;
+      for (;;) {
+          Values[I - 1] = OperandValue(I);
+        if (I == 4) break;
+        I++;
+      }
+    }
   }
   if (((Values[0] == Values[1])) && ((Values[2] == Values[3]))) {
     CompareFlags[0] = 1;
@@ -484,6 +509,7 @@ void CompareBothPairsCommand(void)
      SkipCommand steps over the next command. Any other opcode only moves EclPC. */
 void RunIfCompared(void)
 {
+  POOL_TRACE("RunIfCompared");
   EclPC++;
   switch (CurrentOpcode) {
   case OpIfEqual:
@@ -538,6 +564,7 @@ void RunIfCompared(void)
      resets the script machine. ScriptRunEnded and ScriptBlockStarted are set to 1 and AreaRedrawArmed is cleared. */
 void StartEclBlock(void)
 {
+  POOL_TRACE("StartEclBlock");
   u8 Block = 0;
   u8 TileSetText[2] = {0};
   u8 t1[256];
@@ -567,15 +594,20 @@ void StartEclBlock(void)
      AreaStepRedrawOnce is cleared. Words 231 and 232 of GameVars and word 713 of GameVars2 are not named yet. */
 void LoadAreaGraphics(void)
 {
+  POOL_TRACE("LoadAreaGraphics");
   u8 Blocks[3] = {0};
   u8 I = 0;
   DecodeOperands(3);
   AreaRedrawArmed = 1;
-  I = 1;
-  if (I <= 3) for (;;) {
-    Blocks[I - 1] = OperandValue(I);
-    if (I == 3) break;
-    I++;
+  {
+    if (1 <= 3) {
+      I = 1;
+      for (;;) {
+          Blocks[I - 1] = OperandValue(I);
+        if (I == 3) break;
+        I++;
+      }
+    }
   }
   if (CurrentOpcode == 0x21) {
     Command33Ran = 1;
@@ -595,16 +627,20 @@ void LoadAreaGraphics(void)
       LoadWallSet(Blocks[0], 1);
       LoadWallSet(Blocks[2], 3);
     } else {
-      I = 1;
-      if (I <= 3) for (;;) {
-        if (Blocks[I - 1] != 0xFF) {
-          LoadWallSet(Blocks[I - 1], I);
-        } else {
-          WallSetSlotPairs[I].A = 0xFFFF;
-          WallSetSlotPairs[I].B = 0xFFFF;
+      {
+        if (1 <= 3) {
+          I = 1;
+          for (;;) {
+              if (Blocks[I - 1] != 0xFF) {
+                LoadWallSet(Blocks[I - 1], I);
+              } else {
+                WallSetSlotPairs[I].A = 0xFFFF;
+                WallSetSlotPairs[I].B = 0xFFFF;
+              }
+            if (I == 3) break;
+            I++;
+          }
         }
-        if (I == 3) break;
-        I++;
       }
     }
   }
@@ -621,6 +657,7 @@ void LoadAreaGraphics(void)
      written with WriteVmWord to the script address operand 3 names. */
 void BitwiseCommand(void)
 {
+  POOL_TRACE("BitwiseCommand");
   u16 Target = 0;
   u16 Second = 0;
   u16 First = 0;
@@ -644,6 +681,7 @@ void BitwiseCommand(void)
      WriteVmWord. */
 void CopyIndexedWordCommand(void)
 {
+  POOL_TRACE("CopyIndexedWordCommand");
   u16 Base = 0;
   u16 Dest = 0;
   u16 Source = 0;
@@ -664,6 +702,7 @@ void CopyIndexedWordCommand(void)
      command 42) reads back. */
 void StoreIndexedWordCommand(void)
 {
+  POOL_TRACE("StoreIndexedWordCommand");
   u16 Index = 0;
   u16 Base = 0;
   u16 Value = 0;
@@ -687,6 +726,7 @@ void StoreIndexedWordCommand(void)
      and the lines before it stay allocated [I]. The window is cleared afterwards. */
 void ChooseFromListCommand(void)
 {
+  POOL_TRACE("ChooseFromListCommand");
   u8 Count = 0;
   u8 I = 0;
   u8 Prompt[256] = {0};
@@ -738,6 +778,7 @@ void ChooseFromListCommand(void)
      prompt line is cleared afterwards. */
 void AskMenuCommand(void)
 {
+  POOL_TRACE("AskMenuCommand");
   u8 Count = 0;
   u8 Choice = 0;
   u8 I = 0;
@@ -748,9 +789,8 @@ void AskMenuCommand(void)
   u8 Animate = 0;
   u8 HotColor = 0;
   u8 WordColor = 0;
-  u8 t1;
+  u8 t1[256];
   u8 t2[256];
-  u8 t3[256];
   rtl_str_assign(Title, 1, S("\000"));
   rtl_str_assign(Options, 50, S("\000"));
   DecodeOperands(2);
@@ -772,14 +812,18 @@ void AskMenuCommand(void)
     WordColor = MenuTextColor;
   }
   Animate = (((CloseUpShown != 0)) && ((CloseUpHidden != 0)));
-  t1 = (s16)(Count - 1);
-  I = 1;
-  if (I <= t1) for (;;) {
-    rtl_str_assign(Options, 50, rtl_str_cat(t2, 4, (const u8 *const[]){Options, S("\001~"), EclStrings[I], S("\001 ")}));
-    if (I == t1) break;
-    I++;
+  {
+    u8 limit = (s16)(Count - 1);
+    if (1 <= limit) {
+      I = 1;
+      for (;;) {
+          rtl_str_assign(Options, 50, rtl_str_cat(t1, 4, (const u8 *const[]){Options, S("\001~"), EclStrings[I], S("\001 ")}));
+        if (I == limit) break;
+        I++;
+      }
+    }
   }
-  rtl_str_assign(Options, 50, rtl_str_cat(t3, 3, (const u8 *const[]){Options, S("\001~"), EclStrings[Count]}));
+  rtl_str_assign(Options, 50, rtl_str_cat(t2, 3, (const u8 *const[]){Options, S("\001~"), EclStrings[Count]}));
   Choice = AskMenu(Title, Options, MenuTitleColor, WordColor, HotColor, AcceptEnter, Animate);
   WriteVmWord(Target, Choice);
   ClearRect(PromptLeftCol_OVL03, BottomRow, PromptLastCol, BottomRow);
@@ -791,6 +835,7 @@ void AskMenuCommand(void)
      PooledMoney is cleared, and the item list PooledItems is freed line by line (SizeOf(TMenuLine) bytes each). */
 void ClearEncounterCommand(void)
 {
+  POOL_TRACE("ClearEncounterCommand");
   PMenuLine Next = 0;
   u16 Unused = 0;
   EclPC++;
@@ -815,6 +860,7 @@ void ClearEncounterCommand(void)
      what the script does with the value. */
 void ComputePartyValueCommand(void)
 {
+  POOL_TRACE("ComputePartyValueCommand");
   u8 HitPoints = 0;
   u8 HitAdjust = 0;
   u8 ClassLevel5 = 0;
@@ -887,6 +933,7 @@ static void ScanPartyCommand_WriteScanResults(struct Frame_ScanPartyCommand *up)
      script addresses and the four values are its parent's locals). */
 void ScanPartyCommand(void)
 {
+  POOL_TRACE("ScanPartyCommand");
   Frame_ScanPartyCommand fr;
   memset(&fr, 0, sizeof fr);
   DecodeOperands(6);
@@ -913,11 +960,15 @@ void ScanPartyCommand(void)
       fr.Found = HasAffect(fr.Member, fr.AffectId, &fr.Affect);
       fr.Member = (*FPD(TCharacter (*), fr.Member)).Next;
     }
-    fr.I = 1;
-    if (fr.I <= 3) for (;;) {
-      fr.Stats[fr.I - 1] = 0;
-      if (fr.I == 3) break;
-      fr.I++;
+    {
+      if (1 <= 3) {
+        fr.I = 1;
+        for (;;) {
+            fr.Stats[fr.I - 1] = 0;
+          if (fr.I == 3) break;
+          fr.I++;
+        }
+      }
     }
     ScanPartyCommand_WriteScanResults(&fr);
     break;
@@ -967,6 +1018,7 @@ void ScanPartyCommand(void)
      halves (ovl05:0355); mask 4 is not named yet. */
 void CheckPartyHasRangerCommand(void)
 {
+  POOL_TRACE("CheckPartyHasRangerCommand");
   PCharacter Member = 0;
   u8 Found = 0;
   u8 Second = 0;
@@ -1002,6 +1054,7 @@ void CheckPartyHasRangerCommand(void)
      Height, but the test that follows overwrites it with 2 (ovl03:1769), so 3 is never written. */
 void RollSurpriseCommand(void)
 {
+  POOL_TRACE("RollSurpriseCommand");
   u8 RollA = 0;
   u8 RollB = 0;
   u8 I = 0;
@@ -1011,11 +1064,15 @@ void RollSurpriseCommand(void)
   s8 Height = 0;
   DecodeOperands(4);
   Kind = 0;
-  I = 1;
-  if (I <= 4) for (;;) {
-    Values[I - 1] = OperandValue(I);
-    if (I == 4) break;
-    I++;
+  {
+    if (1 <= 4) {
+      I = 1;
+      for (;;) {
+          Values[I - 1] = OperandValue(I);
+        if (I == 4) break;
+        I++;
+      }
+    }
   }
   Width = (Values[3] + 2) - Values[0];
   Height = (Values[1] + 2) - Values[2];
@@ -1048,6 +1105,7 @@ void RollSurpriseCommand(void)
      screen (RedrawView). */
 void RunAreaEventCommand(void)
 {
+  POOL_TRACE("RunAreaEventCommand");
   u16 Steps = 0;
   EclPC++;
   if (((EncounterMembersAdded == 0)) && ((DuelMode == 0))) {
@@ -1096,6 +1154,7 @@ void RunAreaEventCommand(void)
      down by one on every call, before the choice is made. */
 void SelectCaseCommand(void)
 {
+  POOL_TRACE("SelectCaseCommand");
   u8 Choice = 0;
   u8 Count = 0;
   u8 Unused = 0;
@@ -1141,6 +1200,7 @@ void SelectCaseCommand(void)
      gives 'E'. */
 void AddLootCommand(void)
 {
+  POOL_TRACE("AddLootCommand");
   s8 Index = 0;
   u8 Kind = 0;
   u8 Treasure = 0;
@@ -1157,13 +1217,16 @@ void AddLootCommand(void)
   u8 TileSetText[2] = {0};
   farptr Block = 0;
   u8 t1[256];
-  u8 t2;
   DecodeOperands(8);
-  Index = 0;
-  if (Index <= 6) for (;;) {
-    PooledMoney[Index] = OperandValue((s16)(Index + 1));
-    if (Index == 6) break;
-    Index++;
+  {
+    if (0 <= 6) {
+      Index = 0;
+      for (;;) {
+          PooledMoney[Index] = OperandValue((s16)(Index + 1));
+        if (Index == 6) break;
+        Index++;
+      }
+    }
   }
   Kind = OperandValue(8);
   if (Kind < TreasureTableBase) {
@@ -1191,347 +1254,351 @@ void AddLootCommand(void)
     rtl_freemem(Block, Size);
   } else if (Kind != NoTreasure) {
     Index = Kind - TreasureTableBase;
-    t2 = Index;
-    Treasure = 1;
-    if (Treasure <= t2) for (;;) {
-      Chance = RollDice(1, 100);
-      switch (Chance) {
-      case 1:
-      case 2:
-      case 3:
-      case 4:
-      case 5:
-      case 6:
-      case 7:
-      case 8:
-      case 9:
-      case 10:
-      case 11:
-      case 12:
-      case 13:
-      case 14:
-      case 15:
-      case 16:
-      case 17:
-      case 18:
-      case 19:
-      case 20:
-      case 21:
-      case 22:
-      case 23:
-      case 24:
-      case 25:
-      case 26:
-      case 27:
-      case 28:
-      case 29:
-      case 30:
-      case 31:
-      case 32:
-      case 33:
-      case 34:
-      case 35:
-      case 36:
-      case 37:
-      case 38:
-      case 39:
-      case 40:
-      case 41:
-      case 42:
-      case 43:
-      case 44:
-      case 45:
-      case 46:
-      case 47:
-      case 48:
-      case 49:
-      case 50:
-      case 51:
-      case 52:
-      case 53:
-      case 54:
-      case 55:
-      case 56:
-      case 57:
-      case 58:
-      case 59:
-      case 60:
-      {
-        Roll2 = RollDice(1, 100);
-        switch (Roll2) {
-        case 1:
-        case 2:
-        case 3:
-        case 4:
-        case 5:
-        case 6:
-        case 7:
-        case 8:
-        case 9:
-        case 10:
-        case 11:
-        case 12:
-        case 13:
-        case 14:
-        case 15:
-        case 16:
-        case 17:
-        case 18:
-        case 19:
-        case 20:
-        case 21:
-        case 22:
-        case 23:
-        case 24:
-        case 25:
-        case 26:
-        case 27:
-        case 28:
-        case 29:
-        case 30:
-        case 31:
-        case 32:
-        case 33:
-        case 34:
-        case 35:
-        case 36:
-        case 37:
-        case 38:
-        case 39:
-        case 40:
-        case 41:
-        case 42:
-        case 43:
-        case 44:
-        case 45:
-        case 46:
-        case 47:
-        case 50:
-        case 51:
-        case 52:
-        case 53:
-        case 54:
-        case 55:
-        case 56:
-        case 57:
-        case 58:
-        case 59:
-        {
-          if (Roll2 == 45) {
-            Code = ';';
-          } else {
-            Code = (u8)Roll2;
-          }
-          break;
+    {
+      u8 limit = Index;
+      if (1 <= limit) {
+        Treasure = 1;
+        for (;;) {
+            Chance = RollDice(1, 100);
+            switch (Chance) {
+            case 1:
+            case 2:
+            case 3:
+            case 4:
+            case 5:
+            case 6:
+            case 7:
+            case 8:
+            case 9:
+            case 10:
+            case 11:
+            case 12:
+            case 13:
+            case 14:
+            case 15:
+            case 16:
+            case 17:
+            case 18:
+            case 19:
+            case 20:
+            case 21:
+            case 22:
+            case 23:
+            case 24:
+            case 25:
+            case 26:
+            case 27:
+            case 28:
+            case 29:
+            case 30:
+            case 31:
+            case 32:
+            case 33:
+            case 34:
+            case 35:
+            case 36:
+            case 37:
+            case 38:
+            case 39:
+            case 40:
+            case 41:
+            case 42:
+            case 43:
+            case 44:
+            case 45:
+            case 46:
+            case 47:
+            case 48:
+            case 49:
+            case 50:
+            case 51:
+            case 52:
+            case 53:
+            case 54:
+            case 55:
+            case 56:
+            case 57:
+            case 58:
+            case 59:
+            case 60:
+            {
+              Roll2 = RollDice(1, 100);
+              switch (Roll2) {
+              case 1:
+              case 2:
+              case 3:
+              case 4:
+              case 5:
+              case 6:
+              case 7:
+              case 8:
+              case 9:
+              case 10:
+              case 11:
+              case 12:
+              case 13:
+              case 14:
+              case 15:
+              case 16:
+              case 17:
+              case 18:
+              case 19:
+              case 20:
+              case 21:
+              case 22:
+              case 23:
+              case 24:
+              case 25:
+              case 26:
+              case 27:
+              case 28:
+              case 29:
+              case 30:
+              case 31:
+              case 32:
+              case 33:
+              case 34:
+              case 35:
+              case 36:
+              case 37:
+              case 38:
+              case 39:
+              case 40:
+              case 41:
+              case 42:
+              case 43:
+              case 44:
+              case 45:
+              case 46:
+              case 47:
+              case 50:
+              case 51:
+              case 52:
+              case 53:
+              case 54:
+              case 55:
+              case 56:
+              case 57:
+              case 58:
+              case 59:
+              {
+                if (Roll2 == 45) {
+                  Code = ';';
+                } else {
+                  Code = (u8)Roll2;
+                }
+                break;
+              }
+              case 60:
+              case 61:
+              case 62:
+              case 63:
+              case 64:
+              case 65:
+              case 66:
+              case 67:
+              case 68:
+              case 69:
+              case 70:
+              case 71:
+              case 72:
+              case 73:
+              case 74:
+              case 75:
+              case 76:
+              case 77:
+              case 78:
+              case 79:
+              case 80:
+              case 81:
+              case 82:
+              case 83:
+              case 84:
+              case 85:
+              case 86:
+              case 87:
+              case 88:
+              case 89:
+              case 90:
+              {
+                Roll2 = RollDice(1, 10);
+                switch (Roll2) {
+                case 1:
+                case 2:
+                case 3:
+                case 4:
+                {
+                  Code = '$';
+                  break;
+                }
+                case 5:
+                case 6:
+                case 7:
+                {
+                  Code = '#';
+                  break;
+                }
+                case 8:
+                {
+                  Code = '"';
+                  break;
+                }
+                case 9:
+                {
+                  Code = '%';
+                  break;
+                }
+                case 10:
+                {
+                  Code = '&';
+                  break;
+                }
+                }
+                break;
+              }
+              case 91:
+              case 92:
+              case 93:
+              case 94:
+              {
+                Code = 'I';
+                break;
+              }
+              case 95:
+              case 96:
+              case 97:
+              {
+                Code = ']';
+                break;
+              }
+              case 98:
+              case 99:
+              case 100:
+              {
+                Code = 'M';
+                break;
+              }
+              }
+              break;
+            }
+            case 61:
+            case 62:
+            case 63:
+            case 64:
+            case 65:
+            case 66:
+            case 67:
+            case 68:
+            case 69:
+            case 70:
+            case 71:
+            case 72:
+            case 73:
+            case 74:
+            case 75:
+            case 76:
+            case 77:
+            case 78:
+            case 79:
+            case 80:
+            case 81:
+            case 82:
+            case 83:
+            case 84:
+            case 85:
+            {
+              Code = '=';
+              break;
+            }
+            case 86:
+            case 87:
+            case 88:
+            case 89:
+            case 90:
+            case 91:
+            case 92:
+            {
+              Code = '>';
+              break;
+            }
+            case 93:
+            case 94:
+            case 95:
+            case 96:
+            case 97:
+            case 98:
+            {
+              Pick = RollDice(1, 16);
+              switch (Pick) {
+              case 1:
+              case 2:
+              case 3:
+              case 4:
+              case 5:
+              case 6:
+              case 7:
+              {
+                Code = 'G';
+                break;
+              }
+              case 8:
+              case 9:
+              {
+                Code = 'F';
+                break;
+              }
+              case 10:
+              {
+                Code = 'T';
+                break;
+              }
+              case 11:
+              case 12:
+              {
+                Code = 'N';
+                break;
+              }
+              case 13:
+              case 14:
+              {
+                Code = 'O';
+                break;
+              }
+              case 15:
+              {
+                Code = '\\';
+                break;
+              }
+              case 16:
+              {
+                Code = 'C';
+                break;
+              }
+              }
+              break;
+            }
+            case 99:
+            case 100:
+            {
+              Code = 'E';
+              break;
+            }
+            }
+            BuildTreasureItem(Code, &Item);
+            if (PooledItems == 0) {
+              PooledItems = rtl_getmem(63);
+              (*FPD(TMenuLine (*), PooledItems)) = Item;
+              (*FPD(TMenuLine (*), PooledItems)).Next = 0;
+            } else {
+              Entry = PooledItems;
+              PooledItems = rtl_getmem(63);
+              (*FPD(TMenuLine (*), PooledItems)) = Item;
+              (*FPD(TMenuLine (*), PooledItems)).Next = Entry;
+            }
+          if (Treasure == limit) break;
+          Treasure++;
         }
-        case 60:
-        case 61:
-        case 62:
-        case 63:
-        case 64:
-        case 65:
-        case 66:
-        case 67:
-        case 68:
-        case 69:
-        case 70:
-        case 71:
-        case 72:
-        case 73:
-        case 74:
-        case 75:
-        case 76:
-        case 77:
-        case 78:
-        case 79:
-        case 80:
-        case 81:
-        case 82:
-        case 83:
-        case 84:
-        case 85:
-        case 86:
-        case 87:
-        case 88:
-        case 89:
-        case 90:
-        {
-          Roll2 = RollDice(1, 10);
-          switch (Roll2) {
-          case 1:
-          case 2:
-          case 3:
-          case 4:
-          {
-            Code = '$';
-            break;
-          }
-          case 5:
-          case 6:
-          case 7:
-          {
-            Code = '#';
-            break;
-          }
-          case 8:
-          {
-            Code = '"';
-            break;
-          }
-          case 9:
-          {
-            Code = '%';
-            break;
-          }
-          case 10:
-          {
-            Code = '&';
-            break;
-          }
-          }
-          break;
-        }
-        case 91:
-        case 92:
-        case 93:
-        case 94:
-        {
-          Code = 'I';
-          break;
-        }
-        case 95:
-        case 96:
-        case 97:
-        {
-          Code = ']';
-          break;
-        }
-        case 98:
-        case 99:
-        case 100:
-        {
-          Code = 'M';
-          break;
-        }
-        }
-        break;
       }
-      case 61:
-      case 62:
-      case 63:
-      case 64:
-      case 65:
-      case 66:
-      case 67:
-      case 68:
-      case 69:
-      case 70:
-      case 71:
-      case 72:
-      case 73:
-      case 74:
-      case 75:
-      case 76:
-      case 77:
-      case 78:
-      case 79:
-      case 80:
-      case 81:
-      case 82:
-      case 83:
-      case 84:
-      case 85:
-      {
-        Code = '=';
-        break;
-      }
-      case 86:
-      case 87:
-      case 88:
-      case 89:
-      case 90:
-      case 91:
-      case 92:
-      {
-        Code = '>';
-        break;
-      }
-      case 93:
-      case 94:
-      case 95:
-      case 96:
-      case 97:
-      case 98:
-      {
-        Pick = RollDice(1, 16);
-        switch (Pick) {
-        case 1:
-        case 2:
-        case 3:
-        case 4:
-        case 5:
-        case 6:
-        case 7:
-        {
-          Code = 'G';
-          break;
-        }
-        case 8:
-        case 9:
-        {
-          Code = 'F';
-          break;
-        }
-        case 10:
-        {
-          Code = 'T';
-          break;
-        }
-        case 11:
-        case 12:
-        {
-          Code = 'N';
-          break;
-        }
-        case 13:
-        case 14:
-        {
-          Code = 'O';
-          break;
-        }
-        case 15:
-        {
-          Code = '\\';
-          break;
-        }
-        case 16:
-        {
-          Code = 'C';
-          break;
-        }
-        }
-        break;
-      }
-      case 99:
-      case 100:
-      {
-        Code = 'E';
-        break;
-      }
-      }
-      BuildTreasureItem(Code, &Item);
-      if (PooledItems == 0) {
-        PooledItems = rtl_getmem(63);
-        (*FPD(TMenuLine (*), PooledItems)) = Item;
-        (*FPD(TMenuLine (*), PooledItems)).Next = 0;
-      } else {
-        Entry = PooledItems;
-        PooledItems = rtl_getmem(63);
-        (*FPD(TMenuLine (*), PooledItems)) = Item;
-        (*FPD(TMenuLine (*), PooledItems)).Next = Entry;
-      }
-      if (Treasure == t2) break;
-      Treasure++;
     }
     Node = PooledItems;
     while (Node != 0) {
@@ -1549,6 +1616,7 @@ void AddLootCommand(void)
      same value unless the operand is a variable that changed. Operand 3 is decoded and not read. */
 void LoseMoneyAndItemsCommand(void)
 {
+  POOL_TRACE("LoseMoneyAndItemsCommand");
   u8 Mode = 0;
   u8 Percent = 0;
   u8 Chance = 0;
@@ -1596,6 +1664,7 @@ void LoseMoneyAndItemsCommand(void)
      QUIRK ovl03:210A: steps ahead other than 0, 1 or 2 leave the prompt (Lines[0]) unset. */
 void EncounterActionCommand(void)
 {
+  POOL_TRACE("EncounterActionCommand");
   u8 Choice = 0;
   u8 ChoiceKinds[5] = {0};
   u8 Lines[4][256] = {0};
@@ -1622,17 +1691,25 @@ void EncounterActionCommand(void)
   (*FPD(TGameVars (*), GameVars2))[704] = OperandValue(2);
   EncounterPicBank = OperandValue(3);
   ResultAddr = MakeWord(OperandLow[4], OperandHigh[4]);
-  I = 0;
-  if (I <= 4) for (;;) {
-    ChoiceKinds[I] = OperandValue((s16)(I + 5));
-    if (I == 4) break;
-    I++;
+  {
+    if (0 <= 4) {
+      I = 0;
+      for (;;) {
+          ChoiceKinds[I] = OperandValue((s16)(I + 5));
+        if (I == 4) break;
+        I++;
+      }
+    }
   }
-  I = 1;
-  if (I <= 3) for (;;) {
-    rtl_str_assign(Lines[I], 255, EclStrings[I]);
-    if (I == 3) break;
-    I++;
+  {
+    if (1 <= 3) {
+      I = 1;
+      for (;;) {
+          rtl_str_assign(Lines[I], 255, EclStrings[I]);
+        if (I == 3) break;
+        I++;
+      }
+    }
   }
   FleeMovement = OperandValue(13);
   MonsterMovement = OperandValue(14);
@@ -1866,6 +1943,7 @@ void EncounterActionCommand(void)
      value (not traced yet). */
 void ChooseAttitudeCommand(void)
 {
+  POOL_TRACE("ChooseAttitudeCommand");
   u8 Choice = 0;
   u8 Value = 0;
   u8 I = 0;
@@ -1875,11 +1953,15 @@ void ChooseAttitudeCommand(void)
   u8 t1[256];
   DecodeOperands(6);
   BlankTitle = ' ';
-  I = 0;
-  if (I <= 4) for (;;) {
-    Values[I] = OperandValue((s16)(I + 1));
-    if (I == 4) break;
-    I++;
+  {
+    if (0 <= 4) {
+      I = 0;
+      for (;;) {
+          Values[I] = OperandValue((s16)(I + 1));
+        if (I == 4) break;
+        I++;
+      }
+    }
   }
   Choice = AskMenu(rtl_str_char(t1, BlankTitle), AttitudeMenu, MenuTitleColor, MenuTextColor, MenuHotColor, 0, 0);
   Target = MakeWord(OperandLow[6], OperandHigh[6]);
@@ -1895,6 +1977,7 @@ void ChooseAttitudeCommand(void)
      Purpose unknown: which item types the script tests. */
 void ComparePartyItemCommand(void)
 {
+  POOL_TRACE("ComparePartyItemCommand");
   u8 ItemType = 0;
   u8 Unused = 0;
   PCharacter Member = 0;
@@ -1925,6 +2008,7 @@ void ComparePartyItemCommand(void)
      program counter past the opcode so RunScriptFrom (ovl03:3171) reads the next command (see EclPC). */
 void PauseCommand(void)
 {
+  POOL_TRACE("PauseCommand");
   EclPC++;
   DelayByGameSpeed();
 }
@@ -1948,6 +2032,7 @@ void PauseCommand(void)
      is shown. Purpose unknown: which events use it. */
 void DamagePartyCommand(void)
 {
+  POOL_TRACE("DamagePartyCommand");
   u8 Flags = 0;
   u8 DamageDice = 0;
   u8 DamageSides = 0;
@@ -1964,8 +2049,6 @@ void DamagePartyCommand(void)
   PCharacter SavedCharacter = 0;
   u8 Unused = 0;
   u8 WholePartyHit = 0;
-  u8 t1;
-  u8 t2;
   SavedCharacter = SelectedCharacter;
   Unused = 0;
   WholePartyHit = 0;
@@ -1999,12 +2082,16 @@ void DamagePartyCommand(void)
         DamageWithMessage(Damage, SelectedCharacter);
       }
     } else {
-      t1 = MemberNumber;
-      I = 2;
-      if (I <= t1) for (;;) {
-        Who = (*FPD(TCharacter (*), Who)).Next;
-        if (I == t1) break;
-        I++;
+      {
+        u8 limit = MemberNumber;
+        if (2 <= limit) {
+          I = 2;
+          for (;;) {
+              Who = (*FPD(TCharacter (*), Who)).Next;
+            if (I == limit) break;
+            I++;
+          }
+        }
       }
       if (!SavingThrow(Who, SaveKind_, SaveBonus)) {
         DamageWithMessage(Damage, Who);
@@ -2013,22 +2100,26 @@ void DamagePartyCommand(void)
   } else {
     /* QUIRK ovl03:2775: bit 7 clear, so Flags is the number of hits, counted per bit: bit 6 (and bit 5)
        adds to it here, and when bit 6 is set MemberNumber was not rolled above. */
-    t2 = Flags;
-    I = 1;
-    if (I <= t2) for (;;) {
-      Who = PartyListHead;
-      MemberNumber = RollDice(1, (u8)(*FPD(TGameVars (*), GameVars2))[830]);
-      Step = 1;
-      while (Step < MemberNumber) {
-        Who = (*FPD(TCharacter (*), Who)).Next;
-        Step++;
+    {
+      u8 limit = Flags;
+      if (1 <= limit) {
+        I = 1;
+        for (;;) {
+            Who = PartyListHead;
+            MemberNumber = RollDice(1, (u8)(*FPD(TGameVars (*), GameVars2))[830]);
+            Step = 1;
+            while (Step < MemberNumber) {
+              Who = (*FPD(TCharacter (*), Who)).Next;
+              Step++;
+            }
+            if (RollBeatsResistance(Who, Resistance)) {
+              DamageWithMessage(Damage, Who);
+            }
+            Damage = RollDice(DamageDice, DamageSides) + DamageBonus;
+          if (I == limit) break;
+          I++;
+        }
       }
-      if (RollBeatsResistance(Who, Resistance)) {
-        DamageWithMessage(Damage, Who);
-      }
-      Damage = RollDice(DamageDice, DamageSides) + DamageBonus;
-      if (I == t2) break;
-      I++;
     }
   }
   Member = PartyListHead;
@@ -2057,6 +2148,7 @@ void DamagePartyCommand(void)
      Purpose unknown: why the script redraws the area. */
 void RedrawAreaViewCommand(void)
 {
+  POOL_TRACE("RedrawAreaViewCommand");
   EclPC++;
   if (Sprite3DLoaded != 0) {
     ShowAreaView();
@@ -2072,6 +2164,7 @@ void RedrawAreaViewCommand(void)
      byte the frame held on entry; the compiled code does exactly this. */
 void PassTimeCommand(void)
 {
+  POOL_TRACE("PassTimeCommand");
   u8 Amount = 0;
   u8 Unused = 0;
   DecodeOperands(1);
@@ -2086,6 +2179,7 @@ void PassTimeCommand(void)
      (ovl03:3171) reads the next command (see EclPC). */
 void NewLineCommand(void)
 {
+  POOL_TRACE("NewLineCommand");
   EclPC++;
   if (GlyphRunPending != 0) {
     GlyphCol = EclTextLeft;
@@ -2104,6 +2198,7 @@ void NewLineCommand(void)
      so RunScriptFrom (ovl03:3171) reads the next command (see EclPC). */
 void ClearPictureWindowCommand(void)
 {
+  POOL_TRACE("ClearPictureWindowCommand");
   EclPC++;
   ClearRect(PictureFrameLeft, PictureFrameTop, PictureFrameRight, PictureFrameBottom);
   GlyphRunInBox = 1;
@@ -2117,6 +2212,7 @@ void ClearPictureWindowCommand(void)
      in RES12.PAS, since PCharacter is not visible there (the caller passes the address of SelectedCharacter). */
 void ChoosePartyMemberCommand(void)
 {
+  POOL_TRACE("ChoosePartyMemberCommand");
   u8 Prompt[256] = {0};
   DecodeOperands(1);
   ClearRect(EclTextLeft, EclTextTop, EclTextRight, EclTextBottom);
@@ -2132,6 +2228,7 @@ void ChoosePartyMemberCommand(void)
      QUIRK ovl03:2B7E: four bytes of the frame nothing uses. */
 void AddComputerMemberCommand(void)
 {
+  POOL_TRACE("AddComputerMemberCommand");
   s32 Unused = 0;
   u8 Kind = 0;
   u8 Morale = 0;
@@ -2163,6 +2260,7 @@ void AddComputerMemberCommand(void)
      of Spells, through the record bytes after them. */
 void FindMemorizedSpellCommand(void)
 {
+  POOL_TRACE("FindMemorizedSpellCommand");
   u8 Value = 0;
   u8 I = 0;
   u8 Count = 0;
@@ -2208,6 +2306,7 @@ void FindMemorizedSpellCommand(void)
      - ActionWallProbe: when AreaViewKind is 1, PartyCellWallId takes the wall id of the party's cell (WallIdAt). */
 void EngineActionCommand(void)
 {
+  POOL_TRACE("EngineActionCommand");
   u16 Code = 0;
   u16 Action = 0;
   DecodeOperands(1);
@@ -2277,6 +2376,7 @@ void EngineActionCommand(void)
      (ShowAreaView) and HeapErrorStop, the gate of the heap error retry, is cleared. */
 void RunCamp(void)
 {
+  POOL_TRACE("RunCamp");
   u8 EndCamp = 0;
   u8 Unused = 0;
   EndCamp = 0;
@@ -2297,6 +2397,7 @@ void RunCamp(void)
      (ReselectCharacterPending, set by ECL command 10) first selects the character at ReselectCharacter, as EndCommand does. */
 void ShowSpecialScreenCommand(void)
 {
+  POOL_TRACE("ShowSpecialScreenCommand");
   u8 Choice = 0;
   u16 SavedCounter = 0;
   u8 Unused = 0;
@@ -2338,6 +2439,7 @@ void ShowSpecialScreenCommand(void)
      is set, and the cursor goes down one row at the end. Purpose unknown: what the script writes this way. */
 void DrawGlyphRunCommand(void)
 {
+  POOL_TRACE("DrawGlyphRunCommand");
   u16 Start = 0;
   u16 Address = 0;
   u8 Index = 0;
@@ -2375,6 +2477,7 @@ void DrawGlyphRunCommand(void)
      EclPC past the command. An opcode without an arm (31, and 62 and above) does nothing. */
 void DispatchCommand(void)
 {
+  POOL_TRACE("DispatchCommand");
   switch (CurrentOpcode) {
   case 0:
   {
@@ -2643,6 +2746,7 @@ void DispatchCommand(void)
      it. Both flags are cleared on the way out. */
 void RunScriptFrom(u16 Address)
 {
+  POOL_TRACE("RunScriptFrom");
   EclPC = Address;
   ScriptRunEnded = 0;
   while (((ScriptRunEnded == 0)) && ((PartyDestroyed == 0))) {
@@ -2665,6 +2769,7 @@ void RunScriptFrom(u16 Address)
      in parts: what the entries and word VarMapEdgeHit do. */
 void RunAreaStep(void)
 {
+  POOL_TRACE("RunAreaStep");
   PCharacter Saved = 0;
   do {
     PartyCellEventByte = EventByteAt(PartyMapColumn, PartyMapRow);
@@ -2731,6 +2836,7 @@ void RunAreaStep(void)
      bytes of this routine (a call operand and a cmp), not routines. */
 void RunWilderness(void)
 {
+  POOL_TRACE("RunWilderness");
   u8 Key = 0;
   u8 Unused = 0;
   Command55Ran = 0;
@@ -2815,5 +2921,6 @@ void RunWilderness(void)
 /* Initialisation part of unit OVL03. */
 void init_OVL03(void)
 {
+  POOL_TRACE("init");
   /* ovl03:3508. The initialisation part is empty: push bp, mov bp, sp, pop bp, retf. */
 }

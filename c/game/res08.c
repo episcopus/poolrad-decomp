@@ -3,6 +3,7 @@
 /* Initialisation part of unit RES08. */
 void init_RES08(void)
 {
+  POOL_TRACE("init");
   /* 042B:00A4. Starts the game: initialises res05, then the overlay manager on GAME.OVR; probes
      pool.cfg (retrying with 'Please insert startup disk.' until it opens) and parses POOL.CFG:
      line 1 the video choice (E: VideoAdapter 1 and EGA mode $0D, T: 2 with a smaller heap,

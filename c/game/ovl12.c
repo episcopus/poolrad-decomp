@@ -5,6 +5,7 @@
      (ovl24:1672), so the affect and its damage are dropped. */
 void CancelPendingHook(u8 AffectId)
 {
+  POOL_TRACE("CancelPendingHook");
   if (((AffectId == 0)) || ((HookAffectId == AffectId))) {
     DamageAmount = 0;
     HookAffectId = 0;
@@ -17,6 +18,7 @@ void CancelPendingHook(u8 AffectId)
      when the affect is removed, and the result is True. */
 u8 TryAddAffect(PCharacter Who, u8 AffectId, u8 Data, u16 Duration)
 {
+  POOL_TRACE("TryAddAffect");
   u8 Result = 0;
   if (RemovingAffects != 0) {
     Result = 0;
@@ -36,6 +38,7 @@ u8 TryAddAffect(PCharacter Who, u8 AffectId, u8 Data, u16 Duration)
      redraw. */
 void DropFromFight(PCharacter Who, u8 NewStatus, const u8 *Msg_in)
 {
+  POOL_TRACE("DropFromFight");
   const u8 *Msg = Msg_in;
   ShowCharacterMessage(Who, Msg, CombatMessageRow, 0);
   switch ((*FPD(TCharacter (*), Who)).Status) {
@@ -69,6 +72,7 @@ void DropFromFight(PCharacter Who, u8 NewStatus, const u8 *Msg_in)
      InitAffectHandlers [V]). */
 void RaiseAttackAndMorale(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("RaiseAttackAndMorale");
   MoraleScratch += MoraleStep;
   AttackRoll++;
 }
@@ -78,6 +82,7 @@ void RaiseAttackAndMorale(PCharacter Who, PAffect Affect, u8 Mode)
      holds less, and takes 1 off AttackRoll. Runs for affect $02 (id 2, InitAffectHandlers [V]). */
 void LowerAttackAndMorale(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("LowerAttackAndMorale");
   if (MoraleScratch < MoraleStep) {
     MoraleScratch = 0;
   } else {
@@ -93,6 +98,7 @@ void LowerAttackAndMorale(PCharacter Who, PAffect Affect, u8 Mode)
      InitAffectHandlers [V]). */
 void BoostAttackAgainstUndead(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("BoostAttackAgainstUndead");
   AttackTarget = (*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).Target;
   if ((*FPD(TCharacter (*), AttackTarget)).CreatureType == CreatureUndead) {
     AttackRoll += TargetBonus;
@@ -108,6 +114,7 @@ void BoostAttackAgainstUndead(PCharacter Who, PAffect Affect, u8 Mode)
      [V]). */
 void StartTrainingWithManual(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("StartTrainingWithManual");
   ShowCharacterMessage(Who, S("\017starts to train"), CombatMessageRow, 1);
   AddAffect(Who, AffectTrainingManual, TrainingManualDuration, TrainingManualData, RunsHandlerOnRemove);
 }
@@ -120,6 +127,7 @@ void StartTrainingWithManual(PCharacter Who, PAffect Affect, u8 Mode)
      (fire, plus the magic bit 8, ovl24:13E4). Runs for affect $06 (id 6, InitAffectHandlers [V]). */
 void BoostFireAttackByTarget(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("BoostFireAttackByTarget");
   u8 Bonus = 0;
   AttackTarget = (*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).Target;
   switch ((*FPD(TCharacter (*), AttackTarget)).CreatureType) {
@@ -158,6 +166,7 @@ void BoostFireAttackByTarget(PCharacter Who, PAffect Affect, u8 Mode)
      (id 7, InitAffectHandlers [V]). */
 void TrainConstitution(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("TrainConstitution");
   u8 Gain = 0;
   u8 Weight = 0;
   s8 I = 0;
@@ -172,19 +181,23 @@ void TrainConstitution(PCharacter Who, PAffect Affect, u8 Mode)
   if ((*FPD(TCharacter (*), Who)).Constitution < TrainingConstitution) {
     return;
   }
-  I = 0;
-  if (I <= LastClass_OVL12) for (;;) {
-    if ((*FPD(TCharacter (*), Who)).ClassLevels[I] > 0) {
-      if (I == ClassFighter) {
-        Weight += (s16)(((s16)((*FPD(TCharacter (*), Who)).Constitution - TrainingConstitution)) * (*FPD(TCharacter (*), Who)).ClassLevels[I]);
-      } else if ((*FPD(TCharacter (*), Who)).Constitution > TrainingConstitution) {
-        Weight += (s16)((*FPD(TCharacter (*), Who)).ClassLevels[I] * 2);
-      } else {
-        Weight += (*FPD(TCharacter (*), Who)).ClassLevels[I];
+  {
+    if (0 <= LastClass_OVL12) {
+      I = 0;
+      for (;;) {
+          if ((*FPD(TCharacter (*), Who)).ClassLevels[I] > 0) {
+            if (I == ClassFighter) {
+              Weight += (s16)(((s16)((*FPD(TCharacter (*), Who)).Constitution - TrainingConstitution)) * (*FPD(TCharacter (*), Who)).ClassLevels[I]);
+            } else if ((*FPD(TCharacter (*), Who)).Constitution > TrainingConstitution) {
+              Weight += (s16)((*FPD(TCharacter (*), Who)).ClassLevels[I] * 2);
+            } else {
+              Weight += (*FPD(TCharacter (*), Who)).ClassLevels[I];
+            }
+          }
+        if (I == LastClass_OVL12) break;
+        I++;
       }
     }
-    if (I == LastClass_OVL12) break;
-    I++;
   }
   if (Weight == 0) {
     Weight = 1;
@@ -203,6 +216,7 @@ void TrainConstitution(PCharacter Who, PAffect Affect, u8 Mode)
      (Who, Affect and Mode are not read). Runs for affects $08 and $2D (ids 8, 45, InitAffectHandlers [V]). */
 void ShiftAttackToSaveVsEvil(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("ShiftAttackToSaveVsEvil");
   if (((((*FPD(TCharacter (*), SelectedCharacter)).Alignment == AlignLawfulEvil)) || (((*FPD(TCharacter (*), SelectedCharacter)).Alignment == AlignNeutralEvil))) || (((*FPD(TCharacter (*), SelectedCharacter)).Alignment == AlignChaoticEvil))) {
     SaveRoll += ProtectionShift;
     AttackRoll -= ProtectionShift;
@@ -215,6 +229,7 @@ void ShiftAttackToSaveVsEvil(PCharacter Who, PAffect Affect, u8 Mode)
      loses 2. Who, Affect and Mode are not read. Runs for affects $09 and $2E (ids 9, 46, InitAffectHandlers [V]). */
 void ShiftAttackToSaveVsGood(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("ShiftAttackToSaveVsGood");
   if (((((*FPD(TCharacter (*), SelectedCharacter)).Alignment == AlignLawfulGood)) || (((*FPD(TCharacter (*), SelectedCharacter)).Alignment == AlignNeutralGood))) || (((*FPD(TCharacter (*), SelectedCharacter)).Alignment == AlignChaoticGood))) {
     SaveRoll += ProtectionShift;
     AttackRoll -= ProtectionShift;
@@ -227,6 +242,7 @@ void ShiftAttackToSaveVsGood(PCharacter Who, PAffect Affect, u8 Mode)
      the spell with SpellTable AffectId $0A (spell 8) [V]: half cold damage and +3 on the save, as the AD&D spell [I]. */
 void HalveColdDamage(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("HalveColdDamage");
   if (((DamageKind & KindCold)) != 0) {
     DamageAmount = (s16)((u16)DamageAmount >> 1);
     SaveRoll += ColdSaveBonus;
@@ -243,6 +259,7 @@ void HalveColdDamage(PCharacter Who, PAffect Affect, u8 Mode)
      ComputerRunMorale; it does not clear Quick. Applying also sets the morale scratch MoraleScratch (AffectMorale). */
 void ApplyCharmPerson(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("ApplyCharmPerson");
   if (Mode != 0) {
     (*FPD(TCharacter (*), Who)).Side = ((((*FPD(TAffect (*), Affect)).Data & ControlSavedSideBit)) / ControlSavedSideBit);
     if ((*FPD(TCharacter (*), Who)).B84 == ComputerRunMorale) {
@@ -275,6 +292,7 @@ void ApplyCharmPerson(PCharacter Who, PAffect Affect, u8 Mode)
      sets it. */
 void ApplyStrengthAffect(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("ApplyStrengthAffect");
   u8 Strength = 0;
   u8 Percent = 0;
   u8 BestStrength = 0;
@@ -316,6 +334,7 @@ void ApplyStrengthAffect(PCharacter Who, PAffect Affect, u8 Mode)
      value is set each time. Runs for affect $0E (id 14, InitAffectHandlers [V]). */
 void SetCharismaFromAffect(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("SetCharismaFromAffect");
   (*FPD(TCharacter (*), Who)).Charisma = (*FPD(TAffect (*), Affect)).Data;
 }
 
@@ -328,6 +347,7 @@ void SetCharismaFromAffect(PCharacter Who, PAffect Affect, u8 Mode)
      InitAffectHandlers [V]). */
 void SlowPoisonDamage(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("SlowPoisonDamage");
   if (TryAddAffect(Who, AffectSlowPoisonDamage, (*FPD(TAffect (*), Affect)).Data, SlowPoisonDamageDuration)) {
     if ((*FPD(TCharacter (*), Who)).HpCurrent > 1) {
       DamageKind = 0;
@@ -343,6 +363,7 @@ void SlowPoisonDamage(PCharacter Who, PAffect Affect, u8 Mode)
      parameters is read and no global is written. Runs for affect $10 (id 16, InitAffectHandlers [V]). */
 void IgnoreAffect(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("IgnoreAffect");
 }
 
 /* ovl12:064E. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Affect and Mode are not read). Raises
@@ -351,6 +372,7 @@ void IgnoreAffect(PCharacter Who, PAffect Affect, u8 Mode)
      damage of the roll in progress is none. Runs for affect $11 (id 17, InitAffectHandlers [V]). */
 void RaiseResistanceAndSave(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("RaiseResistanceAndSave");
   if ((*FPD(TCharacter (*), Who)).ArmourClassValue < MinimumResistance) {
     (*FPD(TCharacter (*), Who)).ArmourClassValue = MinimumResistance;
   }
@@ -367,16 +389,21 @@ void RaiseResistanceAndSave(PCharacter Who, PAffect Affect, u8 Mode)
      Given to the gnome by CreateCharacter [V]. */
 void BoostAttackVsKoboldGoblin(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("BoostAttackVsKoboldGoblin");
   u8 I = 0;
   AttackTarget = (*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).Target;
   if ((((*FPD(TCharacter (*), AttackTarget)).CreatureType == CreatureHumanoid)) && (((*FPD(TCharacter (*), AttackTarget)).CombatSize == SmallFootprintKind))) {
-    I = 1;
-    if (I <= KoboldGoblinNameCount) for (;;) {
-      if (rtl_str_cmp((*FPD(TCharacter (*), AttackTarget)).Name, KoboldGoblinNames[I]) == 0) {
-        AttackRoll++;
+    {
+      if (1 <= KoboldGoblinNameCount) {
+        I = 1;
+        for (;;) {
+            if (rtl_str_cmp((*FPD(TCharacter (*), AttackTarget)).Name, KoboldGoblinNames[I]) == 0) {
+              AttackRoll++;
+            }
+          if (I == KoboldGoblinNameCount) break;
+          I++;
+        }
       }
-      if (I == KoboldGoblinNameCount) break;
-      I++;
     }
   }
 }
@@ -388,6 +415,7 @@ void BoostAttackVsKoboldGoblin(PCharacter Who, PAffect Affect, u8 Mode)
      and +3 on the save [I]. */
 void HalveFireDamage(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("HalveFireDamage");
   if (((DamageKind & KindFire)) != 0) {
     DamageAmount = (s16)((u16)DamageAmount >> 1);
     SaveRoll += FireSaveBonus;
@@ -400,6 +428,7 @@ void HalveFireDamage(PCharacter Who, PAffect Affect, u8 Mode)
      21, InitAffectHandlers [V]). */
 void ShowSilenceAndStopCasting(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("ShowSilenceAndStopCasting");
   if ((*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).CanUseMagicItem != 0) {
     ShowCharacterMessage(Who, S("\013is silenced"), CombatMessageRow, 1);
   }
@@ -414,6 +443,7 @@ void ShowSilenceAndStopCasting(PCharacter Who, PAffect Affect, u8 Mode)
      it runs. Runs for affect $16 (id 22, InitAffectHandlers [V]). */
 void DieIfPoisoned(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("DieIfPoisoned");
   farptr PoisonAffect = 0;
   if (HasAffect(Who, AffectPoisoned, &PoisonAffect)) {
     DropFromFight(Who, StatusDead, S("\020dies from poison"));
@@ -432,6 +462,7 @@ void DieIfPoisoned(PCharacter Who, PAffect Affect, u8 Mode)
      for affect $17 (id 23, InitAffectHandlers [V]). */
 void GiveSpiritualHammer(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("GiveSpiritualHammer");
   PItem Item = 0;
   u8 Found = 0;
   Item = (*FPD(TCharacter (*), Who)).Items;
@@ -477,6 +508,7 @@ void GiveSpiritualHammer(PCharacter Who, PAffect Affect, u8 Mode)
      affect $19 (id 25, InitAffectHandlers [V]). */
 void InvisibleTargetHardToHit(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("InvisibleTargetHardToHit");
   farptr FoundAffect = 0;
   if (!HasAffect(SelectedCharacter, AffectDetectInvisibility, &FoundAffect)) {
     HookVetoFlag = 1;
@@ -491,16 +523,21 @@ void InvisibleTargetHardToHit(PCharacter Who, PAffect Affect, u8 Mode)
      character's name equals. Runs for affect $1A (id 26, InitAffectHandlers [V]). Given to the dwarf by CreateCharacter [V]. */
 void BoostAttackVsOrcGoblinHobgoblin(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("BoostAttackVsOrcGoblinHobgoblin");
   u8 I = 0;
   AttackTarget = (*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).Target;
   if ((((*FPD(TCharacter (*), AttackTarget)).CreatureType == CreatureHumanoid)) && (((*FPD(TCharacter (*), AttackTarget)).CombatSize == SmallFootprintKind))) {
-    I = 1;
-    if (I <= OrcGoblinHobgoblinNameCount) for (;;) {
-      if (rtl_str_cmp((*FPD(TCharacter (*), AttackTarget)).Name, OrcGoblinHobgoblinNames[I - 1]) == 0) {
-        AttackRoll++;
+    {
+      if (1 <= OrcGoblinHobgoblinNameCount) {
+        I = 1;
+        for (;;) {
+            if (rtl_str_cmp((*FPD(TCharacter (*), AttackTarget)).Name, OrcGoblinHobgoblinNames[I - 1]) == 0) {
+              AttackRoll++;
+            }
+          if (I == OrcGoblinHobgoblinNameCount) break;
+          I++;
+        }
       }
-      if (I == OrcGoblinHobgoblinNameCount) break;
-      I++;
     }
   }
 }
@@ -513,6 +550,7 @@ void BoostAttackVsOrcGoblinHobgoblin(PCharacter Who, PAffect Affect, u8 Mode)
      [I]. Runs for affect $1C (id 28, InitAffectHandlers [V]). */
 void ImageAbsorbsHit(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("ImageAbsorbsHit");
   if ((((RollDice(1, (s16)((*FPD(TAffect (*), Affect)).Data + 1)) > 1)) && ((CastingSpell > 0))) && ((SpellAppliedToArea == 0))) {
     CancelPendingHook(0);
     ShowCharacterMessage(Who, S("\015lost an image"), CombatMessageRow, 1);
@@ -529,6 +567,7 @@ void ImageAbsorbsHit(PCharacter Who, PAffect Affect, u8 Mode)
      (the damage hook is kind 6, ovl24:02FA). Runs for affect $1D (id 29, InitAffectHandlers [V]). */
 void ReduceDamageByQuarter(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("ReduceDamageByQuarter");
   DamageAmount = DamageAmount - (DamageAmount / 4);
 }
 
@@ -541,6 +580,7 @@ void ReduceDamageByQuarter(PCharacter Who, PAffect Affect, u8 Mode)
      gas or smoke affect [I]. Runs for affect $1E (id 30, InitAffectHandlers [V]). */
 void CoughStopsCasting(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("CoughStopsCasting");
   if ((*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).CanUseMagicItem != 0) {
     ShowCharacterMessage(Who, S("\013is coughing"), CombatMessageRow, 1);
   }
@@ -570,6 +610,7 @@ void CoughStopsCasting(PCharacter Who, PAffect Affect, u8 Mode)
      own side (ovl22 stores Side * 16 + caster level in Data) [I]. */
 void CollapseAndChangeSide(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("CollapseAndChangeSide");
   (*FPD(TAffect (*), Affect)).Flag = 0;
   if (RemovingAffects == 0) {
     DropFromFight(Who, StatusDead, S("\011collapses"));
@@ -591,6 +632,7 @@ void CollapseAndChangeSide(PCharacter Who, PAffect Affect, u8 Mode)
      Runs for affect $21 (id 33, InitAffectHandlers [V]). */
 void LowerAttackSaveAndResistance(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("LowerAttackSaveAndResistance");
   AttackRoll -= AttackPenalty;
   (*FPD(TCharacter (*), Who)).ArmourClassValue -= ResistPenalty;
   (*FPD(TCharacter (*), Who)).RearArmourClassValue -= ResistPenalty;
@@ -603,6 +645,7 @@ void LowerAttackSaveAndResistance(PCharacter Who, PAffect Affect, u8 Mode)
      handlers. Runs for affect $22 (id 34, InitAffectHandlers [V]). */
 void RunDiseaseHandlers(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("RunDiseaseHandlers");
   CallAffectHandler(AffectDrainsStrength, Who, Affect, Mode);
   CallAffectHandler(AffectCauseDisease, Who, Affect, Mode);
 }
@@ -612,6 +655,7 @@ void RunDiseaseHandlers(PCharacter Who, PAffect Affect, u8 Mode)
      Runs for affect $23 (id 35, InitAffectHandlers [V]). */
 void RaiseAttackAndSave(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("RaiseAttackAndSave");
   SaveRoll++;
   AttackRoll++;
 }
@@ -621,6 +665,7 @@ void RaiseAttackAndSave(PCharacter Who, PAffect Affect, u8 Mode)
      InitAffectHandlers [V]). */
 void LowerAttackAndSave(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("LowerAttackAndSave");
   AttackRoll -= AttackPenalty;
   SaveRoll -= SavePenalty;
 }
@@ -632,6 +677,7 @@ void LowerAttackAndSave(PCharacter Who, PAffect Affect, u8 Mode)
      InitAffectHandlers [V]). */
 void SetAttackMissIfTurnPending(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("SetAttackMissIfTurnPending");
   if ((*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).Initiative > 0) {
     HookVetoFlag = 1;
     AttackRoll = MissRoll;
@@ -647,6 +693,7 @@ void SetAttackMissIfTurnPending(PCharacter Who, PAffect Affect, u8 Mode)
      InitAffectHandlers [V]). */
 void ApplyHaste(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("ApplyHaste");
   if ((((*FPD(TAffect (*), Affect)).Data & AgedBit)) == 0) {
     (*FPD(TAffect (*), Affect)).Data = (*FPD(TAffect (*), Affect)).Data + AgedBit;
     ShowCharacterMessage(Who, S("\004ages"), CombatMessageRow, 1);
@@ -663,6 +710,7 @@ void ApplyHaste(PCharacter Who, PAffect Affect, u8 Mode)
      Runs for affect $28 (id 40, InitAffectHandlers [V]). */
 void ClearCloud(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("ClearCloud");
   PCombatNode Node = 0;
   PCombatNode Cloud = 0;
   u8 Found = 0;
@@ -670,7 +718,6 @@ void ClearCloud(PCharacter Who, PAffect Affect, u8 Mode)
   u8 Arm = 0;
   u8 CellX = 0;
   u8 CellY = 0;
-  u8 t1;
   Index = ((*FPD(TAffect (*), Affect)).Data / 16);
   Found = 0;
   Cloud = CloudList;
@@ -685,29 +732,37 @@ void ClearCloud(PCharacter Who, PAffect Affect, u8 Mode)
     return;
   }
   ShowFlashMessage(S("\032The air clears a little..."));
-  Arm = 1;
-  if (Arm <= 4) for (;;) {
-    if ((*FPD(TCombatNode (*), Cloud)).Arms[Arm - 1] != 0) {
-      CellX = (*FPD(TCombatNode (*), Cloud)).X + DirStepX[CloudArmDirections[Arm]];
-      CellY = (*FPD(TCombatNode (*), Cloud)).Y + DirStepY[CloudArmDirections[Arm]];
-      Found = 0;
-      t1 = BodyCount;
-      Index = 1;
-      if (Index <= t1) for (;;) {
-        if ((((BodyTable[Index - 1].Who != 0)) && ((BodyTable[Index - 1].X == CellX))) && ((BodyTable[Index - 1].Y == CellY))) {
-          Found = 1;
-        }
-        if (Index == t1) break;
-        Index++;
-      }
-      if (Found) {
-        (*FPD(TCombatMap (*), CombatMap)).Cells[CellY][CellX] = BodyTile_OVL12;
-      } else {
-        (*FPD(TCombatMap (*), CombatMap)).Cells[CellY][CellX] = (*FPD(TCombatNode (*), Cloud)).Tiles[Arm - 1];
+  {
+    if (1 <= 4) {
+      Arm = 1;
+      for (;;) {
+          if ((*FPD(TCombatNode (*), Cloud)).Arms[Arm - 1] != 0) {
+            CellX = (*FPD(TCombatNode (*), Cloud)).X + DirStepX[CloudArmDirections[Arm]];
+            CellY = (*FPD(TCombatNode (*), Cloud)).Y + DirStepY[CloudArmDirections[Arm]];
+            Found = 0;
+            {
+              u8 limit = BodyCount;
+              if (1 <= limit) {
+                Index = 1;
+                for (;;) {
+                    if ((((BodyTable[Index - 1].Who != 0)) && ((BodyTable[Index - 1].X == CellX))) && ((BodyTable[Index - 1].Y == CellY))) {
+                      Found = 1;
+                    }
+                  if (Index == limit) break;
+                  Index++;
+                }
+              }
+            }
+            if (Found) {
+              (*FPD(TCombatMap (*), CombatMap)).Cells[CellY][CellX] = BodyTile_OVL12;
+            } else {
+              (*FPD(TCombatMap (*), CombatMap)).Cells[CellY][CellX] = (*FPD(TCombatNode (*), Cloud)).Tiles[Arm - 1];
+            }
+          }
+        if (Arm == 4) break;
+        Arm++;
       }
     }
-    if (Arm == 4) break;
-    Arm++;
   }
   Node = CloudList;
   if (Node == Cloud) {
@@ -721,13 +776,17 @@ void ClearCloud(PCharacter Who, PAffect Affect, u8 Mode)
   rtl_freemem(Cloud, 19);
   Node = CloudList;
   while (Node != 0) {
-    Arm = 1;
-    if (Arm <= 4) for (;;) {
-      if ((*FPD(TCombatNode (*), Node)).Arms[Arm - 1] != 0) {
-        (*FPD(TCombatMap (*), CombatMap)).Cells[(s16)((*FPD(TCombatNode (*), Node)).Y + DirStepY[CloudArmDirections[Arm]])][(s16)((*FPD(TCombatNode (*), Node)).X + DirStepX[CloudArmDirections[Arm]])] = CloudTile;
+    {
+      if (1 <= 4) {
+        Arm = 1;
+        for (;;) {
+            if ((*FPD(TCombatNode (*), Node)).Arms[Arm - 1] != 0) {
+              (*FPD(TCombatMap (*), CombatMap)).Cells[(s16)((*FPD(TCombatNode (*), Node)).Y + DirStepY[CloudArmDirections[Arm]])][(s16)((*FPD(TCombatNode (*), Node)).X + DirStepX[CloudArmDirections[Arm]])] = CloudTile;
+            }
+          if (Arm == 4) break;
+          Arm++;
+        }
       }
-      if (Arm == 4) break;
-      Arm++;
     }
     Node = (*FPD(TCombatNode (*), Node)).Next;
   }
@@ -743,6 +802,7 @@ void ClearCloud(PCharacter Who, PAffect Affect, u8 Mode)
      hill and fire giants ($78, 50 percent) [V monster data]. */
 void AvoidDistantAttack(PCharacter Who, u8 Chance)
 {
+  POOL_TRACE("AvoidDistantAttack");
   if ((*FPD(TCharacter (*), SelectedCharacter)).SlotItems[0] != 0) {
     if (DistanceToTarget(SelectedCharacter, Who) > 1) {
       if (RollDice(1, 100) <= Chance) {
@@ -761,6 +821,7 @@ void AvoidDistantAttack(PCharacter Who, u8 Chance)
      Purpose unknown: what ChooseAttackItem finds is not known yet [?]. */
 PItem FirstSlotItem(PCharacter Who)
 {
+  POOL_TRACE("FirstSlotItem");
   PItem Result = 0;
   farptr Item = 0;
   u8 Found = 0;
@@ -780,6 +841,7 @@ PItem FirstSlotItem(PCharacter Who)
      (AvoidDistantAttack with AlwaysAvoids). Runs for affect $29 (id 41, InitAffectHandlers [V]). */
 void ProtectFromNormalMissiles(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("ProtectFromNormalMissiles");
   if (FirstSlotItem(SelectedCharacter) != 0) {
     if ((*FPD(TMenuLine (*), FirstSlotItem(SelectedCharacter))).Plus == 0) {
       AvoidDistantAttack(Who, AlwaysAvoids);
@@ -792,6 +854,7 @@ void ProtectFromNormalMissiles(PCharacter Who, PAffect Affect, u8 Mode)
      42, InitAffectHandlers [V]). */
 void ApplySlow(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("ApplySlow");
   HookedMoveOrAttacks = (s16)((u16)HookedMoveOrAttacks >> 1);
 }
 
@@ -803,6 +866,7 @@ void ApplySlow(PCharacter Who, PAffect Affect, u8 Mode)
      InitAffectHandlers [V]). */
 void WeakenStrength(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("WeakenStrength");
   farptr FoundAffect = 0;
   if (TryAddAffect(Who, AffectDrainsStrength, (*FPD(TAffect (*), Affect)).Data, WeakeningDuration)) {
     if ((*FPD(TCharacter (*), Who)).Strength > MinimumStrength) {
@@ -821,6 +885,7 @@ void WeakenStrength(PCharacter Who, PAffect Affect, u8 Mode)
      it already. Runs for affect $2C (id 44, InitAffectHandlers [V]). */
 void CauseDiseaseAndDamage(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("CauseDiseaseAndDamage");
   farptr FoundAffect = 0;
   if (TryAddAffect(Who, AffectCauseDisease, (*FPD(TAffect (*), Affect)).Data, AffectCauseDiseaseDuration)) {
     if ((*FPD(TCharacter (*), Who)).HpCurrent > 1) {
@@ -845,16 +910,21 @@ void CauseDiseaseAndDamage(PCharacter Who, PAffect Affect, u8 Mode)
      name of AttackTarget (Who's own last target), where the sibling handlers test the target for both [?]. */
 void LowerAttackVsOgreTrollGiant(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("LowerAttackVsOgreTrollGiant");
   u8 I = 0;
   AttackTarget = (*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).Target;
   if ((((*FPD(TCharacter (*), SelectedCharacter)).CreatureType == CreatureHumanoid)) && (((((*FPD(TCharacter (*), SelectedCharacter)).CombatSize & CombatKindMask)) == LargeFootprintKind_OVL12))) {
-    I = 1;
-    if (I <= OgreTrollGiantNameCount) for (;;) {
-      if (rtl_str_cmp((*FPD(TCharacter (*), AttackTarget)).Name, OgreTrollGiantNames[I - 1]) == 0) {
-        AttackRoll -= AttackPenalty;
+    {
+      if (1 <= OgreTrollGiantNameCount) {
+        I = 1;
+        for (;;) {
+            if (rtl_str_cmp((*FPD(TCharacter (*), AttackTarget)).Name, OgreTrollGiantNames[I - 1]) == 0) {
+              AttackRoll -= AttackPenalty;
+            }
+          if (I == OgreTrollGiantNameCount) break;
+          I++;
+        }
       }
-      if (I == OgreTrollGiantNameCount) break;
-      I++;
     }
   }
 }
@@ -864,6 +934,7 @@ void LowerAttackVsOgreTrollGiant(PCharacter Who, PAffect Affect, u8 Mode)
      loses AttackPenalty. Runs for affect $30 (id 48, InitAffectHandlers [V]); given to the gnome by CreateCharacter [V]. */
 void LowerAttackIfSelectedIsBugbearOrGnoll(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("LowerAttackIfSelectedIsBugbearOrGnoll");
   if ((*FPD(TCharacter (*), SelectedCharacter)).CreatureType == CreatureHumanoid) {
     if (((rtl_str_cmp((*FPD(TCharacter (*), SelectedCharacter)).Name, S("\007BUGBEAR")) == 0)) || ((rtl_str_cmp((*FPD(TCharacter (*), SelectedCharacter)).Name, S("\005GNOLL")) == 0))) {
       AttackRoll -= AttackPenalty;
@@ -877,6 +948,7 @@ void LowerAttackIfSelectedIsBugbearOrGnoll(PCharacter Who, PAffect Affect, u8 Mo
      Runs for affect $31 (id 49, InitAffectHandlers [V]). */
 void RaiseOrLowerAttackAndSave(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("RaiseOrLowerAttackAndSave");
   u8 Side = 0;
   Side = ((((*FPD(TAffect (*), Affect)).Data & SideDataBit)) / 16);
   if ((*FPD(TCharacter (*), Who)).Side == Side) {
@@ -895,6 +967,7 @@ void RaiseOrLowerAttackAndSave(PCharacter Who, PAffect Affect, u8 Mode)
      for the first call start at 12FB), so it has no routine of its own. Runs for affect $32 (id 50, InitAffectHandlers [V]). */
 void AddHealingBlockAndHeal(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("AddHealingBlockAndHeal");
   if (TryAddAffect(Who, AffectMummyDisease, (*FPD(TAffect (*), Affect)).Data, MummyDiseaseDuration)) {
     if (HealCharacter(Who, 1, 1)) {
       ShowHealResult(Who);
@@ -908,6 +981,7 @@ void AddHealingBlockAndHeal(PCharacter Who, PAffect Affect, u8 Mode)
      stands alone. runs for affects $1F, $33, $34 and $35 (ids 31, 51, 52, 53, InitAffectHandlers [V]). */
 void EndAffectedCombatantTurn(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("EndAffectedCombatantTurn");
   if (EndCombatTurn(Who) != 0) {
   }
 }
@@ -917,6 +991,7 @@ void EndAffectedCombatantTurn(PCharacter Who, PAffect Affect, u8 Mode)
      InitAffectHandlers [V]). */
 void IgnoreAffect36(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("IgnoreAffect36");
 }
 
 /* ovl12:135C. Affect handler (the AffectHandlers shape: Who, Affect and Mode) with an empty body, like IgnoreAffect
@@ -924,6 +999,7 @@ void IgnoreAffect36(PCharacter Who, PAffect Affect, u8 Mode)
      InitAffectHandlers [V]). */
 void IgnoreAffect37(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("IgnoreAffect37");
 }
 
 /* ovl12:1363. Affect handler (the AffectHandlers shape: Who, Affect and Mode; only Who is read). It gives Who the
@@ -934,6 +1010,7 @@ void IgnoreAffect37(PCharacter Who, PAffect Affect, u8 Mode)
      clears from the attacker (ovl24:0CB7) [I]. runs for affect $38 (id 56, InitAffectHandlers [V]). */
 void GiveInvisibilityForOneRound(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("GiveInvisibilityForOneRound");
   AddAffect(Who, AffectInvisibility, InvisibilityDuration, InvisibilityData, NoRemoveHandler);
 }
 
@@ -947,6 +1024,7 @@ void GiveInvisibilityForOneRound(PCharacter Who, PAffect Affect, u8 Mode)
      text "Dies rots away". Runs for affect $39 (id 57, InitAffectHandlers [V]). */
 void ProgressRot(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("ProgressRot");
   if (RemovingAffects != 0) {
     return;
   }
@@ -974,6 +1052,7 @@ void ProgressRot(PCharacter Who, PAffect Affect, u8 Mode)
      InitAffectHandlers [V]). */
 void StopMovement(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("StopMovement");
   (*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).Moves = 0;
   if (HookRunning) {
     HookedMoveOrAttacks = 0;
@@ -985,6 +1064,7 @@ void StopMovement(PCharacter Who, PAffect Affect, u8 Mode)
      when it is removed (NoRemoveHandler). runs for affect $3B (id 59, InitAffectHandlers [V]). */
 void GiveRegainHitPointsAffect(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("GiveRegainHitPointsAffect");
   AddAffect(Who, AffectRegainHitPoints, PermanentDuration, AffectRegainHitPointsData, NoRemoveHandler);
 }
 
@@ -996,18 +1076,22 @@ void GiveRegainHitPointsAffect(PCharacter Who, PAffect Affect, u8 Mode)
      name of affect $3D [V]; the item side is the Ring with Affects[3] $81 and Affects[2] $3D (Ring of Fire Resistance [I]). */
 void ReduceFireDamageByRoll(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("ReduceFireDamageByRoll");
   u8 I = 0;
-  u8 t1;
   if (((DamageKind & KindFire)) != 0) {
-    t1 = LastDiceCount;
-    I = 1;
-    if (I <= t1) for (;;) {
-      DamageAmount -= FireReductionPerDie;
-      if (DamageAmount < LastDiceCount) {
-        DamageAmount = LastDiceCount;
+    {
+      u8 limit = LastDiceCount;
+      if (1 <= limit) {
+        I = 1;
+        for (;;) {
+            DamageAmount -= FireReductionPerDie;
+            if (DamageAmount < LastDiceCount) {
+              DamageAmount = LastDiceCount;
+            }
+          if (I == limit) break;
+          I++;
+        }
       }
-      if (I == t1) break;
-      I++;
     }
     SaveRoll += FireProtectionSaveBonus;
     if (((DamageKind & KindMagic)) == 0) {
@@ -1024,6 +1108,7 @@ void ReduceFireDamageByRoll(PCharacter Who, PAffect Affect, u8 Mode)
      InitAffectHandlers [V]). */
 void AddTrainedOutAndHeal(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("AddTrainedOutAndHeal");
   if (TryAddAffect(Who, AffectTrainedOut, (*FPD(TAffect (*), Affect)).Data, TrainedOutDuration)) {
     if (HealCharacter(Who, 1, 1)) {
       ShowHealResult(Who);
@@ -1042,6 +1127,7 @@ void AddTrainedOutAndHeal(PCharacter Who, PAffect Affect, u8 Mode)
      [V]). */
 void PoisonAttackTarget(PCharacter Who, s8 Bonus)
 {
+  POOL_TRACE("PoisonAttackTarget");
   AttackTarget = (*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).Target;
   if (!SavingThrow(AttackTarget, SaveKindPoison, Bonus)) {
     ShowCharacterMessage(AttackTarget, S("\013is Poisoned"), CombatMessageRow, 0);
@@ -1059,6 +1145,7 @@ void PoisonAttackTarget(PCharacter Who, s8 Bonus)
      routine never reads it. */
 void ParalyzeAttackTarget(PCharacter Who, u16 Duration, u8 Unused)
 {
+  POOL_TRACE("ParalyzeAttackTarget");
   AttackTarget = (*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).Target;
   if (!SavingThrow(AttackTarget, SaveKindParalysis, 0)) {
     ShowHitMessage(AttackTarget, 1, S("\014is Paralyzed"));
@@ -1071,6 +1158,7 @@ void ParalyzeAttackTarget(PCharacter Who, u16 Duration, u8 Unused)
      InitAffectHandlers [V]). */
 void PoisonAttackTargetBonus0(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("PoisonAttackTargetBonus0");
   PoisonAttackTarget(Who, 0);
 }
 
@@ -1079,6 +1167,7 @@ void PoisonAttackTargetBonus0(PCharacter Who, PAffect Affect, u8 Mode)
      InitAffectHandlers [V]). */
 void PoisonAttackTargetBonus4(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("PoisonAttackTargetBonus4");
   PoisonAttackTarget(Who, 4);
 }
 
@@ -1087,6 +1176,7 @@ void PoisonAttackTargetBonus4(PCharacter Who, PAffect Affect, u8 Mode)
      InitAffectHandlers [V]). */
 void PoisonAttackTargetBonus2(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("PoisonAttackTargetBonus2");
   PoisonAttackTarget(Who, 2);
 }
 
@@ -1096,6 +1186,7 @@ void PoisonAttackTargetBonus2(PCharacter Who, PAffect Affect, u8 Mode)
      InitAffectHandlers [V]). */
 void ParalyzeAttackTargetFor2d8(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("ParalyzeAttackTargetFor2d8");
   ParalyzeAttackTarget(Who, RollDice(2, 8), 0);
 }
 
@@ -1106,6 +1197,7 @@ void ParalyzeAttackTargetFor2d8(PCharacter Who, PAffect Affect, u8 Mode)
      InitAffectHandlers [V]). */
 void ParalyzeAttackTargetUnlessImmune(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("ParalyzeAttackTargetUnlessImmune");
   if ((*FPD(TCharacter (*), (*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).Target)).Race != RaceElf) {
     ParalyzeAttackTarget(Who, ParalysisDuration, 0);
   }
@@ -1116,6 +1208,7 @@ void ParalyzeAttackTargetUnlessImmune(PCharacter Who, PAffect Affect, u8 Mode)
      Runs for affect $45 (id 69, InitAffectHandlers [V]). */
 void ParalyzeAttackTargetFor1d9Plus10(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("ParalyzeAttackTargetFor1d9Plus10");
   /* the third argument is the unused byte: ParalyzeAttackTarget never reads it; this caller passes $FE, the others 0 */
   ParalyzeAttackTarget(Who, (s16)(RollDice(1, ParalysisDieSides) + ParalysisBaseRounds), 0xFE);
 }
@@ -1125,6 +1218,7 @@ void ParalyzeAttackTargetFor1d9Plus10(PCharacter Who, PAffect Affect, u8 Mode)
      InitAffectHandlers [V]). */
 void PoisonAttackTargetBonusMinus2(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("PoisonAttackTargetBonusMinus2");
   PoisonAttackTarget(Who, (-2));
 }
 
@@ -1134,6 +1228,7 @@ void PoisonAttackTargetBonusMinus2(PCharacter Who, PAffect Affect, u8 Mode)
      without the test InvisibleTargetHardToHit (ovl12:0918) makes first. Runs for affect $47 (id 71, InitAffectHandlers [V]). */
 void InvisibleTargetCannotBeTargeted(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("InvisibleTargetCannotBeTargeted");
   HookVetoFlag = 1;
   AttackRoll -= AttackPenalty;
 }
@@ -1146,6 +1241,7 @@ void InvisibleTargetCannotBeTargeted(PCharacter Who, PAffect Affect, u8 Mode)
      InitAffectHandlers [V]). */
 void CamouflageGivesInvisibility(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("CamouflageGivesInvisibility");
   if (RollDice(1, 100) <= CamouflageInvisibilityChance) {
     AddAffect(Who, AffectInvisibility, InvisibilityDuration, InvisibilityData, NoRemoveHandler);
   }
@@ -1165,6 +1261,7 @@ void CamouflageGivesInvisibility(PCharacter Who, PAffect Affect, u8 Mode)
      a combatant with it nonzero to flee, ovl09:10D7). Runs for affect $4B (id 75, InitAffectHandlers [V]). */
 void DrainBloodFromCombatant(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("DrainBloodFromCombatant");
   u8 Turn = 0;
   u8 Dice = 0;
   AttackTarget = CombatantRecord[(*FPD(TAffect (*), Affect)).Data - 1];
@@ -1198,6 +1295,7 @@ void DrainBloodFromCombatant(PCharacter Who, PAffect Affect, u8 Mode)
      handler runs at once (CallAffectHandler). Runs for affect $4C (id 76, InitAffectHandlers [V]). */
 void StartBloodDrain(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("StartBloodDrain");
   AttackTarget = (*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).Target;
   AddAffect(Who, AffectBloodDrain, BloodDrainDuration, CombatantIndex(AttackTarget), RunsHandlerOnRemove);
   AddAffect(AttackTarget, AffectHeldFast, HeldFastDuration, HeldFastData, NoRemoveHandler);
@@ -1213,6 +1311,7 @@ void StartBloodDrain(PCharacter Who, PAffect Affect, u8 Mode)
      (ShowCharacterMessage). Runs for affect $4D (id 77, InitAffectHandlers [V]). */
 void HoldWeakTargetFast(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("HoldWeakTargetFast");
   AttackTarget = (*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).Target;
   if ((*FPD(TCharacter (*), AttackTarget)).Strength < HeldFastStrengthLimit) {
     AddAffect(Who, AffectForcedAttack, ForcedAttackDuration, CombatantIndex(AttackTarget), RunsHandlerOnRemove);
@@ -1228,6 +1327,7 @@ void HoldWeakTargetFast(PCharacter Who, PAffect Affect, u8 Mode)
      tried again (TryAddAffect; its result is stored and never read). Runs for affect $4E (id 78, InitAffectHandlers [V]). */
 void ReviveOrRetryRevival(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("ReviveOrRetryRevival");
   u8 Added = 0;
   if (!ReviveCombatant(Who, (*FPD(TCharacter (*), Who)).HpCurrent)) {
     Added = TryAddAffect(Who, AffectRevival, (*FPD(TAffect (*), Affect)).Data, RevivalRetryDuration);
@@ -1240,6 +1340,7 @@ void ReviveOrRetryRevival(PCharacter Who, PAffect Affect, u8 Mode)
      (DealDamage, ovl24:1344). Runs for affect $4F (id 79, InitAffectHandlers [V]). */
 void FireAttackTargetFor2d10(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("FireAttackTargetFor2d10");
   DamageKind = (KindFire | KindMagic);
   DealDamage((*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).Target, RollDiceCounted(2, 10), 0, 0);
 }
@@ -1249,6 +1350,7 @@ void FireAttackTargetFor2d10(PCharacter Who, PAffect Affect, u8 Mode)
      save (DealDamage, ovl24:1344). Runs for affect $50 (id 80, InitAffectHandlers [V]). */
 void AcidAttackTargetFor1d4(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("AcidAttackTargetFor1d4");
   DamageKind = KindAcid;
   DealDamage((*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).Target, RollDiceCounted(1, 4), 0, 0);
 }
@@ -1262,6 +1364,7 @@ void AcidAttackTargetFor1d4(PCharacter Who, PAffect Affect, u8 Mode)
      (ApplyAffect, ovl24:1656). Other levels get nothing. Runs for affect $51 (id 81, InitAffectHandlers [V]). */
 void FrightenSideWithFear(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("FrightenSideWithFear");
   PCharacter Scan = 0;
   u8 FearSaved = 0;
   Scan = PartyListHead;
@@ -1299,6 +1402,7 @@ void FrightenSideWithFear(PCharacter Who, PAffect Affect, u8 Mode)
      save negates the affect. Runs for affect $52 (id 82, InitAffectHandlers [V]). */
 void ParalyzeSideWithFear(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("ParalyzeSideWithFear");
   PCharacter Scan = 0;
   u8 Bonus = 0;
   u8 Saved = 0;
@@ -1332,6 +1436,7 @@ void ParalyzeSideWithFear(PCharacter Who, PAffect Affect, u8 Mode)
      and "is Stoned". Runs for affect $53 (id 83, InitAffectHandlers [V]). */
 void GazeStonesTarget(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("GazeStonesTarget");
   PItem Item = 0;
   u8 Reflected = 0;
   farptr FoundAffect = 0;
@@ -1370,6 +1475,7 @@ void GazeStonesTarget(PCharacter Who, PAffect Affect, u8 Mode)
      InitAffectHandlers [V]). */
 void GazeCharmsTarget(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("GazeCharmsTarget");
   u16 StepCount = 0;
   farptr FoundAffect = 0;
   s8 EndX = 0;
@@ -1419,23 +1525,27 @@ static s8 DrainLevels_HighestLevelClass(struct Frame_DrainLevels *up)
   s8 Level = 0;
   up->BestXp = 0;
   BestLevel = 0;
-  J = 0;
-  if (J <= LastClass_OVL12) for (;;) {
-    Level = (*FPD(TCharacter (*), up->Who)).ClassLevels[J];
-    if (Level > 1) {
-      up->CurXp = ExperienceTable[J][Level];
-    } else {
-      up->CurXp = 0;
-    }
-    if (Level >= BestLevel) {
-      if (((up->CurXp >= up->BestXp)) || ((up->CurXp == (-1)))) {
-        up->BestXp = up->CurXp;
-        Result = J;
-        BestLevel = Level;
+  {
+    if (0 <= LastClass_OVL12) {
+      J = 0;
+      for (;;) {
+          Level = (*FPD(TCharacter (*), up->Who)).ClassLevels[J];
+          if (Level > 1) {
+            up->CurXp = ExperienceTable[J][Level];
+          } else {
+            up->CurXp = 0;
+          }
+          if (Level >= BestLevel) {
+            if (((up->CurXp >= up->BestXp)) || ((up->CurXp == (-1)))) {
+              up->BestXp = up->CurXp;
+              Result = J;
+              BestLevel = Level;
+            }
+          }
+        if (J == LastClass_OVL12) break;
+        J++;
       }
     }
-    if (J == LastClass_OVL12) break;
-    J++;
   }
   return Result;
 }
@@ -1458,6 +1568,7 @@ static s8 DrainLevels_HighestLevelClass(struct Frame_DrainLevels *up)
      QUIRK ovl12:2122: Total 0 (a character with no class level) divides by zero. */
 void DrainLevels(PCharacter Who, u8 Count)
 {
+  POOL_TRACE("DrainLevels");
   Frame_DrainLevels fr;
   memset(&fr, 0, sizeof fr);
   fr.Who = Who;
@@ -1465,8 +1576,6 @@ void DrainLevels(PCharacter Who, u8 Count)
   u8 t1[256];
   u8 t2[256];
   u8 t3[256];
-  u8 t4;
-  u8 t5;
   if (fr.Count > 1) {
     rtl_str_assign(fr.Msg, 40, rtl_str_cat(t2, 2, (const u8 *const[]){ByteToText(t1, fr.Count), S("\007 levels")}));
   } else {
@@ -1478,55 +1587,67 @@ void DrainLevels(PCharacter Who, u8 Count)
     (*FPD(TCharacter (*), fr.Who)).HpMax = 0;
     return;
   }
-  t4 = fr.Count;
-  fr.Step = 1;
-  if (fr.Step <= t4) for (;;) {
-    if ((*FPD(TCharacter (*), fr.Who)).Status != StatusGone) {
-      (*FPD(TCharacter (*), fr.Who)).Pad74[0]++;
-      fr.Total = 0;
-      fr.ClassIndex = 0;
-      if (fr.ClassIndex <= LastClass_OVL12) for (;;) {
-        fr.Total += (*FPD(TCharacter (*), fr.Who)).ClassLevels[fr.ClassIndex];
-        if (fr.ClassIndex == LastClass_OVL12) break;
-        fr.ClassIndex++;
+  {
+    u8 limit = fr.Count;
+    if (1 <= limit) {
+      fr.Step = 1;
+      for (;;) {
+          if ((*FPD(TCharacter (*), fr.Who)).Status != StatusGone) {
+            (*FPD(TCharacter (*), fr.Who)).Pad74[0]++;
+            fr.Total = 0;
+            {
+              if (0 <= LastClass_OVL12) {
+                fr.ClassIndex = 0;
+                for (;;) {
+                    fr.Total += (*FPD(TCharacter (*), fr.Who)).ClassLevels[fr.ClassIndex];
+                  if (fr.ClassIndex == LastClass_OVL12) break;
+                  fr.ClassIndex++;
+                }
+              }
+            }
+            fr.Quotient = ((*FPD(TCharacter (*), fr.Who)).HpMax / fr.Total);
+            ShowDebugTrace(S("\014max,cur,lost"), (*FPD(TCharacter (*), fr.Who)).HpMax, (*FPD(TCharacter (*), fr.Who)).HpCurrent, (*FPD(TCharacter (*), fr.Who)).Pad74[1]);
+            {
+              u8 limit = fr.Quotient;
+              if (1 <= limit) {
+                fr.Point = 1;
+                for (;;) {
+                    if ((*FPD(TCharacter (*), fr.Who)).HpMax > 0) {
+                      (*FPD(TCharacter (*), fr.Who)).HpMax--;
+                    }
+                    if ((*FPD(TCharacter (*), fr.Who)).HpB1 > 0) {
+                      (*FPD(TCharacter (*), fr.Who)).HpB1--;
+                    }
+                    if ((*FPD(TCharacter (*), fr.Who)).HpCurrent > 0) {
+                      (*FPD(TCharacter (*), fr.Who)).HpCurrent--;
+                    }
+                    (*FPD(TCharacter (*), fr.Who)).Pad74[1]++;
+                  if (fr.Point == limit) break;
+                  fr.Point++;
+                }
+              }
+            }
+            if ((*FPD(TCharacter (*), fr.Who)).HighestLevel < 2) {
+              DropFromFight(fr.Who, StatusGone, S("\017is dead forever"));
+              (*FPD(TCharacter (*), fr.Who)).HpMax = 0;
+              if ((((*FPD(TCharacter (*), fr.Who)).ClassLevels[DrainLevels_HighestLevelClass(&fr)] > 0)) && ((fr.Count == 2))) {
+                (*FPD(TCharacter (*), fr.Who)).ClassLevels[DrainLevels_HighestLevelClass(&fr)] = 0;
+              }
+            } else {
+              (*FPD(TCharacter (*), fr.Who)).ClassLevels[DrainLevels_HighestLevelClass(&fr)]--;
+              if ((((*FPD(TCharacter (*), fr.Who)).HpCurrent == 0)) && (((*FPD(TCharacter (*), fr.Who)).Status != StatusDead))) {
+                DropFromFight(fr.Who, StatusDead, S("\011is killed"));
+              }
+              RecalcClassStats(fr.Who);
+            }
+            (*FPD(TCharacter (*), fr.Who)).HighestLevel = (*FPD(TCharacter (*), fr.Who)).ClassLevels[DrainLevels_HighestLevelClass(&fr)];
+            (*FPD(TCharacter (*), fr.Who)).Experience = fr.BestXp;
+            RecalcCombatValues(fr.Who);
+          }
+        if (fr.Step == limit) break;
+        fr.Step++;
       }
-      fr.Quotient = ((*FPD(TCharacter (*), fr.Who)).HpMax / fr.Total);
-      ShowDebugTrace(S("\014max,cur,lost"), (*FPD(TCharacter (*), fr.Who)).HpMax, (*FPD(TCharacter (*), fr.Who)).HpCurrent, (*FPD(TCharacter (*), fr.Who)).Pad74[1]);
-      t5 = fr.Quotient;
-      fr.Point = 1;
-      if (fr.Point <= t5) for (;;) {
-        if ((*FPD(TCharacter (*), fr.Who)).HpMax > 0) {
-          (*FPD(TCharacter (*), fr.Who)).HpMax--;
-        }
-        if ((*FPD(TCharacter (*), fr.Who)).HpB1 > 0) {
-          (*FPD(TCharacter (*), fr.Who)).HpB1--;
-        }
-        if ((*FPD(TCharacter (*), fr.Who)).HpCurrent > 0) {
-          (*FPD(TCharacter (*), fr.Who)).HpCurrent--;
-        }
-        (*FPD(TCharacter (*), fr.Who)).Pad74[1]++;
-        if (fr.Point == t5) break;
-        fr.Point++;
-      }
-      if ((*FPD(TCharacter (*), fr.Who)).HighestLevel < 2) {
-        DropFromFight(fr.Who, StatusGone, S("\017is dead forever"));
-        (*FPD(TCharacter (*), fr.Who)).HpMax = 0;
-        if ((((*FPD(TCharacter (*), fr.Who)).ClassLevels[DrainLevels_HighestLevelClass(&fr)] > 0)) && ((fr.Count == 2))) {
-          (*FPD(TCharacter (*), fr.Who)).ClassLevels[DrainLevels_HighestLevelClass(&fr)] = 0;
-        }
-      } else {
-        (*FPD(TCharacter (*), fr.Who)).ClassLevels[DrainLevels_HighestLevelClass(&fr)]--;
-        if ((((*FPD(TCharacter (*), fr.Who)).HpCurrent == 0)) && (((*FPD(TCharacter (*), fr.Who)).Status != StatusDead))) {
-          DropFromFight(fr.Who, StatusDead, S("\011is killed"));
-        }
-        RecalcClassStats(fr.Who);
-      }
-      (*FPD(TCharacter (*), fr.Who)).HighestLevel = (*FPD(TCharacter (*), fr.Who)).ClassLevels[DrainLevels_HighestLevelClass(&fr)];
-      (*FPD(TCharacter (*), fr.Who)).Experience = fr.BestXp;
-      RecalcCombatValues(fr.Who);
     }
-    if (fr.Step == t4) break;
-    fr.Step++;
   }
 }
 
@@ -1535,6 +1656,7 @@ void DrainLevels(PCharacter Who, u8 Count)
      takes one level off it, with "is drained a level" shown on it. Runs for affect $55 (id 85, InitAffectHandlers [V]). */
 void DrainAttackTargetLevel(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("DrainAttackTargetLevel");
   DrainLevels((*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).Target, 1);
 }
 
@@ -1543,6 +1665,7 @@ void DrainAttackTargetLevel(PCharacter Who, PAffect Affect, u8 Mode)
      takes two levels off it, with "is drained 2 levels" shown on it. Runs for affect $56 (id 86, InitAffectHandlers [V]). */
 void DrainAttackTargetTwoLevels(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("DrainAttackTargetTwoLevels");
   DrainLevels((*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).Target, 2);
 }
 
@@ -1555,6 +1678,7 @@ void DrainAttackTargetTwoLevels(PCharacter Who, PAffect Affect, u8 Mode)
      (id 87, InitAffectHandlers [V]). */
 void CauseRotOnAttackTarget(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("CauseRotOnAttackTarget");
   farptr FoundAffect = 0;
   AttackTarget = (*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).Target;
   if (!HasAffect(AttackTarget, AffectMummyDisease, &FoundAffect)) {
@@ -1570,6 +1694,7 @@ void CauseRotOnAttackTarget(PCharacter Who, PAffect Affect, u8 Mode)
      and MissedBit is set, so the attack misses once. Runs for affect $59 (id 89, InitAffectHandlers [V]). */
 void ForceFirstAttackMiss(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("ForceFirstAttackMiss");
   if (((CombatRound == 0)) && ((AttackRoll == 0))) {
     (*FPD(TAffect (*), Affect)).Data = ((*FPD(TAffect (*), Affect)).Data & DataLowNibble);
   } else if ((((*FPD(TAffect (*), Affect)).Data & MissedBit)) == 0) {
@@ -1586,6 +1711,7 @@ void ForceFirstAttackMiss(PCharacter Who, PAffect Affect, u8 Mode)
      value is added to SaveRoll. */
 void DwarfHalflingPoisonSaveBonus(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("DwarfHalflingPoisonSaveBonus");
   u8 Bonus = 0;
   if (SaveKind == SaveKindPoison) {
     /* The bonus by Constitution bracket, the same table in ovl12:24D9 and ovl12:268A: 4..6 gives 1, 7..10 gives 2, 11..13 gives
@@ -1641,6 +1767,7 @@ void DwarfHalflingPoisonSaveBonus(PCharacter Who, PAffect Affect, u8 Mode)
      $5B (id 91, InitAffectHandlers [V]). */
 void ImmuneToMagicMissileAndElectricity(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("ImmuneToMagicMissileAndElectricity");
   if (CastingSpell == SpellMagicMissile) {
     CancelPendingHook(0);
     ShowCharacterMessage(Who, S("\015is unaffected"), CombatMessageRow, 1);
@@ -1654,6 +1781,7 @@ void ImmuneToMagicMissileAndElectricity(PCharacter Who, PAffect Affect, u8 Mode)
      (ovl12:06E4) without its SaveRoll bonus. Runs for affect $5D (id 93, InitAffectHandlers [V]). */
 void HalveFireDamageNoSave(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("HalveFireDamageNoSave");
   if (((DamageKind & KindFire)) != 0) {
     DamageAmount = (s16)((u16)DamageAmount >> 1);
   }
@@ -1668,6 +1796,7 @@ void HalveFireDamageNoSave(PCharacter Who, PAffect Affect, u8 Mode)
      attacker's weapon has ItemTable byte 7 flag $01 (piercing) or $80 (bludgeoning) [I]. */
 void HalveDamageForFirstSlotItem(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("HalveDamageForFirstSlotItem");
   PItem Item = 0;
   Item = FirstSlotItem(SelectedCharacter);
   if (Item != 0) {
@@ -1683,6 +1812,7 @@ void HalveDamageForFirstSlotItem(PCharacter Who, PAffect Affect, u8 Mode)
      (id 95, InitAffectHandlers [V]). */
 void FallDeadIfInFight(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("FallDeadIfInFight");
   (*FPD(TAffect (*), Affect)).Flag = 0;
   if ((*FPD(TCharacter (*), Who)).Flag10D != 0) {
     DropFromFight(Who, StatusDead, S("\012Falls dead"));
@@ -1695,6 +1825,7 @@ void FallDeadIfInFight(PCharacter Who, PAffect Affect, u8 Mode)
      Runs for affect $60 (id 96, InitAffectHandlers [V]). */
 void CancelDamageUnlessMagicSlotItem(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("CancelDamageUnlessMagicSlotItem");
   PItem Item = 0;
   Item = FirstSlotItem(SelectedCharacter);
   if (((Item == 0)) || (((((*FPD(TMenuLine (*), Item)).Plus == 0)) && (((*FPD(TMenuLine (*), Item)).NameNum[2] != SilverNameNum_OVL12))))) {
@@ -1710,6 +1841,7 @@ void CancelDamageUnlessMagicSlotItem(PCharacter Who, PAffect Affect, u8 Mode)
      value is added to SaveRoll. */
 void DwarfGnomeHalflingWandSpellSaveBonus(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("DwarfGnomeHalflingWandSpellSaveBonus");
   u8 Bonus = 0;
   if (((SaveKind == SaveKindSpell)) || ((SaveKind == SaveKindWand))) {
     /* The bonus by Constitution bracket, the same table in ovl12:24D9 and ovl12:268A: 4..6 gives 1, 7..10 gives 2, 11..13 gives
@@ -1762,6 +1894,7 @@ void DwarfGnomeHalflingWandSpellSaveBonus(PCharacter Who, PAffect Affect, u8 Mod
      Runs for affect $62 (id 98, InitAffectHandlers [V]). */
 void RegainHitPoints(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("RegainHitPoints");
   (*FPD(TCharacter (*), Who)).HpCurrent += RegainedHitPoints;
   if ((*FPD(TCharacter (*), Who)).HpCurrent > (*FPD(TCharacter (*), Who)).HpMax) {
     (*FPD(TCharacter (*), Who)).HpCurrent = (*FPD(TCharacter (*), Who)).HpMax;
@@ -1776,6 +1909,7 @@ void RegainHitPoints(PCharacter Who, PAffect Affect, u8 Mode)
      InitAffectHandlers [V]). */
 void ReviveDyingCharacter(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("ReviveDyingCharacter");
   u8 HitPoints = 0;
   HitPoints = 0;
   if ((*FPD(TCharacter (*), Who)).Status == StatusDying) {
@@ -1800,6 +1934,7 @@ void ReviveDyingCharacter(PCharacter Who, PAffect Affect, u8 Mode)
      with the Data $FF, and its handler runs when it is removed. Runs for affect $64 (id 100, InitAffectHandlers [V]). */
 void GiveAffectUnlessFireOrAcid(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("GiveAffectUnlessFireOrAcid");
   if (((DamageKind & KindFire)) == 0) {
     if (((DamageKind & KindAcid)) == 0) {
       AddAffect(Who, AffectRetryRevival, RollDice(AffectRetryRevivalDice, AffectRetryRevivalSides), DataFF, RunsHandlerOnRemove);
@@ -1813,6 +1948,7 @@ void GiveAffectUnlessFireOrAcid(PCharacter Who, PAffect Affect, u8 Mode)
      with the Data $FF, and its handler runs when it is removed. Runs for affect $65 (id 101, InitAffectHandlers [V]). */
 void GiveRegeneratingUnlessAffected(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("GiveRegeneratingUnlessAffected");
   farptr FoundAffect = 0;
   if (!HasAffect(Who, AffectRegainHitPoints, &FoundAffect)) {
     if (!HasAffect(Who, AffectRegenerating, &FoundAffect)) {
@@ -1827,6 +1963,7 @@ void GiveRegeneratingUnlessAffected(PCharacter Who, PAffect Affect, u8 Mode)
      and never read. Runs for affect $66 (id 102, InitAffectHandlers [V]). */
 void RetryRevivalAtFullHitPoints(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("RetryRevivalAtFullHitPoints");
   u8 Added = 0;
   if (!ReviveCombatant(Who, (*FPD(TCharacter (*), Who)).HpMax)) {
     Added = TryAddAffect(Who, AffectRetryRevival, (*FPD(TAffect (*), Affect)).Data, AffectRetryRevivalRetryDuration);
@@ -1839,6 +1976,7 @@ void RetryRevivalAtFullHitPoints(PCharacter Who, PAffect Affect, u8 Mode)
      'Turns gaseous and escapes' (DropCombatant, ovl24:0F06). Runs for affect $67 (id 103, InitAffectHandlers [V]). */
 void TurnGaseousAndEscape(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("TurnGaseousAndEscape");
   (*FPD(TAffect (*), Affect)).Flag = NoRemoveHandler;
   ShowCursorOn(Who, GaseousCursorMargin, GaseousShowCursor);
   DropCombatant(Who, StatusFled, S("\031Turns gaseous and escapes"));
@@ -1849,6 +1987,7 @@ void TurnGaseousAndEscape(PCharacter Who, PAffect Affect, u8 Mode)
      Runs for affect $68 (id 104, InitAffectHandlers [V]). */
 void AvoidDistantAttackByChance(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("AvoidDistantAttackByChance");
   AvoidDistantAttack(Who, DistantAvoidChance);
 }
 
@@ -1864,6 +2003,7 @@ void AvoidDistantAttackByChance(PCharacter Who, PAffect Affect, u8 Mode)
      Level above 11 (12 for class 2) the threshold rises above Chance. Never fixed. */
 void RollMagicResistance(u8 Chance)
 {
+  POOL_TRACE("RollMagicResistance");
   u8 Level = 0;
   u8 Threshold = 0;
   Level = SpellCasterLevel(CastingSpell);
@@ -1881,6 +2021,7 @@ void RollMagicResistance(u8 Chance)
      InitAffectHandlers [V]). */
 void CancelHookByHalfChance(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("CancelHookByHalfChance");
   RollMagicResistance(HookChanceHalf);
 }
 
@@ -1889,6 +2030,7 @@ void CancelHookByHalfChance(PCharacter Who, PAffect Affect, u8 Mode)
      Runs for affect $6A (id 106, InitAffectHandlers [V]). */
 void CancelHookByLowChance(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("CancelHookByLowChance");
   RollMagicResistance(HookChanceLow);
 }
 
@@ -1897,6 +2039,7 @@ void CancelHookByLowChance(PCharacter Who, PAffect Affect, u8 Mode)
      (AffectCharm), each through CancelPendingHook. Runs for affect $6B (id 107, InitAffectHandlers [V]). */
 void ElfResistsCharmAndSleep(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("ElfResistsCharmAndSleep");
   if (RollDice(1, 100) <= ElfCharmSleepResistance) {
     CancelPendingHook(AffectEndsTurn);
     CancelPendingHook(AffectCharm);
@@ -1908,6 +2051,7 @@ void ElfResistsCharmAndSleep(PCharacter Who, PAffect Affect, u8 Mode)
      (id 108, InitAffectHandlers [V]). */
 void ImmuneToCharmAndSleep(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("ImmuneToCharmAndSleep");
   CancelPendingHook(AffectCharm);
   CancelPendingHook(AffectEndsTurn);
 }
@@ -1918,6 +2062,7 @@ void ImmuneToCharmAndSleep(PCharacter Who, PAffect Affect, u8 Mode)
      WRAITH and FERRAN MARTINEZ (MON4SPC) [V]. */
 void CancelParalysisHook(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("CancelParalysisHook");
   CancelPendingHook(AffectParalysis);
 }
 
@@ -1927,6 +2072,7 @@ void CancelParalysisHook(PCharacter Who, PAffect Affect, u8 Mode)
      undead (SPECTRE, WIGHT, WRAITH, SKELETON, GIANT SKELETON, ZOMBIE, JUJU ZOMBIE, MUMMY, FERRAN MARTINEZ) [V monster data]. */
 void CancelColdDamage(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("CancelColdDamage");
   if (((DamageKind & KindCold)) != 0) {
     CancelPendingHook(0);
   }
@@ -1939,6 +2085,7 @@ void CancelColdDamage(PCharacter Who, PAffect Affect, u8 Mode)
      SPECTRE, WIGHT, WRAITH and FERRAN MARTINEZ (affect $6F, AffectPoisonImmunity) [V monster data, I meaning]. */
 void CancelPoisonAndParalysisHooks(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("CancelPoisonAndParalysisHooks");
   CancelPendingHook(AffectPoisoned);
   CancelPendingHook(AffectParalysis);
   if (SaveKind == SaveKindPoison) {
@@ -1952,6 +2099,7 @@ void CancelPoisonAndParalysisHooks(PCharacter Who, PAffect Affect, u8 Mode)
      by the FIRE GIANT (MON5SPC block 56) [V]. */
 void CancelFireDamage(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("CancelFireDamage");
   if (((DamageKind & KindFire)) != 0) {
     CancelPendingHook(0);
   }
@@ -1964,18 +2112,22 @@ void CancelFireDamage(PCharacter Who, PAffect Affect, u8 Mode)
      (id 113, InitAffectHandlers [V]). Game meaning: fire resistance of the EFREETI (MON4SPC 70, MON8SPC 124) [V]. */
 void ReduceFireDamageOnePerDie(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("ReduceFireDamageOnePerDie");
   u8 I = 0;
-  u8 t1;
   if (((DamageKind & KindFire)) != 0) {
-    t1 = LastDiceCount;
-    I = 1;
-    if (I <= t1) for (;;) {
-      DamageAmount--;
-      if (DamageAmount < LastDiceCount) {
-        DamageAmount = LastDiceCount;
+    {
+      u8 limit = LastDiceCount;
+      if (1 <= limit) {
+        I = 1;
+        for (;;) {
+            DamageAmount--;
+            if (DamageAmount < LastDiceCount) {
+              DamageAmount = LastDiceCount;
+            }
+          if (I == limit) break;
+          I++;
+        }
       }
-      if (I == t1) break;
-      I++;
     }
   }
 }
@@ -1986,6 +2138,7 @@ void ReduceFireDamageOnePerDie(PCharacter Who, PAffect Affect, u8 Mode)
      InitAffectHandlers [V]). Game meaning: carried only by the VAMPIRE [V]. */
 void HalveElectricityDamage(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("HalveElectricityDamage");
   if (((DamageKind & KindElectricity)) != 0) {
     DamageAmount = (s16)((u16)DamageAmount >> 1);
   }
@@ -1998,6 +2151,7 @@ void HalveElectricityDamage(PCharacter Who, PAffect Affect, u8 Mode)
      the weapon is bludgeoning (ItemTable byte 7 is 0 or odd), the AD&D skeleton rule [I]. */
 void HalveDamageByFirstSlotItemRow(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("HalveDamageByFirstSlotItemRow");
   PItem Item = 0;
   Item = FirstSlotItem(SelectedCharacter);
   if (Item != 0) {
@@ -2013,6 +2167,7 @@ void HalveDamageByFirstSlotItemRow(PCharacter Who, PAffect Affect, u8 Mode)
      damage from a weapon with Plus above 0 [I]. */
 void HalveDamageForEnchantedSlotItem(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("HalveDamageForEnchantedSlotItem");
   PItem Item = 0;
   Item = FirstSlotItem(SelectedCharacter);
   if (Item != 0) {
@@ -2030,6 +2185,7 @@ void HalveDamageForEnchantedSlotItem(PCharacter Who, PAffect Affect, u8 Mode)
      type $55 is Vial Of Holy Water [V item files]: damage 1d6 + 1, holy water against undead [I]. */
 void SetDamageFromHolyWater(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("SetDamageFromHolyWater");
   PItem Item = 0;
   Item = (*FPD(TCharacter (*), SelectedCharacter)).SlotItems[0];
   if (Item != 0) {
@@ -2045,6 +2201,7 @@ void SetDamageFromHolyWater(PCharacter Who, PAffect Affect, u8 Mode)
      InitAffectHandlers [V]). Game meaning: carried only by the VAMPIRE [V]. */
 void HalveColdDamageNoSave(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("HalveColdDamageNoSave");
   if (((DamageKind & KindCold)) != 0) {
     DamageAmount = (s16)((u16)DamageAmount >> 1);
   }
@@ -2058,6 +2215,7 @@ void HalveColdDamageNoSave(PCharacter Who, PAffect Affect, u8 Mode)
      or more, hurts [I]. */
 void CancelDamageUnlessEnchantedSlotItem(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("CancelDamageUnlessEnchantedSlotItem");
   PItem Item = 0;
   Item = FirstSlotItem(SelectedCharacter);
   if (((Item == 0)) || (((*FPD(TMenuLine (*), Item)).Plus == 0))) {
@@ -2075,6 +2233,7 @@ void CancelDamageUnlessEnchantedSlotItem(PCharacter Who, PAffect Affect, u8 Mode
      hurled boulder, 50 percent [I]. */
 void AvoidDistantAttackForBoulder(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("AvoidDistantAttackForBoulder");
   PItem Item = 0;
   Item = (*FPD(TCharacter (*), SelectedCharacter)).SlotItems[0];
   if (Item != 0) {
@@ -2097,6 +2256,7 @@ void AvoidDistantAttackForBoulder(PCharacter Who, PAffect Affect, u8 Mode)
      affect $79 (id 121, InitAffectHandlers [V]). */
 void SpitAcidAtTarget(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("SpitAcidAtTarget");
   u8 Turn = 0;
   AttackTarget = (*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).Target;
   if (RollDice(1, 100) <= SpitChance) {
@@ -2121,6 +2281,7 @@ void SpitAcidAtTarget(PCharacter Who, PAffect Affect, u8 Mode)
      plus the dice count for fire or magic damage, burning oil [I]. */
 void SetDamageFromOilFlask(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("SetDamageFromOilFlask");
   PItem Item = 0;
   Item = (*FPD(TCharacter (*), SelectedCharacter)).SlotItems[0];
   if (Item != 0) {
@@ -2141,6 +2302,7 @@ void SetDamageFromOilFlask(PCharacter Who, PAffect Affect, u8 Mode)
      silver weapon with Plus 0 does half damage, any other plain weapon none [I]. */
 void HalveOrCancelDamageForUnenchantedSlotItem(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("HalveOrCancelDamageForUnenchantedSlotItem");
   PItem Item = 0;
   Item = FirstSlotItem(SelectedCharacter);
   if (Item != 0) {
@@ -2159,6 +2321,7 @@ void HalveOrCancelDamageForUnenchantedSlotItem(PCharacter Who, PAffect Affect, u
      AffectEndsTurn, each through CancelPendingHook (ovl12:0000). Runs for affect $7C (id 124, InitAffectHandlers [V]). */
 void HalfElfResistsCharmAndSleep(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("HalfElfResistsCharmAndSleep");
   if (RollDice(1, 100) <= HalfElfCharmSleepResistance) {
     CancelPendingHook(AffectCharm);
     CancelPendingHook(AffectEndsTurn);
@@ -2173,6 +2336,7 @@ void HalfElfResistsCharmAndSleep(PCharacter Who, PAffect Affect, u8 Mode)
      InitAffectHandlers [V]). */
 void ImmuneToCharmSleepHoldAndPoison(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("ImmuneToCharmSleepHoldAndPoison");
   CancelPendingHook(AffectCharm);
   CancelPendingHook(AffectEndsTurn);
   CancelPendingHook(AffectParalysis);
@@ -2191,19 +2355,24 @@ void ImmuneToCharmSleepHoldAndPoison(PCharacter Who, PAffect Affect, u8 Mode)
      affect $7E (MON4SPC blocks 23 and 105) [V]. Runs for affect $7E (id 126, InitAffectHandlers [V]). */
 void VetoTargetWithMirrorOrWoodenHolySymbol(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("VetoTargetWithMirrorOrWoodenHolySymbol");
   PItem Item = 0;
   u8 NameIndex = 0;
   AttackTarget = (*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).Target;
   Item = (*FPD(TCharacter (*), AttackTarget)).Items;
   while (((Item != 0)) && ((HookVetoFlag == 0))) {
     if ((*FPD(TMenuLine (*), Item)).Readied) {
-      NameIndex = 1;
-      if (NameIndex <= 3) for (;;) {
-        if ((((((*FPD(TMenuLine (*), Item)).NameNum[NameIndex - 1] == HolySymbolNameNum)) && (((*FPD(TMenuLine (*), Item)).NameNum[2] == WoodenNameNum)))) || (((*FPD(TMenuLine (*), Item)).NameNum[NameIndex - 1] == MirrorNameNum))) {
-          HookVetoFlag = 1;
+      {
+        if (1 <= 3) {
+          NameIndex = 1;
+          for (;;) {
+              if ((((((*FPD(TMenuLine (*), Item)).NameNum[NameIndex - 1] == HolySymbolNameNum)) && (((*FPD(TMenuLine (*), Item)).NameNum[2] == WoodenNameNum)))) || (((*FPD(TMenuLine (*), Item)).NameNum[NameIndex - 1] == MirrorNameNum))) {
+                HookVetoFlag = 1;
+              }
+            if (NameIndex == 3) break;
+            NameIndex++;
+          }
         }
-        if (NameIndex == 3) break;
-        NameIndex++;
       }
     }
     Item = (*FPD(TMenuLine (*), Item)).Next;
@@ -2220,6 +2389,7 @@ void VetoTargetWithMirrorOrWoodenHolySymbol(PCharacter Who, PAffect Affect, u8 M
      $8A and $8B (ids 128, 129, 130, 133, 134, 136, 138, 139, InitAffectHandlers [V]). */
 void ApplyItemSecondAffect(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("ApplyItemSecondAffect");
   PItem Item = 0;
   Item = Affect;
   if (Mode != 0) {
@@ -2246,6 +2416,7 @@ void ApplyItemSecondAffect(PCharacter Who, PAffect Affect, u8 Mode)
      (QUIRK ovl12:2FFF), and stops once one was removed. Runs for affect $83 (id 131, InitAffectHandlers [V]). */
 void GiveExceptionalStrength(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("GiveExceptionalStrength");
   u8 Code = 0;
   u8 Strength = 0;
   u8 Percent = 0;
@@ -2297,6 +2468,7 @@ void GiveExceptionalStrength(PCharacter Who, PAffect Affect, u8 Mode)
      InitAffectHandlers [V]). */
 void AlignmentBoundWeaponHurtsOthers(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("AlignmentBoundWeaponHurtsOthers");
   PItem Item = 0;
   u8 Damage = 0;
   Item = Affect;
@@ -2323,6 +2495,7 @@ void AlignmentBoundWeaponHurtsOthers(PCharacter Who, PAffect Affect, u8 Mode)
      bludgeoning row [V item files]. Runs for affect $87 (id 135, InitAffectHandlers [V]). */
 void RequireGiantStrength(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("RequireGiantStrength");
   PItem Item = 0;
   Item = Affect;
   if (Mode != 0) {
@@ -2341,6 +2514,7 @@ void RequireGiantStrength(PCharacter Who, PAffect Affect, u8 Mode)
      [V]). */
 void EndSpiritualHammerWhenHammerRemoved(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("EndSpiritualHammerWhenHammerRemoved");
   if (Mode != 0) {
     RemoveAffect(Who, AffectSpiritualHammer, 0);
   }
@@ -2352,6 +2526,7 @@ void EndSpiritualHammerWhenHammerRemoved(PCharacter Who, PAffect Affect, u8 Mode
      AffectHandlers table (DS:6828). */
 void IgnoreAffectShared(PCharacter Who, PAffect Affect, u8 Mode)
 {
+  POOL_TRACE("IgnoreAffectShared");
 }
 
 /* ovl12:31A2. the name stays provisional because ovl11 calls it by name (ovl11:002D, StartGame);
@@ -2362,6 +2537,7 @@ void IgnoreAffectShared(PCharacter Who, PAffect Affect, u8 Mode)
      the table is not a handler (SaveKind lies in it). */
 void InitAffectHandlers(void)
 {
+  POOL_TRACE("InitAffectHandlers");
   AffectHandlers[1] = PROC_RaiseAttackAndMorale;
   AffectHandlers[2] = PROC_LowerAttackAndMorale;
   AffectHandlers[3] = PROC_BoostAttackAgainstUndead;
@@ -2505,4 +2681,5 @@ void InitAffectHandlers(void)
 /* Initialisation part of unit OVL12. */
 void init_OVL12(void)
 {
+  POOL_TRACE("init");
 }

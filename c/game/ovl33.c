@@ -16,6 +16,7 @@
      ShowMessageLine). */
 void ShowDebugTrace(const u8 *Message_in, u8 Max, u8 Current, u8 Lost)
 {
+  POOL_TRACE("ShowDebugTrace");
   const u8 *Message = Message_in;
   u8 MaxText[256] = {0};
   u8 CurrentText[256] = {0};
@@ -35,4 +36,5 @@ void ShowDebugTrace(const u8 *Message_in, u8 Max, u8 Current, u8 Lost)
 /* Initialisation part of unit OVL33. */
 void init_OVL33(void)
 {
+  POOL_TRACE("init");
 }

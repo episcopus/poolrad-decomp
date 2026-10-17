@@ -8,6 +8,7 @@
      saved is not shown. Then Halt. */
 void QuitGame(void)
 {
+  POOL_TRACE("QuitGame");
   SoundMode = SoundModeBeforePause;
   PlaySound(SoundStopAll);
   Regs.AH = VideoSetMode;
@@ -27,6 +28,7 @@ void QuitGame(void)
      ParamStr's string temporary. */
 u8 ReadGameKey(void)
 {
+  POOL_TRACE("ReadGameKey");
   u8 Result = 0;
   u8 Key = 0;
   u8 t1[256];
@@ -62,6 +64,7 @@ u8 ReadGameKey(void)
      wheel's), but it returns at once. QUIRK 0899:010A: the Exit comes first, so the loop never runs. */
 void FlushKeyboard(void)
 {
+  POOL_TRACE("FlushKeyboard");
   u8 Key = 0;
   return;
   while (rtl_KeyPressed()) {
@@ -74,6 +77,7 @@ void FlushKeyboard(void)
      that one. */
 void DiscardWaitingKey(void)
 {
+  POOL_TRACE("DiscardWaitingKey");
   u8 Key = 0;
   if (rtl_KeyPressed()) {
     Key = ReadGameKey();
@@ -83,6 +87,7 @@ void DiscardWaitingKey(void)
 /* Initialisation part of unit RES04. */
 void init_RES04(void)
 {
+  POOL_TRACE("init");
   /* 0899:013C. Empty initialisation: push bp, mov bp, sp, pop bp, retf, then 15 zero bytes of
      paragraph padding. */
 }

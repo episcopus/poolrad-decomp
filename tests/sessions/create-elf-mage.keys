@@ -1,0 +1,40 @@
+# create-elf-mage: pass the code wheel, create a female Elf Magic-user, neutral good, named Mira (the class list of an
+# Elf starts at Fighter, so one END reaches Magic-user), keep the rolled scores, then add her to the party from
+# the saved characters list (A) and look at the party screen. Menu keys as in create-character.keys.
+clock 12:00:16.58
+wheel
+wait 20
+key C
+wait 10
+key END                  # race: Elf
+key ENTER
+wait 10
+key END                  # sex: Female
+key ENTER
+wait 10
+key END                  # class: Magic-user
+key ENTER
+wait 10
+key END                  # alignment: Neutral good
+key ENTER
+wait 40
+shot sheet               # the rolled sheet: a Magic-user with spells
+key Y
+wait 15
+text Mira
+key ENTER
+wait 15
+key K                    # Head Body Keep > Keep
+wait 20
+key E                    # icon editor: Exit
+wait 20
+key Y
+wait 40
+shot main-menu
+key A                    # Add character to party
+wait 40
+shot add-list
+key ENTER                # the first saved character
+wait 60
+shot party
+quit

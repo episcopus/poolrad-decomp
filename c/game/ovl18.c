@@ -9,6 +9,7 @@
      ShortInt). Called by ShowEndingNarrative. */
 void AnimateFinalPicture(u16 Col, u16 Row, u8 Bank, u8 Cycles)
 {
+  POOL_TRACE("AnimateFinalPicture");
   TSpriteList (*Sprites) = (TSpriteList (*))rtl_stack_alloc(66);
   s32 NowTick = 0;
   s32 StartTick = 0;
@@ -46,6 +47,7 @@ L_exit:
      number from DS:4713 and its lines from the code's literal pool. */
 void ShowEndingNarrative(void)
 {
+  POOL_TRACE("ShowEndingNarrative");
   u8 t1[256];
   u8 t2[256];
   u8 t3[256];
@@ -105,58 +107,79 @@ void ShowEndingNarrative(void)
      ovl17:1602. */
 void AnimateAreaDoors(u8 Flag)
 {
+  POOL_TRACE("AnimateAreaDoors");
   u8 DoorCol = 0;
   u8 DoorRow = 0;
   if (Flag != 0) {
     DrawAreaView(0x11, 0xF);
     FlushPictureChanges();
-    DoorRow = 0;
-    if (DoorRow <= 8) for (;;) {
-      DoorCol = 0;
-      if (DoorCol <= 0xA) for (;;) {
-        if (DoorBlockCodesFirst[DoorCol] > 0x7F) {
-          RemapPictureColors(rtl_far(&DoorRemapFrom), rtl_far(&DoorRemapToFirst), (DoorBlockCodesFirst[DoorCol] & 0x7F), 1, SqrPaciBank2);
-        } else {
-          RemapPictureColors(rtl_far(&DoorRemapFrom), rtl_far(&DoorRemapToFirst), DoorBlockCodesFirst[DoorCol], 1, SqrPaciBank1);
+    {
+      if (0 <= 8) {
+        DoorRow = 0;
+        for (;;) {
+            {
+              if (0 <= 0xA) {
+                DoorCol = 0;
+                for (;;) {
+                    if (DoorBlockCodesFirst[DoorCol] > 0x7F) {
+                      RemapPictureColors(rtl_far(&DoorRemapFrom), rtl_far(&DoorRemapToFirst), (DoorBlockCodesFirst[DoorCol] & 0x7F), 1, SqrPaciBank2);
+                    } else {
+                      RemapPictureColors(rtl_far(&DoorRemapFrom), rtl_far(&DoorRemapToFirst), DoorBlockCodesFirst[DoorCol], 1, SqrPaciBank1);
+                    }
+                  if (DoorCol == 0xA) break;
+                  DoorCol++;
+                }
+              }
+            }
+            {
+              if (0 <= 0x11) {
+                DoorCol = 0;
+                for (;;) {
+                    if (DoorBlockCodesSecond[DoorCol] > 0x7F) {
+                      RemapPictureColors(rtl_far(&DoorRemapFrom), rtl_far(&DoorRemapToSecond), (DoorBlockCodesSecond[DoorCol] & 0x7F), 1, SqrPaciBank2);
+                    } else {
+                      RemapPictureColors(rtl_far(&DoorRemapFrom), rtl_far(&DoorRemapToSecond), DoorBlockCodesSecond[DoorCol], 1, SqrPaciBank1);
+                    }
+                  if (DoorCol == 0x11) break;
+                  DoorCol++;
+                }
+              }
+            }
+            DrawAreaView(DoorViewColumns[DoorRow], DoorViewRows[DoorRow]);
+            FlushPictureChanges();
+          if (DoorRow == 8) break;
+          DoorRow++;
         }
+      }
+    }
+  }
+  {
+    if (0 <= 0xA) {
+      DoorCol = 0;
+      for (;;) {
+          if (DoorBlockCodesFirst[DoorCol] > 0x7F) {
+            RemapPictureColors(rtl_far(&DoorRemapFrom), rtl_far(&DoorRemapToFirst), (DoorBlockCodesFirst[DoorCol] & 0x7F), 0, SqrPaciBank2);
+          } else {
+            RemapPictureColors(rtl_far(&DoorRemapFrom), rtl_far(&DoorRemapToFirst), DoorBlockCodesFirst[DoorCol], 0, SqrPaciBank1);
+          }
         if (DoorCol == 0xA) break;
         DoorCol++;
       }
+    }
+  }
+  {
+    if (0 <= 0x11) {
       DoorCol = 0;
-      if (DoorCol <= 0x11) for (;;) {
-        if (DoorBlockCodesSecond[DoorCol] > 0x7F) {
-          RemapPictureColors(rtl_far(&DoorRemapFrom), rtl_far(&DoorRemapToSecond), (DoorBlockCodesSecond[DoorCol] & 0x7F), 1, SqrPaciBank2);
-        } else {
-          RemapPictureColors(rtl_far(&DoorRemapFrom), rtl_far(&DoorRemapToSecond), DoorBlockCodesSecond[DoorCol], 1, SqrPaciBank1);
-        }
+      for (;;) {
+          if (DoorBlockCodesSecond[DoorCol] > 0x7F) {
+            RemapPictureColors(rtl_far(&DoorRemapFrom), rtl_far(&DoorRemapToSecond), (DoorBlockCodesSecond[DoorCol] & 0x7F), 0, SqrPaciBank2);
+          } else {
+            RemapPictureColors(rtl_far(&DoorRemapFrom), rtl_far(&DoorRemapToSecond), DoorBlockCodesSecond[DoorCol], 0, SqrPaciBank1);
+          }
         if (DoorCol == 0x11) break;
         DoorCol++;
       }
-      DrawAreaView(DoorViewColumns[DoorRow], DoorViewRows[DoorRow]);
-      FlushPictureChanges();
-      if (DoorRow == 8) break;
-      DoorRow++;
     }
-  }
-  DoorCol = 0;
-  if (DoorCol <= 0xA) for (;;) {
-    if (DoorBlockCodesFirst[DoorCol] > 0x7F) {
-      RemapPictureColors(rtl_far(&DoorRemapFrom), rtl_far(&DoorRemapToFirst), (DoorBlockCodesFirst[DoorCol] & 0x7F), 0, SqrPaciBank2);
-    } else {
-      RemapPictureColors(rtl_far(&DoorRemapFrom), rtl_far(&DoorRemapToFirst), DoorBlockCodesFirst[DoorCol], 0, SqrPaciBank1);
-    }
-    if (DoorCol == 0xA) break;
-    DoorCol++;
-  }
-  DoorCol = 0;
-  if (DoorCol <= 0x11) for (;;) {
-    if (DoorBlockCodesSecond[DoorCol] > 0x7F) {
-      RemapPictureColors(rtl_far(&DoorRemapFrom), rtl_far(&DoorRemapToSecond), (DoorBlockCodesSecond[DoorCol] & 0x7F), 0, SqrPaciBank2);
-    } else {
-      RemapPictureColors(rtl_far(&DoorRemapFrom), rtl_far(&DoorRemapToSecond), DoorBlockCodesSecond[DoorCol], 0, SqrPaciBank1);
-    }
-    if (DoorCol == 0x11) break;
-    DoorCol++;
   }
   if (Flag != 0) {
     DrawAreaView(0x17, 0x19);
@@ -169,4 +192,5 @@ void AnimateAreaDoors(u8 Flag)
 /* Initialisation part of unit OVL18. */
 void init_OVL18(void)
 {
+  POOL_TRACE("init");
 }

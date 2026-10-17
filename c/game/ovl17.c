@@ -9,6 +9,7 @@
      character). */
 void ReadSavedCharacterList(PMenuLine (*List))
 {
+  POOL_TRACE("ReadSavedCharacterList");
   PMenuLine SavedLine = 0;
   PMenuLine Last = 0;
   PCharacter Who = 0;
@@ -54,6 +55,7 @@ void ReadSavedCharacterList(PMenuLine (*List))
      menu (AddSavedCharacters) and by SaveCharacter. */
 void RewriteSavedCharacterList(PMenuLine List)
 {
+  POOL_TRACE("RewriteSavedCharacterList");
   PMenuLine Line = 0;
   TextRec Names = {0};
   u16 ErrCode = 0;
@@ -86,6 +88,7 @@ void RewriteSavedCharacterList(PMenuLine List)
      by ReadSavedCharacterList, RewriteSavedCharacterList, SaveCharacter, LoadGame and SaveGame. */
 void CreateSaveDir(void)
 {
+  POOL_TRACE("CreateSaveDir");
   u16 ErrCode = 0;
   u8 t1[256];
   u8 t2[256];
@@ -107,41 +110,51 @@ void CreateSaveDir(void)
      head and body pictures (slot 11 holds the reference picture). No heap or file effect. */
 void MergePictureData(farptr Source, farptr Dest)
 {
+  POOL_TRACE("MergePictureData");
   u16 Count = 0;
   u16 I = 0;
-  u16 t1;
-  u16 t2;
-  u16 t3;
   switch (VideoAdapter) {
   case AdapterCga:
   case AdapterTandy:
   {
-    t1 = (u16)((*FPD(TMemPic_OVL17 (*), Source)).ByteSize - 1);
-    I = 0;
-    if (I <= t1) for (;;) {
-      (*FPD(TMemPic_OVL17 (*), Dest)).Tail[I] = ((*FPD(TMemPic_OVL17 (*), Dest)).Tail[I] | (*FPD(TMemPic_OVL17 (*), Source)).Tail[I]);
-      (*FPD(TByteArray_RES07 (*), (*FPD(TMemPic_OVL17 (*), Dest)).Pixels))[I] = ((*FPD(TByteArray_RES07 (*), (*FPD(TMemPic_OVL17 (*), Dest)).Pixels))[I] & (*FPD(TByteArray_RES07 (*), (*FPD(TMemPic_OVL17 (*), Source)).Pixels))[I]);
-      if (I == t1) break;
-      I++;
+    {
+      u16 limit = (u16)((*FPD(TMemPic_OVL17 (*), Source)).ByteSize - 1);
+      if (0 <= limit) {
+        I = 0;
+        for (;;) {
+            (*FPD(TMemPic_OVL17 (*), Dest)).Tail[I] = ((*FPD(TMemPic_OVL17 (*), Dest)).Tail[I] | (*FPD(TMemPic_OVL17 (*), Source)).Tail[I]);
+            (*FPD(TByteArray_RES07 (*), (*FPD(TMemPic_OVL17 (*), Dest)).Pixels))[I] = ((*FPD(TByteArray_RES07 (*), (*FPD(TMemPic_OVL17 (*), Dest)).Pixels))[I] & (*FPD(TByteArray_RES07 (*), (*FPD(TMemPic_OVL17 (*), Source)).Pixels))[I]);
+          if (I == limit) break;
+          I++;
+        }
+      }
     }
     break;
   }
   case AdapterEga:
   {
-    t2 = (u16)((*FPD(TMemPic_OVL17 (*), Source)).ByteSize - 1);
-    I = 0;
-    if (I <= t2) for (;;) {
-      (*FPD(TMemPic_OVL17 (*), Dest)).Tail[I] = ((*FPD(TMemPic_OVL17 (*), Dest)).Tail[I] | (*FPD(TMemPic_OVL17 (*), Source)).Tail[I]);
-      if (I == t2) break;
-      I++;
+    {
+      u16 limit = (u16)((*FPD(TMemPic_OVL17 (*), Source)).ByteSize - 1);
+      if (0 <= limit) {
+        I = 0;
+        for (;;) {
+            (*FPD(TMemPic_OVL17 (*), Dest)).Tail[I] = ((*FPD(TMemPic_OVL17 (*), Dest)).Tail[I] | (*FPD(TMemPic_OVL17 (*), Source)).Tail[I]);
+          if (I == limit) break;
+          I++;
+        }
+      }
     }
     Count = ((*FPD(TMemPic_OVL17 (*), PictureSlots[11].FirstPic)).ByteSize / 4) - 1;
-    t3 = Count;
-    I = 0;
-    if (I <= t3) for (;;) {
-      (*FPD(TByteArray_RES07 (*), (*FPD(TMemPic_OVL17 (*), Dest)).Pixels))[I] = ((*FPD(TByteArray_RES07 (*), (*FPD(TMemPic_OVL17 (*), Dest)).Pixels))[I] & (*FPD(TByteArray_RES07 (*), (*FPD(TMemPic_OVL17 (*), Source)).Pixels))[I]);
-      if (I == t3) break;
-      I++;
+    {
+      u16 limit = Count;
+      if (0 <= limit) {
+        I = 0;
+        for (;;) {
+            (*FPD(TByteArray_RES07 (*), (*FPD(TMemPic_OVL17 (*), Dest)).Pixels))[I] = ((*FPD(TByteArray_RES07 (*), (*FPD(TMemPic_OVL17 (*), Dest)).Pixels))[I] & (*FPD(TByteArray_RES07 (*), (*FPD(TMemPic_OVL17 (*), Source)).Pixels))[I]);
+          if (I == limit) break;
+          I++;
+        }
+      }
     }
     break;
   }
@@ -159,6 +172,7 @@ void MergePictureData(farptr Source, farptr Dest)
      character menus, by AddMonsterToParty and by LoadGame. */
 void BuildCharacterIcon(u8 Recolor)
 {
+  POOL_TRACE("BuildCharacterIcon");
   u8 UnusedBytes[3] = {0};
   u8 (*MapFrom)[16] = (u8 (*)[16])rtl_stack_alloc(16);
   u8 (*MapTo)[16] = (u8 (*)[16])rtl_stack_alloc(16);
@@ -177,19 +191,27 @@ void BuildCharacterIcon(u8 Recolor)
       MergePictureData(PictureSlots[11].FirstPic, PictureSlots[w1->CombatIcon].FirstPic);
       MergePictureData(PictureSlots[11].SecondPic, PictureSlots[w1->CombatIcon].SecondPic);
       if (Recolor) {
-        I = 0;
-        if (I <= 15) for (;;) {
-          (*MapFrom)[I] = I;
-          (*MapTo)[I] = I;
-          if (I == 15) break;
-          I++;
+        {
+          if (0 <= 15) {
+            I = 0;
+            for (;;) {
+                (*MapFrom)[I] = I;
+                (*MapTo)[I] = I;
+              if (I == 15) break;
+              I++;
+            }
+          }
         }
-        I = 1;
-        if (I <= 6) for (;;) {
-          (*MapTo)[FigureColorSlots[I]] = (w1->Figure[I] & 0xF);
-          (*MapTo)[(s16)(FigureColorSlots[I] + 8)] = (s16)((u16)((w1->Figure[I] & 0xF0)) >> 4);
-          if (I == 6) break;
-          I++;
+        {
+          if (1 <= 6) {
+            I = 1;
+            for (;;) {
+                (*MapTo)[FigureColorSlots[I]] = (w1->Figure[I] & 0xF);
+                (*MapTo)[(s16)(FigureColorSlots[I] + 8)] = (s16)((u16)((w1->Figure[I] & 0xF0)) >> 4);
+              if (I == 6) break;
+              I++;
+            }
+          }
         }
         RemapPictureColors(rtl_far(&(*MapFrom)), rtl_far(&(*MapTo)), 0, 0, PictureSlots[w1->CombatIcon].FirstPic);
         RemapPictureColors(rtl_far(&(*MapFrom)), rtl_far(&(*MapTo)), 0, 0, PictureSlots[w1->CombatIcon].SecondPic);
@@ -211,6 +233,7 @@ L_exit:
      the 9-byte affects of Who^.Affects to '.spc'. Called by RunCharacterMenu, CreateCharacter and SaveGame. */
 void SaveCharacter(PCharacter Who, const u8 *Name_in)
 {
+  POOL_TRACE("SaveCharacter");
   const u8 *Name = Name_in;
   FileRec SaveFile = {0};
   u8 FileName[41] = {0};
@@ -311,6 +334,7 @@ void SaveCharacter(PCharacter Who, const u8 *Name_in)
      keyboard. The read counterpart of SaveCharacter. Called by AddSavedCharacters and LoadGame. */
 void LoadCharacterFile(const u8 *FileName_in, PCharacter Who, u8 SavedGame, u8 UseSaveDir)
 {
+  POOL_TRACE("LoadCharacterFile");
   u8 FileName[256];
   rtl_str_assign(FileName, 255, FileName_in);
   FileRec SaveFile = {0};
@@ -391,6 +415,7 @@ void LoadCharacterFile(const u8 *FileName_in, PCharacter Who, u8 SavedGame, u8 U
      read and flushes the keyboard. Called by ovl07 LoadCharacter and AddMonsterToParty. */
 void LoadMonster(u8 Kind, farptr Who)
 {
+  POOL_TRACE("LoadMonster");
   u16 Size = 0;
   farptr Block = 0;
   u16 Offset = 0;
@@ -432,20 +457,28 @@ void LoadMonster(u8 Kind, farptr Who)
         break;
       }
       }
-      I = 1;
-      if (I <= 3) for (;;) {
-        Roll = RollDice(1, 6);
-        w1->Figure[I] = Roll + ((s16)(((s16)(Roll + 8)) << 4));
-        if (I == 3) break;
-        I++;
+      {
+        if (1 <= 3) {
+          I = 1;
+          for (;;) {
+              Roll = RollDice(1, 6);
+              w1->Figure[I] = Roll + ((s16)(((s16)(Roll + 8)) << 4));
+            if (I == 3) break;
+            I++;
+          }
+        }
       }
       w1->Figure[4] = 0xC4;
-      I = 5;
-      if (I <= 6) for (;;) {
-        Roll = RollDice(1, 6);
-        w1->Figure[I] = Roll + ((s16)(((s16)(Roll + 8)) << 4));
-        if (I == 6) break;
-        I++;
+      {
+        if (5 <= 6) {
+          I = 5;
+          for (;;) {
+              Roll = RollDice(1, 6);
+              w1->Figure[I] = Roll + ((s16)(((s16)(Roll + 8)) << 4));
+            if (I == 6) break;
+            I++;
+          }
+        }
       }
   }
   rtl_freemem(Block, Size);
@@ -496,6 +529,7 @@ void LoadMonster(u8 Kind, farptr Who)
      BuildCharacterIcon(True) rebuilds the combat icon. Called by AddComputerMemberCommand. */
 void AddMonsterToParty(u8 Kind)
 {
+  POOL_TRACE("AddMonsterToParty");
   farptr Unused = 0;
   PCharacter Who = 0;
   u8 Count = 0;
@@ -510,14 +544,18 @@ void AddMonsterToParty(u8 Kind)
     TCharacter *w1 = &(*FPD(TCharacter (*), Who));
       w1->RandomTag = rtl_Random(256);
       Count = 0;
-      I = 0;
-      if (I <= AddMonsterToParty_LastClass) for (;;) {
-        if (w1->ClassLevels[I] > 0) {
-          Count++;
-          Pick[Count - 1] = I;
+      {
+        if (0 <= AddMonsterToParty_LastClass) {
+          I = 0;
+          for (;;) {
+              if (w1->ClassLevels[I] > 0) {
+                Count++;
+                Pick[Count - 1] = I;
+              }
+            if (I == AddMonsterToParty_LastClass) break;
+            I++;
+          }
         }
-        if (I == AddMonsterToParty_LastClass) break;
-        I++;
       }
       if (Count == 0) {
         Count = 1;
@@ -560,6 +598,7 @@ void AddMonsterToParty(u8 Kind)
      SelectedCharacter^.CombatIcon, GameVars2^[VarPartySize], and whatever RecalcClassStats writes. */
 void AddPartyMember(PCharacter Member)
 {
+  POOL_TRACE("AddPartyMember");
   PCharacter Who = 0;
   u8 Used[8] = {0};
   (*FPD(TCharacter (*), Member)).CombatIcon = 0xFF;
@@ -611,6 +650,7 @@ void AddPartyMember(PCharacter Member)
      PartyListHead, SelectedCharacter and the party list. Called by RunCharacterMenu. */
 void LoadGame(void)
 {
+  POOL_TRACE("LoadGame");
   u8 MemberFiles[8][41] = {0};
   FileRec SaveFile = {0};
   u8 I = 0;
@@ -631,7 +671,7 @@ void LoadGame(void)
   u8 t7[256];
   u8 t8[256];
   u8 t9[256];
-  u8 t10;
+  u8 t10[256];
   u8 t11[256];
   u8 t12[256];
   u8 t13[256];
@@ -643,16 +683,19 @@ void LoadGame(void)
   u8 t19[256];
   u8 t20[256];
   u8 t21[256];
-  u8 t22[256];
   CreateSaveDir();
   rtl_str_assign(GameList, 20, S("\000"));
-  Slot = 'A';
-  if (Slot <= 'J') for (;;) {
-    if (FileExists(rtl_str_cat(t2, 4, (const u8 *const[]){SaveDir, S("\006savgam"), rtl_str_char(t1, Slot), S("\004.dat")}))) {
-      rtl_str_assign(GameList, 20, rtl_str_cat(t4, 3, (const u8 *const[]){GameList, rtl_str_char(t3, Slot), S("\001 ")}));
+  {
+    if ('A' <= 'J') {
+      Slot = 'A';
+      for (;;) {
+          if (FileExists(rtl_str_cat(t2, 4, (const u8 *const[]){SaveDir, S("\006savgam"), rtl_str_char(t1, Slot), S("\004.dat")}))) {
+            rtl_str_assign(GameList, 20, rtl_str_cat(t4, 3, (const u8 *const[]){GameList, rtl_str_char(t3, Slot), S("\001 ")}));
+          }
+        if (Slot == 'J') break;
+        Slot++;
+      }
     }
-    if (Slot == 'J') break;
-    Slot++;
   }
   if (rtl_str_cmp(GameList, S("\000")) == 0) {
     return;
@@ -681,31 +724,35 @@ void LoadGame(void)
   ShowPortraits = ((*FPD(TVmWords4900 (*), VarsAt4900))[255] & 1);
   GameSpeed = (*FPD(TVmWords4900 (*), VarsAt4900))[252];
   (*FPD(TVmWords6B00 (*), VarsAt6B00))[830] = 0;
-  t10 = MemberCount;
-  I = 1;
-  if (I <= t10) for (;;) {
-    rtl_str_assign(FileName, 40, MakeDosFileName(t11, DeleteAllOccurrences(t12, MemberFiles[I - 1], S("\001."))));
-    if (FileExists(rtl_str_cat(t13, 3, (const u8 *const[]){SaveDir, FileName, S("\004.sav")}))) {
-      Who = rtl_getmem(285);
-      LoadCharacterFile(FileName, Who, 1, 1);
-      AddPartyMember(Who);
-      CreateSaveDir();
+  {
+    u8 limit = MemberCount;
+    if (1 <= limit) {
+      I = 1;
+      for (;;) {
+          rtl_str_assign(FileName, 40, MakeDosFileName(t10, DeleteAllOccurrences(t11, MemberFiles[I - 1], S("\001."))));
+          if (FileExists(rtl_str_cat(t12, 3, (const u8 *const[]){SaveDir, FileName, S("\004.sav")}))) {
+            Who = rtl_getmem(285);
+            LoadCharacterFile(FileName, Who, 1, 1);
+            AddPartyMember(Who);
+            CreateSaveDir();
+          }
+        if (I == limit) break;
+        I++;
+      }
     }
-    if (I == t10) break;
-    I++;
   }
   Who = PartyListHead;
   while (Who != 0) {
-    rtl_str_assign(FileName, 40, rtl_str_cat(t16, 2, (const u8 *const[]){SaveDir, MakeDosFileName(t14, DeleteAllOccurrences(t15, (*FPD(TCharacter (*), Who)).Name, S("\001.")))}));
-    if (FileExists(rtl_str_cat(t17, 2, (const u8 *const[]){FileName, S("\004.cha")}))) {
-      rtl_assign(&SaveFile, rtl_str_cat(t18, 2, (const u8 *const[]){FileName, S("\004.cha")}));
+    rtl_str_assign(FileName, 40, rtl_str_cat(t15, 2, (const u8 *const[]){SaveDir, MakeDosFileName(t13, DeleteAllOccurrences(t14, (*FPD(TCharacter (*), Who)).Name, S("\001.")))}));
+    if (FileExists(rtl_str_cat(t16, 2, (const u8 *const[]){FileName, S("\004.cha")}))) {
+      rtl_assign(&SaveFile, rtl_str_cat(t17, 2, (const u8 *const[]){FileName, S("\004.cha")}));
       rtl_erase(&SaveFile);
-      if (FileExists(rtl_str_cat(t19, 2, (const u8 *const[]){FileName, S("\004.itm")}))) {
-        rtl_assign(&SaveFile, rtl_str_cat(t20, 2, (const u8 *const[]){FileName, S("\004.itm")}));
+      if (FileExists(rtl_str_cat(t18, 2, (const u8 *const[]){FileName, S("\004.itm")}))) {
+        rtl_assign(&SaveFile, rtl_str_cat(t19, 2, (const u8 *const[]){FileName, S("\004.itm")}));
         rtl_erase(&SaveFile);
       }
-      if (FileExists(rtl_str_cat(t21, 2, (const u8 *const[]){FileName, S("\004.spc")}))) {
-        rtl_assign(&SaveFile, rtl_str_cat(t22, 2, (const u8 *const[]){FileName, S("\004.spc")}));
+      if (FileExists(rtl_str_cat(t20, 2, (const u8 *const[]){FileName, S("\004.spc")}))) {
+        rtl_assign(&SaveFile, rtl_str_cat(t21, 2, (const u8 *const[]){FileName, S("\004.spc")}));
         rtl_erase(&SaveFile);
       }
     }
@@ -724,15 +771,19 @@ void LoadGame(void)
   if (AreaViewKind > 1) {
     LoadPictureSlot(S("\004ICON"), 0, 11);
   } else {
-    I = 1;
-    if (I <= 3) for (;;) {
-      WallSetSlotPairs[I].A = (*FPD(TVmWords4900 (*), VarsAt4900))[(s16)(0x4AF9 + I) - 18688];
-      WallSetSlotPairs[I].B = (*FPD(TVmWords4900 (*), VarsAt4900))[(s16)(0x4AFC + I) - 18688];
-      if (WallSetSlotPairs[I].A >= 0) {
-        LoadWallSet(WallSetSlotPairs[I].A, WallSetSlotPairs[I].B);
+    {
+      if (1 <= 3) {
+        I = 1;
+        for (;;) {
+            WallSetSlotPairs[I].A = (*FPD(TVmWords4900 (*), VarsAt4900))[(s16)(0x4AF9 + I) - 18688];
+            WallSetSlotPairs[I].B = (*FPD(TVmWords4900 (*), VarsAt4900))[(s16)(0x4AFC + I) - 18688];
+            if (WallSetSlotPairs[I].A >= 0) {
+              LoadWallSet(WallSetSlotPairs[I].A, WallSetSlotPairs[I].B);
+            }
+          if (I == 3) break;
+          I++;
+        }
       }
-      if (I == 3) break;
-      I++;
     }
   }
   if ((*FPD(TGameVars (*), GameVars))[418] != 0) {
@@ -755,6 +806,7 @@ void LoadGame(void)
      the heap error handler, MakeCamp, the character menu and SaveAndExit (SaveAndExit). */
 void SaveGame(void)
 {
+  POOL_TRACE("SaveGame");
   u8 MemberFiles[8][41] = {0};
   FileRec SaveFile = {0};
   u8 Count = 0;
@@ -798,12 +850,16 @@ void SaveGame(void)
   } while (!(ErrCode == 0));
   ClearPromptLine();
   DrawTextAt(0, 0x18, 0xA, S("\024Saving...Please Wait"));
-  Count = 1;
-  if (Count <= 3) for (;;) {
-    (*FPD(TVmWords4900 (*), VarsAt4900))[(s16)(0x4AF9 + Count) - 18688] = WallSetSlotPairs[Count].A;
-    (*FPD(TVmWords4900 (*), VarsAt4900))[(s16)(0x4AFC + Count) - 18688] = WallSetSlotPairs[Count].B;
-    if (Count == 3) break;
-    Count++;
+  {
+    if (1 <= 3) {
+      Count = 1;
+      for (;;) {
+          (*FPD(TVmWords4900 (*), VarsAt4900))[(s16)(0x4AF9 + Count) - 18688] = WallSetSlotPairs[Count].A;
+          (*FPD(TVmWords4900 (*), VarsAt4900))[(s16)(0x4AFC + Count) - 18688] = WallSetSlotPairs[Count].B;
+        if (Count == 3) break;
+        Count++;
+      }
+    }
   }
   (*FPD(TVmWords4900 (*), VarsAt4900))[252] = GameSpeed;
   (*FPD(TVmWords4900 (*), VarsAt4900))[255] = (ShowMonsterPics * 2) + ShowPortraits;
@@ -862,6 +918,7 @@ void SaveGame(void)
      and the game exit. */
 void SaveAndExit(const u8 *AreaScript_in)
 {
+  POOL_TRACE("SaveAndExit");
   const u8 *AreaScript = AreaScript_in;
   String40_RES06 Prompt = {0};
   u8 NumText[2] = {0};
@@ -898,4 +955,5 @@ void SaveAndExit(const u8 *AreaScript_in)
 /* Initialisation part of unit OVL17. */
 void init_OVL17(void)
 {
+  POOL_TRACE("init");
 }

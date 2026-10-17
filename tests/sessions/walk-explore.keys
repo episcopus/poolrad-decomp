@@ -1,0 +1,56 @@
+# walk-explore: load the shipped saved game A (the party of six in the Phlan streets at 15,4 facing west),
+# walk and turn, open the area map, view a character sheet, look and search. Covers the 3D view, movement,
+# the area map, the view screens and the saved game loader (SAVE\SAVGAMA.DAT and the character files).
+# Keys: UP moves forward, LEFT and RIGHT turn; A area map (ESC closes it); V view (ESC leaves it); S search; L look.
+clock 12:00:16.58
+wheel
+wait 20
+key L
+wait 20
+key A                    # load saved game A
+wait 300
+shot loaded
+key UP
+wait 20
+key LEFT
+wait 20
+shot turned
+key UP
+wait 20
+key UP
+wait 20
+key UP
+wait 20
+shot walked
+key RIGHT
+wait 20
+key UP
+wait 20
+key UP
+wait 20
+key LEFT
+wait 20
+key LEFT
+wait 20
+key UP
+wait 20
+key UP
+wait 20
+shot corridor
+key A
+wait 40
+shot area-map
+key ESC
+wait 40
+key V
+wait 40
+shot view-sheet
+key ESC
+wait 40
+key S
+wait 60
+shot search
+key L
+wait 60
+shot look
+quit

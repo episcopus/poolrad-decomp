@@ -4,6 +4,7 @@
      (negative for a weak character). */
 u16 CarryLimit(PCharacter Who)
 {
+  POOL_TRACE("CarryLimit");
   u16 Result = 0;
   Result = StrengthWeightAllowance(Who) + BaseLoad;
   return Result;
@@ -12,12 +13,14 @@ u16 CarryLimit(PCharacter Who)
 /* ovl21:0020. Takes Amount off the weight Who carries (coins handed away). */
 void RemoveCarriedWeight(PCharacter Who, u16 Amount)
 {
+  POOL_TRACE("RemoveCarriedWeight");
   (*FPD(TCharacter (*), Who)).CarriedWeight = (*FPD(TCharacter (*), Who)).CarriedWeight - Amount;
 }
 
 /* ovl21:003A. Adds Amount to the weight Who carries (coins taken). */
 void AddCarriedWeight(PCharacter Who, u16 Amount)
 {
+  POOL_TRACE("AddCarriedWeight");
   (*FPD(TCharacter (*), Who)).CarriedWeight = (*FPD(TCharacter (*), Who)).CarriedWeight + Amount;
 }
 
@@ -26,6 +29,7 @@ void AddCarriedWeight(PCharacter Who, u16 Amount)
      Room 0 otherwise. */
 u8 WouldOverload(PCharacter Who, u16 Amount, u16 (*Room))
 {
+  POOL_TRACE("WouldOverload");
   u8 Result = 0;
   if ((u16)((*FPD(TCharacter (*), Who)).CarriedWeight + Amount) > CarryLimit(Who)) {
     Result = 1;
@@ -43,16 +47,21 @@ u8 WouldOverload(PCharacter Who, u16 Amount, u16 (*Room))
      money (PooledMoney). */
 s32 MoneyValueInGold(TPartyMoney (*Money_in))
 {
+  POOL_TRACE("MoneyValueInGold");
   s32 (*Money) = *Money_in;
   s32 Result = 0;
   s32 Total = 0;
   s8 Kind = 0;
   Total = 0;
-  Kind = CopperCoin;
-  if (Kind <= PlatinumCoin) for (;;) {
-    Total += CoinCopperValues[Kind] * Money[Kind];
-    if (Kind == PlatinumCoin) break;
-    Kind++;
+  {
+    if (CopperCoin <= PlatinumCoin) {
+      Kind = CopperCoin;
+      for (;;) {
+          Total += CoinCopperValues[Kind] * Money[Kind];
+        if (Kind == PlatinumCoin) break;
+        Kind++;
+      }
+    }
   }
   Result = ((Total + HalfGoldInCopper) / CoinCopperValues[3]);
   return Result;
@@ -63,12 +72,17 @@ s32 MoneyValueInGold(TPartyMoney (*Money_in))
      purchase with the money left (shop, Temple). */
 void SetCharacterGold(u16 Amount)
 {
+  POOL_TRACE("SetCharacterGold");
   s8 Kind = 0;
-  Kind = CopperCoin;
-  if (Kind <= PlatinumCoin) for (;;) {
-    (*FPD(TCharacter (*), SelectedCharacter)).Money[Kind] = 0;
-    if (Kind == PlatinumCoin) break;
-    Kind++;
+  {
+    if (CopperCoin <= PlatinumCoin) {
+      Kind = CopperCoin;
+      for (;;) {
+          (*FPD(TCharacter (*), SelectedCharacter)).Money[Kind] = 0;
+        if (Kind == PlatinumCoin) break;
+        Kind++;
+      }
+    }
   }
   (*FPD(TCharacter (*), SelectedCharacter)).Money[4] = (Amount / GoldPerPlatinum);
   (*FPD(TCharacter (*), SelectedCharacter)).Money[3] = (Amount % GoldPerPlatinum);
@@ -78,12 +92,17 @@ void SetCharacterGold(u16 Amount)
      platinum cleared, then Amount div 5 platinum and Amount mod 5 gold. */
 void SetPooledGold(u16 Amount)
 {
+  POOL_TRACE("SetPooledGold");
   s8 Kind = 0;
-  Kind = CopperCoin;
-  if (Kind <= PlatinumCoin) for (;;) {
-    PooledMoney[Kind] = 0;
-    if (Kind == PlatinumCoin) break;
-    Kind++;
+  {
+    if (CopperCoin <= PlatinumCoin) {
+      Kind = CopperCoin;
+      for (;;) {
+          PooledMoney[Kind] = 0;
+        if (Kind == PlatinumCoin) break;
+        Kind++;
+      }
+    }
   }
   PooledMoney[4] = (Amount / GoldPerPlatinum);
   PooledMoney[3] = (Amount % GoldPerPlatinum);
@@ -94,6 +113,7 @@ void SetPooledGold(u16 Amount)
      "Overloaded.  Money will be put in Pool."; the carried weight grows by what he takes. */
 void GivePlatinum(u16 Amount)
 {
+  POOL_TRACE("GivePlatinum");
   u16 Room = 0;
   if (WouldOverload(SelectedCharacter, Amount, &Room)) {
     ShowFlashMessage(S("'Overloaded.  Money will be put in Pool."));
@@ -111,6 +131,7 @@ void GivePlatinum(u16 Amount)
      number above Max is replaced by Max. Returns the amount typed, 0 on Escape. */
 u16 ReadAmount(u16 Max, const u8 *Prompt_in, u8 Color)
 {
+  POOL_TRACE("ReadAmount");
   const u8 *Prompt = Prompt_in;
   u16 Result = 0;
   u8 Col = 0;
@@ -181,6 +202,7 @@ u16 ReadAmount(u16 Max, const u8 *Prompt_in, u8 Color)
      with them (but see the quirk); when Taker cannot carry that much more it shows "Overloaded" and nothing moves. */
 void TransferMoney(PCharacter (*Giver), PCharacter (*Taker), u16 Amount, s8 Kind)
 {
+  POOL_TRACE("TransferMoney");
   if ((u16)((*FPD(TCharacter (*), (*Taker))).CarriedWeight + Amount) <= CarryLimit((*Taker))) {
     (*FPD(TCharacter (*), (*Giver))).Money[Kind] = (*FPD(TCharacter (*), (*Giver))).Money[Kind] - Amount;
     RemoveCarriedWeight((*Giver), Amount);
@@ -197,6 +219,7 @@ void TransferMoney(PCharacter (*Giver), PCharacter (*Taker), u16 Amount, s8 Kind
      his money into the pool (PooledMoney) and loses its weight; sets MoneyInPool (money in the pool). */
 void PoolMoney(void)
 {
+  POOL_TRACE("PoolMoney");
   PCharacter Who = 0;
   s8 Kind = 0;
   s8 Slot = 0;
@@ -204,13 +227,17 @@ void PoolMoney(void)
   MoneyInPool = 1;
   while (Who != 0) {
     if ((((*FPD(TCharacter (*), Who)).B84 == 0)) || (((*FPD(TCharacter (*), Who)).B84 == SharerB84))) {
-      Kind = 0;
-      if (Kind <= LastMoneyKind) for (;;) {
-        Slot = Kind;
-        PooledMoney[Slot] = (*FPD(TCharacter (*), Who)).Money[Slot] + PooledMoney[Slot];
-        RemoveCarriedWeight(Who, (*FPD(TCharacter (*), Who)).Money[Slot]);
-        if (Kind == LastMoneyKind) break;
-        Kind++;
+      {
+        if (0 <= LastMoneyKind) {
+          Kind = 0;
+          for (;;) {
+              Slot = Kind;
+              PooledMoney[Slot] = (*FPD(TCharacter (*), Who)).Money[Slot] + PooledMoney[Slot];
+              RemoveCarriedWeight(Who, (*FPD(TCharacter (*), Who)).Money[Slot]);
+            if (Kind == LastMoneyKind) break;
+            Kind++;
+          }
+        }
       }
       rtl_FillChar((void *)&(*FPD(TCharacter (*), Who)).Money, 14, 0);
     }
@@ -221,6 +248,7 @@ void PoolMoney(void)
 /* ovl21:05E0. The number of members who take part in pooling and sharing (B84 0 or $B3). */
 u8 CountSharers(void)
 {
+  POOL_TRACE("CountSharers");
   u8 Result = 0;
   PCharacter Who = 0;
   u8 Count = 0;
@@ -244,6 +272,7 @@ u8 CountSharers(void)
      money is left there. */
 void ShareMoney(void)
 {
+  POOL_TRACE("ShareMoney");
   PCharacter Who = 0;
   farptr Unused1 = 0;
   u8 Sharers = 0;
@@ -257,75 +286,91 @@ void ShareMoney(void)
   Sharers = CountSharers();
   rtl_FillChar((void *)&Share, 14, 0);
   rtl_FillChar((void *)&Remainder, 14, 0);
-  Kind = 0;
-  if (Kind <= LastMoneyKind) for (;;) {
-    if (PooledMoney[Kind] > 0) {
-      Share[Kind] = (PooledMoney[Kind] / Sharers);
-      Remainder[Kind] = (PooledMoney[Kind] % Sharers);
-    } else {
-      Share[Kind] = 0;
-      Remainder[Kind] = 0;
+  {
+    if (0 <= LastMoneyKind) {
+      Kind = 0;
+      for (;;) {
+          if (PooledMoney[Kind] > 0) {
+            Share[Kind] = (PooledMoney[Kind] / Sharers);
+            Remainder[Kind] = (PooledMoney[Kind] % Sharers);
+          } else {
+            Share[Kind] = 0;
+            Remainder[Kind] = 0;
+          }
+        if (Kind == LastMoneyKind) break;
+        Kind++;
+      }
     }
-    if (Kind == LastMoneyKind) break;
-    Kind++;
   }
   while (Who != 0) {
     if ((*FPD(TCharacter (*), Who)).B84 < ComputerRun) {
-      Kind = LastMoneyKind;
-      if (Kind >= 0) for (;;) {
-        if (!WouldOverload(Who, Share[Kind], &Room)) {
-          (*FPD(TCharacter (*), Who)).Money[Kind] = Share[Kind] + (*FPD(TCharacter (*), Who)).Money[Kind];
-          AddCarriedWeight(Who, Share[Kind]);
-          if (Remainder[Kind] > 0) {
-            if (!WouldOverload(Who, Remainder[Kind], &Room)) {
-              (*FPD(TCharacter (*), Who)).Money[Kind] = (*FPD(TCharacter (*), Who)).Money[Kind] + 1;
-              AddCarriedWeight(Who, 1);
-              Remainder[Kind]--;
-            }
+      {
+        if (LastMoneyKind >= 0) {
+          Kind = LastMoneyKind;
+          for (;;) {
+              if (!WouldOverload(Who, Share[Kind], &Room)) {
+                (*FPD(TCharacter (*), Who)).Money[Kind] = Share[Kind] + (*FPD(TCharacter (*), Who)).Money[Kind];
+                AddCarriedWeight(Who, Share[Kind]);
+                if (Remainder[Kind] > 0) {
+                  if (!WouldOverload(Who, Remainder[Kind], &Room)) {
+                    (*FPD(TCharacter (*), Who)).Money[Kind] = (*FPD(TCharacter (*), Who)).Money[Kind] + 1;
+                    AddCarriedWeight(Who, 1);
+                    Remainder[Kind]--;
+                  }
+                }
+              } else {
+                (*FPD(TCharacter (*), Who)).Money[Kind] = (*FPD(TCharacter (*), Who)).Money[Kind] + Room;
+                Remainder[Kind] = (Remainder[Kind] + Share[Kind]) - Room;
+                AddCarriedWeight(Who, Room);
+              }
+            if (Kind == 0) break;
+            Kind--;
           }
-        } else {
-          (*FPD(TCharacter (*), Who)).Money[Kind] = (*FPD(TCharacter (*), Who)).Money[Kind] + Room;
-          Remainder[Kind] = (Remainder[Kind] + Share[Kind]) - Room;
-          AddCarriedWeight(Who, Room);
         }
-        if (Kind == 0) break;
-        Kind--;
       }
     }
     Who = (*FPD(TCharacter (*), Who)).Next;
   }
-  Kind = LastMoneyKind;
-  if (Kind >= 0) for (;;) {
-    if (Remainder[Kind] > 0) {
-      Who = PartyListHead;
-      while (Who != 0) {
-        Room = CarryLimit(Who) - (*FPD(TCharacter (*), Who)).CarriedWeight;
-        if (Room > 0) {
-          if (Remainder[Kind] > Room) {
-            (*FPD(TCharacter (*), Who)).Money[Kind] = (*FPD(TCharacter (*), Who)).Money[Kind] + Room;
-            AddCarriedWeight(Who, Room);
-            Remainder[Kind] = Remainder[Kind] - Room;
-          } else {
-            (*FPD(TCharacter (*), Who)).Money[Kind] = (*FPD(TCharacter (*), Who)).Money[Kind] + Remainder[Kind];
-            AddCarriedWeight(Who, Remainder[Kind]);
-            Remainder[Kind] = 0;
+  {
+    if (LastMoneyKind >= 0) {
+      Kind = LastMoneyKind;
+      for (;;) {
+          if (Remainder[Kind] > 0) {
+            Who = PartyListHead;
+            while (Who != 0) {
+              Room = CarryLimit(Who) - (*FPD(TCharacter (*), Who)).CarriedWeight;
+              if (Room > 0) {
+                if (Remainder[Kind] > Room) {
+                  (*FPD(TCharacter (*), Who)).Money[Kind] = (*FPD(TCharacter (*), Who)).Money[Kind] + Room;
+                  AddCarriedWeight(Who, Room);
+                  Remainder[Kind] = Remainder[Kind] - Room;
+                } else {
+                  (*FPD(TCharacter (*), Who)).Money[Kind] = (*FPD(TCharacter (*), Who)).Money[Kind] + Remainder[Kind];
+                  AddCarriedWeight(Who, Remainder[Kind]);
+                  Remainder[Kind] = 0;
+                }
+              }
+              Who = (*FPD(TCharacter (*), Who)).Next;
+            }
           }
-        }
-        Who = (*FPD(TCharacter (*), Who)).Next;
+        if (Kind == 0) break;
+        Kind--;
       }
     }
-    if (Kind == 0) break;
-    Kind--;
   }
   MoneyInPool = 0;
-  Kind = 0;
-  if (Kind <= LastMoneyKind) for (;;) {
-    PooledMoney[Kind] = Remainder[Kind];
-    if (PooledMoney[Kind] != 0) {
-      MoneyInPool = 1;
+  {
+    if (0 <= LastMoneyKind) {
+      Kind = 0;
+      for (;;) {
+          PooledMoney[Kind] = Remainder[Kind];
+          if (PooledMoney[Kind] != 0) {
+            MoneyInPool = 1;
+          }
+        if (Kind == LastMoneyKind) break;
+        Kind++;
+      }
     }
-    if (Kind == LastMoneyKind) break;
-    Kind++;
   }
 }
 
@@ -333,6 +378,7 @@ void ShareMoney(void)
      Temple (view mode 1) or at a battle's treasure (6) they go into the pool, elsewhere they are lost. */
 void DropMoney(PCharacter Who, u16 Amount, s8 Kind)
 {
+  POOL_TRACE("DropMoney");
   (*FPD(TCharacter (*), Who)).Money[Kind] = (*FPD(TCharacter (*), Who)).Money[Kind] - Amount;
   RemoveCarriedWeight(Who, Amount);
   if (((ViewMode == ViewTreasure)) || ((ViewMode == ViewShop))) {
@@ -345,6 +391,7 @@ void DropMoney(PCharacter Who, u16 Amount, s8 Kind)
      weight. */
 void TakeFromPool(PCharacter Who, u16 Amount, s8 Kind)
 {
+  POOL_TRACE("TakeFromPool");
   u16 Room = 0;
   if (WouldOverload(Who, Amount, &Room)) {
     ShowFlashMessage(S("\012Overloaded"));
@@ -364,6 +411,7 @@ void TakeFromPool(PCharacter Who, u16 Amount, s8 Kind)
      QUIRK ovl21:0CB1: for any other letter the result is never assigned. */
 s8 MoneyKindOfLine(const u8 *Line_in, u8 (*Name)[256])
 {
+  POOL_TRACE("MoneyKindOfLine");
   const u8 *Line = Line_in;
   s8 Result = 0;
   u8 I = 0;
@@ -425,6 +473,7 @@ s8 MoneyKindOfLine(const u8 *Line_in, u8 (*Name)[256])
      QUIRK ovl21:0EA3: leaving the list without a choice does not free the menu lines. */
 void TakeMoney(void)
 {
+  POOL_TRACE("TakeMoney");
   s8 Kind = 0;
   s8 CoinKind = 0;
   u16 Unused = 0;
@@ -446,24 +495,28 @@ void TakeMoney(void)
     Redraw = 1;
     List = 0;
     Chosen = 0;
-    Kind = LastMoneyKind;
-    if (Kind >= 0) for (;;) {
-      if (PooledMoney[Kind] > 0) {
-        Count++;
-        if (List == 0) {
-          List = rtl_getmem(MenuLineBytes);
-          (*FPD(TMenuLine (*), List)).Next = 0;
-        } else {
-          Chosen = List;
-          List = rtl_getmem(MenuLineBytes);
-          (*FPD(TMenuLine (*), List)).Next = Chosen;
+    {
+      if (LastMoneyKind >= 0) {
+        Kind = LastMoneyKind;
+        for (;;) {
+            if (PooledMoney[Kind] > 0) {
+              Count++;
+              if (List == 0) {
+                List = rtl_getmem(MenuLineBytes);
+                (*FPD(TMenuLine (*), List)).Next = 0;
+              } else {
+                Chosen = List;
+                List = rtl_getmem(MenuLineBytes);
+                (*FPD(TMenuLine (*), List)).Next = Chosen;
+              }
+              rtl_str_int(Text, 255, PooledMoney[Kind], 0);
+              rtl_str_assign((*FPD(TMenuLine (*), List)).Text, 40, rtl_str_cat(t1, 3, (const u8 *const[]){MoneyKindNames[Kind], S("\001 "), Text}));
+              (*FPD(TMenuLine (*), List)).Flag29 = 0;
+            }
+          if (Kind == 0) break;
+          Kind--;
         }
-        rtl_str_int(Text, 255, PooledMoney[Kind], 0);
-        rtl_str_assign((*FPD(TMenuLine (*), List)).Text, 40, rtl_str_cat(t1, 3, (const u8 *const[]){MoneyKindNames[Kind], S("\001 "), Text}));
-        (*FPD(TMenuLine (*), List)).Flag29 = 0;
       }
-      if (Kind == 0) break;
-      Kind--;
     }
     Chosen = List;
     Head = List;
@@ -479,14 +532,18 @@ void TakeMoney(void)
       FreeMenuList(&Head);
       MoneyInPool = 0;
       Done = 1;
-      Kind = 0;
-      if (Kind <= LastMoneyKind) for (;;) {
-        if (PooledMoney[Kind] > 0) {
-          MoneyInPool = 1;
-          Done = 0;
+      {
+        if (0 <= LastMoneyKind) {
+          Kind = 0;
+          for (;;) {
+              if (PooledMoney[Kind] > 0) {
+                MoneyInPool = 1;
+                Done = 0;
+              }
+            if (Kind == LastMoneyKind) break;
+            Kind++;
+          }
         }
-        if (Kind == LastMoneyKind) break;
-        Kind++;
       }
     }
   } while (!(Done));
@@ -497,16 +554,21 @@ void TakeMoney(void)
      menu build their menus from it. */
 void TreasureLeft(u8 (*MoneyLeft), u8 (*ItemsLeft))
 {
+  POOL_TRACE("TreasureLeft");
   s8 Kind = 0;
   (*MoneyLeft) = 0;
   (*ItemsLeft) = 0;
-  Kind = 0;
-  if (Kind <= LastMoneyKind) for (;;) {
-    if (PooledMoney[Kind] != 0) {
-      (*MoneyLeft) = 1;
+  {
+    if (0 <= LastMoneyKind) {
+      Kind = 0;
+      for (;;) {
+          if (PooledMoney[Kind] != 0) {
+            (*MoneyLeft) = 1;
+          }
+        if (Kind == LastMoneyKind) break;
+        Kind++;
+      }
     }
-    if (Kind == LastMoneyKind) break;
-    Kind++;
   }
   if (PooledItems != 0) {
     (*ItemsLeft) = 1;
@@ -516,6 +578,7 @@ void TreasureLeft(u8 (*MoneyLeft), u8 (*ItemsLeft))
 /* ovl21:0FD2. Rolls the magic bonus of a treasure item: 1 on 1..14 of a d20, 2 on 15..19, 3 on 20. */
 s8 RollItemBonus(void)
 {
+  POOL_TRACE("RollItemBonus");
   s8 Result = 0;
   u8 Roll = 0;
   Roll = RollDice(1, 20);
@@ -564,12 +627,12 @@ s8 RollItemBonus(void)
      QUIRK ovl21:17A6: type $47 rolls a d11; 11 takes no row. */
 void BuildTreasureItem(u8 Kind, TMenuLine (*Item))
 {
+  POOL_TRACE("BuildTreasureItem");
   u8 Roll = 0;
   u8 NumAffects = 0;
   u8 I = 0;
   u8 Row = 0;
   u8 Affect = 0;
-  u8 t1;
   rtl_FillChar((void *)&(*Item), 63, 0);
   Row = 0;
   {
@@ -953,51 +1016,55 @@ void BuildTreasureItem(u8 Kind, TMenuLine (*Item))
         w1->Weight = 0x19;
         w1->Count = 0;
         w1->Value = 0;
-        t1 = NumAffects;
-        I = 1;
-        if (I <= t1) for (;;) {
-          Roll = RollDice(1, 3);
-          if (w1->ItemType == 0x3D) {
-            switch (Roll) {
-            case 1:
-            {
-              Affect = RollDice(1, 0xD) + 8;
-              break;
-            }
-            case 2:
-            {
-              Affect = RollDice(1, 7) + 0x1C;
-              break;
-            }
-            case 3:
-            {
-              Affect = RollDice(1, 0xB) + 0x2C;
-              break;
-            }
-            }
-          } else {
-            switch (Roll) {
-            case 1:
-            {
-              Affect = RollDice(1, 8);
-              break;
-            }
-            case 2:
-            {
-              Affect = RollDice(1, 7) + 0x15;
-              break;
-            }
-            case 3:
-            {
-              Affect = RollDice(1, 9) + 0x23;
-              break;
-            }
+        {
+          u8 limit = NumAffects;
+          if (1 <= limit) {
+            I = 1;
+            for (;;) {
+                Roll = RollDice(1, 3);
+                if (w1->ItemType == 0x3D) {
+                  switch (Roll) {
+                  case 1:
+                  {
+                    Affect = RollDice(1, 0xD) + 8;
+                    break;
+                  }
+                  case 2:
+                  {
+                    Affect = RollDice(1, 7) + 0x1C;
+                    break;
+                  }
+                  case 3:
+                  {
+                    Affect = RollDice(1, 0xB) + 0x2C;
+                    break;
+                  }
+                  }
+                } else {
+                  switch (Roll) {
+                  case 1:
+                  {
+                    Affect = RollDice(1, 8);
+                    break;
+                  }
+                  case 2:
+                  {
+                    Affect = RollDice(1, 7) + 0x15;
+                    break;
+                  }
+                  case 3:
+                  {
+                    Affect = RollDice(1, 9) + 0x23;
+                    break;
+                  }
+                  }
+                }
+                w1->Affects[I - 1] = Affect;
+                w1->Value = (Roll * 0x12C) + w1->Value;
+              if (I == limit) break;
+              I++;
             }
           }
-          w1->Affects[I - 1] = Affect;
-          w1->Value = (Roll * 0x12C) + w1->Value;
-          if (I == t1) break;
-          I++;
         }
         break;
       }
@@ -1137,11 +1204,15 @@ void BuildTreasureItem(u8 Kind, TMenuLine (*Item))
       }
       }
       if (Row != 0) {
-        I = 0;
-        if (I <= 2) for (;;) {
-          w1->NameNum[(s16)(I + 1) - 1] = TreasureItemRows[(s16)(Row + I)];
-          if (I == 2) break;
-          I++;
+        {
+          if (0 <= 2) {
+            I = 0;
+            for (;;) {
+                w1->NameNum[(s16)(I + 1) - 1] = TreasureItemRows[(s16)(Row + I)];
+              if (I == 2) break;
+              I++;
+            }
+          }
         }
         w1->Plus = 1;
         w1->PlusSave = 1;
@@ -1152,11 +1223,15 @@ void BuildTreasureItem(u8 Kind, TMenuLine (*Item))
         w1->Weight = TreasureItemRows[(s16)(Row + 3)];
         w1->Count = 0;
         w1->Value = TreasureItemRows[(s16)(Row + 4)];
-        I = 1;
-        if (I <= 3) for (;;) {
-          w1->Affects[I - 1] = TreasureItemRows[(s16)((Row + 4) + I)];
-          if (I == 3) break;
-          I++;
+        {
+          if (1 <= 3) {
+            I = 1;
+            for (;;) {
+                w1->Affects[I - 1] = TreasureItemRows[(s16)((Row + 4) + I)];
+              if (I == 3) break;
+              I++;
+            }
+          }
         }
       }
   }
@@ -1173,6 +1248,7 @@ void BuildTreasureItem(u8 Kind, TMenuLine (*Item))
      stored in a local), and a kept gem adds no weight. */
 void AppraiseGems(u8 (*Redraw))
 {
+  POOL_TRACE("AppraiseGems");
   String40_RES06 GemsText = {0};
   String40_RES06 JewelryText = {0};
   u8 Key = 0;
@@ -1613,4 +1689,5 @@ void AppraiseGems(u8 (*Redraw))
 /* Initialisation part of unit OVL21. */
 void init_OVL21(void)
 {
+  POOL_TRACE("init");
 }

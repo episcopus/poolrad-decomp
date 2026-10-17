@@ -6,6 +6,7 @@
      MapMaskAll. Port I/O only; no parameters. */
 void SetEgaFillRegisters(void)
 {
+  POOL_TRACE("SetEgaFillRegisters");
   rtl_outp(GcIndex, 0);
   rtl_outp(GcData, 0);
   rtl_outp(GcIndex, 1);
@@ -31,6 +32,7 @@ void SetEgaFillRegisters(void)
      (Page shl 9 + $A000; one $200-paragraph page) in ActivePageSegment. Called by res08_init. */
 void SetActivePage(u8 Page)
 {
+  POOL_TRACE("SetActivePage");
   Regs.AH = 5;
   Regs.AL = Page;
   rtl_Intr(0x10, &Regs);
@@ -41,6 +43,7 @@ void SetActivePage(u8 Page)
      the rectangle fill writes through. Called by FillPlaneRect and res08_init. */
 void SetPageSegment(u8 Page)
 {
+  POOL_TRACE("SetPageSegment");
   FillPageSegment = (Page << 9) + 0xA000;
 }
 
@@ -54,11 +57,11 @@ void SetPageSegment(u8 Page)
      ClearWindow. */
 void FillPlaneRect(s8 LeftCol, s8 TopRow, s8 RightCol, s8 BotRow, u8 Page, u8 Value)
 {
+  POOL_TRACE("FillPlaneRect");
   u8 SavedPage = 0;
   u16 DestOff = 0;
   u16 ScanLast = 0;
   u16 Scan = 0;
-  u16 t1;
   SavedPage = FillTextPage;
   DestOff = (((u16)TopRow * 40) * 8) + (s32)LeftCol;
   ScanLast = (((s16)((BotRow - TopRow) + 1)) * 8) - 1;
@@ -66,13 +69,17 @@ void FillPlaneRect(s8 LeftCol, s8 TopRow, s8 RightCol, s8 BotRow, u8 Page, u8 Va
   SetEgaFillRegisters();
   rtl_outp(GcIndex, GcMode);
   rtl_outp(GcData, WriteMode2);
-  t1 = ScanLast;
-  Scan = 0;
-  if (Scan <= t1) for (;;) {
-    rtl_FillChar(rtl_mem_ptr(FillPageSegment, DestOff), (s16)((RightCol - LeftCol) + 1), Value);
-    DestOff += 0x28;
-    if (Scan == t1) break;
-    Scan++;
+  {
+    u16 limit = ScanLast;
+    if (0 <= limit) {
+      Scan = 0;
+      for (;;) {
+          rtl_FillChar(rtl_mem_ptr(FillPageSegment, DestOff), (s16)((RightCol - LeftCol) + 1), Value);
+          DestOff += 0x28;
+        if (Scan == limit) break;
+        Scan++;
+      }
+    }
   }
   rtl_outp(GcIndex, GcMode);
   rtl_outp(GcData, 0);
@@ -86,6 +93,7 @@ void FillPlaneRect(s8 LeftCol, s8 TopRow, s8 RightCol, s8 BotRow, u8 Page, u8 Va
      Side effects: the heap and the disk through LoadDaxBlock. */
 void LoadGameFont(void)
 {
+  POOL_TRACE("LoadGameFont");
   u16 BlockSize = 0;
   farptr Block = 0;
   LoadDaxBlock(S("\0058X8d1"), S("\004.dax"), LoadGameFont_FontBlockId, &BlockSize, &Block);
@@ -112,6 +120,7 @@ void LoadGameFont(void)
      Called by CheckCodeWheel, ovl03, ovl25, ClearTextCells, DrawTextAt and DrawTextRun. */
 void DrawGlyph(u8 Col, u8 Row, u8 Color, u8 Count, u8 Glyph, u8 TextSet)
 {
+  POOL_TRACE("DrawGlyph");
   u8 I = 0;
   u8 Index = 0;
   u16 DestOff = 0;
@@ -124,7 +133,6 @@ void DrawGlyph(u8 Col, u8 Row, u8 Color, u8 Count, u8 Glyph, u8 TextSet)
   u8 Bank = 0;
   u8 Line = 0;
   u8 Unused = 0;
-  u8 t1;
   if ((((Col > LastCol)) || ((Row > LastRow))) || ((GameFont == 0))) {
     return;
   }
@@ -133,139 +141,175 @@ void DrawGlyph(u8 Col, u8 Row, u8 Color, u8 Count, u8 Glyph, u8 TextSet)
   } else {
     Index = Glyph;
   }
-  t1 = Count;
-  I = 1;
-  if (I <= t1) for (;;) {
-    switch (VideoAdapter) {
-    case AdapterCga:
-    {
-      Color = TextColorMap4[Color];
-      DestOff = Row * 4;
-      FontRow = 0;
-      Line = 0;
-      if (Line <= 3) for (;;) {
-        Acc = 0;
-        Mask = DrawGlyph_TopBit;
-        Bit = 0;
-        if (Bit <= 7) for (;;) {
-          if (((*FPD(TFont (*), GameFont))[Index][FontRow] & Mask) > 0) {
-            Acc = (Acc | ((GlyphPixelMasks[Bit] & GlyphColorPatterns[Color])));
+  {
+    u8 limit = Count;
+    if (1 <= limit) {
+      I = 1;
+      for (;;) {
+          switch (VideoAdapter) {
+          case AdapterCga:
+          {
+            Color = TextColorMap4[Color];
+            DestOff = Row * 4;
+            FontRow = 0;
+            {
+              if (0 <= 3) {
+                Line = 0;
+                for (;;) {
+                    Acc = 0;
+                    Mask = DrawGlyph_TopBit;
+                    {
+                      if (0 <= 7) {
+                        Bit = 0;
+                        for (;;) {
+                            if (((*FPD(TFont (*), GameFont))[Index][FontRow] & Mask) > 0) {
+                              Acc = (Acc | ((GlyphPixelMasks[Bit] & GlyphColorPatterns[Color])));
+                            }
+                            Mask = (s16)((u16)Mask >> 1);
+                          if (Bit == 7) break;
+                          Bit++;
+                        }
+                      }
+                    }
+                    WordPlane0[DestOff][Col] = rtl_swap(Acc);
+                    FontRow++;
+                    Acc = 0;
+                    Mask = DrawGlyph_TopBit;
+                    {
+                      if (0 <= 7) {
+                        Bit = 0;
+                        for (;;) {
+                            if (((*FPD(TFont (*), GameFont))[Index][FontRow] & Mask) > 0) {
+                              Acc = (Acc | ((GlyphPixelMasks[Bit] & GlyphColorPatterns[Color])));
+                            }
+                            Mask = (s16)((u16)Mask >> 1);
+                          if (Bit == 7) break;
+                          Bit++;
+                        }
+                      }
+                    }
+                    WordPlane1[DestOff][Col] = rtl_swap(Acc);
+                    FontRow++;
+                    DestOff++;
+                  if (Line == 3) break;
+                  Line++;
+                }
+              }
+            }
+            break;
           }
-          Mask = (s16)((u16)Mask >> 1);
-          if (Bit == 7) break;
-          Bit++;
-        }
-        WordPlane0[DestOff][Col] = rtl_swap(Acc);
-        FontRow++;
-        Acc = 0;
-        Mask = DrawGlyph_TopBit;
-        Bit = 0;
-        if (Bit <= 7) for (;;) {
-          if (((*FPD(TFont (*), GameFont))[Index][FontRow] & Mask) > 0) {
-            Acc = (Acc | ((GlyphPixelMasks[Bit] & GlyphColorPatterns[Color])));
+          case AdapterEga:
+          {
+            DestOff = ((Row * 8) * DrawGlyph_GraphStride) + Col;
+            rtl_outp(SeqIndex, SeqMapMask);
+            {
+              if (0 <= 7) {
+                Line = 0;
+                for (;;) {
+                    {
+                      if (0 <= 3) {
+                        Bit = 0;
+                        for (;;) {
+                            rtl_outp(SeqData, EgaPlaneMasks[(s16)(3 - Bit)]);
+                            if (((EgaPlaneMasks[(s16)(3 - Bit)] & Color)) > 0) {
+                              rtl_poke8(ActivePageSegment, DestOff, (*FPD(TFont (*), GameFont))[Index][Line]);
+                              rtl_poke8(FillPageSegment, DestOff, (*FPD(TFont (*), GameFont))[Index][Line]);
+                            } else {
+                              rtl_poke8(ActivePageSegment, DestOff, 0);
+                              rtl_poke8(FillPageSegment, DestOff, 0);
+                            }
+                          if (Bit == 3) break;
+                          Bit++;
+                        }
+                      }
+                    }
+                    DestOff += DrawGlyph_GraphStride;
+                  if (Line == 7) break;
+                  Line++;
+                }
+              }
+            }
+            rtl_outp(SeqData, DrawGlyph_MapMaskRestore);
+            break;
           }
-          Mask = (s16)((u16)Mask >> 1);
-          if (Bit == 7) break;
-          Bit++;
-        }
-        WordPlane1[DestOff][Col] = rtl_swap(Acc);
-        FontRow++;
-        DestOff++;
-        if (Line == 3) break;
-        Line++;
+          case AdapterTandy:
+          {
+            /* QUIRK 0709:047B: the names of DestOff and FontRow are the other way round in this
+               mode: DestOff holds the font row and FontRow the graph row of the destination (the
+               slots are fixed by the original frame). */
+            DestOff = 0;
+            FontRow = Row * 2;
+            ColBase = Col * 4;
+            {
+              if (0 <= 1) {
+                Line = 0;
+                for (;;) {
+                    {
+                      if (0 <= 3) {
+                        Bank = 0;
+                        for (;;) {
+                            Mask = DrawGlyph_TopBit;
+                            {
+                              if (0 <= 3) {
+                                Bit = 0;
+                                for (;;) {
+                                    if (((*FPD(TFont (*), GameFont))[Index][DestOff] & Mask) > 0) {
+                                      Pix = Color << 4;
+                                    } else {
+                                      Pix = 0;
+                                    }
+                                    Mask = (s16)((u16)Mask >> 1);
+                                    if (((*FPD(TFont (*), GameFont))[Index][DestOff] & Mask) > 0) {
+                                      Pix = (Pix | Color);
+                                    }
+                                    Mask = (s16)((u16)Mask >> 1);
+                                    switch (Bank) {
+                                    case 0:
+                                    {
+                                      GraphPlane0[FontRow][(u16)(Bit + ColBase)] = Pix;
+                                      break;
+                                    }
+                                    case 1:
+                                    {
+                                      GraphPlane1[FontRow][(u16)(Bit + ColBase)] = Pix;
+                                      break;
+                                    }
+                                    case 2:
+                                    {
+                                      GraphPlane2[FontRow][(u16)(Bit + ColBase)] = Pix;
+                                      break;
+                                    }
+                                    case 3:
+                                    {
+                                      GraphPlane3[FontRow][(u16)(Bit + ColBase)] = Pix;
+                                      break;
+                                    }
+                                    }
+                                  if (Bit == 3) break;
+                                  Bit++;
+                                }
+                              }
+                            }
+                            DestOff++;
+                          if (Bank == 3) break;
+                          Bank++;
+                        }
+                      }
+                    }
+                    FontRow++;
+                  if (Line == 1) break;
+                  Line++;
+                }
+              }
+            }
+            break;
+          }
+          }
+          Col++;
+        if (I == limit) break;
+        I++;
       }
-      break;
     }
-    case AdapterEga:
-    {
-      DestOff = ((Row * 8) * DrawGlyph_GraphStride) + Col;
-      rtl_outp(SeqIndex, SeqMapMask);
-      Line = 0;
-      if (Line <= 7) for (;;) {
-        Bit = 0;
-        if (Bit <= 3) for (;;) {
-          rtl_outp(SeqData, EgaPlaneMasks[(s16)(3 - Bit)]);
-          if (((EgaPlaneMasks[(s16)(3 - Bit)] & Color)) > 0) {
-            rtl_poke8(ActivePageSegment, DestOff, (*FPD(TFont (*), GameFont))[Index][Line]);
-            rtl_poke8(FillPageSegment, DestOff, (*FPD(TFont (*), GameFont))[Index][Line]);
-          } else {
-            rtl_poke8(ActivePageSegment, DestOff, 0);
-            rtl_poke8(FillPageSegment, DestOff, 0);
-          }
-          if (Bit == 3) break;
-          Bit++;
-        }
-        DestOff += DrawGlyph_GraphStride;
-        if (Line == 7) break;
-        Line++;
-      }
-      rtl_outp(SeqData, DrawGlyph_MapMaskRestore);
-      break;
-    }
-    case AdapterTandy:
-    {
-      /* QUIRK 0709:047B: the names of DestOff and FontRow are the other way round in this
-         mode: DestOff holds the font row and FontRow the graph row of the destination (the
-         slots are fixed by the original frame). */
-      DestOff = 0;
-      FontRow = Row * 2;
-      ColBase = Col * 4;
-      Line = 0;
-      if (Line <= 1) for (;;) {
-        Bank = 0;
-        if (Bank <= 3) for (;;) {
-          Mask = DrawGlyph_TopBit;
-          Bit = 0;
-          if (Bit <= 3) for (;;) {
-            if (((*FPD(TFont (*), GameFont))[Index][DestOff] & Mask) > 0) {
-              Pix = Color << 4;
-            } else {
-              Pix = 0;
-            }
-            Mask = (s16)((u16)Mask >> 1);
-            if (((*FPD(TFont (*), GameFont))[Index][DestOff] & Mask) > 0) {
-              Pix = (Pix | Color);
-            }
-            Mask = (s16)((u16)Mask >> 1);
-            switch (Bank) {
-            case 0:
-            {
-              GraphPlane0[FontRow][(u16)(Bit + ColBase)] = Pix;
-              break;
-            }
-            case 1:
-            {
-              GraphPlane1[FontRow][(u16)(Bit + ColBase)] = Pix;
-              break;
-            }
-            case 2:
-            {
-              GraphPlane2[FontRow][(u16)(Bit + ColBase)] = Pix;
-              break;
-            }
-            case 3:
-            {
-              GraphPlane3[FontRow][(u16)(Bit + ColBase)] = Pix;
-              break;
-            }
-            }
-            if (Bit == 3) break;
-            Bit++;
-          }
-          DestOff++;
-          if (Bank == 3) break;
-          Bank++;
-        }
-        FontRow++;
-        if (Line == 1) break;
-        Line++;
-      }
-      break;
-    }
-    }
-    Col++;
-    if (I == t1) break;
-    I++;
   }
 }
 
@@ -276,6 +320,7 @@ void DrawGlyph(u8 Col, u8 Row, u8 Color, u8 Count, u8 Glyph, u8 TextSet)
      ReadAmount, ClearPromptLine, ReadInputLine, ShowMessageLine (row 24, 40 cells) and FlashMessageLine. */
 void ClearTextCells(u8 Col, u8 Row, u8 Color, u8 Count)
 {
+  POOL_TRACE("ClearTextCells");
   if (((((Col < 0)) || ((Col > LastCol))) || ((Row < 0))) || ((Row > LastRow))) {
     return;
   }
@@ -289,21 +334,25 @@ void ClearTextCells(u8 Col, u8 Row, u8 Color, u8 Count)
      by ShowMessageLine (row 24), ShowCredits, CheckCodeWheel, StartGame and many menus. */
 void DrawTextAt(u8 Col, u8 Row, u8 Color, const u8 *Text_in)
 {
+  POOL_TRACE("DrawTextAt");
   const u8 *Text = Text_in;
   u8 Len = 0;
   u8 I = 0;
-  u8 t1;
   if (((Col > LastCol)) || ((Row > LastCol))) {
     return;
   }
   Len = Text[0];
-  t1 = Len;
-  I = 1;
-  if (I <= t1) for (;;) {
-    DrawGlyph(Col, Row, Color, 1, Text[I], 1);
-    Col++;
-    if (I == t1) break;
-    I++;
+  {
+    u8 limit = Len;
+    if (1 <= limit) {
+      I = 1;
+      for (;;) {
+          DrawGlyph(Col, Row, Color, 1, Text[I], 1);
+          Col++;
+        if (I == limit) break;
+        I++;
+      }
+    }
   }
 }
 
@@ -365,6 +414,7 @@ static void ShowPagedText_SkipSpaces(struct Frame_ShowPagedText *up)
      parent. */
 void ShowPagedText(u8 Left, u8 Top, u8 Right, u8 Bottom, u8 Color, u8 ClearFirst, const u8 *Text_in)
 {
+  POOL_TRACE("ShowPagedText");
   Frame_ShowPagedText fr;
   memset(&fr, 0, sizeof fr);
   fr.Left = Left;
@@ -394,14 +444,14 @@ void ShowPagedText(u8 Left, u8 Top, u8 Right, u8 Bottom, u8 Color, u8 ClearFirst
   fr.Width = (fr.Right - fr.Left) + 1;
   do {
     fr.WordEnd = fr.WordStart;
-    while (((fr.WordEnd < fr.Len)) && (rtl_set_in(BreakChars, fr.Text[fr.WordEnd]))) {
+    while (((fr.WordEnd < fr.Len)) && (rtl_set_in_at(BreakChars, 4, 4, fr.Text[fr.WordEnd]))) {
       fr.WordEnd++;
     }
-    while ((((fr.WordEnd < fr.Len)) && !(rtl_set_in(BreakChars, fr.Text[fr.WordEnd]))) && ((fr.Text[fr.WordEnd] != ' '))) {
+    while ((((fr.WordEnd < fr.Len)) && !(rtl_set_in_at(BreakChars, 4, 4, fr.Text[fr.WordEnd]))) && ((fr.Text[fr.WordEnd] != ' '))) {
       fr.WordEnd++;
     }
     if (fr.Text[fr.WordEnd] != ' ') {
-      while ((((s16)(fr.WordEnd + 1) < fr.Len)) && (rtl_set_in(BreakChars, fr.Text[(s16)(fr.WordEnd + 1)]))) {
+      while ((((s16)(fr.WordEnd + 1) < fr.Len)) && (rtl_set_in_at(BreakChars, 4, 4, fr.Text[(s16)(fr.WordEnd + 1)]))) {
         fr.WordEnd++;
       }
     }
@@ -440,6 +490,7 @@ void ShowPagedText(u8 Left, u8 Top, u8 Right, u8 Bottom, u8 Color, u8 ClearFirst
      word with it (prompt 'INPUT THE CODE WORD: '). */
 u8 *ReadInputLine(u8 *Result_out, const u8 *Prompt_in, u8 Color, u8 MaxLen)
 {
+  POOL_TRACE("ReadInputLine");
   const u8 *Prompt = Prompt_in;
   u8 *Result = Result_out;
   u8 Col = 0;
@@ -450,7 +501,6 @@ u8 *ReadInputLine(u8 *Result_out, const u8 *Prompt_in, u8 Color, u8 MaxLen)
   u8 t3[256];
   u8 t4[256];
   u8 t5[256];
-  u8 t6;
   ClearTextCells(0, BottomRow, 0, ScreenCols);
   DrawTextAt(0, BottomRow, Color, Prompt);
   Col = Prompt[0];
@@ -473,12 +523,16 @@ u8 *ReadInputLine(u8 *Result_out, const u8 *Prompt_in, u8 Color, u8 MaxLen)
     }
   } while (!(((Key == ReadInputLine_KeyEnter)) || ((Key == ReadInputLine_KeyEsc))));
   ClearTextCells(0, BottomRow, 0, ScreenCols);
-  t6 = Line[0];
-  Col = 1;
-  if (Col <= t6) for (;;) {
-    Line[Col] = rtl_upcase(Line[Col]);
-    if (Col == t6) break;
-    Col++;
+  {
+    u8 limit = Line[0];
+    if (1 <= limit) {
+      Col = 1;
+      for (;;) {
+          Line[Col] = rtl_upcase(Line[Col]);
+        if (Col == limit) break;
+        Col++;
+      }
+    }
   }
   rtl_str_assign(Result, 40, Line);
   return Result;
@@ -490,6 +544,7 @@ u8 *ReadInputLine(u8 *Result_out, const u8 *Prompt_in, u8 Color, u8 MaxLen)
      ReadNumberCommand. */
 u16 ReadNumber(const u8 *Prompt_in, u8 Color)
 {
+  POOL_TRACE("ReadNumber");
   const u8 *Prompt = Prompt_in;
   u16 Result = 0;
   s32 Value = 0;
@@ -514,6 +569,7 @@ u16 ReadNumber(const u8 *Prompt_in, u8 Color)
      (twelve call sites). */
 void ShowMessageLine(u8 Color, const u8 *Text_in)
 {
+  POOL_TRACE("ShowMessageLine");
   const u8 *Text = Text_in;
   u8 Key = 0;
   ClearTextCells(0, BottomRow, 0, ScreenCols);
@@ -530,6 +586,7 @@ void ShowMessageLine(u8 Color, const u8 *Text_in)
      Called by WaitKeyOrTimeout, ShowTitleScreen, AnimateFinalPicture and ReadPromptChoice. */
 s32 GameClock(void)
 {
+  POOL_TRACE("GameClock");
   s32 Result = 0;
   u16 Hour = 0;
   u16 Minute = 0;
@@ -546,6 +603,7 @@ s32 GameClock(void)
      ($B800/$BA00/$BC00/$BE00). Called by ovl19. */
 void ClearFullScreen(void)
 {
+  POOL_TRACE("ClearFullScreen");
   switch (VideoAdapter) {
   case AdapterCga:
   {
@@ -576,6 +634,7 @@ void ClearFullScreen(void)
      ovl14 'Not Here' and the river's stench, in colour 14. */
 void FlashMessageLine(const u8 *Text_in, u8 Color)
 {
+  POOL_TRACE("FlashMessageLine");
   const u8 *Text = Text_in;
   ClearTextCells(0, BottomRow, 0, ScreenCols);
   DrawTextAt(0, BottomRow, Color, Text);
@@ -588,6 +647,7 @@ void FlashMessageLine(const u8 *Text_in, u8 Color)
      drawing many screens (ovl03, ovl10, ovl12, ovl13, ovl18, ovl19, ovl20). */
 void DelayByGameSpeed(void)
 {
+  POOL_TRACE("DelayByGameSpeed");
   rtl_Delay((s16)(GameSpeed * 225));
 }
 
@@ -599,26 +659,30 @@ void DelayByGameSpeed(void)
      and others. Side effect: video memory. */
 void ClearRect(s8 Left, s8 Top, s8 Right, s8 Bottom)
 {
+  POOL_TRACE("ClearRect");
   s16 TopCode = 0;
   s16 BottomCode = 0;
   s16 LeftCode = 0;
   s16 Width = 0;
   u16 Row = 0;
-  u16 t1;
-  u16 t2;
   switch (VideoAdapter) {
   case AdapterCga:
   {
     TopCode = Top * ClearRect_ScanlinesPerTextRow;
     BottomCode = (Bottom * ClearRect_ScanlinesPerTextRow) + ClearRect_LastTextScanline;
     Width = ((s16)((Right - Left) + 1)) * ClearRect_BytesPerTextColumn;
-    t1 = BottomCode;
-    Row = TopCode;
-    if (Row <= t1) for (;;) {
-      rtl_FillChar((void *)&TextPlane0[Row][(s16)(Left * ClearRect_BytesPerTextColumn)], Width, 0);
-      rtl_FillChar((void *)&TextPlane1[Row][(s16)(Left * ClearRect_BytesPerTextColumn)], Width, 0);
-      if (Row == t1) break;
-      Row++;
+    {
+      u16 limit = BottomCode;
+      u16 first = TopCode;
+      if (first <= limit) {
+        Row = first;
+        for (;;) {
+            rtl_FillChar((void *)&TextPlane0[Row][(s16)(Left * ClearRect_BytesPerTextColumn)], Width, 0);
+            rtl_FillChar((void *)&TextPlane1[Row][(s16)(Left * ClearRect_BytesPerTextColumn)], Width, 0);
+          if (Row == limit) break;
+          Row++;
+        }
+      }
     }
     break;
   }
@@ -634,15 +698,20 @@ void ClearRect(s8 Left, s8 Top, s8 Right, s8 Bottom)
     BottomCode = (Bottom * ClearRect_GraphRowsPerTextRow) + ClearRect_LastGraphRow;
     LeftCode = Left * ClearRect_BytesPerGraphColumn;
     Width = ((s16)((Right - Left) + 1)) * ClearRect_BytesPerGraphColumn;
-    t2 = BottomCode;
-    Row = TopCode;
-    if (Row <= t2) for (;;) {
-      rtl_FillChar((void *)&GraphPlane0[Row][LeftCode], Width, 0);
-      rtl_FillChar((void *)&GraphPlane1[Row][LeftCode], Width, 0);
-      rtl_FillChar((void *)&GraphPlane2[Row][LeftCode], Width, 0);
-      rtl_FillChar((void *)&GraphPlane3[Row][LeftCode], Width, 0);
-      if (Row == t2) break;
-      Row++;
+    {
+      u16 limit = BottomCode;
+      u16 first = TopCode;
+      if (first <= limit) {
+        Row = first;
+        for (;;) {
+            rtl_FillChar((void *)&GraphPlane0[Row][LeftCode], Width, 0);
+            rtl_FillChar((void *)&GraphPlane1[Row][LeftCode], Width, 0);
+            rtl_FillChar((void *)&GraphPlane2[Row][LeftCode], Width, 0);
+            rtl_FillChar((void *)&GraphPlane3[Row][LeftCode], Width, 0);
+          if (Row == limit) break;
+          Row++;
+        }
+      }
     }
     break;
   }
@@ -652,4 +721,5 @@ void ClearRect(s8 Left, s8 Top, s8 Right, s8 Bottom)
 /* Initialisation part of unit RES06. */
 void init_RES06(void)
 {
+  POOL_TRACE("init");
 }

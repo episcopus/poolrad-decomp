@@ -11,6 +11,7 @@
      Value). Called from BuyItems (Buy). */
 void ChooseShopItem(u8 (*Action), PMenuLine (*Selected), PMenuLine (*Head), s16 (*Choice))
 {
+  POOL_TRACE("ChooseShopItem");
   PMenuLine List = 0;
   PMenuLine Entry = 0;
   u8 NumStr[17] = {0};
@@ -18,8 +19,6 @@ void ChooseShopItem(u8 (*Action), PMenuLine (*Selected), PMenuLine (*Head), s16 
   u8 N = 0;
   u8 I = 0;
   u8 MenuFlag = 0;
-  u8 t1;
-  u8 t2;
   MenuFlag = 1;
   Entry = PooledItems;
   while (Entry != 0) {
@@ -29,20 +28,28 @@ void ChooseShopItem(u8 (*Action), PMenuLine (*Selected), PMenuLine (*Head), s16 
     }
     rtl_str_int(NumStr, 16, (*FPD(TMenuLine (*), Entry)).Value, 0);
     N = NumStr[0];
-    t1 = N;
-    I = 1;
-    if (I <= t1) for (;;) {
-      Field[(s16)((30 - N) + I)] = NumStr[I];
-      if (I == t1) break;
-      I++;
+    {
+      u8 limit = N;
+      if (1 <= limit) {
+        I = 1;
+        for (;;) {
+            Field[(s16)((30 - N) + I)] = NumStr[I];
+          if (I == limit) break;
+          I++;
+        }
+      }
     }
     N = (*FPD(TMenuLine (*), Entry)).Text[0];
-    t2 = N;
-    I = 1;
-    if (I <= t2) for (;;) {
-      Field[I] = (*FPD(TMenuLine (*), Entry)).Text[I];
-      if (I == t2) break;
-      I++;
+    {
+      u8 limit = N;
+      if (1 <= limit) {
+        I = 1;
+        for (;;) {
+            Field[I] = (*FPD(TMenuLine (*), Entry)).Text[I];
+          if (I == limit) break;
+          I++;
+        }
+      }
     }
     rtl_str_assign((*FPD(TMenuLine (*), Entry)).Text, 40, Field);
     /* QUIRK ovl06:012B: the length is set again although the assignment above already set it to 30 */
@@ -69,6 +76,7 @@ void ChooseShopItem(u8 (*Action), PMenuLine (*Selected), PMenuLine (*Head), s16 
      it was added (ovl06:0277). Called from ovl05 (TreasureShare) and BuyItems (Buy). */
 void AddInventoryItem(PMenuLine Item, u8 (*Overloaded))
 {
+  POOL_TRACE("AddInventoryItem");
   PMenuLine Tail = 0;
   PMenuLine NewItem = 0;
   if (WouldOverloadInventory(SelectedCharacter, Item)) {
@@ -111,6 +119,7 @@ void AddInventoryItem(PMenuLine Item, u8 (*Overloaded))
      is rewritten with the truncated amount (the same truncations as ovl04's ChargeForCure). */
 void BuyItems(void)
 {
+  POOL_TRACE("BuyItems");
   PMenuLine Selected = 0;
   u8 Action = 0;
   u8 Cancelled = 0;
@@ -167,6 +176,7 @@ void BuyItems(void)
      through the called routines. */
 void ShopMain(void)
 {
+  POOL_TRACE("ShopMain");
   u8 MenuText[41] = {0};
   u8 Title[2] = {0};
   u8 MenuFlag = 0;
@@ -281,5 +291,6 @@ void ShopMain(void)
 /* Initialisation part of unit OVL06. */
 void init_OVL06(void)
 {
+  POOL_TRACE("init");
   /* Initialisation (ovl06:0798): empty (55 89 E5 5D CB). */
 }

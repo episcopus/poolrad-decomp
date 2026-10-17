@@ -9,6 +9,7 @@
      does not clear the caller's pointer. */
 void FreeCharacter(PCharacter Who)
 {
+  POOL_TRACE("FreeCharacter");
   PItem CurItem = 0;
   PItem NextItem = 0;
   PAffect CurAffect = 0;
@@ -56,6 +57,7 @@ void FreeCharacter(PCharacter Who)
      [bp-5] is unused; the frame needs its 9 bytes. */
 void RunCharacterMenu(void)
 {
+  POOL_TRACE("RunCharacterMenu");
   u8 I = 0;
   u8 Key = 0;
   u8 ExtKey = 0;
@@ -98,15 +100,19 @@ void RunCharacterMenu(void)
         CharacterMenuSlots[9].Present = 0;
       }
       Row = 0;
-      I = 0;
-      if (I <= 10) for (;;) {
-        if (CharacterMenuSlots[I].Present != 0) {
-          DrawTextAt(2, (s16)(Row + MenuFirstRow), HotKeyColor, rtl_str_char(t1, CharacterMenuSlots[I].Name[1]));
-          DrawTextAt(3, (s16)(Row + MenuFirstRow), NameColor, rtl_str_copy(t2, CharacterMenuSlots[I].Name, 2, (s16)(CharacterMenuSlots[I].Name[0] - 1)));
-          Row++;
+      {
+        if (0 <= 10) {
+          I = 0;
+          for (;;) {
+              if (CharacterMenuSlots[I].Present != 0) {
+                DrawTextAt(2, (s16)(Row + MenuFirstRow), HotKeyColor, rtl_str_char(t1, CharacterMenuSlots[I].Name[1]));
+                DrawTextAt(3, (s16)(Row + MenuFirstRow), NameColor, rtl_str_copy(t2, CharacterMenuSlots[I].Name, 2, (s16)(CharacterMenuSlots[I].Name[0] - 1)));
+                Row++;
+              }
+            if (I == 10) break;
+            I++;
+          }
         }
-        if (I == 10) break;
-        I++;
       }
       Show = 0;
     }
@@ -281,6 +287,7 @@ void RunCharacterMenu(void)
      it, so its age would stay 0. */
 void CreateCharacter(void)
 {
+  POOL_TRACE("CreateCharacter");
   PCharacter NewCharacter = 0;
   PCharacter SavedSelection = 0;
   PMenuLine MenuList = 0;
@@ -305,20 +312,22 @@ void CreateCharacter(void)
   u8 t1[256];
   u8 t2[256];
   u8 t3[256];
-  u8 t4;
+  u8 t4[256];
   u8 t5[256];
-  u8 t6;
-  u8 t7[256];
-  u8 t8[256];
+  u8 t6[256];
   NewCharacter = rtl_getmem(CharacterSize);
   rtl_FillChar((void *)&(*FPD(TCharacter (*), NewCharacter)), CharacterSize, 0);
   {
     TCharacter *w1 = &(*FPD(TCharacter (*), NewCharacter));
-      I = 1;
-      if (I <= CreateCharacter_StartFigureCount) for (;;) {
-        w1->Figure[I] = FigureColorSlots[I] + (((s16)(FigureColorSlots[I] + 8)) * 16);
-        if (I == CreateCharacter_StartFigureCount) break;
-        I++;
+      {
+        if (1 <= CreateCharacter_StartFigureCount) {
+          I = 1;
+          for (;;) {
+              w1->Figure[I] = FigureColorSlots[I] + (((s16)(FigureColorSlots[I] + 8)) * 16);
+            if (I == CreateCharacter_StartFigureCount) break;
+            I++;
+          }
+        }
       }
       w1->BaseArmourClassValue = CreateCharacter_StartResist;
       w1->Thac0 = CreateCharacter_StartThac0;
@@ -332,28 +341,32 @@ void CreateCharacter(void)
   NewMenuList(CreateCharacter_MenuRaceLines, &MenuList);
   (*FPD(TMenuLine (*), MenuList)).Flag29 = 1;
   rtl_str_assign((*FPD(TMenuLine (*), MenuList)).Text, 40, S("\011Pick Race"));
-  RaceIndex = 1;
-  if (RaceIndex <= RaceHuman) for (;;) {
-    switch (RaceIndex) {
-    case 1:
-    case 2:
-    case 3:
-    case 4:
-    case 5:
-    {
-      PickedLine = GetMenuLine(RaceIndex, MenuList);
-      rtl_str_assign((*FPD(TMenuLine (*), PickedLine)).Text, 40, rtl_str_cat(t1, 2, (const u8 *const[]){S("\002  "), RaceNames[RaceIndex]}));
-      break;
+  {
+    if (1 <= RaceHuman) {
+      RaceIndex = 1;
+      for (;;) {
+          switch (RaceIndex) {
+          case 1:
+          case 2:
+          case 3:
+          case 4:
+          case 5:
+          {
+            PickedLine = GetMenuLine(RaceIndex, MenuList);
+            rtl_str_assign((*FPD(TMenuLine (*), PickedLine)).Text, 40, rtl_str_cat(t1, 2, (const u8 *const[]){S("\002  "), RaceNames[RaceIndex]}));
+            break;
+          }
+          case RaceHuman:
+          {
+            PickedLine = GetMenuLine((s16)(RaceIndex - 1), MenuList);
+            rtl_str_assign((*FPD(TMenuLine (*), PickedLine)).Text, 40, rtl_str_cat(t2, 2, (const u8 *const[]){S("\002  "), RaceNames[RaceIndex]}));
+            break;
+          }
+          }
+        if (RaceIndex == RaceHuman) break;
+        RaceIndex++;
+      }
     }
-    case RaceHuman:
-    {
-      PickedLine = GetMenuLine((s16)(RaceIndex - 1), MenuList);
-      rtl_str_assign((*FPD(TMenuLine (*), PickedLine)).Text, 40, rtl_str_cat(t2, 2, (const u8 *const[]){S("\002  "), RaceNames[RaceIndex]}));
-      break;
-    }
-    }
-    if (RaceIndex == RaceHuman) break;
-    RaceIndex++;
   }
   PickedLine = MenuList;
   Choice = 1;
@@ -419,12 +432,16 @@ void CreateCharacter(void)
   NewMenuList(CreateCharacter_MenuGenderLines, &MenuList);
   (*FPD(TMenuLine (*), MenuList)).Flag29 = 1;
   rtl_str_assign((*FPD(TMenuLine (*), MenuList)).Text, 40, S("\013Pick Gender"));
-  GenderIndex = 0;
-  if (GenderIndex <= 1) for (;;) {
-    PickedLine = GetMenuLine((s16)(GenderIndex + 1), MenuList);
-    rtl_str_assign((*FPD(TMenuLine (*), PickedLine)).Text, 40, rtl_str_cat(t3, 2, (const u8 *const[]){S("\002  "), SexNames[GenderIndex]}));
-    if (GenderIndex == 1) break;
-    GenderIndex++;
+  {
+    if (0 <= 1) {
+      GenderIndex = 0;
+      for (;;) {
+          PickedLine = GetMenuLine((s16)(GenderIndex + 1), MenuList);
+          rtl_str_assign((*FPD(TMenuLine (*), PickedLine)).Text, 40, rtl_str_cat(t3, 2, (const u8 *const[]){S("\002  "), SexNames[GenderIndex]}));
+        if (GenderIndex == 1) break;
+        GenderIndex++;
+      }
+    }
   }
   PickedLine = MenuList;
   Choice = 1;
@@ -442,13 +459,17 @@ void CreateCharacter(void)
   NewMenuList((s16)(ChoiceCount + 1), &MenuList);
   (*FPD(TMenuLine (*), MenuList)).Flag29 = 1;
   rtl_str_assign((*FPD(TMenuLine (*), MenuList)).Text, 40, S("\012Pick Class"));
-  t4 = ChoiceCount;
-  I = 1;
-  if (I <= t4) for (;;) {
-    PickedLine = GetMenuLine(I, MenuList);
-    rtl_str_assign((*FPD(TMenuLine (*), PickedLine)).Text, 40, rtl_str_cat(t5, 2, (const u8 *const[]){S("\002  "), ClassNames[RaceClassChoices[(*FPD(TCharacter (*), NewCharacter)).Race][I]]}));
-    if (I == t4) break;
-    I++;
+  {
+    u8 limit = ChoiceCount;
+    if (1 <= limit) {
+      I = 1;
+      for (;;) {
+          PickedLine = GetMenuLine(I, MenuList);
+          rtl_str_assign((*FPD(TMenuLine (*), PickedLine)).Text, 40, rtl_str_cat(t4, 2, (const u8 *const[]){S("\002  "), ClassNames[RaceClassChoices[(*FPD(TCharacter (*), NewCharacter)).Race][I]]}));
+        if (I == limit) break;
+        I++;
+      }
+    }
   }
   PickedLine = MenuList;
   Choice = 1;
@@ -539,16 +560,20 @@ void CreateCharacter(void)
       }
       w3->ClassBits = 0;
       w3->Thac0 = 0;
-      ClassIndex = 0;
-      if (ClassIndex <= 7) for (;;) {
-        if (w3->ClassLevels[ClassIndex] > 0) {
-          if (ClassThac0Table[ClassIndex][w3->ClassLevels[ClassIndex]] > w3->Thac0) {
-            w3->Thac0 = ClassThac0Table[ClassIndex][w3->ClassLevels[ClassIndex]];
+      {
+        if (0 <= 7) {
+          ClassIndex = 0;
+          for (;;) {
+              if (w3->ClassLevels[ClassIndex] > 0) {
+                if (ClassThac0Table[ClassIndex][w3->ClassLevels[ClassIndex]] > w3->Thac0) {
+                  w3->Thac0 = ClassThac0Table[ClassIndex][w3->ClassLevels[ClassIndex]];
+                }
+                w3->ClassBits += ClassItemBits[ClassIndex];
+              }
+            if (ClassIndex == 7) break;
+            ClassIndex++;
           }
-          w3->ClassBits += ClassItemBits[ClassIndex];
         }
-        if (ClassIndex == 7) break;
-        ClassIndex++;
       }
   }
   ComputeSavingThrows(NewCharacter);
@@ -557,13 +582,17 @@ void CreateCharacter(void)
   NewMenuList((s16)(ChoiceCount + 1), &MenuList);
   (*FPD(TMenuLine (*), MenuList)).Flag29 = 1;
   rtl_str_assign((*FPD(TMenuLine (*), MenuList)).Text, 40, S("\016Pick Alignment"));
-  t6 = ChoiceCount;
-  I = 1;
-  if (I <= t6) for (;;) {
-    PickedLine = GetMenuLine(I, MenuList);
-    rtl_str_assign((*FPD(TMenuLine (*), PickedLine)).Text, 40, rtl_str_cat(t7, 2, (const u8 *const[]){S("\002  "), AlignmentNames[ClassAlignmentChoices[(*FPD(TCharacter (*), NewCharacter)).ClassCombo][I]]}));
-    if (I == t6) break;
-    I++;
+  {
+    u8 limit = ChoiceCount;
+    if (1 <= limit) {
+      I = 1;
+      for (;;) {
+          PickedLine = GetMenuLine(I, MenuList);
+          rtl_str_assign((*FPD(TMenuLine (*), PickedLine)).Text, 40, rtl_str_cat(t5, 2, (const u8 *const[]){S("\002  "), AlignmentNames[ClassAlignmentChoices[(*FPD(TCharacter (*), NewCharacter)).ClassCombo][I]]}));
+        if (I == limit) break;
+        I++;
+      }
+    }
   }
   PickedLine = MenuList;
   Choice = 1;
@@ -634,229 +663,237 @@ void CreateCharacter(void)
   ShowCharacterSheet();
   do {
     (*FPD(TCharacter (*), NewCharacter)).StrengthPercent = 0;
-    AbilityIndex = 0;
-    if (AbilityIndex <= CreateCharacter_CharismaIndex) for (;;) {
-      (*FPD(TScoredCharacter (*), NewCharacter)).Scores[AbilityIndex] = 0;
-      RollAttempt = 1;
-      if (RollAttempt <= CreateCharacter_AbilityRollCount) for (;;) {
-        AbilityRoll = RollDice(CreateCharacter_AbilityDiceCount, CreateCharacter_AbilityDiceSides);
-        switch (RaceIndex) {
-        case RaceDwarf:
-        {
-          switch (AbilityIndex) {
-          case CreateCharacter_ConstitutionIndex:
-          {
-            AbilityRoll++;
-            break;
-          }
-          case CreateCharacter_CharismaIndex:
-          {
-            AbilityRoll--;
-            break;
-          }
-          }
-          break;
-        }
-        case RaceElf:
-        {
-          switch (AbilityIndex) {
-          case CreateCharacter_DexterityIndex:
-          {
-            AbilityRoll++;
-            break;
-          }
-          case CreateCharacter_ConstitutionIndex:
-          {
-            AbilityRoll--;
-            break;
-          }
-          }
-          break;
-        }
-        case RaceHalfling:
-        {
-          switch (AbilityIndex) {
-          case CreateCharacter_StrengthIndex:
-          {
-            AbilityRoll--;
-            break;
-          }
-          case CreateCharacter_DexterityIndex:
-          {
-            AbilityRoll++;
-            break;
-          }
-          }
-          break;
-        }
-        case RaceHalfOrc:
-        {
-          switch (AbilityIndex) {
-          case CreateCharacter_StrengthIndex:
-          {
-            AbilityRoll++;
-            break;
-          }
-          case CreateCharacter_ConstitutionIndex:
-          {
-            AbilityRoll++;
-            break;
-          }
-          case CreateCharacter_CharismaIndex:
-          {
-            AbilityRoll -= 2;
-            break;
-          }
-          }
-          break;
-        }
-        }
-        if ((*FPD(TScoredCharacter (*), NewCharacter)).Scores[AbilityIndex] < AbilityRoll) {
-          (*FPD(TScoredCharacter (*), NewCharacter)).Scores[AbilityIndex] = AbilityRoll;
-        }
-        if (RollAttempt == CreateCharacter_AbilityRollCount) break;
-        RollAttempt++;
-      }
-      {
-        TScoredCharacter *w6 = &(*FPD(TScoredCharacter (*), NewCharacter));
-          switch (AbilityIndex) {
-          case CreateCharacter_StrengthIndex:
-          {
-            if (((w6->Scores[AbilityIndex] > 0)) && ((RaceAgeBrackets[w6->Race][0] < w6->Age))) {
-              w6->Scores[AbilityIndex]++;
-            }
-            if (((w6->Scores[AbilityIndex] > 0)) && ((RaceAgeBrackets[w6->Race][1] < w6->Age))) {
-              w6->Scores[AbilityIndex]--;
-            }
-            if (((w6->Scores[AbilityIndex] > 0)) && ((RaceAgeBrackets[w6->Race][2] < w6->Age))) {
-              w6->Scores[AbilityIndex] -= 2;
-            }
-            if (((w6->Scores[AbilityIndex] > 0)) && ((RaceAgeBrackets[w6->Race][3] < w6->Age))) {
-              w6->Scores[AbilityIndex]--;
-            }
-            if (w6->Scores[AbilityIndex] < RaceAbilityLimits[w6->Race][w6->Sex]) {
-              w6->Scores[AbilityIndex] = RaceAbilityLimits[w6->Race][w6->Sex];
-            }
-            if (w6->Scores[AbilityIndex] > RaceStrengthMax[w6->Race][w6->Sex - (-2)]) {
-              w6->Scores[AbilityIndex] = RaceStrengthMax[w6->Race][w6->Sex - (-2)];
-            }
-            if (w6->Scores[AbilityIndex] < ClassAbilityMinimums[w6->ClassCombo][AbilityIndex]) {
-              w6->Scores[AbilityIndex] = ClassAbilityMinimums[w6->ClassCombo][AbilityIndex];
-            }
-            if (((w6->Scores[0] == ExceptionalStrength)) && ((w6->ClassLevels[2] > 0))) {
-              w6->StrengthPercent = rtl_Random(CreateCharacter_ExceptionalStrengthRoll) + 1;
-              if (RaceStrengthPercent[w6->Race][w6->Sex - (-4)] < w6->StrengthPercent) {
-                w6->StrengthPercent = RaceStrengthPercent[w6->Race][w6->Sex - (-4)];
+    {
+      if (0 <= CreateCharacter_CharismaIndex) {
+        AbilityIndex = 0;
+        for (;;) {
+            (*FPD(TScoredCharacter (*), NewCharacter)).Scores[AbilityIndex] = 0;
+            {
+              if (1 <= CreateCharacter_AbilityRollCount) {
+                RollAttempt = 1;
+                for (;;) {
+                    AbilityRoll = RollDice(CreateCharacter_AbilityDiceCount, CreateCharacter_AbilityDiceSides);
+                    switch (RaceIndex) {
+                    case RaceDwarf:
+                    {
+                      switch (AbilityIndex) {
+                      case CreateCharacter_ConstitutionIndex:
+                      {
+                        AbilityRoll++;
+                        break;
+                      }
+                      case CreateCharacter_CharismaIndex:
+                      {
+                        AbilityRoll--;
+                        break;
+                      }
+                      }
+                      break;
+                    }
+                    case RaceElf:
+                    {
+                      switch (AbilityIndex) {
+                      case CreateCharacter_DexterityIndex:
+                      {
+                        AbilityRoll++;
+                        break;
+                      }
+                      case CreateCharacter_ConstitutionIndex:
+                      {
+                        AbilityRoll--;
+                        break;
+                      }
+                      }
+                      break;
+                    }
+                    case RaceHalfling:
+                    {
+                      switch (AbilityIndex) {
+                      case CreateCharacter_StrengthIndex:
+                      {
+                        AbilityRoll--;
+                        break;
+                      }
+                      case CreateCharacter_DexterityIndex:
+                      {
+                        AbilityRoll++;
+                        break;
+                      }
+                      }
+                      break;
+                    }
+                    case RaceHalfOrc:
+                    {
+                      switch (AbilityIndex) {
+                      case CreateCharacter_StrengthIndex:
+                      {
+                        AbilityRoll++;
+                        break;
+                      }
+                      case CreateCharacter_ConstitutionIndex:
+                      {
+                        AbilityRoll++;
+                        break;
+                      }
+                      case CreateCharacter_CharismaIndex:
+                      {
+                        AbilityRoll -= 2;
+                        break;
+                      }
+                      }
+                      break;
+                    }
+                    }
+                    if ((*FPD(TScoredCharacter (*), NewCharacter)).Scores[AbilityIndex] < AbilityRoll) {
+                      (*FPD(TScoredCharacter (*), NewCharacter)).Scores[AbilityIndex] = AbilityRoll;
+                    }
+                  if (RollAttempt == CreateCharacter_AbilityRollCount) break;
+                  RollAttempt++;
+                }
               }
             }
-            break;
-          }
-          case CreateCharacter_IntelligenceIndex:
-          {
-            if (RaceAgeBrackets[w6->Race][1] < w6->Age) {
-              w6->Scores[AbilityIndex]++;
+            {
+              TScoredCharacter *w6 = &(*FPD(TScoredCharacter (*), NewCharacter));
+                switch (AbilityIndex) {
+                case CreateCharacter_StrengthIndex:
+                {
+                  if (((w6->Scores[AbilityIndex] > 0)) && ((RaceAgeBrackets[w6->Race][0] < w6->Age))) {
+                    w6->Scores[AbilityIndex]++;
+                  }
+                  if (((w6->Scores[AbilityIndex] > 0)) && ((RaceAgeBrackets[w6->Race][1] < w6->Age))) {
+                    w6->Scores[AbilityIndex]--;
+                  }
+                  if (((w6->Scores[AbilityIndex] > 0)) && ((RaceAgeBrackets[w6->Race][2] < w6->Age))) {
+                    w6->Scores[AbilityIndex] -= 2;
+                  }
+                  if (((w6->Scores[AbilityIndex] > 0)) && ((RaceAgeBrackets[w6->Race][3] < w6->Age))) {
+                    w6->Scores[AbilityIndex]--;
+                  }
+                  if (w6->Scores[AbilityIndex] < RaceAbilityLimits[w6->Race][w6->Sex]) {
+                    w6->Scores[AbilityIndex] = RaceAbilityLimits[w6->Race][w6->Sex];
+                  }
+                  if (w6->Scores[AbilityIndex] > RaceStrengthMax[w6->Race][w6->Sex - (-2)]) {
+                    w6->Scores[AbilityIndex] = RaceStrengthMax[w6->Race][w6->Sex - (-2)];
+                  }
+                  if (w6->Scores[AbilityIndex] < ClassAbilityMinimums[w6->ClassCombo][AbilityIndex]) {
+                    w6->Scores[AbilityIndex] = ClassAbilityMinimums[w6->ClassCombo][AbilityIndex];
+                  }
+                  if (((w6->Scores[0] == ExceptionalStrength)) && ((w6->ClassLevels[2] > 0))) {
+                    w6->StrengthPercent = rtl_Random(CreateCharacter_ExceptionalStrengthRoll) + 1;
+                    if (RaceStrengthPercent[w6->Race][w6->Sex - (-4)] < w6->StrengthPercent) {
+                      w6->StrengthPercent = RaceStrengthPercent[w6->Race][w6->Sex - (-4)];
+                    }
+                  }
+                  break;
+                }
+                case CreateCharacter_IntelligenceIndex:
+                {
+                  if (RaceAgeBrackets[w6->Race][1] < w6->Age) {
+                    w6->Scores[AbilityIndex]++;
+                  }
+                  if (RaceAgeBrackets[w6->Race][3] < w6->Age) {
+                    w6->Scores[AbilityIndex]++;
+                  }
+                  if (w6->Scores[AbilityIndex] < RaceAbilityLimits[w6->Race][6]) {
+                    w6->Scores[AbilityIndex] = RaceAbilityLimits[w6->Race][6];
+                  }
+                  if (w6->Scores[AbilityIndex] > RaceAbilityLimits[w6->Race][7]) {
+                    w6->Scores[AbilityIndex] = RaceAbilityLimits[w6->Race][7];
+                  }
+                  if (w6->Scores[AbilityIndex] < ClassAbilityMinimums[w6->ClassCombo][AbilityIndex]) {
+                    w6->Scores[AbilityIndex] = ClassAbilityMinimums[w6->ClassCombo][AbilityIndex];
+                  }
+                  break;
+                }
+                case CreateCharacter_WisdomIndex:
+                {
+                  if (RaceAgeBrackets[w6->Race][0] >= w6->Age) {
+                    w6->Scores[AbilityIndex]--;
+                  }
+                  if (RaceAgeBrackets[w6->Race][1] < w6->Age) {
+                    w6->Scores[AbilityIndex]++;
+                  }
+                  if (RaceAgeBrackets[w6->Race][2] < w6->Age) {
+                    w6->Scores[AbilityIndex]++;
+                  }
+                  if (RaceAgeBrackets[w6->Race][3] < w6->Age) {
+                    w6->Scores[AbilityIndex]++;
+                  }
+                  if (w6->Scores[AbilityIndex] < RaceAbilityLimits[w6->Race][8]) {
+                    w6->Scores[AbilityIndex] = RaceAbilityLimits[w6->Race][8];
+                  }
+                  if (w6->Scores[AbilityIndex] > RaceAbilityLimits[w6->Race][9]) {
+                    w6->Scores[AbilityIndex] = RaceAbilityLimits[w6->Race][9];
+                  }
+                  if (w6->Scores[AbilityIndex] < ClassAbilityMinimums[w6->ClassCombo][AbilityIndex]) {
+                    w6->Scores[AbilityIndex] = ClassAbilityMinimums[w6->ClassCombo][AbilityIndex];
+                  }
+                  if (((w6->Scores[AbilityIndex] < CreateCharacter_MinClericWisdom)) && (((w6->ClassCombo >= CreateCharacter_ClericFighter && w6->ClassCombo <= CreateCharacter_ClericThief)))) {
+                    w6->Scores[AbilityIndex] = CreateCharacter_MinClericWisdom;
+                  }
+                  break;
+                }
+                case CreateCharacter_DexterityIndex:
+                {
+                  if (RaceAgeBrackets[w6->Race][2] < w6->Age) {
+                    w6->Scores[AbilityIndex] -= 2;
+                  }
+                  if (RaceAgeBrackets[w6->Race][3] < w6->Age) {
+                    w6->Scores[AbilityIndex]--;
+                  }
+                  if (w6->Scores[AbilityIndex] < RaceAbilityLimits[w6->Race][10]) {
+                    w6->Scores[AbilityIndex] = RaceAbilityLimits[w6->Race][10];
+                  }
+                  if (w6->Scores[AbilityIndex] > RaceAbilityLimits[w6->Race][11]) {
+                    w6->Scores[AbilityIndex] = RaceAbilityLimits[w6->Race][11];
+                  }
+                  if (w6->Scores[AbilityIndex] < ClassAbilityMinimums[w6->ClassCombo][AbilityIndex]) {
+                    w6->Scores[AbilityIndex] = ClassAbilityMinimums[w6->ClassCombo][AbilityIndex];
+                  }
+                  break;
+                }
+                case CreateCharacter_ConstitutionIndex:
+                {
+                  if (RaceAgeBrackets[w6->Race][1] < w6->Age) {
+                    w6->Scores[AbilityIndex]--;
+                  }
+                  if (RaceAgeBrackets[w6->Race][2] < w6->Age) {
+                    w6->Scores[AbilityIndex]--;
+                  }
+                  if (RaceAgeBrackets[w6->Race][3] < w6->Age) {
+                    w6->Scores[AbilityIndex]--;
+                  }
+                  if (w6->Scores[AbilityIndex] < RaceAbilityLimits[w6->Race][12]) {
+                    w6->Scores[AbilityIndex] = RaceAbilityLimits[w6->Race][12];
+                  }
+                  if (w6->Scores[AbilityIndex] > RaceAbilityLimits[w6->Race][13]) {
+                    w6->Scores[AbilityIndex] = RaceAbilityLimits[w6->Race][13];
+                  }
+                  if (w6->Scores[AbilityIndex] < ClassAbilityMinimums[w6->ClassCombo][AbilityIndex]) {
+                    w6->Scores[AbilityIndex] = ClassAbilityMinimums[w6->ClassCombo][AbilityIndex];
+                  }
+                  break;
+                }
+                case CreateCharacter_CharismaIndex:
+                {
+                  if (w6->Scores[AbilityIndex] < RaceAbilityLimits[w6->Race][14]) {
+                    w6->Scores[AbilityIndex] = RaceAbilityLimits[w6->Race][14];
+                  }
+                  if (w6->Scores[AbilityIndex] > RaceAbilityLimits[w6->Race][15]) {
+                    w6->Scores[AbilityIndex] = RaceAbilityLimits[w6->Race][15];
+                  }
+                  if (w6->Scores[AbilityIndex] < ClassAbilityMinimums[w6->ClassCombo][AbilityIndex]) {
+                    w6->Scores[AbilityIndex] = ClassAbilityMinimums[w6->ClassCombo][AbilityIndex];
+                  }
+                  break;
+                }
+                }
             }
-            if (RaceAgeBrackets[w6->Race][3] < w6->Age) {
-              w6->Scores[AbilityIndex]++;
-            }
-            if (w6->Scores[AbilityIndex] < RaceAbilityLimits[w6->Race][6]) {
-              w6->Scores[AbilityIndex] = RaceAbilityLimits[w6->Race][6];
-            }
-            if (w6->Scores[AbilityIndex] > RaceAbilityLimits[w6->Race][7]) {
-              w6->Scores[AbilityIndex] = RaceAbilityLimits[w6->Race][7];
-            }
-            if (w6->Scores[AbilityIndex] < ClassAbilityMinimums[w6->ClassCombo][AbilityIndex]) {
-              w6->Scores[AbilityIndex] = ClassAbilityMinimums[w6->ClassCombo][AbilityIndex];
-            }
-            break;
-          }
-          case CreateCharacter_WisdomIndex:
-          {
-            if (RaceAgeBrackets[w6->Race][0] >= w6->Age) {
-              w6->Scores[AbilityIndex]--;
-            }
-            if (RaceAgeBrackets[w6->Race][1] < w6->Age) {
-              w6->Scores[AbilityIndex]++;
-            }
-            if (RaceAgeBrackets[w6->Race][2] < w6->Age) {
-              w6->Scores[AbilityIndex]++;
-            }
-            if (RaceAgeBrackets[w6->Race][3] < w6->Age) {
-              w6->Scores[AbilityIndex]++;
-            }
-            if (w6->Scores[AbilityIndex] < RaceAbilityLimits[w6->Race][8]) {
-              w6->Scores[AbilityIndex] = RaceAbilityLimits[w6->Race][8];
-            }
-            if (w6->Scores[AbilityIndex] > RaceAbilityLimits[w6->Race][9]) {
-              w6->Scores[AbilityIndex] = RaceAbilityLimits[w6->Race][9];
-            }
-            if (w6->Scores[AbilityIndex] < ClassAbilityMinimums[w6->ClassCombo][AbilityIndex]) {
-              w6->Scores[AbilityIndex] = ClassAbilityMinimums[w6->ClassCombo][AbilityIndex];
-            }
-            if (((w6->Scores[AbilityIndex] < CreateCharacter_MinClericWisdom)) && (((w6->ClassCombo >= CreateCharacter_ClericFighter && w6->ClassCombo <= CreateCharacter_ClericThief)))) {
-              w6->Scores[AbilityIndex] = CreateCharacter_MinClericWisdom;
-            }
-            break;
-          }
-          case CreateCharacter_DexterityIndex:
-          {
-            if (RaceAgeBrackets[w6->Race][2] < w6->Age) {
-              w6->Scores[AbilityIndex] -= 2;
-            }
-            if (RaceAgeBrackets[w6->Race][3] < w6->Age) {
-              w6->Scores[AbilityIndex]--;
-            }
-            if (w6->Scores[AbilityIndex] < RaceAbilityLimits[w6->Race][10]) {
-              w6->Scores[AbilityIndex] = RaceAbilityLimits[w6->Race][10];
-            }
-            if (w6->Scores[AbilityIndex] > RaceAbilityLimits[w6->Race][11]) {
-              w6->Scores[AbilityIndex] = RaceAbilityLimits[w6->Race][11];
-            }
-            if (w6->Scores[AbilityIndex] < ClassAbilityMinimums[w6->ClassCombo][AbilityIndex]) {
-              w6->Scores[AbilityIndex] = ClassAbilityMinimums[w6->ClassCombo][AbilityIndex];
-            }
-            break;
-          }
-          case CreateCharacter_ConstitutionIndex:
-          {
-            if (RaceAgeBrackets[w6->Race][1] < w6->Age) {
-              w6->Scores[AbilityIndex]--;
-            }
-            if (RaceAgeBrackets[w6->Race][2] < w6->Age) {
-              w6->Scores[AbilityIndex]--;
-            }
-            if (RaceAgeBrackets[w6->Race][3] < w6->Age) {
-              w6->Scores[AbilityIndex]--;
-            }
-            if (w6->Scores[AbilityIndex] < RaceAbilityLimits[w6->Race][12]) {
-              w6->Scores[AbilityIndex] = RaceAbilityLimits[w6->Race][12];
-            }
-            if (w6->Scores[AbilityIndex] > RaceAbilityLimits[w6->Race][13]) {
-              w6->Scores[AbilityIndex] = RaceAbilityLimits[w6->Race][13];
-            }
-            if (w6->Scores[AbilityIndex] < ClassAbilityMinimums[w6->ClassCombo][AbilityIndex]) {
-              w6->Scores[AbilityIndex] = ClassAbilityMinimums[w6->ClassCombo][AbilityIndex];
-            }
-            break;
-          }
-          case CreateCharacter_CharismaIndex:
-          {
-            if (w6->Scores[AbilityIndex] < RaceAbilityLimits[w6->Race][14]) {
-              w6->Scores[AbilityIndex] = RaceAbilityLimits[w6->Race][14];
-            }
-            if (w6->Scores[AbilityIndex] > RaceAbilityLimits[w6->Race][15]) {
-              w6->Scores[AbilityIndex] = RaceAbilityLimits[w6->Race][15];
-            }
-            if (w6->Scores[AbilityIndex] < ClassAbilityMinimums[w6->ClassCombo][AbilityIndex]) {
-              w6->Scores[AbilityIndex] = ClassAbilityMinimums[w6->ClassCombo][AbilityIndex];
-            }
-            break;
-          }
-          }
+            ShowAbilityScore(AbilityIndex, 0);
+          if (AbilityIndex == CreateCharacter_CharismaIndex) break;
+          AbilityIndex++;
+        }
       }
-      ShowAbilityScore(AbilityIndex, 0);
-      if (AbilityIndex == CreateCharacter_CharismaIndex) break;
-      AbilityIndex++;
     }
     {
       TCharacter *w7 = &(*FPD(TCharacter (*), NewCharacter));
@@ -868,52 +905,60 @@ void CreateCharacter(void)
         w7->BaseMovement = CreateCharacter_StartMovement;
         GoldDiceTotal = 0;
         ClassTotal = 0;
-        ClassIndex = 0;
-        if (ClassIndex <= 7) for (;;) {
-          if (w7->ClassLevels[ClassIndex] > 0) {
-            switch (ClassIndex) {
-            case ClassCleric:
-            {
-              w7->SpellSlots[0][0] = 1;
-              break;
-            }
-            case ClassMagicUser:
-            {
-              w7->SpellSlots[1][0] = 1;
-              break;
-            }
-            }
-            GoldDiceTotal += RollDice(StartingGoldDice[ClassIndex][0], StartingGoldDice[ClassIndex][1]);
-            ClassTotal++;
-            switch (ClassIndex) {
-            case ClassCleric:
-            {
-              AddWisdomBonusSpells(NewCharacter);
-              I = 1;
-              if (I <= LastSpell) for (;;) {
-                {
-                  TSpellEntry *w8 = &SpellTable[I];
-                    if (((w8->SpellClass == 0)) && ((w8->Level == 1))) {
-                      w7->KnownSpells[I - 1] = 1;
+        {
+          if (0 <= 7) {
+            ClassIndex = 0;
+            for (;;) {
+                if (w7->ClassLevels[ClassIndex] > 0) {
+                  switch (ClassIndex) {
+                  case ClassCleric:
+                  {
+                    w7->SpellSlots[0][0] = 1;
+                    break;
+                  }
+                  case ClassMagicUser:
+                  {
+                    w7->SpellSlots[1][0] = 1;
+                    break;
+                  }
+                  }
+                  GoldDiceTotal += RollDice(StartingGoldDice[ClassIndex][0], StartingGoldDice[ClassIndex][1]);
+                  ClassTotal++;
+                  switch (ClassIndex) {
+                  case ClassCleric:
+                  {
+                    AddWisdomBonusSpells(NewCharacter);
+                    {
+                      if (1 <= LastSpell) {
+                        I = 1;
+                        for (;;) {
+                            {
+                              TSpellEntry *w8 = &SpellTable[I];
+                                if (((w8->SpellClass == 0)) && ((w8->Level == 1))) {
+                                  w7->KnownSpells[I - 1] = 1;
+                                }
+                            }
+                          if (I == LastSpell) break;
+                          I++;
+                        }
+                      }
                     }
+                    break;
+                  }
+                  case ClassMagicUser:
+                  {
+                    w7->KnownSpells[10] = 1;
+                    w7->KnownSpells[17] = 1;
+                    w7->KnownSpells[18] = 1;
+                    w7->KnownSpells[20] = 1;
+                    break;
+                  }
+                  }
                 }
-                if (I == LastSpell) break;
-                I++;
-              }
-              break;
-            }
-            case ClassMagicUser:
-            {
-              w7->KnownSpells[10] = 1;
-              w7->KnownSpells[17] = 1;
-              w7->KnownSpells[18] = 1;
-              w7->KnownSpells[20] = 1;
-              break;
-            }
+              if (ClassIndex == 7) break;
+              ClassIndex++;
             }
           }
-          if (ClassIndex == 7) break;
-          ClassIndex++;
         }
         w7->Money[3] = ((s16)(GoldDiceTotal * 10) / ClassTotal);
         w7->HpB1 = RollHitPoints(NewCharacter, 0xFF);
@@ -938,7 +983,7 @@ void CreateCharacter(void)
   ShowCharacterSheet();
   SelectedCharacter = SavedSelection;
   do {
-    rtl_str_assign((*FPD(TCharacter (*), NewCharacter)).Name, 15, ReadInputLine(t8, S("\020Character name: "), CreateCharacter_NamePromptColor, CreateCharacter_NameMaxLength));
+    rtl_str_assign((*FPD(TCharacter (*), NewCharacter)).Name, 15, ReadInputLine(t6, S("\020Character name: "), CreateCharacter_NamePromptColor, CreateCharacter_NameMaxLength));
   } while (!((*FPD(TCharacter (*), NewCharacter)).Name[0] != 0));
   SavedSelection = SelectedCharacter;
   SelectedCharacter = NewCharacter;
@@ -959,6 +1004,7 @@ void CreateCharacter(void)
      SelectedCharacter (nothing happens while it is nil); side effects: a flash message and the drop. */
 void DropCharacter(void)
 {
+  POOL_TRACE("DropCharacter");
   u8 Unused = 0;
   u8 t1[256];
   u8 t2[256];
@@ -1021,6 +1067,7 @@ static void ModifyCharacter_ShowStat(struct Frame_ModifyCharacter *up, u8 Highli
      SpellSlots and HirelingShare are used. */
 void ModifyCharacter(void)
 {
+  POOL_TRACE("ModifyCharacter");
   Frame_ModifyCharacter fr;
   memset(&fr, 0, sizeof fr);
   u8 t1[256];
@@ -1210,11 +1257,15 @@ void ModifyCharacter(void)
           case 'E':
           case 0x00:
           {
-            fr.Stat = 0;
-            if (fr.Stat <= 5) for (;;) {
-              (*FPD(TScoredCharacter (*), SelectedCharacter)).Scores[fr.Stat] = fr.SavedScores[fr.Stat];
-              if (fr.Stat == 5) break;
-              fr.Stat++;
+            {
+              if (0 <= 5) {
+                fr.Stat = 0;
+                for (;;) {
+                    (*FPD(TScoredCharacter (*), SelectedCharacter)).Scores[fr.Stat] = fr.SavedScores[fr.Stat];
+                  if (fr.Stat == 5) break;
+                  fr.Stat++;
+                }
+              }
             }
             (*FPD(TCharacter (*), SelectedCharacter)).StrengthPercent = fr.SavedStrengthPercent;
             (*FPD(TCharacter (*), SelectedCharacter)).HpMax = fr.SavedHpMax;
@@ -1270,6 +1321,7 @@ void ModifyCharacter(void)
      refused; kept. */
 void TrainCharacter(void)
 {
+  POOL_TRACE("TrainCharacter");
   u8 AtLimit = 0;
   s32 NewExperience = 0;
   s32 ClassXp = 0;
@@ -1306,75 +1358,79 @@ void TrainCharacter(void)
   {
     TCharacter *w1 = &(*FPD(TCharacter (*), SelectedCharacter));
       NewExperience = 0;
-      I = 0;
-      if (I <= 7) for (;;) {
-        if (w1->ClassLevels[I] > 0) {
-          ClassBitMask += ClassTrainingBits[I];
-          AtLimit = 0;
-          Level = w1->ClassLevels[I];
-          switch (w1->Race) {
-          case RaceDwarf:
-          {
-            if (I == ClassFighter) {
-              if (((((Level == 8)) && ((w1->Strength == Strength17)))) || ((((Level == 7)) && ((w1->Strength < Strength17))))) {
-                AtLimit = 1;
-              }
-            }
-            break;
-          }
-          case RaceElf:
-          {
-            if (I == ClassFighter) {
-              if ((((Level == 7)) || ((((Level == 6)) && ((w1->Strength == Strength17))))) || ((((Level == 5)) && ((w1->Strength < Strength17))))) {
-                AtLimit = 1;
-              }
-            }
-            break;
-          }
-          case RaceGnome:
-          {
-            if (I == ClassFighter) {
-              if (((Level == 6)) || ((((Level == 5)) && ((w1->Strength < ExceptionalStrength))))) {
-                AtLimit = 1;
-              }
-            }
-            break;
-          }
-          case RaceHalfElf:
-          {
-            if (((I == ClassCleric)) && ((Level == 5))) {
-              AtLimit = 1;
-            } else if (I == ClassFighter) {
-              if ((((Level == 8)) || ((((Level == 7)) && ((w1->Strength == Strength17))))) || ((((Level == 6)) && ((w1->Strength < Strength17))))) {
-                AtLimit = 1;
-              }
-            }
-            break;
-          }
-          case RaceHalfling:
-          {
-            if (I == ClassFighter) {
-              if ((((Level == 6)) || ((((Level == 5)) && ((w1->Strength == Strength17))))) || ((((Level == 4)) && ((w1->Strength < Strength17))))) {
-                AtLimit = 1;
-              }
-            }
-            break;
-          }
-          }
-          if (AtLimit == 0) {
-            if (((ExperienceTable[I][(s8)(Level + 1)] <= w1->Experience)) || ((StingCheat != 0))) {
-              if (ExperienceTable[I][(s8)(Level + 1)] > 0) {
-                TrainableBits += ClassTrainingBits[I];
-                ClassXp = ExperienceTable[I][(s8)((s8)(Level + 1) + 1)];
-                if ((((ClassXp > 0)) && ((w1->Experience >= ClassXp))) && ((ClassXp > NewExperience))) {
-                  NewExperience = ClassXp - 1;
+      {
+        if (0 <= 7) {
+          I = 0;
+          for (;;) {
+              if (w1->ClassLevels[I] > 0) {
+                ClassBitMask += ClassTrainingBits[I];
+                AtLimit = 0;
+                Level = w1->ClassLevels[I];
+                switch (w1->Race) {
+                case RaceDwarf:
+                {
+                  if (I == ClassFighter) {
+                    if (((((Level == 8)) && ((w1->Strength == Strength17)))) || ((((Level == 7)) && ((w1->Strength < Strength17))))) {
+                      AtLimit = 1;
+                    }
+                  }
+                  break;
+                }
+                case RaceElf:
+                {
+                  if (I == ClassFighter) {
+                    if ((((Level == 7)) || ((((Level == 6)) && ((w1->Strength == Strength17))))) || ((((Level == 5)) && ((w1->Strength < Strength17))))) {
+                      AtLimit = 1;
+                    }
+                  }
+                  break;
+                }
+                case RaceGnome:
+                {
+                  if (I == ClassFighter) {
+                    if (((Level == 6)) || ((((Level == 5)) && ((w1->Strength < ExceptionalStrength))))) {
+                      AtLimit = 1;
+                    }
+                  }
+                  break;
+                }
+                case RaceHalfElf:
+                {
+                  if (((I == ClassCleric)) && ((Level == 5))) {
+                    AtLimit = 1;
+                  } else if (I == ClassFighter) {
+                    if ((((Level == 8)) || ((((Level == 7)) && ((w1->Strength == Strength17))))) || ((((Level == 6)) && ((w1->Strength < Strength17))))) {
+                      AtLimit = 1;
+                    }
+                  }
+                  break;
+                }
+                case RaceHalfling:
+                {
+                  if (I == ClassFighter) {
+                    if ((((Level == 6)) || ((((Level == 5)) && ((w1->Strength == Strength17))))) || ((((Level == 4)) && ((w1->Strength < Strength17))))) {
+                      AtLimit = 1;
+                    }
+                  }
+                  break;
+                }
+                }
+                if (AtLimit == 0) {
+                  if (((ExperienceTable[I][(s8)(Level + 1)] <= w1->Experience)) || ((StingCheat != 0))) {
+                    if (ExperienceTable[I][(s8)(Level + 1)] > 0) {
+                      TrainableBits += ClassTrainingBits[I];
+                      ClassXp = ExperienceTable[I][(s8)((s8)(Level + 1) + 1)];
+                      if ((((ClassXp > 0)) && ((w1->Experience >= ClassXp))) && ((ClassXp > NewExperience))) {
+                        NewExperience = ClassXp - 1;
+                      }
+                    }
+                  }
                 }
               }
-            }
+            if (I == 7) break;
+            I++;
           }
         }
-        if (I == 7) break;
-        I++;
       }
       if (NewExperience > 0) {
         w1->Experience = NewExperience;
@@ -1397,18 +1453,22 @@ void TrainCharacter(void)
       Row = TrainCharacter_NameRow;
       DrawCharacterName(SelectedCharacter, TrainCharacter_NameCol, Row, 0);
       DrawTextAt((s16)(w1->Name[0] + 4), Row, TrainCharacter_BecomeTextColor, S("\015 will become:"));
-      I = 0;
-      if (I <= 7) for (;;) {
-        if (((w1->ClassLevels[I] > 0)) && ((((ClassTrainingBits[I] & AllowedBits)) > 0))) {
-          Row++;
-          if (Row == TrainCharacter_FirstBecomeRow) {
-            DrawTextAt(TrainCharacter_BecomeTextCol, Row, TrainCharacter_BecomeTextColor, rtl_str_cat(t2, 4, (const u8 *const[]){S("\014    a level "), ByteToText(t1, (s16)(w1->ClassLevels[I] + 1)), S("\001 "), ClassNames[I]}));
-          } else {
-            DrawTextAt(TrainCharacter_BecomeTextCol, Row, TrainCharacter_BecomeTextColor, rtl_str_cat(t4, 4, (const u8 *const[]){S("\014and a level "), ByteToText(t3, (s16)(w1->ClassLevels[I] + 1)), S("\001 "), ClassNames[I]}));
+      {
+        if (0 <= 7) {
+          I = 0;
+          for (;;) {
+              if (((w1->ClassLevels[I] > 0)) && ((((ClassTrainingBits[I] & AllowedBits)) > 0))) {
+                Row++;
+                if (Row == TrainCharacter_FirstBecomeRow) {
+                  DrawTextAt(TrainCharacter_BecomeTextCol, Row, TrainCharacter_BecomeTextColor, rtl_str_cat(t2, 4, (const u8 *const[]){S("\014    a level "), ByteToText(t1, (s16)(w1->ClassLevels[I] + 1)), S("\001 "), ClassNames[I]}));
+                } else {
+                  DrawTextAt(TrainCharacter_BecomeTextCol, Row, TrainCharacter_BecomeTextColor, rtl_str_cat(t4, 4, (const u8 *const[]){S("\014and a level "), ByteToText(t3, (s16)(w1->ClassLevels[I] + 1)), S("\001 "), ClassNames[I]}));
+                }
+              }
+            if (I == 7) break;
+            I++;
           }
         }
-        if (I == 7) break;
-        I++;
       }
       if (AskYesNo(S("\026Do you wish to train\077 "), TrainCharacter_PromptTitleColor, TrainCharacter_PromptWordColor, TrainCharacter_PromptHotColor) != 'Y') {
         return;
@@ -1419,22 +1479,26 @@ void TrainCharacter(void)
       }
       TrainedCount = 0;
       SavedMageLevel = w1->ClassLevels[5];
-      I = 0;
-      if (I <= 7) for (;;) {
-        if (w1->ClassLevels[I] > 0) {
-          TrainedCount++;
-          if (((ClassTrainingBits[I] & AllowedBits)) > 0) {
-            w1->ClassLevels[I]++;
-            /* the rise also restores one level DrainLevels (ovl12:2122) took: give back that
-               level's share of the lost hit points and drop the count of drained levels [I] */
-            if (w1->Pad74[0] > 0) {
-              w1->Pad74[1] -= (w1->Pad74[1] / w1->Pad74[0]);
-              w1->Pad74[0]--;
-            }
+      {
+        if (0 <= 7) {
+          I = 0;
+          for (;;) {
+              if (w1->ClassLevels[I] > 0) {
+                TrainedCount++;
+                if (((ClassTrainingBits[I] & AllowedBits)) > 0) {
+                  w1->ClassLevels[I]++;
+                  /* the rise also restores one level DrainLevels (ovl12:2122) took: give back that
+                     level's share of the lost hit points and drop the count of drained levels [I] */
+                  if (w1->Pad74[0] > 0) {
+                    w1->Pad74[1] -= (w1->Pad74[1] / w1->Pad74[0]);
+                    w1->Pad74[0]--;
+                  }
+                }
+              }
+            if (I == 7) break;
+            I++;
           }
         }
-        if (I == 7) break;
-        I++;
       }
       RecalcClassStats(SelectedCharacter);
       if (w1->ClassLevels[5] > SavedMageLevel) {
@@ -1481,6 +1545,7 @@ void TrainCharacter(void)
      reach the test with Count never set (first pass) or stale; kept. */
 void AddSavedCharacters(void)
 {
+  POOL_TRACE("AddSavedCharacters");
   PMenuLine List = 0;
   PMenuLine Selected = 0;
   PCharacter NewChar = 0;
@@ -1546,6 +1611,7 @@ void AddSavedCharacters(void)
      its predecessor otherwise). Called on drop, load, battle removal and party reorder. */
 void RemoveSelectedCharacter(u8 Uncounted, u8 FreePicture)
 {
+  POOL_TRACE("RemoveSelectedCharacter");
   PCharacter Cur = 0;
   if (PartyListHead == 0) {
     return;
@@ -1590,6 +1656,7 @@ void RemoveSelectedCharacter(u8 Uncounted, u8 FreePicture)
      the prompt line and the two pictures. */
 void ChooseHeadAndBody(void)
 {
+  POOL_TRACE("ChooseHeadAndBody");
   u8 Key = 0;
   u8 ExtKey = 0;
   u8 SavedHeadBank = 0;
@@ -1705,19 +1772,27 @@ static void EditCharacterIcon_CopyPictureSlot(struct Frame_EditCharacterIcon *up
   if (Recolor != 0) {
     {
       TCharacter *w1 = &(*FPD(TCharacter (*), SelectedCharacter));
-        I = 0;
-        if (I <= 15) for (;;) {
-          (*MapFrom)[I] = I;
-          (*MapTo)[I] = I;
-          if (I == 15) break;
-          I++;
+        {
+          if (0 <= 15) {
+            I = 0;
+            for (;;) {
+                (*MapFrom)[I] = I;
+                (*MapTo)[I] = I;
+              if (I == 15) break;
+              I++;
+            }
+          }
         }
-        I = 1;
-        if (I <= 6) for (;;) {
-          (*MapTo)[FigureColorSlots[I]] = (w1->Figure[I] & 0xF);
-          (*MapTo)[(s16)(FigureColorSlots[I] + 8)] = (s16)((u16)((w1->Figure[I] & 0xF0)) >> 4);
-          if (I == 6) break;
-          I++;
+        {
+          if (1 <= 6) {
+            I = 1;
+            for (;;) {
+                (*MapTo)[FigureColorSlots[I]] = (w1->Figure[I] & 0xF);
+                (*MapTo)[(s16)(FigureColorSlots[I] + 8)] = (s16)((u16)((w1->Figure[I] & 0xF0)) >> 4);
+              if (I == 6) break;
+              I++;
+            }
+          }
         }
         RemapPictureColors(rtl_far(&(*MapFrom)), rtl_far(&(*MapTo)), 0, 0, PictureSlots[Dest].FirstPic);
         RemapPictureColors(rtl_far(&(*MapFrom)), rtl_far(&(*MapTo)), 0, 0, PictureSlots[Dest].SecondPic);
@@ -1757,6 +1832,7 @@ L_exit:
      the player can switch to: 'Small' is shown while Figure[0] is 2 (large), 'Large' otherwise. */
 void EditCharacterIcon(void)
 {
+  POOL_TRACE("EditCharacterIcon");
   Frame_EditCharacterIcon fr;
   memset(&fr, 0, sizeof fr);
   u8 t1[256];
@@ -2094,6 +2170,7 @@ void EditCharacterIcon(void)
      hidden local; the result is the signed total (it can be negative for a low constitution). */
 s8 ConstitutionHitPointAdjustment(PCharacter Who)
 {
+  POOL_TRACE("ConstitutionHitPointAdjustment");
   s8 Result = 0;
   s8 Sum = 0;
   s8 I = 0;
@@ -2101,23 +2178,27 @@ s8 ConstitutionHitPointAdjustment(PCharacter Who)
   Sum = 0;
   {
     TCharacter *w1 = &(*FPD(TCharacter (*), Who));
-      I = 0;
-      if (I <= 7) for (;;) {
-        if (w1->ClassLevels[I] > 0) {
-          Sum += ConstitutionHitPointTable[w1->Constitution];
-          if (w1->Constitution > 16) {
-            if (w1->ClassCombo == 2) {
-              Sum++;
-            }
-          }
-          if (w1->Constitution > 17) {
-            if (w1->ClassCombo == 2) {
-              Sum++;
-            }
+      {
+        if (0 <= 7) {
+          I = 0;
+          for (;;) {
+              if (w1->ClassLevels[I] > 0) {
+                Sum += ConstitutionHitPointTable[w1->Constitution];
+                if (w1->Constitution > 16) {
+                  if (w1->ClassCombo == 2) {
+                    Sum++;
+                  }
+                }
+                if (w1->Constitution > 17) {
+                  if (w1->ClassCombo == 2) {
+                    Sum++;
+                  }
+                }
+              }
+            if (I == 7) break;
+            I++;
           }
         }
-        if (I == 7) break;
-        I++;
       }
   }
   Result = Sum;
@@ -2134,6 +2215,7 @@ s8 ConstitutionHitPointAdjustment(PCharacter Who)
      is never below 1. The `with Who^` evaluates the parameter once. No side effects. */
 u8 MinHitPoints(PCharacter Who)
 {
+  POOL_TRACE("MinHitPoints");
   u8 Result = 0;
   u8 Count = 0;
   s8 Adjustment = 0;
@@ -2143,26 +2225,30 @@ u8 MinHitPoints(PCharacter Who)
     TCharacter *w1 = &(*FPD(TCharacter (*), Who));
       Count = 0;
       Total = 0;
-      I = 0;
-      if (I <= 7) for (;;) {
-        if (w1->ClassLevels[I] > 0) {
-          Total += w1->ClassLevels[I];
-          Count++;
-          switch (I) {
-          case 4:
-          {
-            Total++;
-            break;
-          }
-          case 7:
-          {
-            Total++;
-            break;
-          }
+      {
+        if (0 <= 7) {
+          I = 0;
+          for (;;) {
+              if (w1->ClassLevels[I] > 0) {
+                Total += w1->ClassLevels[I];
+                Count++;
+                switch (I) {
+                case 4:
+                {
+                  Total++;
+                  break;
+                }
+                case 7:
+                {
+                  Total++;
+                  break;
+                }
+                }
+              }
+            if (I == 7) break;
+            I++;
           }
         }
-        if (I == 7) break;
-        I++;
       }
   }
   Adjustment = ConstitutionHitPointAdjustment(Who);
@@ -2190,6 +2276,7 @@ u8 MinHitPoints(PCharacter Who)
       `with Who^` evaluates the parameter once into a hidden local. No side effects. */
 u8 MaxHitPoints(PCharacter Who)
 {
+  POOL_TRACE("MaxHitPoints");
   u8 Result = 0;
   u8 Count = 0;
   u8 Total = 0;
@@ -2199,55 +2286,59 @@ u8 MaxHitPoints(PCharacter Who)
     TCharacter *w1 = &(*FPD(TCharacter (*), Who));
       Count = 0;
       Total = 0;
-      I = 0;
-      if (I <= 7) for (;;) {
-        if (w1->ClassLevels[I] > 0) {
-          Count++;
-          switch (I) {
-          case 0:
-          {
-            Total += (s16)(w1->ClassLevels[I] * 8);
-            break;
-          }
-          case 1:
-          {
-            Total += (s16)(w1->ClassLevels[I] * 8);
-            break;
-          }
-          case 2:
-          {
-            Total += (s16)(w1->ClassLevels[I] * 10);
-            break;
-          }
-          case 3:
-          {
-            Total += (s16)(w1->ClassLevels[I] * 10);
-            break;
-          }
-          case 4:
-          {
-            Total += (s16)(((s16)(w1->ClassLevels[I] + 1)) * 8);
-            break;
-          }
-          case 5:
-          {
-            Total += (s16)(w1->ClassLevels[I] * 4);
-            break;
-          }
-          case 6:
-          {
-            Total += (s16)(w1->ClassLevels[I] * 6);
-            break;
-          }
-          case 7:
-          {
-            Total += (s16)(((s16)(w1->ClassLevels[I] + 1)) * 4);
-            break;
-          }
+      {
+        if (0 <= 7) {
+          I = 0;
+          for (;;) {
+              if (w1->ClassLevels[I] > 0) {
+                Count++;
+                switch (I) {
+                case 0:
+                {
+                  Total += (s16)(w1->ClassLevels[I] * 8);
+                  break;
+                }
+                case 1:
+                {
+                  Total += (s16)(w1->ClassLevels[I] * 8);
+                  break;
+                }
+                case 2:
+                {
+                  Total += (s16)(w1->ClassLevels[I] * 10);
+                  break;
+                }
+                case 3:
+                {
+                  Total += (s16)(w1->ClassLevels[I] * 10);
+                  break;
+                }
+                case 4:
+                {
+                  Total += (s16)(((s16)(w1->ClassLevels[I] + 1)) * 8);
+                  break;
+                }
+                case 5:
+                {
+                  Total += (s16)(w1->ClassLevels[I] * 4);
+                  break;
+                }
+                case 6:
+                {
+                  Total += (s16)(w1->ClassLevels[I] * 6);
+                  break;
+                }
+                case 7:
+                {
+                  Total += (s16)(((s16)(w1->ClassLevels[I] + 1)) * 4);
+                  break;
+                }
+                }
+              }
+            if (I == 7) break;
+            I++;
           }
         }
-        if (I == 7) break;
-        I++;
       }
   }
   Adjustment = ConstitutionHitPointAdjustment(SelectedCharacter);
@@ -2273,24 +2364,29 @@ u8 MaxHitPoints(PCharacter Who)
       create-character run (ovl16:1D1E). No side effects but the random rolls. */
 u8 RollHitPoints(PCharacter Who, u8 ClassBits)
 {
+  POOL_TRACE("RollHitPoints");
   u8 Result = 0;
   u8 ClassRoll = 0;
   u8 Sum = 0;
   s8 I = 0;
   Sum = 0;
-  I = 0;
-  if (I <= 7) for (;;) {
-    if ((((*FPD(TCharacter (*), Who)).ClassLevels[I] > 0)) && ((((ClassTrainingBits[I] & ClassBits)) > 0))) {
-      ClassRoll = RollDice(ClassHitDiceCount[I], ClassHitDieSides[I]);
-      if ((*FPD(TCharacter (*), Who)).ClassLevels[I] == 1) {
-        if (ClassRoll < (((s16)(ClassHitDieSides[I] * 2)) / 3)) {
-          ClassRoll = (((s16)(ClassHitDieSides[I] * 2)) / 3);
-        }
+  {
+    if (0 <= 7) {
+      I = 0;
+      for (;;) {
+          if ((((*FPD(TCharacter (*), Who)).ClassLevels[I] > 0)) && ((((ClassTrainingBits[I] & ClassBits)) > 0))) {
+            ClassRoll = RollDice(ClassHitDiceCount[I], ClassHitDieSides[I]);
+            if ((*FPD(TCharacter (*), Who)).ClassLevels[I] == 1) {
+              if (ClassRoll < (((s16)(ClassHitDieSides[I] * 2)) / 3)) {
+                ClassRoll = (((s16)(ClassHitDieSides[I] * 2)) / 3);
+              }
+            }
+            Sum += ClassRoll;
+          }
+        if (I == 7) break;
+        I++;
       }
-      Sum += ClassRoll;
     }
-    if (I == 7) break;
-    I++;
   }
   Result = Sum;
   return Result;
@@ -2307,6 +2403,7 @@ u8 RollHitPoints(PCharacter Who, u8 ClassBits)
       the parameter once. */
 void PayGold(s32 Amount, PCharacter Who)
 {
+  POOL_TRACE("PayGold");
   u16 Coins = 0;
   TCoinKind Kind = 0;
   Amount = Amount * GoldInCopper;
@@ -2338,4 +2435,5 @@ void PayGold(s32 Amount, PCharacter Who)
 /* Initialisation part of unit OVL16. */
 void init_OVL16(void)
 {
+  POOL_TRACE("init");
 }

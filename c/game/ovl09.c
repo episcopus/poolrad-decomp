@@ -15,6 +15,7 @@
      EndOrGuardTurn. Globals: none. QUIRK: CastChosenSpell's var result is overwritten at once. */
 void QuickTurn(PCharacter Who)
 {
+  POOL_TRACE("QuickTurn");
   u8 Pattern = 0;
   u8 Done = 0;
   Done = HandleCombatKey(Who);
@@ -79,6 +80,7 @@ void QuickTurn(PCharacter Who)
      SelectTurnUndeadTarget's untyped var parameter). */
 u8 TryTurnUndead(PCharacter Who)
 {
+  POOL_TRACE("TryTurnUndead");
   u8 Result = 0;
   u8 Unused[3] = {0};
   u8 Done = 0;
@@ -110,17 +112,20 @@ static u8 SpellAccepted_DifferentSideInArea(struct Frame_SpellAccepted *up, s8 X
 {
   u8 Result = 0;
   u8 I = 0;
-  u8 t1;
   Result = 0;
   ScanTargets(X, Y, SpellTable[Spell].PadB[4], 0xFF, 1, CombatMap);
-  t1 = SortEntries[0].Val_;
-  I = 1;
-  if (I <= t1) for (;;) {
-    if ((*FPD(TCharacter (*), CombatantRecord[SortEntries[I].Head - 1])).Side != OpposingSide(SelectedCharacter)) {
-      Result = 1;
+  {
+    u8 limit = SortEntries[0].Val_;
+    if (1 <= limit) {
+      I = 1;
+      for (;;) {
+          if ((*FPD(TCharacter (*), CombatantRecord[SortEntries[I].Head - 1])).Side != OpposingSide(SelectedCharacter)) {
+            Result = 1;
+          }
+        if (I == limit) break;
+        I++;
+      }
     }
-    if (I == t1) break;
-    I++;
   }
   return Result;
 }
@@ -137,12 +142,12 @@ static u8 SpellAccepted_DifferentSideInArea(struct Frame_SpellAccepted *up, s8 X
      CombatantTable, SortEntries, CombatantRecord, SelectedCharacter, CombatMap. */
 u8 SpellAccepted(PCharacter Who, u8 Spell, u8 Range)
 {
+  POOL_TRACE("SpellAccepted");
   Frame_SpellAccepted fr;
   memset(&fr, 0, sizeof fr);
   fr.Who = Who;
   fr.Spell = Spell;
   fr.Range = Range;
-  u8 t1;
   fr.Result = 0;
   if (SpellTable[fr.Spell].PadB[2] < fr.Range) {
     return fr.Result;
@@ -157,14 +162,18 @@ u8 SpellAccepted(PCharacter Who, u8 Spell, u8 Range)
       fr.Result = 1;
       return fr.Result;
     }
-    t1 = fr.Tries;
-    fr.I = 1;
-    if (fr.I <= t1) for (;;) {
-      if (SpellAccepted_DifferentSideInArea(&fr, CombatantTable[CombatantScanList[fr.I]].X, CombatantTable[CombatantScanList[fr.I]].Y, fr.Spell)) {
-        return fr.Result;
+    {
+      u8 limit = fr.Tries;
+      if (1 <= limit) {
+        fr.I = 1;
+        for (;;) {
+            if (SpellAccepted_DifferentSideInArea(&fr, CombatantTable[CombatantScanList[fr.I]].X, CombatantTable[CombatantScanList[fr.I]].Y, fr.Spell)) {
+              return fr.Result;
+            }
+          if (fr.I == limit) break;
+          fr.I++;
+        }
       }
-      if (fr.I == t1) break;
-      fr.I++;
     }
     fr.Result = 1;
   }
@@ -182,6 +191,7 @@ u8 SpellAccepted(PCharacter Who, u8 Spell, u8 Range)
      (PartySideCount), GameVars, ItemTable. */
 u8 UseMagicItem(PCharacter Who)
 {
+  POOL_TRACE("UseMagicItem");
   u8 Result = 0;
   u8 Range = 0;
   u8 Roll = 0;
@@ -193,7 +203,6 @@ u8 UseMagicItem(PCharacter Who)
   PItem Target = 0;
   PItem Best = 0;
   u8 E8Done = 0;
-  u8 t1;
   Result = 0;
   Best = 0;
   Range = 7;
@@ -207,43 +216,47 @@ u8 UseMagicItem(PCharacter Who)
   if ((*FPD(TGameVars (*), GameVars))[229] != 0) {
     goto L_Done;
   }
-  t1 = Roll;
-  I = 1;
-  if (I <= t1) for (;;) {
-    Target = (*FPD(TCharacter (*), Who)).Items;
-  L_NextItem:
-    ;
-    if (Target == 0) {
-      goto L_NextRound;
-    }
-    if (Best != 0) {
-      goto L_NextRound;
-    }
-    Level = (*FPD(TMenuLine (*), Target)).Affects[1];
-    RowByte = ItemTable[(*FPD(TMenuLine (*), Target)).ItemType].Slot;
-    if (!IsScroll(Target)) {
-      if ((*FPD(TMenuLine (*), Target)).Affects[2] < 0x80) {
-        if ((*FPD(TMenuLine (*), Target)).Readied) {
-          if (Level > 0) {
-            if (Level > MaxSpell) {
-              Level = Level - 0x17;
-            }
-            if (SpellAccepted(Who, Level, Range)) {
-              Best = Target;
+  {
+    u8 limit = Roll;
+    if (1 <= limit) {
+      I = 1;
+      for (;;) {
+          Target = (*FPD(TCharacter (*), Who)).Items;
+        L_NextItem:
+          ;
+          if (Target == 0) {
+            goto L_NextRound;
+          }
+          if (Best != 0) {
+            goto L_NextRound;
+          }
+          Level = (*FPD(TMenuLine (*), Target)).Affects[1];
+          RowByte = ItemTable[(*FPD(TMenuLine (*), Target)).ItemType].Slot;
+          if (!IsScroll(Target)) {
+            if ((*FPD(TMenuLine (*), Target)).Affects[2] < 0x80) {
+              if ((*FPD(TMenuLine (*), Target)).Readied) {
+                if (Level > 0) {
+                  if (Level > MaxSpell) {
+                    Level = Level - 0x17;
+                  }
+                  if (SpellAccepted(Who, Level, Range)) {
+                    Best = Target;
+                  }
+                }
+              }
             }
           }
-        }
+        L_Advance:
+          ;
+          Target = (*FPD(TMenuLine (*), Target)).Next;
+          goto L_NextItem;
+        L_NextRound:
+          ;
+          Range--;
+        if (I == limit) break;
+        I++;
       }
     }
-  L_Advance:
-    ;
-    Target = (*FPD(TMenuLine (*), Target)).Next;
-    goto L_NextItem;
-  L_NextRound:
-    ;
-    Range--;
-    if (I == t1) break;
-    I++;
   }
 L_Done:
   ;
@@ -266,6 +279,7 @@ L_Done:
      bytes are never read (UnusedC, UnusedD). Globals: SideCounts (PartySideCount), MagicToggleOn. */
 u8 CastMemorizedSpell(PCharacter Who)
 {
+  POOL_TRACE("CastMemorizedSpell");
   u8 Result = 0;
   u8 SpellList[21] = {0};
   u8 UnusedC[4] = {0};
@@ -281,14 +295,18 @@ u8 CastMemorizedSpell(PCharacter Who)
   u8 UnusedD = 0;
   Count = 0;
   if ((*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).CanCast != 0) {
-    I = 0;
-    if (I <= 0x14) for (;;) {
-      if ((*FPD(TCharacter (*), Who)).Spells[I] > 0) {
-        SpellList[Count] = (*FPD(TCharacter (*), Who)).Spells[I];
-        Count++;
+    {
+      if (0 <= 0x14) {
+        I = 0;
+        for (;;) {
+            if ((*FPD(TCharacter (*), Who)).Spells[I] > 0) {
+              SpellList[Count] = (*FPD(TCharacter (*), Who)).Spells[I];
+              Count++;
+            }
+          if (I == 0x14) break;
+          I++;
+        }
       }
-      if (I == 0x14) break;
-      I++;
     }
   }
   Chosen = 0;
@@ -337,6 +355,7 @@ L_Done:
      HasAffect finds and is never read. */
 u8 CanAffordStep(PCharacter Who, u8 Column, u8 BaseDir, u8 (*OffMap))
 {
+  POOL_TRACE("CanAffordStep");
   u8 Result = 0;
   farptr Affect = 0;
   u8 Turn = 0;
@@ -395,6 +414,7 @@ u8 CanAffordStep(PCharacter Who, u8 Column, u8 BaseDir, u8 (*OffMap))
      original's; NoStep only computes EndOrGuardTurn. Globals: PartyFacing, AiLastDirection, AiStepTurns. */
 void MoveStep(PCharacter Who)
 {
+  POOL_TRACE("MoveStep");
   u8 Dir = 0;
   u8 Turn = 0;
   u8 Step = 0;
@@ -515,6 +535,7 @@ L_Finish:
      CombatMap. */
 u8 AiTurn(PCharacter Who)
 {
+  POOL_TRACE("AiTurn");
   u8 Result = 0;
   u8 Done = 0;
   u8 Flag = 0;
@@ -660,6 +681,7 @@ L_Finish:
      (parameterless). */
 u8 EndOrGuardTurn(PCharacter Who)
 {
+  POOL_TRACE("EndOrGuardTurn");
   u8 Result = 0;
   ClearCharacterMessage();
   if ((IsHelpless(Who) || IsRangedWeapon(Who)) || (((*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).Initiative == 0))) {
@@ -680,6 +702,7 @@ u8 EndOrGuardTurn(PCharacter Who)
      KeyPressed then else). FlushKeyboard always runs at the end. */
 u8 HandleCombatKey(PCharacter Who)
 {
+  POOL_TRACE("HandleCombatKey");
   u8 Result = 0;
   PCharacter Member = 0;
   u8 Key = 0;
@@ -746,6 +769,7 @@ u8 HandleCombatKey(PCharacter Who)
      Globals: MoraleScratch, SecondMoraleByte, GameVars2 (word Var2Morale). */
 u8 CheckMorale(PCharacter Who)
 {
+  POOL_TRACE("CheckMorale");
   u8 Result = 0;
   u8 E20Result = 0;
   u8 Saved6825 = 0;
@@ -796,6 +820,7 @@ u8 CheckMorale(PCharacter Who)
      score. Globals: ItemTable. */
 u8 ScoreItem(PCharacter Actor, PItem Item)
 {
+  POOL_TRACE("ScoreItem");
   u8 Result = 0;
   u8 Score = 0;
   TItemRow Row = {0};
@@ -865,6 +890,7 @@ u8 ScoreItem(PCharacter Actor, PItem Item)
      SlotItems, HandsInUse, ClassBits, BaseAttacks, BaseDamage and BaseDamageBonus. */
 void UseBestItem(PCharacter Who)
 {
+  POOL_TRACE("UseBestItem");
   PItem AttackPick = 0;
   PItem OtherPick = 0;
   PItem PlusPick = 0;
@@ -1027,4 +1053,5 @@ L_SkipSlotUse:
 /* Initialisation part of unit OVL09. */
 void init_OVL09(void)
 {
+  POOL_TRACE("init");
 }

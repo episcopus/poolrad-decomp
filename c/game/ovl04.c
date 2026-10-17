@@ -4,6 +4,7 @@
      asks "cast cure anyway: "; returns the key (Yes or not). ClearCharacterMessage clears the prompt. */
 u8 AskCastAnyway(const u8 *Reason_in)
 {
+  POOL_TRACE("AskCastAnyway");
   const u8 *Reason = Reason_in;
   u8 Result = 0;
   ShowCharacterMessage(SelectedCharacter, Reason, 0, 0);
@@ -25,6 +26,7 @@ u8 AskCastAnyway(const u8 *Reason_in)
      BuyItems). */
 u8 ChargeForCure(const u8 *Service_in, u16 Price)
 {
+  POOL_TRACE("ChargeForCure");
   u8 Service[256];
   rtl_str_assign(Service, 255, Service_in);
   u8 Result = 0;
@@ -65,6 +67,7 @@ u8 ChargeForCure(const u8 *Service_in, u16 Price)
      cleared and never read (the same in every service routine). */
 void CureBlindness(void)
 {
+  POOL_TRACE("CureBlindness");
   farptr Affect = 0;
   u8 Unused[256] = {0};
   u8 Answer = 0;
@@ -86,6 +89,7 @@ void CureBlindness(void)
      RemovingAffects set while it does. */
 void CureDisease(void)
 {
+  POOL_TRACE("CureDisease");
   farptr Affect = 0;
   u8 Unused[256] = {0};
   u8 Answer = 0;
@@ -94,13 +98,17 @@ void CureDisease(void)
   Diseased = 0;
   rtl_str_assign(Unused, 255, S("\000"));
   Answer = KeyYes;
-  I = 1;
-  if (I <= DiseaseCount) for (;;) {
-    if (HasAffect(SelectedCharacter, DiseaseAffects[I], &Affect)) {
-      Diseased = 1;
+  {
+    if (1 <= DiseaseCount) {
+      I = 1;
+      for (;;) {
+          if (HasAffect(SelectedCharacter, DiseaseAffects[I], &Affect)) {
+            Diseased = 1;
+          }
+        if (I == DiseaseCount) break;
+        I++;
+      }
     }
-    if (I == DiseaseCount) break;
-    I++;
   }
   if (!Diseased) {
     Answer = AskCastAnyway(S("\020is not Diseased."));
@@ -109,11 +117,15 @@ void CureDisease(void)
     Answer = ChargeForCure(S("\014Cure Disease"), PriceCureDisease);
     if (Answer == KeyYes) {
       RemovingAffects = 1;
-      I = 1;
-      if (I <= DiseaseCount) for (;;) {
-        RemoveAffect(SelectedCharacter, DiseaseAffects[I], 0);
-        if (I == DiseaseCount) break;
-        I++;
+      {
+        if (1 <= DiseaseCount) {
+          I = 1;
+          for (;;) {
+              RemoveAffect(SelectedCharacter, DiseaseAffects[I], 0);
+            if (I == DiseaseCount) break;
+            I++;
+          }
+        }
       }
       RemovingAffects = 0;
     }
@@ -124,6 +136,7 @@ void CureDisease(void)
      600 and heals 1d8, 2d8+1 or 3d8+3 hit points (RollDice rolls, HealCharacter heals). */
 void CureWounds(u8 Strength)
 {
+  POOL_TRACE("CureWounds");
   u8 Amount = 0;
   u8 Answer = 0;
   u8 Healed = 0;
@@ -169,6 +182,7 @@ void CureWounds(u8 Strength)
      the character has no fighter level. */
 void RaiseDead(void)
 {
+  POOL_TRACE("RaiseDead");
   farptr Affect = 0;
   u8 Unused[256] = {0};
   u8 Answer = 0;
@@ -208,19 +222,23 @@ void RaiseDead(void)
         }
         Bonus = 0;
         if ((*FPD(TCharacter (*), Who)).Constitution >= BonusConstitution) {
-          I = 0;
-          if (I <= LastClass_OVL04) for (;;) {
-            if ((*FPD(TCharacter (*), Who)).ClassLevels[I] > 0) {
-              if (I == ClassFighter) {
-                Bonus += (s16)(((s16)((*FPD(TCharacter (*), Who)).Constitution - BonusConstitution)) * (*FPD(TCharacter (*), Who)).ClassLevels[I]);
-              } else if ((*FPD(TCharacter (*), Who)).Constitution > HighConstitution) {
-                Bonus += (s16)((*FPD(TCharacter (*), Who)).ClassLevels[I] * 2);
-              } else {
-                Bonus += (*FPD(TCharacter (*), Who)).ClassLevels[I];
+          {
+            if (0 <= LastClass_OVL04) {
+              I = 0;
+              for (;;) {
+                  if ((*FPD(TCharacter (*), Who)).ClassLevels[I] > 0) {
+                    if (I == ClassFighter) {
+                      Bonus += (s16)(((s16)((*FPD(TCharacter (*), Who)).Constitution - BonusConstitution)) * (*FPD(TCharacter (*), Who)).ClassLevels[I]);
+                    } else if ((*FPD(TCharacter (*), Who)).Constitution > HighConstitution) {
+                      Bonus += (s16)((*FPD(TCharacter (*), Who)).ClassLevels[I] * 2);
+                    } else {
+                      Bonus += (*FPD(TCharacter (*), Who)).ClassLevels[I];
+                    }
+                  }
+                if (I == LastClass_OVL04) break;
+                I++;
               }
             }
-            if (I == LastClass_OVL04) break;
-            I++;
           }
           if (Bonus > 0) {
             HpLoss = (HpLoss / Bonus);
@@ -238,6 +256,7 @@ void RaiseDead(void)
      PriceNeutralizePoison and removes AffectPoisoned plus values $16 and $0F (their meanings are unknown). */
 void NeutralizePoison(void)
 {
+  POOL_TRACE("NeutralizePoison");
   farptr Affect = 0;
   u8 Unused[256] = {0};
   u8 Answer = 0;
@@ -268,6 +287,7 @@ void NeutralizePoison(void)
      CastRemoveCurse through FirstSpellTarget. */
 void RemoveCurse(void)
 {
+  POOL_TRACE("RemoveCurse");
   u8 Cursed = 0;
   PItem Item = 0;
   farptr Affect = 0;
@@ -301,6 +321,7 @@ void RemoveCurse(void)
      (ovl24:175D). */
 void StoneToFlesh(void)
 {
+  POOL_TRACE("StoneToFlesh");
   farptr Affect = 0;
   u8 Unused[256] = {0};
   u8 Answer = 0;
@@ -328,6 +349,7 @@ void StoneToFlesh(void)
      0..24) and redraws the view and reshows SelectedCharacter. */
 void HealMenu(void)
 {
+  POOL_TRACE("HealMenu");
   PMenuLine List = 0;
   PMenuLine First = 0;
   u8 RedrawList = 0;
@@ -440,6 +462,7 @@ void HealMenu(void)
      and sets MoneyInPool to 0. */
 void VisitTemple(void)
 {
+  POOL_TRACE("VisitTemple");
   u8 Key = 0;
   u8 Done = 0;
   u8 ExtKey = 0;
@@ -548,6 +571,7 @@ void VisitTemple(void)
 /* Initialisation part of unit OVL04. */
 void init_OVL04(void)
 {
+  POOL_TRACE("init");
   /* ovl04:0F32. The unit's initialisation part is empty: the compiler emits only `55 89 E5 5D CB`
      (push bp; mov bp, sp; pop bp; retf, the frame with no body), so the Temple runs no code when the
      program starts; its work happens only when VisitTemple is called. */

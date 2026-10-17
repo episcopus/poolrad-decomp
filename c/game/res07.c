@@ -5,6 +5,7 @@
      bit 7 is the high nibble of Data[0], bit 0 the low nibble of Data[3]. */
 u8 ColorMatchMask(u8 Color, s32 Data)
 {
+  POOL_TRACE("ColorMatchMask");
   u8 Result = 0;
   u8 (*CellBytes)[4] = (u8 (*)[4])&Data;
   u8 Sum = 0;
@@ -14,18 +15,22 @@ u8 ColorMatchMask(u8 Color, s32 Data)
   Sum = 0;
   Target = Color << 4;
   Mask = 0x80;
-  I = 0;
-  if (I <= 3) for (;;) {
-    if ((((*CellBytes)[I] & 0xF0)) == Target) {
-      Sum += Mask;
+  {
+    if (0 <= 3) {
+      I = 0;
+      for (;;) {
+          if ((((*CellBytes)[I] & 0xF0)) == Target) {
+            Sum += Mask;
+          }
+          Mask = (s16)((u16)Mask >> 1);
+          if ((((*CellBytes)[I] & 0xF)) == Color) {
+            Sum += Mask;
+          }
+          Mask = (s16)((u16)Mask >> 1);
+        if (I == 3) break;
+        I++;
+      }
     }
-    Mask = (s16)((u16)Mask >> 1);
-    if ((((*CellBytes)[I] & 0xF)) == Color) {
-      Sum += Mask;
-    }
-    Mask = (s16)((u16)Mask >> 1);
-    if (I == 3) break;
-    I++;
   }
   Result = Sum;
   return Result;
@@ -36,6 +41,7 @@ u8 ColorMatchMask(u8 Color, s32 Data)
      even Index takes the high nibble, odd Index the low nibble of Pal[Index shr 1]. */
 u8 PaletteColor(u8 Index, PPalette Source)
 {
+  POOL_TRACE("PaletteColor");
   u8 Result = 0;
   TPalette Pal = {0};
   memcpy(Pal, (*FPD(TPalette (*), Source)), 8);
@@ -54,6 +60,7 @@ u8 PaletteColor(u8 Index, PPalette Source)
      res08_init and by RestoreVideoMode, so the two calls swap the modes [I]. */
 void SetVideoMode(u8 Mode)
 {
+  POOL_TRACE("SetVideoMode");
   u8 UnusedMode = 0;
   SavedVideoMode = CurrentVideoMode;
   Regs.AH = 0;
@@ -72,6 +79,7 @@ void SetVideoMode(u8 Mode)
      QuitGame would leave the game mode saved (not run in the oracle). */
 void RestoreVideoMode(void)
 {
+  POOL_TRACE("RestoreVideoMode");
   SetVideoMode(SavedVideoMode);
 }
 
@@ -84,6 +92,7 @@ void RestoreVideoMode(void)
      ovl28 and ovl11 can each pass their own pointer variable. */
 void LoadPicture(const u8 *Text_in, u8 BlockId, u8 AllocFlags, u8 Color, void *Target)
 {
+  POOL_TRACE("LoadPicture");
   const u8 *Text = Text_in;
   u16 DaxHeight = 0;
   u16 DaxWidthCols = 0;
@@ -131,6 +140,7 @@ void LoadPicture(const u8 *Text_in, u8 BlockId, u8 AllocFlags, u8 Color, void *T
      QUIRK 0464:02A5: the frame has 17 bytes above Cell that the code never touches. */
 void UnpackPicturePixels(farptr Source, u16 Offset, u8 AllocFlags, u8 Color, farptr Data)
 {
+  POOL_TRACE("UnpackPicturePixels");
   u8 Unused[17] = {0};
   s32 Cell = 0;
   u8 (*CellBytes)[4] = (u8 (*)[4])&Cell;
@@ -145,14 +155,6 @@ void UnpackPicturePixels(farptr Source, u16 Offset, u8 AllocFlags, u8 Color, far
   u8 Bit = 0;
   u8 Plane = 0;
   u8 Nibble = 0;
-  u8 t1;
-  u16 t2;
-  u16 t3;
-  u8 t4;
-  u16 t5;
-  u16 t6;
-  u8 t7;
-  u16 t8;
   if (Data == 0) {
     return;
   }
@@ -163,157 +165,218 @@ void UnpackPicturePixels(farptr Source, u16 Offset, u8 AllocFlags, u8 Color, far
       switch (VideoAdapter) {
       case 0:
       {
-        t1 = w1->ItemCount;
-        I = 1;
-        if (I <= t1) for (;;) {
-          t2 = (u16)(w1->Height - 1);
-          Row = 0;
-          if (Row <= t2) for (;;) {
-            t3 = (u16)(w1->WidthCols - 1);
-            Col = 0;
-            if (Col <= t3) for (;;) {
-              rtl_Move((void *)&(*FPD(TByteArray_RES07 (*), Source))[Offset], (void *)&Cell, 4);
-              if (w1->Pixels != 0) {
-                Mask = ColorMatchMask(Color, Cell);
-                Bit = 0x80;
-                Pass = 1;
-                if (Pass <= 2) for (;;) {
-                  Index = 4;
-                  if (Index <= 7) for (;;) {
-                    if (((Bit & Mask)) > 0) {
-                      (*FPD(TByteArray_RES07 (*), w1->Pixels))[PixIndex] = ((*FPD(TByteArray_RES07 (*), w1->Pixels))[PixIndex] | GlyphPixelMasks[Index]);
+        {
+          u8 limit = w1->ItemCount;
+          if (1 <= limit) {
+            I = 1;
+            for (;;) {
+                {
+                  u16 limit = (u16)(w1->Height - 1);
+                  if (0 <= limit) {
+                    Row = 0;
+                    for (;;) {
+                        {
+                          u16 limit = (u16)(w1->WidthCols - 1);
+                          if (0 <= limit) {
+                            Col = 0;
+                            for (;;) {
+                                rtl_Move((void *)&(*FPD(TByteArray_RES07 (*), Source))[Offset], (void *)&Cell, 4);
+                                if (w1->Pixels != 0) {
+                                  Mask = ColorMatchMask(Color, Cell);
+                                  Bit = 0x80;
+                                  {
+                                    if (1 <= 2) {
+                                      Pass = 1;
+                                      for (;;) {
+                                          {
+                                            if (4 <= 7) {
+                                              Index = 4;
+                                              for (;;) {
+                                                  if (((Bit & Mask)) > 0) {
+                                                    (*FPD(TByteArray_RES07 (*), w1->Pixels))[PixIndex] = ((*FPD(TByteArray_RES07 (*), w1->Pixels))[PixIndex] | GlyphPixelMasks[Index]);
+                                                  }
+                                                  Bit = (s16)((u16)Bit >> 1);
+                                                if (Index == 7) break;
+                                                Index++;
+                                              }
+                                            }
+                                          }
+                                          PixIndex++;
+                                        if (Pass == 2) break;
+                                        Pass++;
+                                      }
+                                    }
+                                  }
+                                }
+                                {
+                                  if (0 <= 3) {
+                                    Index = 0;
+                                    for (;;) {
+                                        if (Index & 1) {
+                                          w1->Data[OutOfs] = (w1->Data[OutOfs] | PixelBitsByColor[PaletteColor(((*CellBytes)[(s16)((u16)Index >> 1)] & 0xF), rtl_far(&w1->Palette))][Index]);
+                                        } else {
+                                          w1->Data[OutOfs] = (w1->Data[OutOfs] | PixelBitsByColor[PaletteColor((s16)((u16)(((*CellBytes)[(s16)((u16)Index >> 1)] & 0xF0)) >> 4), rtl_far(&w1->Palette))][Index]);
+                                        }
+                                      if (Index == 3) break;
+                                      Index++;
+                                    }
+                                  }
+                                }
+                                if (w1->Pixels != 0) {
+                                  w1->Data[OutOfs] = (w1->Data[OutOfs] & (u8)~(*FPD(TByteArray_RES07 (*), w1->Pixels))[(u16)(PixIndex - 2)]);
+                                }
+                                OutOfs++;
+                                {
+                                  if (4 <= 7) {
+                                    Index = 4;
+                                    for (;;) {
+                                        if (Index & 1) {
+                                          w1->Data[OutOfs] = (w1->Data[OutOfs] | PixelBitsByColor[PaletteColor(((*CellBytes)[(s16)((u16)Index >> 1)] & 0xF), rtl_far(&w1->Palette))][(s16)(Index - 4)]);
+                                        } else {
+                                          w1->Data[OutOfs] = (w1->Data[OutOfs] | PixelBitsByColor[PaletteColor((s16)((u16)(((*CellBytes)[(s16)((u16)Index >> 1)] & 0xF0)) >> 4), rtl_far(&w1->Palette))][(s16)(Index - 4)]);
+                                        }
+                                      if (Index == 7) break;
+                                      Index++;
+                                    }
+                                  }
+                                }
+                                if (w1->Pixels != 0) {
+                                  w1->Data[OutOfs] = (w1->Data[OutOfs] & (u8)~(*FPD(TByteArray_RES07 (*), w1->Pixels))[(u16)(PixIndex - 1)]);
+                                }
+                                OutOfs++;
+                                Offset += 4;
+                              if (Col == limit) break;
+                              Col++;
+                            }
+                          }
+                        }
+                      if (Row == limit) break;
+                      Row++;
                     }
-                    Bit = (s16)((u16)Bit >> 1);
-                    if (Index == 7) break;
-                    Index++;
                   }
-                  PixIndex++;
-                  if (Pass == 2) break;
-                  Pass++;
                 }
-              }
-              Index = 0;
-              if (Index <= 3) for (;;) {
-                if (Index & 1) {
-                  w1->Data[OutOfs] = (w1->Data[OutOfs] | PixelBitsByColor[PaletteColor(((*CellBytes)[(s16)((u16)Index >> 1)] & 0xF), rtl_far(&w1->Palette))][Index]);
-                } else {
-                  w1->Data[OutOfs] = (w1->Data[OutOfs] | PixelBitsByColor[PaletteColor((s16)((u16)(((*CellBytes)[(s16)((u16)Index >> 1)] & 0xF0)) >> 4), rtl_far(&w1->Palette))][Index]);
-                }
-                if (Index == 3) break;
-                Index++;
-              }
-              if (w1->Pixels != 0) {
-                w1->Data[OutOfs] = (w1->Data[OutOfs] & (u8)~(*FPD(TByteArray_RES07 (*), w1->Pixels))[(u16)(PixIndex - 2)]);
-              }
-              OutOfs++;
-              Index = 4;
-              if (Index <= 7) for (;;) {
-                if (Index & 1) {
-                  w1->Data[OutOfs] = (w1->Data[OutOfs] | PixelBitsByColor[PaletteColor(((*CellBytes)[(s16)((u16)Index >> 1)] & 0xF), rtl_far(&w1->Palette))][(s16)(Index - 4)]);
-                } else {
-                  w1->Data[OutOfs] = (w1->Data[OutOfs] | PixelBitsByColor[PaletteColor((s16)((u16)(((*CellBytes)[(s16)((u16)Index >> 1)] & 0xF0)) >> 4), rtl_far(&w1->Palette))][(s16)(Index - 4)]);
-                }
-                if (Index == 7) break;
-                Index++;
-              }
-              if (w1->Pixels != 0) {
-                w1->Data[OutOfs] = (w1->Data[OutOfs] & (u8)~(*FPD(TByteArray_RES07 (*), w1->Pixels))[(u16)(PixIndex - 1)]);
-              }
-              OutOfs++;
-              Offset += 4;
-              if (Col == t3) break;
-              Col++;
+              if (I == limit) break;
+              I++;
             }
-            if (Row == t2) break;
-            Row++;
           }
-          if (I == t1) break;
-          I++;
         }
         break;
       }
       case 1:
       {
-        t4 = w1->ItemCount;
-        I = 1;
-        if (I <= t4) for (;;) {
-          t5 = (u16)(w1->Height - 1);
-          Row = 0;
-          if (Row <= t5) for (;;) {
-            t6 = (u16)(w1->WidthCols - 1);
-            Col = 0;
-            if (Col <= t6) for (;;) {
-              rtl_Move((void *)&(*FPD(TByteArray_RES07 (*), Source))[Offset], (void *)&Cell, 4);
-              if (w1->Pixels != 0) {
-                (*FPD(TByteArray_RES07 (*), w1->Pixels))[PixIndex] = ColorMatchMask(Color, Cell);
-                PixIndex++;
-              }
-              Bit = 0x80;
-              Index = 0;
-              if (Index <= 7) for (;;) {
-                if (Index & 1) {
-                  Nibble = ((*CellBytes)[(s16)((u16)Index >> 1)] & 0xF);
-                } else {
-                  Nibble = (s16)((u16)(*CellBytes)[(s16)((u16)Index >> 1)] >> 4);
-                }
-                Plane = 0;
-                if (Plane <= 3) for (;;) {
-                  if (((EgaPlaneBitMasks[Plane] & Nibble)) > 0) {
-                    w1->Data[(u16)(OutOfs + Plane)] = (w1->Data[(u16)(OutOfs + Plane)] | Bit);
+        {
+          u8 limit = w1->ItemCount;
+          if (1 <= limit) {
+            I = 1;
+            for (;;) {
+                {
+                  u16 limit = (u16)(w1->Height - 1);
+                  if (0 <= limit) {
+                    Row = 0;
+                    for (;;) {
+                        {
+                          u16 limit = (u16)(w1->WidthCols - 1);
+                          if (0 <= limit) {
+                            Col = 0;
+                            for (;;) {
+                                rtl_Move((void *)&(*FPD(TByteArray_RES07 (*), Source))[Offset], (void *)&Cell, 4);
+                                if (w1->Pixels != 0) {
+                                  (*FPD(TByteArray_RES07 (*), w1->Pixels))[PixIndex] = ColorMatchMask(Color, Cell);
+                                  PixIndex++;
+                                }
+                                Bit = 0x80;
+                                {
+                                  if (0 <= 7) {
+                                    Index = 0;
+                                    for (;;) {
+                                        if (Index & 1) {
+                                          Nibble = ((*CellBytes)[(s16)((u16)Index >> 1)] & 0xF);
+                                        } else {
+                                          Nibble = (s16)((u16)(*CellBytes)[(s16)((u16)Index >> 1)] >> 4);
+                                        }
+                                        {
+                                          if (0 <= 3) {
+                                            Plane = 0;
+                                            for (;;) {
+                                                if (((EgaPlaneBitMasks[Plane] & Nibble)) > 0) {
+                                                  w1->Data[(u16)(OutOfs + Plane)] = (w1->Data[(u16)(OutOfs + Plane)] | Bit);
+                                                }
+                                              if (Plane == 3) break;
+                                              Plane++;
+                                            }
+                                          }
+                                        }
+                                        Bit = (s16)((u16)Bit >> 1);
+                                      if (Index == 7) break;
+                                      Index++;
+                                    }
+                                  }
+                                }
+                                if (w1->Pixels != 0) {
+                                  {
+                                    if (0 <= 3) {
+                                      Plane = 0;
+                                      for (;;) {
+                                          w1->Data[(u16)(OutOfs + Plane)] = (w1->Data[(u16)(OutOfs + Plane)] & (u8)~(*FPD(TByteArray_RES07 (*), w1->Pixels))[(u16)(PixIndex - 1)]);
+                                        if (Plane == 3) break;
+                                        Plane++;
+                                      }
+                                    }
+                                  }
+                                }
+                                OutOfs += 4;
+                                Offset += 4;
+                              if (Col == limit) break;
+                              Col++;
+                            }
+                          }
+                        }
+                      if (Row == limit) break;
+                      Row++;
+                    }
                   }
-                  if (Plane == 3) break;
-                  Plane++;
                 }
-                Bit = (s16)((u16)Bit >> 1);
-                if (Index == 7) break;
-                Index++;
-              }
-              if (w1->Pixels != 0) {
-                Plane = 0;
-                if (Plane <= 3) for (;;) {
-                  w1->Data[(u16)(OutOfs + Plane)] = (w1->Data[(u16)(OutOfs + Plane)] & (u8)~(*FPD(TByteArray_RES07 (*), w1->Pixels))[(u16)(PixIndex - 1)]);
-                  if (Plane == 3) break;
-                  Plane++;
-                }
-              }
-              OutOfs += 4;
-              Offset += 4;
-              if (Col == t6) break;
-              Col++;
+              if (I == limit) break;
+              I++;
             }
-            if (Row == t5) break;
-            Row++;
           }
-          if (I == t4) break;
-          I++;
         }
         break;
       }
       case 2:
       {
-        t7 = w1->ItemCount;
-        I = 1;
-        if (I <= t7) for (;;) {
-          rtl_Move((void *)&(*FPD(TByteArray_RES07 (*), Source))[Offset], (void *)&w1->Data[OutOfs], w1->ByteSize);
-          if (w1->Pixels != 0) {
-            t8 = (u16)((OutOfs + w1->ByteSize) - 1);
-            Col = OutOfs;
-            if (Col <= t8) for (;;) {
-              if (((s16)((u16)w1->Data[Col] >> 4)) == Color) {
-                (*FPD(TByteArray_RES07 (*), w1->Pixels))[Col] = 0xF0;
-              }
-              if (((w1->Data[Col] & 0xF)) == Color) {
-                (*FPD(TByteArray_RES07 (*), w1->Pixels))[Col] += 0xF;
-              }
-              w1->Data[Col] = (w1->Data[Col] & (u8)~(*FPD(TByteArray_RES07 (*), w1->Pixels))[Col]);
-              if (Col == t8) break;
-              Col++;
+        {
+          u8 limit = w1->ItemCount;
+          if (1 <= limit) {
+            I = 1;
+            for (;;) {
+                rtl_Move((void *)&(*FPD(TByteArray_RES07 (*), Source))[Offset], (void *)&w1->Data[OutOfs], w1->ByteSize);
+                if (w1->Pixels != 0) {
+                  {
+                    u16 limit = (u16)((OutOfs + w1->ByteSize) - 1);
+                    u16 first = OutOfs;
+                    if (first <= limit) {
+                      Col = first;
+                      for (;;) {
+                          if (((s16)((u16)w1->Data[Col] >> 4)) == Color) {
+                            (*FPD(TByteArray_RES07 (*), w1->Pixels))[Col] = 0xF0;
+                          }
+                          if (((w1->Data[Col] & 0xF)) == Color) {
+                            (*FPD(TByteArray_RES07 (*), w1->Pixels))[Col] += 0xF;
+                          }
+                          w1->Data[Col] = (w1->Data[Col] & (u8)~(*FPD(TByteArray_RES07 (*), w1->Pixels))[Col]);
+                        if (Col == limit) break;
+                        Col++;
+                      }
+                    }
+                  }
+                }
+                OutOfs += w1->ByteSize;
+                Offset += w1->ByteSize;
+              if (I == limit) break;
+              I++;
             }
           }
-          OutOfs += w1->ByteSize;
-          Offset += w1->ByteSize;
-          if (I == t7) break;
-          I++;
         }
         break;
       }
@@ -332,6 +395,7 @@ void UnpackPicturePixels(farptr Source, u16 Offset, u8 AllocFlags, u8 Color, far
      item must lie inside Dest (RightRoom is a Word and is added as it is). */
 void DrawPictureItem(s16 Col, s16 Row, u8 PicIndex, u8 Flags, farptr Source, farptr Dest)
 {
+  POOL_TRACE("DrawPictureItem");
   s16 LeftCol = 0;
   u16 RightRoom = 0;
   u16 SrcRowBytes = 0;
@@ -344,12 +408,6 @@ void DrawPictureItem(s16 Col, s16 Row, u8 PicIndex, u8 Flags, farptr Source, far
   u16 FirstRow = 0;
   u16 LeftBytes = 0;
   u8 HasMask = 0;
-  u16 t1;
-  s8 t2;
-  u16 t3;
-  u16 t4;
-  s8 t5;
-  u16 t6;
   HasMask = (((((Flags & 1)) > 0)) && (((*FPD(TPicture (*), Source)).Pixels != 0)));
   FirstRow = Row * 8;
   DestOfs = FirstRow * (*FPD(TPicture (*), Dest)).WidthCols;
@@ -376,52 +434,64 @@ void DrawPictureItem(s16 Col, s16 Row, u8 PicIndex, u8 Flags, farptr Source, far
       DestOfs = DestOfs * 4;
     }
     if (HasMask) {
-      t1 = SrcLastRow;
-      SrcRow = 0;
-      if (SrcRow <= t1) for (;;) {
-        RowDirtyFlags[FirstRow] = 1;
-        DestOfs += LeftCol;
-        if (RowFirstChangedOfs[FirstRow] > DestOfs) {
-          RowFirstChangedCol[FirstRow] = LeftBytes;
-          RowFirstChangedOfs[FirstRow] = DestOfs;
+      {
+        u16 limit = SrcLastRow;
+        if (0 <= limit) {
+          SrcRow = 0;
+          for (;;) {
+              RowDirtyFlags[FirstRow] = 1;
+              DestOfs += LeftCol;
+              if (RowFirstChangedOfs[FirstRow] > DestOfs) {
+                RowFirstChangedCol[FirstRow] = LeftBytes;
+                RowFirstChangedOfs[FirstRow] = DestOfs;
+              }
+              {
+                s8 limit = SrcRowBytes;
+                if (1 <= limit) {
+                  SharedLoopIndex = 1;
+                  for (;;) {
+                      (*FPD(TPicture (*), Dest)).Data[DestOfs] = ((((*FPD(TPicture (*), Dest)).Data[DestOfs] & (*FPD(TByteArray_RES07 (*), (*FPD(TPicture (*), Source)).Pixels))[ItemOfs])) | (*FPD(TPicture (*), Source)).Data[ItemOfs]);
+                      ItemOfs++;
+                      DestOfs++;
+                    if (SharedLoopIndex == limit) break;
+                    SharedLoopIndex++;
+                  }
+                }
+              }
+              if ((u16)(DestOfs - 1) > RowLastChangedOfs[FirstRow]) {
+                RowLastChangedOfs[FirstRow] = DestOfs - 1;
+              }
+              DestOfs += RightRoom;
+              FirstRow++;
+            if (SrcRow == limit) break;
+            SrcRow++;
+          }
         }
-        t2 = SrcRowBytes;
-        SharedLoopIndex = 1;
-        if (SharedLoopIndex <= t2) for (;;) {
-          (*FPD(TPicture (*), Dest)).Data[DestOfs] = ((((*FPD(TPicture (*), Dest)).Data[DestOfs] & (*FPD(TByteArray_RES07 (*), (*FPD(TPicture (*), Source)).Pixels))[ItemOfs])) | (*FPD(TPicture (*), Source)).Data[ItemOfs]);
-          ItemOfs++;
-          DestOfs++;
-          if (SharedLoopIndex == t2) break;
-          SharedLoopIndex++;
-        }
-        if ((u16)(DestOfs - 1) > RowLastChangedOfs[FirstRow]) {
-          RowLastChangedOfs[FirstRow] = DestOfs - 1;
-        }
-        DestOfs += RightRoom;
-        FirstRow++;
-        if (SrcRow == t1) break;
-        SrcRow++;
       }
     } else {
-      t3 = SrcLastRow;
-      SrcRow = 0;
-      if (SrcRow <= t3) for (;;) {
-        RowDirtyFlags[FirstRow] = 1;
-        DestOfs += LeftCol;
-        if (RowFirstChangedOfs[FirstRow] > DestOfs) {
-          RowFirstChangedCol[FirstRow] = LeftBytes;
-          RowFirstChangedOfs[FirstRow] = DestOfs;
+      {
+        u16 limit = SrcLastRow;
+        if (0 <= limit) {
+          SrcRow = 0;
+          for (;;) {
+              RowDirtyFlags[FirstRow] = 1;
+              DestOfs += LeftCol;
+              if (RowFirstChangedOfs[FirstRow] > DestOfs) {
+                RowFirstChangedCol[FirstRow] = LeftBytes;
+                RowFirstChangedOfs[FirstRow] = DestOfs;
+              }
+              rtl_Move((void *)&(*FPD(TPicture (*), Source)).Data[ItemOfs], (void *)&(*FPD(TPicture (*), Dest)).Data[DestOfs], SrcRowBytes);
+              ItemOfs += SrcRowBytes;
+              DestOfs += SrcRowBytes;
+              if ((u16)(DestOfs - 1) > RowLastChangedOfs[FirstRow]) {
+                RowLastChangedOfs[FirstRow] = DestOfs - 1;
+              }
+              DestOfs += RightRoom;
+              FirstRow++;
+            if (SrcRow == limit) break;
+            SrcRow++;
+          }
         }
-        rtl_Move((void *)&(*FPD(TPicture (*), Source)).Data[ItemOfs], (void *)&(*FPD(TPicture (*), Dest)).Data[DestOfs], SrcRowBytes);
-        ItemOfs += SrcRowBytes;
-        DestOfs += SrcRowBytes;
-        if ((u16)(DestOfs - 1) > RowLastChangedOfs[FirstRow]) {
-          RowLastChangedOfs[FirstRow] = DestOfs - 1;
-        }
-        DestOfs += RightRoom;
-        FirstRow++;
-        if (SrcRow == t3) break;
-        SrcRow++;
       }
     }
     break;
@@ -437,57 +507,69 @@ void DrawPictureItem(s16 Col, s16 Row, u8 PicIndex, u8 Flags, farptr Source, far
     BytesToNextMask = 4;
     DestOfs = DestOfs * 4;
     if (HasMask) {
-      t4 = SrcLastRow;
-      SrcRow = 0;
-      if (SrcRow <= t4) for (;;) {
-        RowDirtyFlags[FirstRow] = 1;
-        DestOfs += LeftCol;
-        if (RowFirstChangedOfs[FirstRow] > DestOfs) {
-          RowFirstChangedCol[FirstRow] = LeftBytes;
-          RowFirstChangedOfs[FirstRow] = DestOfs;
-        }
-        t5 = SrcRowBytes;
-        SharedLoopIndex = 1;
-        if (SharedLoopIndex <= t5) for (;;) {
-          (*FPD(TPicture (*), Dest)).Data[DestOfs] = ((((*FPD(TPicture (*), Dest)).Data[DestOfs] & (*FPD(TByteArray_RES07 (*), (*FPD(TPicture (*), Source)).Pixels))[MaskOfs])) | (*FPD(TPicture (*), Source)).Data[ItemOfs]);
-          ItemOfs++;
-          BytesToNextMask--;
-          if (BytesToNextMask == 0) {
-            BytesToNextMask = 4;
-            MaskOfs++;
+      {
+        u16 limit = SrcLastRow;
+        if (0 <= limit) {
+          SrcRow = 0;
+          for (;;) {
+              RowDirtyFlags[FirstRow] = 1;
+              DestOfs += LeftCol;
+              if (RowFirstChangedOfs[FirstRow] > DestOfs) {
+                RowFirstChangedCol[FirstRow] = LeftBytes;
+                RowFirstChangedOfs[FirstRow] = DestOfs;
+              }
+              {
+                s8 limit = SrcRowBytes;
+                if (1 <= limit) {
+                  SharedLoopIndex = 1;
+                  for (;;) {
+                      (*FPD(TPicture (*), Dest)).Data[DestOfs] = ((((*FPD(TPicture (*), Dest)).Data[DestOfs] & (*FPD(TByteArray_RES07 (*), (*FPD(TPicture (*), Source)).Pixels))[MaskOfs])) | (*FPD(TPicture (*), Source)).Data[ItemOfs]);
+                      ItemOfs++;
+                      BytesToNextMask--;
+                      if (BytesToNextMask == 0) {
+                        BytesToNextMask = 4;
+                        MaskOfs++;
+                      }
+                      DestOfs++;
+                    if (SharedLoopIndex == limit) break;
+                    SharedLoopIndex++;
+                  }
+                }
+              }
+              if ((u16)(DestOfs - 1) > RowLastChangedOfs[FirstRow]) {
+                RowLastChangedOfs[FirstRow] = DestOfs - 1;
+              }
+              DestOfs += RightRoom;
+              FirstRow++;
+            if (SrcRow == limit) break;
+            SrcRow++;
           }
-          DestOfs++;
-          if (SharedLoopIndex == t5) break;
-          SharedLoopIndex++;
         }
-        if ((u16)(DestOfs - 1) > RowLastChangedOfs[FirstRow]) {
-          RowLastChangedOfs[FirstRow] = DestOfs - 1;
-        }
-        DestOfs += RightRoom;
-        FirstRow++;
-        if (SrcRow == t4) break;
-        SrcRow++;
       }
     } else {
-      t6 = SrcLastRow;
-      SrcRow = 0;
-      if (SrcRow <= t6) for (;;) {
-        RowDirtyFlags[FirstRow] = 1;
-        DestOfs += LeftCol;
-        if (RowFirstChangedOfs[FirstRow] > DestOfs) {
-          RowFirstChangedCol[FirstRow] = LeftBytes;
-          RowFirstChangedOfs[FirstRow] = DestOfs;
+      {
+        u16 limit = SrcLastRow;
+        if (0 <= limit) {
+          SrcRow = 0;
+          for (;;) {
+              RowDirtyFlags[FirstRow] = 1;
+              DestOfs += LeftCol;
+              if (RowFirstChangedOfs[FirstRow] > DestOfs) {
+                RowFirstChangedCol[FirstRow] = LeftBytes;
+                RowFirstChangedOfs[FirstRow] = DestOfs;
+              }
+              rtl_Move((void *)&(*FPD(TPicture (*), Source)).Data[ItemOfs], (void *)&(*FPD(TPicture (*), Dest)).Data[DestOfs], SrcRowBytes);
+              ItemOfs += SrcRowBytes;
+              DestOfs += SrcRowBytes;
+              if ((u16)(DestOfs - 1) > RowLastChangedOfs[FirstRow]) {
+                RowLastChangedOfs[FirstRow] = DestOfs - 1;
+              }
+              DestOfs += RightRoom;
+              FirstRow++;
+            if (SrcRow == limit) break;
+            SrcRow++;
+          }
         }
-        rtl_Move((void *)&(*FPD(TPicture (*), Source)).Data[ItemOfs], (void *)&(*FPD(TPicture (*), Dest)).Data[DestOfs], SrcRowBytes);
-        ItemOfs += SrcRowBytes;
-        DestOfs += SrcRowBytes;
-        if ((u16)(DestOfs - 1) > RowLastChangedOfs[FirstRow]) {
-          RowLastChangedOfs[FirstRow] = DestOfs - 1;
-        }
-        DestOfs += RightRoom;
-        FirstRow++;
-        if (SrcRow == t6) break;
-        SrcRow++;
       }
     }
     break;
@@ -509,6 +591,7 @@ void DrawPictureItem(s16 Col, s16 Row, u8 PicIndex, u8 Flags, farptr Source, far
      the adapter 1 mask phase is set once per call, so it carries from row to row. */
 void DrawPictureItemClipped(s16 Col, s16 Row, u8 PicIndex, u8 Flags, farptr Source, farptr Dest)
 {
+  POOL_TRACE("DrawPictureItemClipped");
   u16 LeftCut = 0;
   u16 RightCut = 0;
   u16 LeftCol = 0;
@@ -527,10 +610,6 @@ void DrawPictureItemClipped(s16 Col, s16 Row, u8 PicIndex, u8 Flags, farptr Sour
   u16 LeftBytes = 0;
   u8 HasMask = 0;
   u8 SaveBackground = 0;
-  u16 t1;
-  s8 t2;
-  u16 t3;
-  s8 t4;
   if (((Source == 0)) || ((Dest == 0))) {
     return;
   }
@@ -623,45 +702,53 @@ void DrawPictureItemClipped(s16 Col, s16 Row, u8 PicIndex, u8 Flags, farptr Sour
       SrcOfs = SrcOfs + (PicIndex * (*FPD(TPicture (*), Source)).ByteSize);
       DestOfs = DestOfs * 4;
     }
-    t1 = SrcLastRow;
-    SrcRow = 0;
-    if (SrcRow <= t1) for (;;) {
-      RowDirtyFlags[FirstRow] = 1;
-      SrcOfs += LeftCut;
-      SaveOfs += LeftCut;
-      DestOfs += LeftCol;
-      if (RowFirstChangedOfs[FirstRow] > DestOfs) {
-        RowFirstChangedCol[FirstRow] = LeftBytes;
-        RowFirstChangedOfs[FirstRow] = DestOfs;
-      }
-      if (SaveBackground) {
-        rtl_Move((void *)&(*FPD(TPicture (*), Dest)).Data[DestOfs], (void *)&(*FPD(TPicture (*), IconBackgroundBuffer)).Data[SaveOfs], VisibleBytes);
-      }
-      SaveOfs += VisibleBytes;
-      if (HasMask) {
-        t2 = VisibleBytes;
-        SharedLoopIndex = 1;
-        if (SharedLoopIndex <= t2) for (;;) {
-          (*FPD(TPicture (*), Dest)).Data[DestOfs] = ((((*FPD(TPicture (*), Dest)).Data[DestOfs] & (*FPD(TByteArray_RES07 (*), (*FPD(TPicture (*), Source)).Pixels))[SrcOfs])) | (*FPD(TPicture (*), Source)).Data[SrcOfs]);
-          SrcOfs++;
-          DestOfs++;
-          if (SharedLoopIndex == t2) break;
-          SharedLoopIndex++;
+    {
+      u16 limit = SrcLastRow;
+      if (0 <= limit) {
+        SrcRow = 0;
+        for (;;) {
+            RowDirtyFlags[FirstRow] = 1;
+            SrcOfs += LeftCut;
+            SaveOfs += LeftCut;
+            DestOfs += LeftCol;
+            if (RowFirstChangedOfs[FirstRow] > DestOfs) {
+              RowFirstChangedCol[FirstRow] = LeftBytes;
+              RowFirstChangedOfs[FirstRow] = DestOfs;
+            }
+            if (SaveBackground) {
+              rtl_Move((void *)&(*FPD(TPicture (*), Dest)).Data[DestOfs], (void *)&(*FPD(TPicture (*), IconBackgroundBuffer)).Data[SaveOfs], VisibleBytes);
+            }
+            SaveOfs += VisibleBytes;
+            if (HasMask) {
+              {
+                s8 limit = VisibleBytes;
+                if (1 <= limit) {
+                  SharedLoopIndex = 1;
+                  for (;;) {
+                      (*FPD(TPicture (*), Dest)).Data[DestOfs] = ((((*FPD(TPicture (*), Dest)).Data[DestOfs] & (*FPD(TByteArray_RES07 (*), (*FPD(TPicture (*), Source)).Pixels))[SrcOfs])) | (*FPD(TPicture (*), Source)).Data[SrcOfs]);
+                      SrcOfs++;
+                      DestOfs++;
+                    if (SharedLoopIndex == limit) break;
+                    SharedLoopIndex++;
+                  }
+                }
+              }
+            } else {
+              rtl_Move((void *)&(*FPD(TPicture (*), Source)).Data[SrcOfs], (void *)&(*FPD(TPicture (*), Dest)).Data[DestOfs], VisibleBytes);
+              SrcOfs += VisibleBytes;
+              DestOfs += VisibleBytes;
+            }
+            if ((u16)(DestOfs - 1) > RowLastChangedOfs[FirstRow]) {
+              RowLastChangedOfs[FirstRow] = DestOfs - 1;
+            }
+            SrcOfs += RightCut;
+            SaveOfs += RightCut;
+            DestOfs += RightRoom;
+            FirstRow++;
+          if (SrcRow == limit) break;
+          SrcRow++;
         }
-      } else {
-        rtl_Move((void *)&(*FPD(TPicture (*), Source)).Data[SrcOfs], (void *)&(*FPD(TPicture (*), Dest)).Data[DestOfs], VisibleBytes);
-        SrcOfs += VisibleBytes;
-        DestOfs += VisibleBytes;
       }
-      if ((u16)(DestOfs - 1) > RowLastChangedOfs[FirstRow]) {
-        RowLastChangedOfs[FirstRow] = DestOfs - 1;
-      }
-      SrcOfs += RightCut;
-      SaveOfs += RightCut;
-      DestOfs += RightRoom;
-      FirstRow++;
-      if (SrcRow == t1) break;
-      SrcRow++;
     }
     break;
   }
@@ -682,52 +769,60 @@ void DrawPictureItemClipped(s16 Col, s16 Row, u8 PicIndex, u8 Flags, farptr Sour
     RightMaskCut = (u16)((u16)(u16)((u16)RightCut >> 1) >> 1);
     BytesToNextMask = 4;
     DestOfs = DestOfs * 4;
-    t3 = SrcLastRow;
-    SrcRow = 0;
-    if (SrcRow <= t3) for (;;) {
-      RowDirtyFlags[FirstRow] = 1;
-      SrcOfs += LeftCut;
-      MaskOfs += LeftMaskCut;
-      SaveOfs += LeftCut;
-      DestOfs += LeftCol;
-      if (RowFirstChangedOfs[FirstRow] > DestOfs) {
-        RowFirstChangedCol[FirstRow] = LeftBytes;
-        RowFirstChangedOfs[FirstRow] = DestOfs;
-      }
-      if (SaveBackground) {
-        rtl_Move((void *)&(*FPD(TPicture (*), Dest)).Data[DestOfs], (void *)&(*FPD(TPicture (*), IconBackgroundBuffer)).Data[SaveOfs], VisibleBytes);
-      }
-      SaveOfs += VisibleBytes;
-      if (HasMask) {
-        t4 = VisibleBytes;
-        SharedLoopIndex = 1;
-        if (SharedLoopIndex <= t4) for (;;) {
-          (*FPD(TPicture (*), Dest)).Data[DestOfs] = ((((*FPD(TPicture (*), Dest)).Data[DestOfs] & (*FPD(TByteArray_RES07 (*), (*FPD(TPicture (*), Source)).Pixels))[MaskOfs])) | (*FPD(TPicture (*), Source)).Data[SrcOfs]);
-          SrcOfs++;
-          BytesToNextMask--;
-          if (BytesToNextMask == 0) {
-            BytesToNextMask = 4;
-            MaskOfs++;
-          }
-          DestOfs++;
-          if (SharedLoopIndex == t4) break;
-          SharedLoopIndex++;
+    {
+      u16 limit = SrcLastRow;
+      if (0 <= limit) {
+        SrcRow = 0;
+        for (;;) {
+            RowDirtyFlags[FirstRow] = 1;
+            SrcOfs += LeftCut;
+            MaskOfs += LeftMaskCut;
+            SaveOfs += LeftCut;
+            DestOfs += LeftCol;
+            if (RowFirstChangedOfs[FirstRow] > DestOfs) {
+              RowFirstChangedCol[FirstRow] = LeftBytes;
+              RowFirstChangedOfs[FirstRow] = DestOfs;
+            }
+            if (SaveBackground) {
+              rtl_Move((void *)&(*FPD(TPicture (*), Dest)).Data[DestOfs], (void *)&(*FPD(TPicture (*), IconBackgroundBuffer)).Data[SaveOfs], VisibleBytes);
+            }
+            SaveOfs += VisibleBytes;
+            if (HasMask) {
+              {
+                s8 limit = VisibleBytes;
+                if (1 <= limit) {
+                  SharedLoopIndex = 1;
+                  for (;;) {
+                      (*FPD(TPicture (*), Dest)).Data[DestOfs] = ((((*FPD(TPicture (*), Dest)).Data[DestOfs] & (*FPD(TByteArray_RES07 (*), (*FPD(TPicture (*), Source)).Pixels))[MaskOfs])) | (*FPD(TPicture (*), Source)).Data[SrcOfs]);
+                      SrcOfs++;
+                      BytesToNextMask--;
+                      if (BytesToNextMask == 0) {
+                        BytesToNextMask = 4;
+                        MaskOfs++;
+                      }
+                      DestOfs++;
+                    if (SharedLoopIndex == limit) break;
+                    SharedLoopIndex++;
+                  }
+                }
+              }
+            } else {
+              rtl_Move((void *)&(*FPD(TPicture (*), Source)).Data[SrcOfs], (void *)&(*FPD(TPicture (*), Dest)).Data[DestOfs], VisibleBytes);
+              SrcOfs += VisibleBytes;
+              DestOfs += VisibleBytes;
+            }
+            if ((u16)(DestOfs - 1) > RowLastChangedOfs[FirstRow]) {
+              RowLastChangedOfs[FirstRow] = DestOfs - 1;
+            }
+            SrcOfs += RightCut;
+            MaskOfs += RightMaskCut;
+            SaveOfs += RightCut;
+            DestOfs += RightRoom;
+            FirstRow++;
+          if (SrcRow == limit) break;
+          SrcRow++;
         }
-      } else {
-        rtl_Move((void *)&(*FPD(TPicture (*), Source)).Data[SrcOfs], (void *)&(*FPD(TPicture (*), Dest)).Data[DestOfs], VisibleBytes);
-        SrcOfs += VisibleBytes;
-        DestOfs += VisibleBytes;
       }
-      if ((u16)(DestOfs - 1) > RowLastChangedOfs[FirstRow]) {
-        RowLastChangedOfs[FirstRow] = DestOfs - 1;
-      }
-      SrcOfs += RightCut;
-      MaskOfs += RightMaskCut;
-      SaveOfs += RightCut;
-      DestOfs += RightRoom;
-      FirstRow++;
-      if (SrcRow == t3) break;
-      SrcRow++;
     }
     break;
   }
@@ -738,6 +833,7 @@ void DrawPictureItemClipped(s16 Col, s16 Row, u8 PicIndex, u8 Flags, farptr Sour
      and so on. The byte-sized mirror used to flip an 8-pixel byte of a picture. */
 u8 MirrorByte(u8 Value)
 {
+  POOL_TRACE("MirrorByte");
   u8 Result = 0;
   u8 Mirrored = 0;
   Mirrored = Value << 7;
@@ -759,6 +855,7 @@ u8 MirrorByte(u8 Value)
      order, so the statements run from element 7 down to 0. */
 u16 MirrorWord(u16 Value)
 {
+  POOL_TRACE("MirrorWord");
   u16 Result = 0;
   u16 Mirrored = 0;
   Mirrored = ((Value & GlyphPixelMasks[7])) << 14;
@@ -778,6 +875,7 @@ u16 MirrorWord(u16 Value)
      mirrors a pair of pixels (MirrorPicture); the companion of MirrorByte (1484) and MirrorWord (1509). */
 u8 SwapNibbles(u8 Value)
 {
+  POOL_TRACE("SwapNibbles");
   u8 Result = 0;
   u8 Swapped = 0;
   Swapped = Value << 4;
@@ -795,6 +893,7 @@ u8 SwapNibbles(u8 Value)
      (icon sets above 3) and res12. */
 void MirrorPicture(farptr Source, farptr Dest)
 {
+  POOL_TRACE("MirrorPicture");
   u16 DestOfs = 0;
   u16 SrcLastOfs = 0;
   u16 RowOfs = 0;
@@ -803,14 +902,6 @@ void MirrorPicture(farptr Source, farptr Dest)
   u16 Row = 0;
   u8 I = 0;
   u16 PixelWord = 0;
-  u16 t1;
-  u16 t2;
-  u16 t3;
-  u16 t4;
-  u16 t5;
-  u16 t6;
-  u16 t7;
-  u16 t8;
   if (((Source == 0)) || ((Dest == 0))) {
     return;
   }
@@ -823,28 +914,36 @@ void MirrorPicture(farptr Source, farptr Dest)
         RowBytes = w1->WidthCols * 2;
         SrcLastOfs = RowBytes - 2;
         DestOfs = 0;
-        t1 = w1->Height;
-        Row = 1;
-        if (Row <= t1) for (;;) {
-          RowOfs = DestOfs;
-          t2 = (u16)(w1->WidthCols - 1);
-          Col = 0;
-          if (Col <= t2) for (;;) {
-            rtl_Move((void *)&w1->Data[(u16)((SrcLastOfs - DestOfs) + RowOfs)], (void *)&PixelWord, 2);
-            PixelWord = MirrorWord(PixelWord);
-            rtl_Move((void *)&PixelWord, (void *)&(*FPD(TPicture (*), Dest)).Data[DestOfs], 2);
-            if (w1->Pixels != 0) {
-              rtl_Move((void *)&(*FPD(TByteArray_RES07 (*), w1->Pixels))[(u16)((SrcLastOfs - DestOfs) + RowOfs)], (void *)&PixelWord, 2);
-              PixelWord = MirrorWord(PixelWord);
-              rtl_Move((void *)&PixelWord, (void *)&(*FPD(TByteArray_RES07 (*), (*FPD(TPicture (*), Dest)).Pixels))[DestOfs], 2);
+        {
+          u16 limit = w1->Height;
+          if (1 <= limit) {
+            Row = 1;
+            for (;;) {
+                RowOfs = DestOfs;
+                {
+                  u16 limit = (u16)(w1->WidthCols - 1);
+                  if (0 <= limit) {
+                    Col = 0;
+                    for (;;) {
+                        rtl_Move((void *)&w1->Data[(u16)((SrcLastOfs - DestOfs) + RowOfs)], (void *)&PixelWord, 2);
+                        PixelWord = MirrorWord(PixelWord);
+                        rtl_Move((void *)&PixelWord, (void *)&(*FPD(TPicture (*), Dest)).Data[DestOfs], 2);
+                        if (w1->Pixels != 0) {
+                          rtl_Move((void *)&(*FPD(TByteArray_RES07 (*), w1->Pixels))[(u16)((SrcLastOfs - DestOfs) + RowOfs)], (void *)&PixelWord, 2);
+                          PixelWord = MirrorWord(PixelWord);
+                          rtl_Move((void *)&PixelWord, (void *)&(*FPD(TByteArray_RES07 (*), (*FPD(TPicture (*), Dest)).Pixels))[DestOfs], 2);
+                        }
+                        DestOfs += 2;
+                      if (Col == limit) break;
+                      Col++;
+                    }
+                  }
+                }
+                SrcLastOfs += RowBytes;
+              if (Row == limit) break;
+              Row++;
             }
-            DestOfs += 2;
-            if (Col == t2) break;
-            Col++;
           }
-          SrcLastOfs += RowBytes;
-          if (Row == t1) break;
-          Row++;
         }
         break;
       }
@@ -853,42 +952,62 @@ void MirrorPicture(farptr Source, farptr Dest)
         RowBytes = w1->WidthCols * 4;
         SrcLastOfs = RowBytes - 4;
         DestOfs = 0;
-        t3 = w1->Height;
-        Row = 1;
-        if (Row <= t3) for (;;) {
-          RowOfs = DestOfs;
-          t4 = w1->WidthCols;
-          Col = 1;
-          if (Col <= t4) for (;;) {
-            I = 0;
-            if (I <= 3) for (;;) {
-              (*FPD(TPicture (*), Dest)).Data[(u16)(DestOfs + I)] = MirrorByte(w1->Data[(u16)(((SrcLastOfs - DestOfs) + RowOfs) + I)]);
-              if (I == 3) break;
-              I++;
+        {
+          u16 limit = w1->Height;
+          if (1 <= limit) {
+            Row = 1;
+            for (;;) {
+                RowOfs = DestOfs;
+                {
+                  u16 limit = w1->WidthCols;
+                  if (1 <= limit) {
+                    Col = 1;
+                    for (;;) {
+                        {
+                          if (0 <= 3) {
+                            I = 0;
+                            for (;;) {
+                                (*FPD(TPicture (*), Dest)).Data[(u16)(DestOfs + I)] = MirrorByte(w1->Data[(u16)(((SrcLastOfs - DestOfs) + RowOfs) + I)]);
+                              if (I == 3) break;
+                              I++;
+                            }
+                          }
+                        }
+                        DestOfs += 4;
+                      if (Col == limit) break;
+                      Col++;
+                    }
+                  }
+                }
+                SrcLastOfs += RowBytes;
+              if (Row == limit) break;
+              Row++;
             }
-            DestOfs += 4;
-            if (Col == t4) break;
-            Col++;
           }
-          SrcLastOfs += RowBytes;
-          if (Row == t3) break;
-          Row++;
         }
         if (w1->Pixels != 0) {
           SrcLastOfs = 0;
-          t5 = w1->Height;
-          Row = 1;
-          if (Row <= t5) for (;;) {
-            t6 = (u16)(w1->WidthCols - 1);
-            Col = 0;
-            if (Col <= t6) for (;;) {
-              (*FPD(TByteArray_RES07 (*), (*FPD(TPicture (*), Dest)).Pixels))[(u16)(((SrcLastOfs + w1->WidthCols) - Col) - 1)] = MirrorByte((*FPD(TByteArray_RES07 (*), w1->Pixels))[(u16)(SrcLastOfs + Col)]);
-              if (Col == t6) break;
-              Col++;
+          {
+            u16 limit = w1->Height;
+            if (1 <= limit) {
+              Row = 1;
+              for (;;) {
+                  {
+                    u16 limit = (u16)(w1->WidthCols - 1);
+                    if (0 <= limit) {
+                      Col = 0;
+                      for (;;) {
+                          (*FPD(TByteArray_RES07 (*), (*FPD(TPicture (*), Dest)).Pixels))[(u16)(((SrcLastOfs + w1->WidthCols) - Col) - 1)] = MirrorByte((*FPD(TByteArray_RES07 (*), w1->Pixels))[(u16)(SrcLastOfs + Col)]);
+                        if (Col == limit) break;
+                        Col++;
+                      }
+                    }
+                  }
+                  SrcLastOfs += w1->WidthCols;
+                if (Row == limit) break;
+                Row++;
+              }
             }
-            SrcLastOfs += w1->WidthCols;
-            if (Row == t5) break;
-            Row++;
           }
         }
         break;
@@ -898,24 +1017,32 @@ void MirrorPicture(farptr Source, farptr Dest)
         RowBytes = w1->WidthCols * 4;
         SrcLastOfs = RowBytes - 1;
         DestOfs = 0;
-        t7 = w1->Height;
-        Row = 1;
-        if (Row <= t7) for (;;) {
-          RowOfs = DestOfs;
-          t8 = RowBytes;
-          Col = 1;
-          if (Col <= t8) for (;;) {
-            (*FPD(TPicture (*), Dest)).Data[DestOfs] = SwapNibbles(w1->Data[(u16)((SrcLastOfs - DestOfs) + RowOfs)]);
-            if (w1->Pixels != 0) {
-              (*FPD(TByteArray_RES07 (*), (*FPD(TPicture (*), Dest)).Pixels))[DestOfs] = SwapNibbles((*FPD(TByteArray_RES07 (*), w1->Pixels))[(u16)((SrcLastOfs - DestOfs) + RowOfs)]);
+        {
+          u16 limit = w1->Height;
+          if (1 <= limit) {
+            Row = 1;
+            for (;;) {
+                RowOfs = DestOfs;
+                {
+                  u16 limit = RowBytes;
+                  if (1 <= limit) {
+                    Col = 1;
+                    for (;;) {
+                        (*FPD(TPicture (*), Dest)).Data[DestOfs] = SwapNibbles(w1->Data[(u16)((SrcLastOfs - DestOfs) + RowOfs)]);
+                        if (w1->Pixels != 0) {
+                          (*FPD(TByteArray_RES07 (*), (*FPD(TPicture (*), Dest)).Pixels))[DestOfs] = SwapNibbles((*FPD(TByteArray_RES07 (*), w1->Pixels))[(u16)((SrcLastOfs - DestOfs) + RowOfs)]);
+                        }
+                        DestOfs++;
+                      if (Col == limit) break;
+                      Col++;
+                    }
+                  }
+                }
+                SrcLastOfs += RowBytes;
+              if (Row == limit) break;
+              Row++;
             }
-            DestOfs++;
-            if (Col == t8) break;
-            Col++;
           }
-          SrcLastOfs += RowBytes;
-          if (Row == t7) break;
-          Row++;
         }
         break;
       }
@@ -935,6 +1062,7 @@ void MirrorPicture(farptr Source, farptr Dest)
      segment table. Called by ShowTitleScreen, ovl28 DrawSprite and ovl34 Put8x8Symbol. */
 void ShowPicture(s16 PicCol, s16 PicRow, farptr Buf)
 {
+  POOL_TRACE("ShowPicture");
   s16 Col = 0;
   s16 Row = 0;
   u16 FirstCol = 0;
@@ -944,10 +1072,6 @@ void ShowPicture(s16 PicCol, s16 PicRow, farptr Buf)
   u16 RowBytes = 0;
   u16 SourceOfs = 0;
   u8 Plane = 0;
-  s16 t1;
-  s16 t2;
-  s16 t3;
-  s16 t4;
   if (Buf == 0) {
     return;
   }
@@ -961,13 +1085,18 @@ void ShowPicture(s16 PicCol, s16 PicRow, farptr Buf)
         FirstRow = PicRow * 8;
         LastRow = (FirstRow + w1->Height) - 1;
         FirstCol = PicCol * 2;
-        t1 = LastRow;
-        Row = FirstRow;
-        if (Row <= t1) for (;;) {
-          rtl_Move((void *)&(*FPD(TPicture (*), Buf)).Data[SourceOfs], rtl_mem_ptr(CgaScanlineSegments[Row], FirstCol), RowBytes);
-          SourceOfs += RowBytes;
-          if (Row == t1) break;
-          Row++;
+        {
+          s16 limit = LastRow;
+          s16 first = FirstRow;
+          if (first <= limit) {
+            Row = first;
+            for (;;) {
+                rtl_Move((void *)&(*FPD(TPicture (*), Buf)).Data[SourceOfs], rtl_mem_ptr(CgaScanlineSegments[Row], FirstCol), RowBytes);
+                SourceOfs += RowBytes;
+              if (Row == limit) break;
+              Row++;
+            }
+          }
         }
         break;
       }
@@ -979,25 +1108,39 @@ void ShowPicture(s16 PicCol, s16 PicRow, farptr Buf)
         FirstCol = PicCol;
         LastCol = (FirstCol + w1->WidthCols) - 1;
         rtl_outp(SeqIndex, SeqMapMask);
-        t2 = LastRow;
-        Row = FirstRow;
-        if (Row <= t2) for (;;) {
-          t3 = LastCol;
-          Col = FirstCol;
-          if (Col <= t3) for (;;) {
-            Plane = 0;
-            if (Plane <= 3) for (;;) {
-              rtl_outp(SeqData, EgaPlaneBitMasks[Plane]);
-              rtl_poke8(EgaPage0Segment, EgaScanlineOffsets[Row] + Col, (*FPD(TPicture (*), Buf)).Data[SourceOfs]);
-              SourceOfs++;
-              if (Plane == 3) break;
-              Plane++;
+        {
+          s16 limit = LastRow;
+          s16 first = FirstRow;
+          if (first <= limit) {
+            Row = first;
+            for (;;) {
+                {
+                  s16 limit = LastCol;
+                  s16 first = FirstCol;
+                  if (first <= limit) {
+                    Col = first;
+                    for (;;) {
+                        {
+                          if (0 <= 3) {
+                            Plane = 0;
+                            for (;;) {
+                                rtl_outp(SeqData, EgaPlaneBitMasks[Plane]);
+                                rtl_poke8(EgaPage0Segment, EgaScanlineOffsets[Row] + Col, (*FPD(TPicture (*), Buf)).Data[SourceOfs]);
+                                SourceOfs++;
+                              if (Plane == 3) break;
+                              Plane++;
+                            }
+                          }
+                        }
+                      if (Col == limit) break;
+                      Col++;
+                    }
+                  }
+                }
+              if (Row == limit) break;
+              Row++;
             }
-            if (Col == t3) break;
-            Col++;
           }
-          if (Row == t2) break;
-          Row++;
         }
         rtl_outp(SeqData, MapMaskAll);
         break;
@@ -1009,13 +1152,18 @@ void ShowPicture(s16 PicCol, s16 PicRow, farptr Buf)
         FirstRow = PicRow * 8;
         LastRow = (FirstRow + w1->Height) - 1;
         FirstCol = PicCol * 4;
-        t4 = LastRow;
-        Row = FirstRow;
-        if (Row <= t4) for (;;) {
-          rtl_Move((void *)&(*FPD(TPicture (*), Buf)).Data[SourceOfs], rtl_mem_ptr(TandyScanlineSegments[Row], FirstCol), RowBytes);
-          SourceOfs += RowBytes;
-          if (Row == t4) break;
-          Row++;
+        {
+          s16 limit = LastRow;
+          s16 first = FirstRow;
+          if (first <= limit) {
+            Row = first;
+            for (;;) {
+                rtl_Move((void *)&(*FPD(TPicture (*), Buf)).Data[SourceOfs], rtl_mem_ptr(TandyScanlineSegments[Row], FirstCol), RowBytes);
+                SourceOfs += RowBytes;
+              if (Row == limit) break;
+              Row++;
+            }
+          }
         }
         break;
       }
@@ -1039,6 +1187,7 @@ void ShowPicture(s16 PicCol, s16 PicRow, farptr Buf)
      picture blit. */
 void FlushPictureChanges(void)
 {
+  POOL_TRACE("FlushPictureChanges");
   u16 Row = 0;
   u16 SrcOfs = 0;
   u16 DestOfs = 0;
@@ -1047,84 +1196,100 @@ void FlushPictureChanges(void)
   switch (VideoAdapter) {
   case AdapterCga:
   {
-    Row = 0;
-    if (Row <= 0xA7) for (;;) {
-      if (RowDirtyFlags[Row] != 0) {
-        rtl_Move((void *)&(*FPD(TPicture (*), DrawBuf)).Data[RowFirstChangedOfs[Row]], rtl_mem_ptr(CgaScanlineSegments[(u16)(Row + 8)], (u16)(RowFirstChangedCol[Row] + 2)), (u16)((RowLastChangedOfs[Row] - RowFirstChangedOfs[Row]) + 1));
+    {
+      if (0 <= 0xA7) {
+        Row = 0;
+        for (;;) {
+            if (RowDirtyFlags[Row] != 0) {
+              rtl_Move((void *)&(*FPD(TPicture (*), DrawBuf)).Data[RowFirstChangedOfs[Row]], rtl_mem_ptr(CgaScanlineSegments[(u16)(Row + 8)], (u16)(RowFirstChangedCol[Row] + 2)), (u16)((RowLastChangedOfs[Row] - RowFirstChangedOfs[Row]) + 1));
+            }
+          if (Row == 0xA7) break;
+          Row++;
+        }
       }
-      if (Row == 0xA7) break;
-      Row++;
     }
     break;
   }
   case AdapterEga:
   {
     rtl_outp(SeqIndex, SeqMapMask);
-    Row = 0;
-    if (Row <= 0xA7) for (;;) {
-      if (RowDirtyFlags[Row] != 0) {
-        BaseOfs = (EgaScanlineOffsets[(u16)(Row + 8)] + RowFirstChangedCol[Row]) + 1;
-        rtl_outp(SeqData, EgaPlaneBitMasks[0]);
-        SrcOfs = RowFirstChangedOfs[Row];
-        DestOfs = BaseOfs;
-        do {
-          rtl_poke8(EgaPage1Segment, DestOfs, (*FPD(TPicture (*), DrawBuf)).Data[SrcOfs]);
-          SrcOfs += 4;
-          DestOfs++;
-        } while (!(SrcOfs > RowLastChangedOfs[Row]));
-        rtl_outp(SeqData, EgaPlaneBitMasks[1]);
-        SrcOfs = RowFirstChangedOfs[Row] + 1;
-        DestOfs = BaseOfs;
-        do {
-          rtl_poke8(EgaPage1Segment, DestOfs, (*FPD(TPicture (*), DrawBuf)).Data[SrcOfs]);
-          SrcOfs += 4;
-          DestOfs++;
-        } while (!(SrcOfs > RowLastChangedOfs[Row]));
-        rtl_outp(SeqData, EgaPlaneBitMasks[2]);
-        SrcOfs = RowFirstChangedOfs[Row] + 2;
-        DestOfs = BaseOfs;
-        do {
-          rtl_poke8(EgaPage1Segment, DestOfs, (*FPD(TPicture (*), DrawBuf)).Data[SrcOfs]);
-          SrcOfs += 4;
-          DestOfs++;
-        } while (!(SrcOfs > RowLastChangedOfs[Row]));
-        rtl_outp(SeqData, EgaPlaneBitMasks[3]);
-        SrcOfs = RowFirstChangedOfs[Row] + 3;
-        DestOfs = BaseOfs;
-        do {
-          rtl_poke8(EgaPage1Segment, DestOfs, (*FPD(TPicture (*), DrawBuf)).Data[SrcOfs]);
-          SrcOfs += 4;
-          DestOfs++;
-        } while (!(SrcOfs > RowLastChangedOfs[Row]));
+    {
+      if (0 <= 0xA7) {
+        Row = 0;
+        for (;;) {
+            if (RowDirtyFlags[Row] != 0) {
+              BaseOfs = (EgaScanlineOffsets[(u16)(Row + 8)] + RowFirstChangedCol[Row]) + 1;
+              rtl_outp(SeqData, EgaPlaneBitMasks[0]);
+              SrcOfs = RowFirstChangedOfs[Row];
+              DestOfs = BaseOfs;
+              do {
+                rtl_poke8(EgaPage1Segment, DestOfs, (*FPD(TPicture (*), DrawBuf)).Data[SrcOfs]);
+                SrcOfs += 4;
+                DestOfs++;
+              } while (!(SrcOfs > RowLastChangedOfs[Row]));
+              rtl_outp(SeqData, EgaPlaneBitMasks[1]);
+              SrcOfs = RowFirstChangedOfs[Row] + 1;
+              DestOfs = BaseOfs;
+              do {
+                rtl_poke8(EgaPage1Segment, DestOfs, (*FPD(TPicture (*), DrawBuf)).Data[SrcOfs]);
+                SrcOfs += 4;
+                DestOfs++;
+              } while (!(SrcOfs > RowLastChangedOfs[Row]));
+              rtl_outp(SeqData, EgaPlaneBitMasks[2]);
+              SrcOfs = RowFirstChangedOfs[Row] + 2;
+              DestOfs = BaseOfs;
+              do {
+                rtl_poke8(EgaPage1Segment, DestOfs, (*FPD(TPicture (*), DrawBuf)).Data[SrcOfs]);
+                SrcOfs += 4;
+                DestOfs++;
+              } while (!(SrcOfs > RowLastChangedOfs[Row]));
+              rtl_outp(SeqData, EgaPlaneBitMasks[3]);
+              SrcOfs = RowFirstChangedOfs[Row] + 3;
+              DestOfs = BaseOfs;
+              do {
+                rtl_poke8(EgaPage1Segment, DestOfs, (*FPD(TPicture (*), DrawBuf)).Data[SrcOfs]);
+                SrcOfs += 4;
+                DestOfs++;
+              } while (!(SrcOfs > RowLastChangedOfs[Row]));
+            }
+          if (Row == 0xA7) break;
+          Row++;
+        }
       }
-      if (Row == 0xA7) break;
-      Row++;
     }
     rtl_outp(SeqData, MapMaskAll);
     DestOfs = EgaScanlineOffsets[8] + 1;
     rtl_outp(GcIndex, GcMode);
     rtl_outp(GcData, WriteMode1);
-    Row = 0;
-    if (Row <= 0xA7) for (;;) {
-      if (RowDirtyFlags[Row] != 0) {
-        rtl_Move(rtl_mem_ptr(EgaPage1Segment, (u16)(DestOfs + RowFirstChangedCol[Row])), rtl_mem_ptr(EgaPage0Segment, (u16)(DestOfs + RowFirstChangedCol[Row])), (u16)((u16)((u16)(u16)((u16)((u16)(RowLastChangedOfs[Row] - RowFirstChangedOfs[Row])) >> 1) >> 1) + 1));
+    {
+      if (0 <= 0xA7) {
+        Row = 0;
+        for (;;) {
+            if (RowDirtyFlags[Row] != 0) {
+              rtl_Move(rtl_mem_ptr(EgaPage1Segment, (u16)(DestOfs + RowFirstChangedCol[Row])), rtl_mem_ptr(EgaPage0Segment, (u16)(DestOfs + RowFirstChangedCol[Row])), (u16)((u16)((u16)(u16)((u16)((u16)(RowLastChangedOfs[Row] - RowFirstChangedOfs[Row])) >> 1) >> 1) + 1));
+            }
+            DestOfs += 0x28;
+          if (Row == 0xA7) break;
+          Row++;
+        }
       }
-      DestOfs += 0x28;
-      if (Row == 0xA7) break;
-      Row++;
     }
     rtl_outp(GcData, WriteMode0);
     break;
   }
   case AdapterTandy:
   {
-    Row = 0;
-    if (Row <= 0xA7) for (;;) {
-      if (RowDirtyFlags[Row] != 0) {
-        rtl_Move((void *)&(*FPD(TPicture (*), DrawBuf)).Data[RowFirstChangedOfs[Row]], rtl_mem_ptr(TandyScanlineSegments[(u16)(Row + 8)], (u16)(RowFirstChangedCol[Row] + 4)), (u16)((RowLastChangedOfs[Row] - RowFirstChangedOfs[Row]) + 1));
+    {
+      if (0 <= 0xA7) {
+        Row = 0;
+        for (;;) {
+            if (RowDirtyFlags[Row] != 0) {
+              rtl_Move((void *)&(*FPD(TPicture (*), DrawBuf)).Data[RowFirstChangedOfs[Row]], rtl_mem_ptr(TandyScanlineSegments[(u16)(Row + 8)], (u16)(RowFirstChangedCol[Row] + 4)), (u16)((RowLastChangedOfs[Row] - RowFirstChangedOfs[Row]) + 1));
+            }
+          if (Row == 0xA7) break;
+          Row++;
+        }
       }
-      if (Row == 0xA7) break;
-      Row++;
     }
     break;
   }
@@ -1152,6 +1317,7 @@ void FlushPictureChanges(void)
      FirstItem recolours and copies back item 0 only. */
 void RemapPictureColors(farptr FromMap, farptr ToMap, s16 FirstItem, u8 Flicker, farptr Pic)
 {
+  POOL_TRACE("RemapPictureColors");
   TColorMap FromMapCopy = {0};
   TColorMap ToMapCopy = {0};
   u16 PicOfs = 0;
@@ -1169,15 +1335,6 @@ void RemapPictureColors(farptr FromMap, farptr ToMap, s16 FirstItem, u8 Flicker,
   u8 ToHigh = 0;
   u8 Color = 0;
   farptr Scratch = 0;
-  s8 t1;
-  u16 t2;
-  u16 t3;
-  s8 t4;
-  u16 t5;
-  u16 t6;
-  s8 t7;
-  u16 t8;
-  u16 t9;
   memcpy(FromMapCopy, (*FPD(TColorMap (*), FromMap)), 16);
   memcpy(ToMapCopy, (*FPD(TColorMap (*), ToMap)), 16);
   if (Pic == 0) {
@@ -1197,157 +1354,216 @@ void RemapPictureColors(farptr FromMap, farptr ToMap, s16 FirstItem, u8 Flicker,
   AllocatePicture((*FPD(TPicture (*), Pic)).Height, (*FPD(TPicture (*), Pic)).WidthCols, Items, 0, (void *)&Scratch);
   memcpy((*FPD(TPicture (*), Scratch)).Palette, (*FPD(TPicture (*), Pic)).Palette, 8);
   rtl_Move((void *)&(*FPD(TPicture (*), Pic)).Data[PicOfs], (void *)&(*FPD(TPicture (*), Scratch)).Data[ScratchOfs], (u16)((*FPD(TPicture (*), Scratch)).ItemCount * (*FPD(TPicture (*), Scratch)).ByteSize));
-  Color = 0;
-  if (Color <= 15) for (;;) {
-    {
-      TPicture *w2 = &(*FPD(TPicture (*), Pic));
-        if (FirstItem < 0) {
-          FirstItem = 0;
-          Items = w2->ItemCount;
-        } else {
-          Items = 1;
-        }
-        PicOfs = FirstItem * w2->ByteSize;
-        ScratchOfs = 0;
-    }
-    if (FromMapCopy[Color] != ToMapCopy[Color]) {
-      {
-        TPicture *w3 = &(*FPD(TPicture (*), Scratch));
-          switch (VideoAdapter) {
-          case 0:
+  {
+    if (0 <= 15) {
+      Color = 0;
+      for (;;) {
           {
-            RowBytes = w3->WidthCols * 2;
-            t1 = (s16)((Items + FirstItem) - 1);
-            SharedLoopIndex = FirstItem;
-            if (SharedLoopIndex <= t1) for (;;) {
-              t2 = w3->Height;
-              PixelRow = 1;
-              if (PixelRow <= t2) for (;;) {
-                t3 = RowBytes;
-                ColByte = 1;
-                if (ColByte <= t3) for (;;) {
-                  Quad = 0;
-                  if (Quad <= 3) for (;;) {
-                    if ((((*FPD(TPicture (*), Pic)).Data[PicOfs] & GlyphPixelMasks[(s16)(Quad + 4)])) == PixelBitsByColor[PaletteColor(FromMapCopy[Color], rtl_far(&w3->Palette))][Quad]) {
-                      if (((Flicker == 0)) || ((((Flicker != 0)) && ((rtl_Random(4) == 0))))) {
-                        /* QUIRK 0464:2375: the redundant
-                           second test is the original's */
-                        w3->Data[ScratchOfs] = (((w3->Data[ScratchOfs] & (u16)~GlyphPixelMasks[(s16)(Quad + 4)])) | PixelBitsByColor[PaletteColor(ToMapCopy[Color], rtl_far(&w3->Palette))][Quad]);
+            TPicture *w2 = &(*FPD(TPicture (*), Pic));
+              if (FirstItem < 0) {
+                FirstItem = 0;
+                Items = w2->ItemCount;
+              } else {
+                Items = 1;
+              }
+              PicOfs = FirstItem * w2->ByteSize;
+              ScratchOfs = 0;
+          }
+          if (FromMapCopy[Color] != ToMapCopy[Color]) {
+            {
+              TPicture *w3 = &(*FPD(TPicture (*), Scratch));
+                switch (VideoAdapter) {
+                case 0:
+                {
+                  RowBytes = w3->WidthCols * 2;
+                  {
+                    s8 limit = (s16)((Items + FirstItem) - 1);
+                    s8 first = FirstItem;
+                    if (first <= limit) {
+                      SharedLoopIndex = first;
+                      for (;;) {
+                          {
+                            u16 limit = w3->Height;
+                            if (1 <= limit) {
+                              PixelRow = 1;
+                              for (;;) {
+                                  {
+                                    u16 limit = RowBytes;
+                                    if (1 <= limit) {
+                                      ColByte = 1;
+                                      for (;;) {
+                                          {
+                                            if (0 <= 3) {
+                                              Quad = 0;
+                                              for (;;) {
+                                                  if ((((*FPD(TPicture (*), Pic)).Data[PicOfs] & GlyphPixelMasks[(s16)(Quad + 4)])) == PixelBitsByColor[PaletteColor(FromMapCopy[Color], rtl_far(&w3->Palette))][Quad]) {
+                                                    if (((Flicker == 0)) || ((((Flicker != 0)) && ((rtl_Random(4) == 0))))) {
+                                                      /* QUIRK 0464:2375: the redundant
+                                                         second test is the original's */
+                                                      w3->Data[ScratchOfs] = (((w3->Data[ScratchOfs] & (u16)~GlyphPixelMasks[(s16)(Quad + 4)])) | PixelBitsByColor[PaletteColor(ToMapCopy[Color], rtl_far(&w3->Palette))][Quad]);
+                                                    }
+                                                  }
+                                                if (Quad == 3) break;
+                                                Quad++;
+                                              }
+                                            }
+                                          }
+                                          PicOfs++;
+                                          ScratchOfs++;
+                                        if (ColByte == limit) break;
+                                        ColByte++;
+                                      }
+                                    }
+                                  }
+                                if (PixelRow == limit) break;
+                                PixelRow++;
+                              }
+                            }
+                          }
+                        if (SharedLoopIndex == limit) break;
+                        SharedLoopIndex++;
                       }
                     }
-                    if (Quad == 3) break;
-                    Quad++;
                   }
-                  PicOfs++;
-                  ScratchOfs++;
-                  if (ColByte == t3) break;
-                  ColByte++;
+                  break;
                 }
-                if (PixelRow == t2) break;
-                PixelRow++;
-              }
-              if (SharedLoopIndex == t1) break;
-              SharedLoopIndex++;
-            }
-            break;
-          }
-          case 1:
-          {
-            Plane = 0;
-            if (Plane <= 3) for (;;) {
-              if (((FromMapCopy[Color] & EgaPlaneBitMasks[Plane])) > 0) {
-                PlaneMask[Plane] = 0;
-              } else {
-                PlaneMask[Plane] = 0xFF;
-              }
-              if (Plane == 3) break;
-              Plane++;
-            }
-            t4 = (s16)((Items + FirstItem) - 1);
-            SharedLoopIndex = FirstItem;
-            if (SharedLoopIndex <= t4) for (;;) {
-              t5 = w3->Height;
-              PixelRow = 1;
-              if (PixelRow <= t5) for (;;) {
-                t6 = w3->WidthCols;
-                ColByte = 1;
-                if (ColByte <= t6) for (;;) {
-                  if (Flicker != 0) {
-                    Mask = (rtl_Random(256) & rtl_Random(256));
-                  } else {
-                    Mask = 0xFF;
-                  }
-                  Plane = 0;
-                  if (Plane <= 3) for (;;) {
-                    Mask = ((((*FPD(TPicture (*), Pic)).Data[(u16)(PicOfs + Plane)] ^ PlaneMask[Plane])) & Mask);
-                    if (Plane == 3) break;
-                    Plane++;
-                  }
-                  Plane = 0;
-                  if (Plane <= 3) for (;;) {
-                    if (((ToMapCopy[Color] & EgaPlaneBitMasks[Plane])) > 0) {
-                      w3->Data[(u16)(ScratchOfs + Plane)] = (w3->Data[(u16)(ScratchOfs + Plane)] | Mask);
-                    } else {
-                      w3->Data[(u16)(ScratchOfs + Plane)] = (w3->Data[(u16)(ScratchOfs + Plane)] & (u8)~Mask);
-                    }
-                    if (Plane == 3) break;
-                    Plane++;
-                  }
-                  PicOfs += 4;
-                  ScratchOfs += 4;
-                  if (ColByte == t6) break;
-                  ColByte++;
-                }
-                if (PixelRow == t5) break;
-                PixelRow++;
-              }
-              if (SharedLoopIndex == t4) break;
-              SharedLoopIndex++;
-            }
-            break;
-          }
-          case 2:
-          {
-            RowBytes = w3->WidthCols * 4;
-            FromHigh = FromMapCopy[Color] << 4;
-            ToHigh = ToMapCopy[Color] << 4;
-            t7 = (s16)((Items + FirstItem) - 1);
-            SharedLoopIndex = FirstItem;
-            if (SharedLoopIndex <= t7) for (;;) {
-              t8 = w3->Height;
-              PixelRow = 1;
-              if (PixelRow <= t8) for (;;) {
-                t9 = RowBytes;
-                ColByte = 1;
-                if (ColByte <= t9) for (;;) {
-                  if ((((*FPD(TPicture (*), Pic)).Data[PicOfs] & 0xF0)) == FromHigh) {
-                    if (((Flicker == 0)) || ((((Flicker != 0)) && ((rtl_Random(4) == 0))))) {
-                      w3->Data[ScratchOfs] = (((w3->Data[ScratchOfs] & 0xF)) | ToHigh);
+                case 1:
+                {
+                  {
+                    if (0 <= 3) {
+                      Plane = 0;
+                      for (;;) {
+                          if (((FromMapCopy[Color] & EgaPlaneBitMasks[Plane])) > 0) {
+                            PlaneMask[Plane] = 0;
+                          } else {
+                            PlaneMask[Plane] = 0xFF;
+                          }
+                        if (Plane == 3) break;
+                        Plane++;
+                      }
                     }
                   }
-                  if ((((*FPD(TPicture (*), Pic)).Data[PicOfs] & 0xF)) == FromMapCopy[Color]) {
-                    if (((Flicker == 0)) || ((((Flicker != 0)) && ((rtl_Random(4) == 0))))) {
-                      w3->Data[ScratchOfs] = (((w3->Data[ScratchOfs] & 0xF0)) | ToMapCopy[Color]);
+                  {
+                    s8 limit = (s16)((Items + FirstItem) - 1);
+                    s8 first = FirstItem;
+                    if (first <= limit) {
+                      SharedLoopIndex = first;
+                      for (;;) {
+                          {
+                            u16 limit = w3->Height;
+                            if (1 <= limit) {
+                              PixelRow = 1;
+                              for (;;) {
+                                  {
+                                    u16 limit = w3->WidthCols;
+                                    if (1 <= limit) {
+                                      ColByte = 1;
+                                      for (;;) {
+                                          if (Flicker != 0) {
+                                            Mask = (rtl_Random(256) & rtl_Random(256));
+                                          } else {
+                                            Mask = 0xFF;
+                                          }
+                                          {
+                                            if (0 <= 3) {
+                                              Plane = 0;
+                                              for (;;) {
+                                                  Mask = ((((*FPD(TPicture (*), Pic)).Data[(u16)(PicOfs + Plane)] ^ PlaneMask[Plane])) & Mask);
+                                                if (Plane == 3) break;
+                                                Plane++;
+                                              }
+                                            }
+                                          }
+                                          {
+                                            if (0 <= 3) {
+                                              Plane = 0;
+                                              for (;;) {
+                                                  if (((ToMapCopy[Color] & EgaPlaneBitMasks[Plane])) > 0) {
+                                                    w3->Data[(u16)(ScratchOfs + Plane)] = (w3->Data[(u16)(ScratchOfs + Plane)] | Mask);
+                                                  } else {
+                                                    w3->Data[(u16)(ScratchOfs + Plane)] = (w3->Data[(u16)(ScratchOfs + Plane)] & (u8)~Mask);
+                                                  }
+                                                if (Plane == 3) break;
+                                                Plane++;
+                                              }
+                                            }
+                                          }
+                                          PicOfs += 4;
+                                          ScratchOfs += 4;
+                                        if (ColByte == limit) break;
+                                        ColByte++;
+                                      }
+                                    }
+                                  }
+                                if (PixelRow == limit) break;
+                                PixelRow++;
+                              }
+                            }
+                          }
+                        if (SharedLoopIndex == limit) break;
+                        SharedLoopIndex++;
+                      }
                     }
                   }
-                  PicOfs++;
-                  ScratchOfs++;
-                  if (ColByte == t9) break;
-                  ColByte++;
+                  break;
                 }
-                if (PixelRow == t8) break;
-                PixelRow++;
-              }
-              if (SharedLoopIndex == t7) break;
-              SharedLoopIndex++;
+                case 2:
+                {
+                  RowBytes = w3->WidthCols * 4;
+                  FromHigh = FromMapCopy[Color] << 4;
+                  ToHigh = ToMapCopy[Color] << 4;
+                  {
+                    s8 limit = (s16)((Items + FirstItem) - 1);
+                    s8 first = FirstItem;
+                    if (first <= limit) {
+                      SharedLoopIndex = first;
+                      for (;;) {
+                          {
+                            u16 limit = w3->Height;
+                            if (1 <= limit) {
+                              PixelRow = 1;
+                              for (;;) {
+                                  {
+                                    u16 limit = RowBytes;
+                                    if (1 <= limit) {
+                                      ColByte = 1;
+                                      for (;;) {
+                                          if ((((*FPD(TPicture (*), Pic)).Data[PicOfs] & 0xF0)) == FromHigh) {
+                                            if (((Flicker == 0)) || ((((Flicker != 0)) && ((rtl_Random(4) == 0))))) {
+                                              w3->Data[ScratchOfs] = (((w3->Data[ScratchOfs] & 0xF)) | ToHigh);
+                                            }
+                                          }
+                                          if ((((*FPD(TPicture (*), Pic)).Data[PicOfs] & 0xF)) == FromMapCopy[Color]) {
+                                            if (((Flicker == 0)) || ((((Flicker != 0)) && ((rtl_Random(4) == 0))))) {
+                                              w3->Data[ScratchOfs] = (((w3->Data[ScratchOfs] & 0xF0)) | ToMapCopy[Color]);
+                                            }
+                                          }
+                                          PicOfs++;
+                                          ScratchOfs++;
+                                        if (ColByte == limit) break;
+                                        ColByte++;
+                                      }
+                                    }
+                                  }
+                                if (PixelRow == limit) break;
+                                PixelRow++;
+                              }
+                            }
+                          }
+                        if (SharedLoopIndex == limit) break;
+                        SharedLoopIndex++;
+                      }
+                    }
+                  }
+                  break;
+                }
+                }
             }
-            break;
           }
-          }
+        if (Color == 15) break;
+        Color++;
       }
     }
-    if (Color == 15) break;
-    Color++;
   }
   {
     TPicture *w4 = &(*FPD(TPicture (*), Pic));
@@ -1364,6 +1580,7 @@ void RemapPictureColors(farptr FromMap, farptr ToMap, s16 FirstItem, u8 Flicker,
      banks and ovl28 its list pointers. */
 void AllocatePicture(u16 Height, u16 WidthCols, u8 ItemCount, u8 AllocFlags, void *Pic)
 {
+  POOL_TRACE("AllocatePicture");
   u16 ItemBytes = 0;
   u16 BlockBytes = 0;
   ItemBytes = (Height * WidthCols) * 2;
@@ -1394,6 +1611,7 @@ void AllocatePicture(u16 Height, u16 WidthCols, u8 ItemCount, u8 AllocFlags, voi
      Pic is untyped so ovl28 can pass its typed sprite banks. */
 void ReleasePicture(void *Pic)
 {
+  POOL_TRACE("ReleasePicture");
   u16 Size = 0;
   if ((*(farptr (*))Pic) != 0) {
     {
@@ -1427,6 +1645,7 @@ void ReleasePicture(void *Pic)
      bound is Height - |FirstRow| and the loop includes it. */
 void FillPictureRect(s16 FirstCol, s16 FirstRow, u16 Width, u16 Height, u8 Color, farptr Palette, farptr Target)
 {
+  POOL_TRACE("FillPictureRect");
   TPalette (*Pal) = (TPalette (*))rtl_stack_alloc(8);
   u16 ClipLeft = 0;
   u16 RightOver = 0;
@@ -1441,9 +1660,6 @@ void FillPictureRect(s16 FirstCol, s16 FirstRow, u16 Width, u16 Height, u8 Color
   u16 StartBytes = 0;
   u8 PlaneIndex = 0;
   u16 stack_mark = rtl_stack_mark();
-  u16 t1;
-  u16 t2;
-  s8 t3;
   memcpy((*Pal), (*FPD(TPalette (*), Palette)), 8);
   if (Target == 0) {
     goto L_exit;
@@ -1493,28 +1709,32 @@ void FillPictureRect(s16 FirstCol, s16 FirstRow, u16 Width, u16 Height, u8 Color
       DestOfs = DestOfs * 4;
       StartBytes = StartCol;
     }
-    t1 = LastRow;
-    Row = 0;
-    if (Row <= t1) for (;;) {
-      RowDirtyFlags[TrackRow] = 1;
-      DestOfs += StartCol;
-      if (RowFirstChangedOfs[TrackRow] > DestOfs) {
-        RowFirstChangedCol[TrackRow] = StartBytes;
-        RowFirstChangedOfs[TrackRow] = DestOfs;
+    {
+      u16 limit = LastRow;
+      if (0 <= limit) {
+        Row = 0;
+        for (;;) {
+            RowDirtyFlags[TrackRow] = 1;
+            DestOfs += StartCol;
+            if (RowFirstChangedOfs[TrackRow] > DestOfs) {
+              RowFirstChangedCol[TrackRow] = StartBytes;
+              RowFirstChangedOfs[TrackRow] = DestOfs;
+            }
+            if (VideoAdapter == AdapterCga) {
+              rtl_FillChar((void *)&(*FPD(TPicture (*), Target)).Data[DestOfs], Count, PixelsByColor2Bit[PaletteColor(Color, rtl_far(&(*Pal)))]);
+            } else {
+              rtl_FillChar((void *)&(*FPD(TPicture (*), Target)).Data[DestOfs], Count, PixelsByColor4Bit[Color]);
+            }
+            DestOfs += Count;
+            if ((u16)(DestOfs - 1) > RowLastChangedOfs[TrackRow]) {
+              RowLastChangedOfs[TrackRow] = DestOfs - 1;
+            }
+            DestOfs += RightRoom;
+            TrackRow++;
+          if (Row == limit) break;
+          Row++;
+        }
       }
-      if (VideoAdapter == AdapterCga) {
-        rtl_FillChar((void *)&(*FPD(TPicture (*), Target)).Data[DestOfs], Count, PixelsByColor2Bit[PaletteColor(Color, rtl_far(&(*Pal)))]);
-      } else {
-        rtl_FillChar((void *)&(*FPD(TPicture (*), Target)).Data[DestOfs], Count, PixelsByColor4Bit[Color]);
-      }
-      DestOfs += Count;
-      if ((u16)(DestOfs - 1) > RowLastChangedOfs[TrackRow]) {
-        RowLastChangedOfs[TrackRow] = DestOfs - 1;
-      }
-      DestOfs += RightRoom;
-      TrackRow++;
-      if (Row == t1) break;
-      Row++;
     }
     break;
   }
@@ -1526,38 +1746,50 @@ void FillPictureRect(s16 FirstCol, s16 FirstRow, u16 Width, u16 Height, u8 Color
     RightRoom = RightRoom * 4;
     DestOfs = DestOfs * 4;
     rtl_FillChar((void *)&Mask, 4, 0);
-    PlaneIndex = 0;
-    if (PlaneIndex <= 3) for (;;) {
-      if (((EgaPlaneBitMasks[PlaneIndex] & Color)) > 0) {
-        Mask[PlaneIndex] = 0xFF;
+    {
+      if (0 <= 3) {
+        PlaneIndex = 0;
+        for (;;) {
+            if (((EgaPlaneBitMasks[PlaneIndex] & Color)) > 0) {
+              Mask[PlaneIndex] = 0xFF;
+            }
+          if (PlaneIndex == 3) break;
+          PlaneIndex++;
+        }
       }
-      if (PlaneIndex == 3) break;
-      PlaneIndex++;
     }
-    t2 = LastRow;
-    Row = 0;
-    if (Row <= t2) for (;;) {
-      RowDirtyFlags[TrackRow] = 1;
-      DestOfs += StartCol;
-      if (RowFirstChangedOfs[TrackRow] > DestOfs) {
-        RowFirstChangedCol[TrackRow] = StartBytes;
-        RowFirstChangedOfs[TrackRow] = DestOfs;
+    {
+      u16 limit = LastRow;
+      if (0 <= limit) {
+        Row = 0;
+        for (;;) {
+            RowDirtyFlags[TrackRow] = 1;
+            DestOfs += StartCol;
+            if (RowFirstChangedOfs[TrackRow] > DestOfs) {
+              RowFirstChangedCol[TrackRow] = StartBytes;
+              RowFirstChangedOfs[TrackRow] = DestOfs;
+            }
+            {
+              s8 limit = Count;
+              if (1 <= limit) {
+                SharedLoopIndex = 1;
+                for (;;) {
+                    rtl_Move((void *)&Mask, (void *)&(*FPD(TPicture (*), Target)).Data[DestOfs], 4);
+                    DestOfs += 4;
+                  if (SharedLoopIndex == limit) break;
+                  SharedLoopIndex++;
+                }
+              }
+            }
+            if ((u16)(DestOfs - 1) > RowLastChangedOfs[TrackRow]) {
+              RowLastChangedOfs[TrackRow] = DestOfs - 1;
+            }
+            DestOfs += RightRoom;
+            TrackRow++;
+          if (Row == limit) break;
+          Row++;
+        }
       }
-      t3 = Count;
-      SharedLoopIndex = 1;
-      if (SharedLoopIndex <= t3) for (;;) {
-        rtl_Move((void *)&Mask, (void *)&(*FPD(TPicture (*), Target)).Data[DestOfs], 4);
-        DestOfs += 4;
-        if (SharedLoopIndex == t3) break;
-        SharedLoopIndex++;
-      }
-      if ((u16)(DestOfs - 1) > RowLastChangedOfs[TrackRow]) {
-        RowLastChangedOfs[TrackRow] = DestOfs - 1;
-      }
-      DestOfs += RightRoom;
-      TrackRow++;
-      if (Row == t2) break;
-      Row++;
     }
     break;
   }
@@ -1575,6 +1807,7 @@ L_exit:
      is the intensity bit of the RGBI monitor palette. */
 void SetPaletteRegister(u8 Register, u8 Color)
 {
+  POOL_TRACE("SetPaletteRegister");
   Regs.AH = 0x10;
   Regs.AL = 0;
   if (Color < 8) {
@@ -1589,4 +1822,5 @@ void SetPaletteRegister(u8 Register, u8 Color)
 /* Initialisation part of unit RES07. */
 void init_RES07(void)
 {
+  POOL_TRACE("init");
 }
