@@ -38,9 +38,9 @@ Enter, Esc, letters.
 | `game/` | **generated** by `make c-translate`: one `.c` per Pascal unit, `game.h` (types, constants, DGROUP globals as macros, prototypes), `image.c` (the typed constants' bytes), `proc_table.c` (procedure pointers) |
 | `driver/` | `res03_driver.c`: the sound driver, ported by hand from `src/RES03.ASM` |
 | `rtl/` | Turbo Pascal's runtime: strings, sets, files over DOS names, the heap, the EGA model (`ega.c`), Crt/Dos/Overlay |
-| `platform/` | `sdl_host.c` (the game you play), `replay.c` (headless, for tests), `null.c` (sound tests) |
+| `platform/` | `sdl_host.c` (the game you play), `psg.c` (the speaker and Tandy synthesiser), `replay.c` (headless, for tests), `null.c` (sound tests) |
 | `include/` | `pool.h` (the memory model and the runtime's interface), `platform.h` (the only boundary with the machine), `ega.h`, `sha256.h` |
-| `tests/` | `sound_probe.c` |
+| `tests/` | `sound_probe.c`, `tune_wav.c` |
 
 **Memory model.** One flat 1 MB arena addressed by segment:offset (`farptr`), DGROUP at its original paragraph,
 the Turbo Pascal heap above it, the EGA window at `A000:0000`. A global is a macro into DGROUP at the offset the
@@ -63,6 +63,12 @@ them with what the original read at the same point of a recorded run.
 run of writes a few milliseconds apart. The SDL host stamps each write with its tick's time and the audio thread
 replays them at that time, 40 ms behind the game, so no tick is lost. `--wav FILE` also writes the sound to a file
 (for tests).
+`build/cmake/tune_wav DIR` plays every tune of the driver on both devices through the same synthesiser
+(`platform/psg.c`) and writes `DIR/tandy-NN.wav` and `DIR/speaker-NN.wav`. The game has no music: it plays tunes 1
+to 11, all sound effects (spell, hit, affect, death, attack leaves, no action, lightning bolt, miss, step, fireball,
+attack arrives); tunes 12 to 20 are in the driver but nothing plays them. A sound played while the driver is idle
+(the miss, the step) is cut after 0.1 s by the game's own `PlaySound`, and the arrival of an attack after one tick by
+`ShowAttackAnimation`; the Tandy versions are longer than the speaker's, so the cut is easier to hear.
 
 ## Proof
 

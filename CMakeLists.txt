@@ -50,13 +50,20 @@ if(NOT SDL3_FOUND AND POOLRAD_FETCH_SDL3)
   set(SDL3_FOUND TRUE)
 endif()
 if(SDL3_FOUND AND EXISTS ${CMAKE_SOURCE_DIR}/c/platform/sdl_host.c)
-  add_executable(poolrad c/platform/sdl_host.c)
+  add_executable(poolrad c/platform/sdl_host.c c/platform/psg.c)
   target_link_libraries(poolrad PRIVATE poolrad_engine SDL3::SDL3)
   if(UNIX)
     target_link_libraries(poolrad PRIVATE m)
   endif()
 else()
   message(STATUS "SDL3 not found: only poolrad_replay is built (install SDL3 to build the game)")
+endif()
+
+# ---- every tune of the sound driver to WAV files through the host's synthesiser ----
+add_executable(tune_wav c/tests/tune_wav.c c/platform/psg.c)
+target_link_libraries(tune_wav PRIVATE poolrad_engine)
+if(UNIX)
+  target_link_libraries(tune_wav PRIVATE m)
 endif()
 
 # ---- sound driver probe (tools/c/sound_check.py runs it against the oracle's golden) ----

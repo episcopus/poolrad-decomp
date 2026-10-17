@@ -29,6 +29,7 @@
 
 #include "ega.h"
 #include "platform.h"
+#include "psg.h"
 
 extern void rtl_init(void);
 
@@ -150,21 +151,7 @@ static void present(void)
 static Uint64 now_ns(void);
 static SDL_AudioStream *audio;
 static SDL_Mutex *audio_lock;
-static struct {
-  int spk_on;              /* speaker gate and data bits both set */
-  u16 spk_div;
-  u8 tandy_latch;          /* last latched register */
-  u16 tone[3];             /* tone periods */
-  u8 vol[4];               /* attenuation 0 (loud) .. 15 (off) */
-  u8 noise;                /* noise control */
-} snd;
-static struct {
-  double spk_phase;
-  double tone_phase[3];
-  u16 lfsr;
-  double noise_phase;
-  float lp;
-} syn = {0, {0, 0, 0}, 0x4000, 0, 0};
+static Psg psg;                        /* the devices as the audio thread has replayed them so far */
 
 enum { EvSpeaker, EvSpeakerOff, EvTandy };
 typedef struct SoundEvent {
@@ -179,43 +166,12 @@ static Uint64 tick_ns;                 /* while the timer handler runs: the tick
 static FILE *wav_out;                  /* --wav FILE: the rendered sound, for tests */
 static u32 wav_samples;
 
-static float tandy_amp(int att)
-{
-  return att >= 15 ? 0.0f : (float)pow(10.0, -0.1 * att);       /* 2 dB per step */
-}
-
 static void apply_event(const SoundEvent *e)
 {
-  u8 v;
-  int reg;
   switch (e->kind) {
-  case EvSpeaker:
-    snd.spk_div = e->a;
-    snd.spk_on = (e->b & 3) == 3;
-    break;
-  case EvSpeakerOff:
-    snd.spk_on = 0;
-    break;
-  default:
-    v = (u8)e->a;
-    if (v & 0x80) {
-      reg = (v >> 5) & 3;
-      snd.tandy_latch = (u8)(v & 0x7F);
-      if (v & 0x10) {
-        snd.vol[reg] = v & 15;
-      } else if (reg == 3) {
-        snd.noise = v & 7;
-        syn.lfsr = 0x4000;
-      } else {
-        snd.tone[reg] = (u16)((snd.tone[reg] & 0x3F0) | (v & 15));
-      }
-    } else {
-      reg = (snd.tandy_latch >> 5) & 3;
-      if (!(snd.tandy_latch & 0x10) && reg < 3) {
-        snd.tone[reg] = (u16)((snd.tone[reg] & 15) | ((v & 0x3F) << 4));
-      }
-    }
-    break;
+  case EvSpeaker: psg_speaker(&psg, e->a, e->b); break;
+  case EvSpeakerOff: psg_speaker_off(&psg); break;
+  default: psg_tandy(&psg, (u8)e->a); break;
   }
 }
 
@@ -237,47 +193,6 @@ static void queue_event(u8 kind, u16 a, u8 b)
   SDL_UnlockMutex(audio_lock);
 }
 
-static float synth_sample(void)
-{
-  int ch;
-  float mix = 0;
-  double spk_hz = snd.spk_div ? 1193181.0 / snd.spk_div : 0;
-  if (snd.spk_on && spk_hz > 0 && spk_hz < RATE / 2) {
-    syn.spk_phase += spk_hz / RATE;
-    if (syn.spk_phase >= 1.0) syn.spk_phase -= 1.0;
-    mix += syn.spk_phase < 0.5 ? 0.5f : -0.5f;
-  }
-  for (ch = 0; ch < 3; ch++) {
-    u16 p = snd.tone[ch];
-    float a = tandy_amp(snd.vol[ch]);
-    if (a > 0 && p > 1) {
-      double hz = 3579545.0 / (32.0 * p);
-      if (hz < RATE / 2) {
-        syn.tone_phase[ch] += hz / RATE;
-        if (syn.tone_phase[ch] >= 1.0) syn.tone_phase[ch] -= 1.0;
-        mix += (syn.tone_phase[ch] < 0.5 ? 0.3f : -0.3f) * a;
-      }
-    }
-  }
-  {
-    float a = tandy_amp(snd.vol[3]);
-    if (a > 0) {
-      static const int rates[3] = {512, 1024, 2048};
-      int sel = snd.noise & 3;
-      double hz = sel < 3 ? 3579545.0 / (rates[sel] / 1.0) : (snd.tone[2] > 1 ? 3579545.0 / (32.0 * snd.tone[2]) : 1000);
-      syn.noise_phase += hz / RATE;
-      while (syn.noise_phase >= 1.0) {
-        int fb = (snd.noise & 4) ? ((syn.lfsr ^ (syn.lfsr >> 1)) & 1) : (syn.lfsr & 1);
-        syn.lfsr = (u16)((syn.lfsr >> 1) | (fb << 14));
-        syn.noise_phase -= 1.0;
-      }
-      mix += ((syn.lfsr & 1) ? 0.3f : -0.3f) * a;
-    }
-  }
-  syn.lp += (mix - syn.lp) * 0.45f;                             /* a little smoothing against harsh aliasing */
-  return syn.lp;
-}
-
 /* n samples from play_ns on: each write is applied at the sample of its time. */
 static void synth(s16 *out, int n)
 {
@@ -294,7 +209,7 @@ static void synth(s16 *out, int n)
       apply_event(&sq[sq_tail]);
       sq_tail = (sq_tail + 1) % SOUND_QUEUE;
     }
-    v = synth_sample() * master * 32767.0f;
+    v = psg_sample(&psg, RATE) * master * 32767.0f;
     out[i] = (s16)(v > 32767.0f ? 32767.0f : (v < -32768.0f ? -32768.0f : v));
   }
   play_ns += (Uint64)n * 1000000000u / RATE;
@@ -344,8 +259,7 @@ static void audio_start(const char *wav_path)
   spec.format = SDL_AUDIO_S16;
   spec.channels = 1;
   spec.freq = RATE;
-  memset(&snd, 0, sizeof snd);
-  snd.vol[0] = snd.vol[1] = snd.vol[2] = snd.vol[3] = 15;
+  psg_reset(&psg);
   if (wav_path) {
     wav_out = fopen(wav_path, "wb");
     if (wav_out) wav_header(wav_out, 0);
@@ -554,6 +468,8 @@ static void inject(void)
   else if (!strcmp(name, "LEFT")) sc = SDL_SCANCODE_LEFT;
   else if (!strcmp(name, "RIGHT")) sc = SDL_SCANCODE_RIGHT;
   else if (!strcmp(name, "DOWN")) sc = SDL_SCANCODE_DOWN;
+  else if (!strcmp(name, "END")) sc = SDL_SCANCODE_END;
+  else if (!strcmp(name, "HOME")) sc = SDL_SCANCODE_HOME;
   if (sc == SDL_SCANCODE_UNKNOWN) return;
   SDL_zero(e);
   e.type = SDL_EVENT_KEY_DOWN;
@@ -605,8 +521,10 @@ void platform_pump(void)
   }
   if (shot_path && (t - start_ns) / 1000000u >= shot_ms) {
     SDL_Surface *surf;
-    present();
-    surf = SDL_RenderReadPixels(ren, NULL);
+    int w = 320, h = 200;
+    ega_size(&w, &h);                                             /* the game's picture itself, not the window's */
+    ega_render(pixels);
+    surf = SDL_CreateSurfaceFrom(w, h, SDL_PIXELFORMAT_RGBA32, pixels, w * 4);
     if (surf) {
       SDL_SaveBMP(surf, shot_path);
       SDL_DestroySurface(surf);
