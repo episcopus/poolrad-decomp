@@ -18,13 +18,15 @@ LINKLIBS := -L$(CMOCLIB) -lcmoc-crt-void -lcmoc-std-void
 ENGINE_OBJ := build/obj/boot.o build/obj/mailbox.o
 P ?= byte-arith
 
-.PHONY: help doctor toolchain demo test-demo run-demo probe probes asm-probe bench test clean
+.PHONY: help doctor toolchain sizes heap-stats demo test-demo run-demo probe probes asm-probe bench test clean
 .DEFAULT_GOAL := help
 
 help:
 	@echo "ports/coco3: CoCo 3 port dev workflow (root of the port)"
 	@echo "  make doctor         check docker, the image, ROMs, xroar"
 	@echo "  make toolchain      print the toolchain versions (in the container)"
+	@echo "  make sizes          compile every generated unit of ../../c/game with CMOC, tabulate the sizes (step 8.1)"
+	@echo "  make heap-stats     replay the sessions on a heap-stats build of the C game: heap peak, DGROUP use"
 	@echo "  make demo           build the banked hello world (build/demo/demo.bin, demo.dsk)"
 	@echo "  make test-demo      build, run in headless MAME and XRoar, check the mailbox"
 	@echo "  make run-demo       run the demo in a windowed XRoar (interactive look)"
@@ -40,6 +42,12 @@ doctor:
 
 toolchain:
 	@$(TC) scripts/toolchain-report.sh
+
+sizes:
+	@$(TC) scripts/sizes.sh
+
+heap-stats:
+	@scripts/heap_stats.sh
 
 demo:
 	@$(TC) $(IMAKE) --no-print-directory build/demo/demo.dsk

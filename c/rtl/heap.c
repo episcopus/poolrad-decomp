@@ -9,6 +9,13 @@
  * taken from the top of the heap makes the last link point at the new HeapPtr. */
 #include "pool.h"
 
+/* -DPOOL_HEAP_STATS (cmake -DCMAKE_C_FLAGS=-DPOOL_HEAP_STATS): count the heap in use and print the peak
+ * on exit (CoCo 3 port, step 8.1: how much RAM the heap needs). No effect on the heap itself. */
+#ifdef POOL_HEAP_STATS
+#define rtl_getmem real_getmem
+#define rtl_freemem real_freemem
+#endif
+
 #define V32(off) (*(u32 *)(pool_ds + (off)))
 #define HEAP_ORG V32(0x4400)
 #define HEAP_PTR V32(0x4404)
@@ -162,3 +169,118 @@ s32 rtl_MaxAvail(void)
   }
   return best;
 }
+
+#ifdef POOL_HEAP_STATS
+#undef rtl_getmem
+#undef rtl_freemem
+#include <stdio.h>
+#include <stdlib.h>
+#include <execinfo.h>
+
+#define STATS_MAX 16384
+static struct { u32 at, size; } live[STATS_MAX];
+static int nlive;
+static u32 live_bytes, peak_live, top_high, allocs, frees, unmatched;
+static struct { u32 size, count; } peak_hist[96];
+static int peak_nsizes;
+static int registered;
+
+static void stats_print(void)
+{
+  int i;
+  if (getenv("POOL_DGROUP_DUMP")) {                        /* DGROUP as the session left it */
+    FILE *f = fopen(getenv("POOL_DGROUP_DUMP"), "wb");
+    if (f) {
+      fwrite(pool_ds, 1, 0x8760, f);
+      fclose(f);
+    }
+  }
+  fprintf(stderr, "HEAPSTATS peak_live=%u top_highwater=%u allocs=%u frees=%u live_at_exit=%u unmatched_frees=%u\n",
+          peak_live, top_high, allocs, frees, live_bytes, unmatched);
+  fprintf(stderr, "HEAPSTATS live at exit, blocks of 1000 bytes or more:");
+  for (i = 0; i < nlive; i++) {
+    if (live[i].size >= 1000) {
+      fprintf(stderr, " %u", live[i].size);
+    }
+  }
+  fprintf(stderr, "\n");
+  {
+    u32 small = 0, nsmall = 0;
+    for (i = 0; i < nlive; i++) {
+      if (live[i].size < 1000) {
+        small += live[i].size;
+        nsmall++;
+      }
+    }
+    fprintf(stderr, "HEAPSTATS live at exit, blocks under 1000 bytes: %u blocks, %u bytes\n", nsmall, small);
+  }
+  fprintf(stderr, "HEAPSTATS at the peak:");
+  for (i = 0; i < peak_nsizes; i++) {
+    fprintf(stderr, " %ux%u", peak_hist[i].count, peak_hist[i].size);
+  }
+  fprintf(stderr, "\n");
+}
+
+static void snapshot_peak(void)
+{
+  int i, j;
+  peak_nsizes = 0;
+  for (i = 0; i < nlive; i++) {
+    for (j = 0; j < peak_nsizes && peak_hist[j].size != live[i].size; j++) {
+    }
+    if (j == peak_nsizes) {
+      if (peak_nsizes == 96) {
+        continue;
+      }
+      peak_hist[peak_nsizes].size = live[i].size;
+      peak_hist[peak_nsizes++].count = 0;
+    }
+    peak_hist[j].count++;
+  }
+}
+
+farptr rtl_getmem(u16 size)
+{
+  farptr p = real_getmem(size);
+  if (size >= 1000 && getenv("POOL_HEAP_CALLERS")) {       /* who asks for the big blocks */
+    void *bt[6];
+    int k = backtrace(bt, 6);
+    fprintf(stderr, "HEAPALLOC %u\n", (unsigned)size);
+    backtrace_symbols_fd(bt + 1, k - 1, 2);
+  }
+  if (!registered) {
+    registered = 1;
+    atexit(stats_print);
+  }
+  if (p != 0 && nlive < STATS_MAX) {
+    u32 n = ((u32)size + 7u) & ~7u;
+    live[nlive].at = lin(p);
+    live[nlive++].size = n;
+    live_bytes += n;
+    allocs++;
+    if (live_bytes > peak_live) {
+      peak_live = live_bytes;
+      snapshot_peak();
+    }
+    if (lin(HEAP_PTR) - lin(HEAP_ORG) > top_high) {
+      top_high = lin(HEAP_PTR) - lin(HEAP_ORG);
+    }
+  }
+  return p;
+}
+
+void rtl_freemem(farptr p, u16 size)
+{
+  int i;
+  for (i = nlive - 1; i >= 0 && live[i].at != lin(p); i--) {
+  }
+  if (i >= 0) {
+    live_bytes -= live[i].size;
+    live[i] = live[--nlive];
+    frees++;
+  } else if (size != 0) {
+    unmatched++;
+  }
+  real_freemem(p, size);
+}
+#endif

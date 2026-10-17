@@ -5,8 +5,10 @@ sources, the probes and the build output all live here and use paths relative to
 plan are in `../../docs/coco/` (start with `README.md` and `PORTING-GUIDE.md` there); the
 result of each step of the plan is recorded in `docs/`.
 
-Status: step 8.0 (toolchain baseline) is done, see `docs/PHASE-8.0.md`. Nothing of the game is
-ported yet; what exists is the build and test machinery plus a banked hello world.
+Status: steps 8.0 (toolchain baseline) and 8.1 (measure) are done, see `docs/PHASE-8.0.md` and
+`docs/PHASE-8.1.md`. Nothing of the game is ported yet; what exists is the build and test machinery, a banked
+hello world and the measurements of the generated C on CMOC. **Waiting for the human: decision D12 (data
+addressing model, 8.1 section 7).**
 
 ## Quick start
 
@@ -15,6 +17,8 @@ cd ports/coco3
 make doctor        # docker, the coco-dev image, ROMs, xroar
 make test          # builds the banked demo, runs it in headless MAME and XRoar, checks the mailbox
 make probe P=byte-arith    # run a CMOC probe on the emulated CoCo 3 and print its results
+make sizes         # 8.1: compile every generated unit with CMOC and tabulate the 6809 sizes
+make heap-stats    # 8.1: heap peak and DGROUP use over the recorded sessions (needs `make c-golden` once)
 make help
 ```
 
@@ -45,8 +49,9 @@ The firmware is copyrighted and is never committed (`roms/` is ignored by git). 
 | Path | What |
 |---|---|
 | `Makefile` | the front door (`make help`) |
-| `scripts/` | shell behind the targets: `lib.sh` (container helpers), `mame_run.sh`, `xroar_run.sh`, `doctor.sh`, `toolchain-report.sh`, `asm-probe.sh` |
-| `tools/` | `symexport.py` (core symbols for banks), `mkdecb.py` (DECB packing), `mbdump.py` (mailbox results), `maplimit.py` |
+| `scripts/` | shell behind the targets: `lib.sh` (container helpers), `mame_run.sh`, `xroar_run.sh`, `doctor.sh`, `toolchain-report.sh`, `asm-probe.sh`, `sizes.sh`, `heap_stats.sh` |
+| `tools/` | step 8.0: `symexport.py` (core symbols for banks), `mkdecb.py` (DECB packing), `mbdump.py` (mailbox results), `maplimit.py`, `bankcheck.py`, `cpbench.py`; step 8.1: `mkshim.py` and `cmocify.py` (make the Phase 7 C readable by CMOC), `unitsizes.py`, `unitgraph.py`, `dgroup_stats.py` |
+| `shim/` | stand-ins for the C library headers CMOC lacks (`stdint.h`, `stddef.h`, `string.h`) |
 | `lua/mailbox.lua` | MAME autoboot script: types the LOADM command, waits for the mailbox, dumps it and a screenshot |
 | `src/engine/` | the engine so far: `boot.asm` (takeover), `farcall.asm` (far-call trampoline, bank loader), `banks.inc`, `mailbox.*`, link scripts |
 | `src/demo/` | the banked hello world: a resident core and two code banks |

@@ -1,6 +1,6 @@
 # Pool of Radiance on the CoCo 3: porting guide (Phase 8 baseline)
 
-Version 0.2, 2026-10-17. Status: research baseline; step 8.0 is done (`ports/coco3/docs/PHASE-8.0.md`), the rest is not built yet. Every design choice below is a **proposal** until the human approves it at the Phase 8 kick-off (section 10 lists the decisions). Facts carry the project's tags: **[V]** verified on our bytes or by running a tool, **[S]** stated by a cited source (details and URLs in `research/`), **[E]** an estimate, **[?]** open.
+Version 0.3, 2026-10-17. Status: research baseline; steps 8.0 and 8.1 are done (`ports/coco3/docs/PHASE-8.0.md`, `PHASE-8.1.md`), the rest is not built yet. **8.1 found that the data addressing model needs a decision (D12) before step 8.2.** Every design choice below is a **proposal** until the human approves it at the Phase 8 kick-off (section 10 lists the decisions). Facts carry the project's tags: **[V]** verified on our bytes or by running a tool, **[S]** stated by a cited source (details and URLs in `research/`), **[E]** an estimate, **[?]** open.
 
 This guide is the synthesis. The eight research files under `research/` hold the evidence, the register tables, cycle counts and sources. Read this file first, then the research file for the module you are working on (the table in section 11 says which).
 
@@ -46,6 +46,7 @@ This guide is the synthesis. The eight research files under `research/` hold the
 | Overlay code | 35 units, 197,641 bytes of x86; largest ovl16 17,497, ovl13 15,474, ovl12 14,510, ovl22 14,261, ovl03 13,581, ovl19 11,026 | [V] appendix A |
 | Resident code | load image 68,592 bytes; code paragraphs 0000 to 0C7C (about 51 KB) include the Borland runtime units (System, Crt, Dos, Overlay), which the port replaces | [V] 3.1 |
 | DGROUP | paragraph 0C7C up to the stack segment 14F2: 34,656 bytes (33.8 KB), of which about 17 KB initialised; 16 KB stack | [V] 3.1 |
+| Heap in play, measured in 8.1 | peak 182,984 bytes at start-up and the title screen; 118,936 to 142,560 live in the game, of which 2 x 36,888 are the staging screens and 14,136 one picture; the rest 45 to 69 KB (17.6 KB loader blocks, small blocks 11 to 23 KB, loaded pictures). DGROUP: the 17,370-byte constants image never changed in seven sessions; 17,284 bytes of variables, 4,099 of them nonzero at the end | [V] `make heap-stats` |
 | Start-up heap blocks | game variables `$800`, a second `$800`, `$400`, ECL buffer `$1E00`, `$588`, wall sets `$924`, GEO planes `$400` (about 17 KB) plus the screen staging buffers and pictures loaded on demand | [V] 3.2.2 |
 | DAX data | 113 archives, 1,245 blocks, 1,273,124 bytes packed, 2,603,688 bytes unpacked; largest block 36,881 bytes; 831 blocks are 1 KB or less, 1,178 are 8 KB or less | [V] measured 2026-10-17 |
 | Biggest data families (unpacked) | PIC 1.27 MB (92 blocks), SPRIT 308 KB, ECL 176 KB, HEAD 112 KB, 8X8D 99 KB, BODY 98 KB, CPIC 90 KB, FINAL 78 KB | [V] measured |
@@ -123,7 +124,7 @@ Budget [E]: 288 + 24 KB = 312 KB for code and cache. At 250 KB of 6809 code that
 Rules that follow from this map [S] 02, 03, 05:
 - Interrupt handlers and their data live in the `$FE00` page or in slots that are never remapped (1 to 3). A handler never assumes what slots 0, 4 to 7 hold.
 - The DSKCON wrapper, its caller's stack and the sector buffer live in slots 1 to 4.
-- Globals that do not fit slots 0 to 2 (DGROUP is 34,656 bytes and the start-up heap another 17 KB [V]) go into a **data bank** reached through accessors; the big cold tables are the candidates (area map 1,584 bytes, combat occupancy 1,250, the image of typed constants). Measuring this is task 8.1.
+- Globals that do not fit slots 0 to 2 (DGROUP is 34,656 bytes and the start-up heap another 17 KB [V]) go into a **data bank** reached through accessors; the big cold tables are the candidates (area map 1,584 bytes, combat occupancy 1,250, the image of typed constants). **Measured in 8.1 [V]: the constants image (17,370 bytes) is read-only in practice and goes to banked read-only data; but the data the C code dereferences at once is still 45 to 58 KB (15 to 17 KB of variables plus 29 to 41 KB of heap), so this map has no room for the code. The question is not which tables to bank but the addressing model: `ports/coco3/docs/PHASE-8.1.md` sections 6.4 and 7, decision D12.**
 - Drawing: two options to measure in 8.1. (a) Aperture: map the one or two screen blocks that hold the target rows into slots 6 and 7 (16 KB, but the top 512 bytes of slot 7 are the constant page and I/O, so about 99 writable rows) for each blit. (b) Task 1: a second MMU task with the whole back buffer at `$8000` to `$FCFF` (32,000 bytes end below `$FE00`), the blitter code and the source in slots 0 to 3; a task switch is one store to `$FF91` [S] 02. Research 02 recommends (b); (a) keeps one task and is simpler to reason about.
 
 ### 3.5 Banking: how overlays become MMU pages
@@ -197,7 +198,9 @@ So CMOC computes a binary operation on two byte-sized operands (an 8-bit constan
 
 Other CMOC limits that the translated C will hit [S] 04: structs, enums and typedefs only at global scope; `volatile` accepted but ignored (ISR-shared flags go through an asm accessor until shown otherwise); no `inline` or `_Bool`, and designated initializers are probably unsupported (inferred, test it); bit-fields take full storage; `long` arithmetic through helper calls and pointers (about 4 to 6 times the cost of 16-bit for an add, much more for multiply and divide); float only through the BASIC ROM or `--mc6839`, neither bit-compatible with Turbo Pascal's 6-byte Real; no `stdint.h`, `string.h` or `stdio.h` (ship shim headers); globals addressed PC-relative.
 
-### 6.2 Generate CoCo C from the Pascal (proposed, decision D5)
+### 6.2 Generate CoCo C from the Pascal (proposed, decision D5; the pointer part depends on D12)
+
+8.1 measured how far the existing C is from CMOC: the list of constructs it cannot read (pointers to arrays, parenthesised declarators, compound literals, 32-bit enumerators, anonymous unions, two code generation bugs) is in `ports/coco3/docs/PHASE-8.1.md` section 2 and is the first requirement of the profile.
 
 `tools/c/pas2c.py` already models Turbo Pascal's integer classes exactly (whitepaper appendix D): it knows, for every expression, whether the original computed in Byte, Integer, Word or Longint. The cheapest and safest way to neutralise CMOC's byte rule and its left-operand signedness is a **CoCo profile in the translator** that emits an explicit cast to the Turbo Pascal result type on every binary operation with byte-sized operands, and that also:
 - emits native globals and native pointers (2 bytes) instead of DGROUP macros and `farptr`;
@@ -276,9 +279,10 @@ Feature flags keep a slow reference path for each engine routine (Hewlett's prac
 | Step | Goal | Exit criterion |
 |---|---|---|
 | 8.0 Toolchain baseline **(done 2026-10-17, `ports/coco3/docs/PHASE-8.0.md`)** | Container check: `cmoc --help`, NEWS 0.1.86 to 0.1.100, USim and `writecocofile` present; rerun `probes/`; lwlink two-file test of resident symbol export (Q6) | Probe results recorded for 0.1.100; a banked hello world (core plus one window page, far call and return) runs in XRoar and MAME. Met: core plus two banks, nested far calls, both emulators; USim is not in the image, so tests run on the emulated machine |
-| 8.1 Measure | CMOC-compile the five largest units and one resident unit as they are (with shims) to get real 6809 sizes; measure DGROUP and heap peak on the host (instrument `c/rtl/heap.c` over the goldens) | Size table per unit; window size and data-bank decisions (D4) made from numbers |
+| 8.1 Measure **(done 2026-10-17, `ports/coco3/docs/PHASE-8.1.md`)** | CMOC-compile the five largest units and one resident unit as they are (with shims) to get real 6809 sizes; measure DGROUP and heap peak on the host (instrument `c/rtl/heap.c` over the goldens) | Size table per unit; window size and data-bank decisions (D4) made from numbers. Met and exceeded: all 46 units compile (overlays 1.06 times the x86), D4 decided, DGROUP and heap measured; the data-bank decision became D12 |
 | 8.1b Compiler bake-off | gcc6809 built in a pinned x86_64 Docker image; ovl09, ovl07 and ovl16 compiled with CMOC and gcc6809 from the same C; size, MAME cycles and correctness compared (6.4) | Compiler decision (D11) made from numbers |
-| 8.2 Translator CoCo profile | pas2c CoCo profile (6.2); host build with the CoCo memory model and a 4bpp screen model | All seven sessions play on the host with the new model; 4bpp screen goldens recorded |
+| 8.1c Data model study (new) | For each heap block class and the 40 largest globals: who dereferences them, how often per keypress, whether the engine can take the access; choose among the D12 options from numbers | D12 decided; the list of C constructs CMOC cannot read (8.1 section 2.1) is the starting requirement of the profile |
+| 8.2 Translator CoCo profile (**conditional on D12**; its "native pointers" part only if D12 keeps them) | pas2c CoCo profile (6.2); host build with the CoCo memory model and a 4bpp screen model | All seven sessions play on the host with the new model; 4bpp screen goldens recorded |
 | 8.3 Engine core | Boot and takeover, MMU map, trampolines, IRQ/FIRQ, keyboard scan, frame clock, DSKCON wrapper, RLE decode, fills and blits, glyphs, palette | Engine test program in MAME: draws a DAX picture, text and tiles loaded from a `.DSK` |
 | 8.4 Data pipeline | Host tool producing volumes and `.DSK` images (section 7) | Reproducible images; every block round-trips against `make dax` |
 | 8.5 First light | Title screens, main menu, character creation on the CoCo | `boot-title` and `create-character` sessions match on screen and state in MAME |
@@ -296,7 +300,8 @@ Feature flags keep a slow reference path for each engine routine (Hewlett's prac
 | D1 | Minimum machine | CoCo 3, 512 KB, 6809 | Every high-end modern CoCo 3 game needs 512 KB; two screens alone take 64 KB [S] 02, 06 |
 | D2 | 6309 support | Optional fast paths only, detected at boot | Enthusiast upgrade; CMOC emits 6809 only [S] 01, 04 |
 | D3 | Operating environment | Bare metal, DSKCON through a DynoSprite-style wrapper | Scores highest; proven in DynoSprite [S] 03 |
-| D4 | Code window and data bank layout | Decide after 8.1 measurements; start with a 16 KB code window and an 8 KB data window | Five units may exceed 16 KB [E] |
+| D4 | Code window | **16 KB (two slots), confirmed by 8.1**: only `ovl16` exceeds it (22.7 KB, splits at routine boundaries into 14.5 and 7.5 KB), 35 overlays pack into 14 banks; an 8 KB window is impossible without refactoring `CreateCharacter` (9,172 bytes) | [V] 8.1 |
+| D12 | Data addressing model (new, from 8.1) | A study first (step 8.1c); candidates: two-level data (hot C data native, pictures behind engine handles), far data accessors for the big blocks, two address spaces, or shrinking the data | The C code's data does not fit beside the code in 64 KB (8.1 section 6.4) |
 | D5 | How to produce CoCo C | Extend pas2c with a CoCo profile | Neutralises CMOC's byte rule mechanically, keeps regeneration [V] 6.1 |
 | D6 | Sound target | Built-in 1-bit or DAC backend always, GMC optional | GMC needs a Multi-Pak alongside the disk controller [S] 02 |
 | D7 | Saved games | Native big-endian format, a few slots per save disk; PC save compatibility only through a host converter | Simpler engine; about 16 KB per slot [V] |
@@ -330,8 +335,8 @@ Numbered for reference; the research file in brackets has the detail.
 
 1. Is DSKCON reliable at 1.79 MHz on real hardware and controllers (FD-502, SDC)? DynoSprite drops to 0.89 MHz around it. Test early. (01, 03)
 2. **Answered in 8.0:** the byte rule holds on 0.1.100; `_CMOC_fpir_` and `--initial-s` exist; new `__gcccall` register convention (B, X, result in X); no 6309 or banking options; `switch` now allows Duff's device. (04; `ports/coco3/docs/PHASE-8.0.md` section 2, 3)
-3. How large is CMOC output for real units (the 0.9x to 1.5x estimate)? (01, 04)
-4. DGROUP and heap peak in practice, and how much of DGROUP is the Borland runtime's (file records, buffers) that the port drops. (this guide 3.4)
+3. **Answered in 8.1:** CMOC output is 1.06 times the x86 for the 35 overlays (209,542 bytes of code, 10,832 of constants, against 197,641), 1.13 for the resident game units; `-fomit-frame-pointer` saves 2.5%, `-O1` costs 14.7%. (01, 04)
+4. **Answered in 8.1:** heap peak 182,984 bytes (start-up), 118,936 to 142,560 live in play, 45 to 69 KB without the staging screens; DGROUP: constants image never written, 17,284 bytes of variables, the Borland runtime owns 708 bytes. (this guide 3.4)
 5. Which saved-file fields are pointers (whitepaper appendix D says saved files contain heap pointers), and are they read back after a load? Decides how D7 handles them.
 6. **Answered in 8.0: yes**, through a `constant` section of absolute symbols; no library search is involved. (04)
 7. **Answered in 8.0:** `volatile` is rejected with a warning, but polling loops on a global reload it every pass at `-O2` in the shapes tested; keep ISR-shared flags behind asm accessors anyway. (04)

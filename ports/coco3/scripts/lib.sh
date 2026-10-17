@@ -20,7 +20,7 @@ docker_run() {
   command -v docker >/dev/null 2>&1 || { echo "docker is not on PATH" >&2; exit 1; }
   docker info >/dev/null 2>&1 || { echo "the docker daemon is not running" >&2; exit 1; }
   docker run --rm -i \
-    -v "$ROOT:/work" -w /work -e HOME=/tmp -e SDL_VIDEODRIVER=dummy -e SDL_AUDIODRIVER=dummy \
+    -v "$ROOT:/work" -v "$ROOT/../..:/repo:ro" -w /work -e REPO=/repo -e HOME=/tmp -e SDL_VIDEODRIVER=dummy -e SDL_AUDIODRIVER=dummy \
     --user "$(id -u):$(id -g)" "$IMAGE" "$@"
 }
 
