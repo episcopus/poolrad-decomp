@@ -41,4 +41,3 @@ wait 100
 press E                  # Exit
 wait 200
 shot world-again
-quit

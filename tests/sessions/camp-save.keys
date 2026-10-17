@@ -18,4 +18,3 @@ wait 300
 press ENTER              # camp menu: Exit asks "Quit to DOS?"
 wait 300
 shot quit-prompt
-quit

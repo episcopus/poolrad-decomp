@@ -37,4 +37,3 @@ shot add-list
 key ENTER                # the first saved character
 wait 60
 shot party
-quit
