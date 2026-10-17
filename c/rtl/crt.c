@@ -25,6 +25,10 @@ int rtl_KeyPressed(void)
   return platform_key_peek() != 0;
 }
 
+#ifdef POOL_PROFILE
+void pool_prof_key(void);
+#endif
+
 u8 rtl_ReadKey(void)
 {
   u16 k;
@@ -32,6 +36,9 @@ u8 rtl_ReadKey(void)
     has_pending = 0;
     return pending_scan;
   }
+#ifdef POOL_PROFILE
+  pool_prof_key();                      /* a key is consumed: ports/coco3/prof closes its interval here */
+#endif
   k = platform_key_wait();
   if ((k & 0xFF) == 0) {
     pending_scan = (u8)(k >> 8);

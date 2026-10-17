@@ -177,6 +177,11 @@ s32 rtl_MaxAvail(void)
 #include <stdlib.h>
 #include <execinfo.h>
 
+#ifdef POOL_PROFILE                /* ports/coco3/prof: who touches which block (CoCo 3 port, step 8.1c) */
+void pool_prof_alloc(farptr p, u32 n);
+void pool_prof_free(farptr p, u32 n);
+#endif
+
 #define STATS_MAX 16384
 static struct { u32 at, size; } live[STATS_MAX];
 static int nlive;
@@ -258,6 +263,9 @@ farptr rtl_getmem(u16 size)
     live[nlive++].size = n;
     live_bytes += n;
     allocs++;
+#ifdef POOL_PROFILE
+    pool_prof_alloc(p, n);
+#endif
     if (live_bytes > peak_live) {
       peak_live = live_bytes;
       snapshot_peak();
@@ -275,6 +283,9 @@ void rtl_freemem(farptr p, u16 size)
   for (i = nlive - 1; i >= 0 && live[i].at != lin(p); i--) {
   }
   if (i >= 0) {
+#ifdef POOL_PROFILE
+    pool_prof_free(p, live[i].size);
+#endif
     live_bytes -= live[i].size;
     live[i] = live[--nlive];
     frees++;
