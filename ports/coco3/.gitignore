@@ -1,0 +1,6 @@
+# generated
+build/
+# firmware is copyrighted: never committed (see README, "ROMs")
+roms/*
+!roms/.gitkeep
+.DS_Store

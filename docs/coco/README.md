@@ -24,6 +24,7 @@ Research and design baseline for porting Pool of Radiance to the Tandy Color Com
 | `research/08-emulators-testing-workflow.md` | XRoar, MAME (Lua automation), golden tests, profiling, deployment |
 | `research/09-factcheck-2026-10-17.md` | Independent fact check of `PORTING-GUIDE.md` (64 claims against the research files, 13 against primary sources); its corrections are applied, errata in guide section 13 |
 | `probes/` | CMOC behaviour probes with recorded results |
+| `../../ports/coco3/` | the port itself and its dev workflow (root of the work: `Makefile`, `src/`, `probes/`, `docs/PHASE-8.x.md` per step) |
 
 ## Conventions
 

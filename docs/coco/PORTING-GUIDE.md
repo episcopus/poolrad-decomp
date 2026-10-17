@@ -1,6 +1,6 @@
 # Pool of Radiance on the CoCo 3: porting guide (Phase 8 baseline)
 
-Version 0.1, 2026-10-17. Status: research baseline, nothing here is built yet. Every design choice below is a **proposal** until the human approves it at the Phase 8 kick-off (section 10 lists the decisions). Facts carry the project's tags: **[V]** verified on our bytes or by running a tool, **[S]** stated by a cited source (details and URLs in `research/`), **[E]** an estimate, **[?]** open.
+Version 0.2, 2026-10-17. Status: research baseline; step 8.0 is done (`ports/coco3/docs/PHASE-8.0.md`), the rest is not built yet. Every design choice below is a **proposal** until the human approves it at the Phase 8 kick-off (section 10 lists the decisions). Facts carry the project's tags: **[V]** verified on our bytes or by running a tool, **[S]** stated by a cited source (details and URLs in `research/`), **[E]** an estimate, **[?]** open.
 
 This guide is the synthesis. The eight research files under `research/` hold the evidence, the register tables, cycle counts and sources. Read this file first, then the research file for the module you are working on (the table in section 11 says which).
 
@@ -130,8 +130,8 @@ Rules that follow from this map [S] 02, 03, 05:
 
 CMOC has no far calls, overlays or section pragmas [S] 04. The method proven by Space Bandits and DynoSprite [S] 04, 05:
 1. Link the pinned core first; extract its symbols from the lwlink map into a generated assembly file of absolute symbols.
-2. Compile each unit (or group of units) separately and link it at the code window address (`$8000`) against those symbols, with `-nodefaultlibs`, so it calls the core's copy of the CMOC helpers instead of carrying its own [S] 04, to verify with a two-file test (open question Q6).
-3. Every call into another bank goes through an assembly trampoline in the core: save the current window mapping, map the callee's pages, call, restore. Cost is a few dozen cycles [E]; calls to the core are plain `JSR`.
+2. Compile each unit (or group of units) separately and link it at the code window address (`$8000`) against those symbols, with no CMOC library, so it calls the core's copy of the CMOC helpers instead of carrying its own. **Works [V], step 8.0:** `tools/symexport.py` turns the core's lwlink map into a `constant` section of absolute symbols (restricted to what the bank references, an unresolved one is an error); `lwlink` resolves the bank's calls to `MUL16` and to resident functions against it (Q6 answered).
+3. Every call into another bank goes through an assembly trampoline in the core: save the current window mapping, map the callee's pages, call, restore. **Measured in step 8.0: 176 cycles per far call on top of the call itself (287 against 111 for a resident call of the same shape) [V]**, not the few dozen first estimated; calls to the core are plain `JSR`.
 4. The unit boundaries are the original 35 overlays plus the resident units, because the original already partitioned the program so that calls across overlay units are rare and the overlay manager made them correct [V] 3.3. An overlay that compiles to more than the window splits along routine boundaries.
 
 Window size (decision D4): 16 KB (two slots) fits most units; ovl16, ovl13, ovl12, ovl22 and ovl03 (13.6 to 17.5 KB of x86) will probably need splitting at 16 KB [E], or the window grows to 24 KB at the cost of data space. Measure the CMOC size of these five first (task 8.1).
@@ -193,7 +193,7 @@ Probe `probes/cmoc-byte-arith.c`, compiled with CMOC 0.1.86 built from source (G
 | `k - 10` with `k = 7`, stored in `int` | -3 | **253** | **no** |
 | `(long)w1 + w2` (Words 60000, 10000) | 70000 | 70000 | n/a |
 
-So CMOC computes a binary operation on two byte-sized operands (an 8-bit constant counts) in 8 bits, and its own warning misses the multiply and subtract cases with a constant. Research 04 also reports that CMOC takes the signedness of `+ - * /` from the left operand [S] 04. Re-run the probe on 0.1.100 in the container (`probes/README.md`) before relying on the details.
+So CMOC computes a binary operation on two byte-sized operands (an 8-bit constant counts) in 8 bits, and its own warning misses the multiply and subtract cases with a constant. Research 04 also reports that CMOC takes the signedness of `+ - * /` from the left operand [S] 04. **Re-run on 0.1.100 in the container, step 8.0 [V]:** the same results, on the emulated CoCo 3 in MAME and XRoar (`ports/coco3/probes/byte-arith.c`, `make probe P=byte-arith`); also `a + 100` gives 44, `sa / ub` with `sa` = -8 gives 65532 (the left operand's signedness), and `-Wgives-byte` still warns only when neither operand is a constant (it misses `row * 40`, `k - 10`, `a + 100`). Details: `ports/coco3/docs/PHASE-8.0.md` section 3.
 
 Other CMOC limits that the translated C will hit [S] 04: structs, enums and typedefs only at global scope; `volatile` accepted but ignored (ISR-shared flags go through an asm accessor until shown otherwise); no `inline` or `_Bool`, and designated initializers are probably unsupported (inferred, test it); bit-fields take full storage; `long` arithmetic through helper calls and pointers (about 4 to 6 times the cost of 16-bit for an add, much more for multiply and divide); float only through the BASIC ROM or `--mc6839`, neither bit-compatible with Turbo Pascal's 6-byte Real; no `stdint.h`, `string.h` or `stdio.h` (ship shim headers); globals addressed PC-relative.
 
@@ -275,7 +275,7 @@ Feature flags keep a slow reference path for each engine routine (Hewlett's prac
 
 | Step | Goal | Exit criterion |
 |---|---|---|
-| 8.0 Toolchain baseline | Container check: `cmoc --help`, NEWS 0.1.86 to 0.1.100, USim and `writecocofile` present; rerun `probes/`; lwlink two-file test of resident symbol export (Q6) | Probe results recorded for 0.1.100; a banked hello world (core plus one window page, far call and return) runs in XRoar and MAME |
+| 8.0 Toolchain baseline **(done 2026-10-17, `ports/coco3/docs/PHASE-8.0.md`)** | Container check: `cmoc --help`, NEWS 0.1.86 to 0.1.100, USim and `writecocofile` present; rerun `probes/`; lwlink two-file test of resident symbol export (Q6) | Probe results recorded for 0.1.100; a banked hello world (core plus one window page, far call and return) runs in XRoar and MAME. Met: core plus two banks, nested far calls, both emulators; USim is not in the image, so tests run on the emulated machine |
 | 8.1 Measure | CMOC-compile the five largest units and one resident unit as they are (with shims) to get real 6809 sizes; measure DGROUP and heap peak on the host (instrument `c/rtl/heap.c` over the goldens) | Size table per unit; window size and data-bank decisions (D4) made from numbers |
 | 8.1b Compiler bake-off | gcc6809 built in a pinned x86_64 Docker image; ovl09, ovl07 and ovl16 compiled with CMOC and gcc6809 from the same C; size, MAME cycles and correctness compared (6.4) | Compiler decision (D11) made from numbers |
 | 8.2 Translator CoCo profile | pas2c CoCo profile (6.2); host build with the CoCo memory model and a 4bpp screen model | All seven sessions play on the host with the new model; 4bpp screen goldens recorded |
@@ -329,12 +329,12 @@ Feature flags keep a slow reference path for each engine routine (Hewlett's prac
 Numbered for reference; the research file in brackets has the detail.
 
 1. Is DSKCON reliable at 1.79 MHz on real hardware and controllers (FD-502, SDC)? DynoSprite drops to 0.89 MHz around it. Test early. (01, 03)
-2. What changed in CMOC between 0.1.86 and 0.1.100; does the byte rule still hold as measured; is `_CMOC_fpir_` still there; any 6309 or banking options? (04)
+2. **Answered in 8.0:** the byte rule holds on 0.1.100; `_CMOC_fpir_` and `--initial-s` exist; new `__gcccall` register convention (B, X, result in X); no 6309 or banking options; `switch` now allows Duff's device. (04; `ports/coco3/docs/PHASE-8.0.md` section 2, 3)
 3. How large is CMOC output for real units (the 0.9x to 1.5x estimate)? (01, 04)
 4. DGROUP and heap peak in practice, and how much of DGROUP is the Borland runtime's (file records, buffers) that the port drops. (this guide 3.4)
 5. Which saved-file fields are pointers (whitepaper appendix D says saved files contain heap pointers), and are they read back after a load? Decides how D7 handles them.
-6. Does lwlink resolve an overlay's imports against absolute symbols exported from the core before searching libraries? (04)
-7. Does a polling loop on an ISR-set global reload it every pass in CMOC without `volatile`? (04)
+6. **Answered in 8.0: yes**, through a `constant` section of absolute symbols; no library search is involved. (04)
+7. **Answered in 8.0:** `volatile` is rejected with a warning, but polling loops on a global reload it every pass at `-O2` in the shapes tested; keep ISR-shared flags behind asm accessors anyway. (04)
 8. GMC: tone clock confirmed at 4 MHz on hardware (MAME source says 4 MHz); which Multi-Pak slot combinations work with an SDC; Multi-Pak sound mixing. (02, 05)
 9. 1986 vs 1987 GIME differences beyond the timer reload and the odd-offset crash; the `$FF91` bit 6 memory type value BASIC writes on 512 KB. (02)
 10. Composite palette table on a real TV. (02)
@@ -350,5 +350,6 @@ Numbered for reference; the research file in brackets has the detail.
 
 Found by the fact check (`research/09-factcheck-2026-10-17.md`); the research files are left as written.
 
+- Step 8.0 results (2026-10-17, `ports/coco3/docs/PHASE-8.0.md`): the image has no `usim` binary (unit tests run as programs on the emulated CoCo, reported through a RAM mailbox); XRoar's `-trap-snap x.ram` is a raw dump of the 512 KB in physical order (the 08 open question); the far call costs 176 cycles; `-Wgives-byte` misses every byte-with-constant case.
 - `research/05`, GIME register table and implication 5: `$FF9D`/`$FF9E` hold the screen start in **8-byte** units (physical address / 8), not 16-byte units (MAME `gime.cpp`).
 - `research/01`, `research/05`: the field length is 29,868 cycles at 59.92 Hz (262 x 114); the 29,860 figure is DynoSprite's rounded benchmark.

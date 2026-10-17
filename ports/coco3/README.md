@@ -1,0 +1,74 @@
+# ports/coco3: Pool of Radiance for the Tandy Color Computer 3 (Phase 8)
+
+This directory is the root of the CoCo 3 port's dev workflow: the Makefile, the scripts, the
+sources, the probes and the build output all live here and use paths relative to it. The research and the
+plan are in `../../docs/coco/` (start with `README.md` and `PORTING-GUIDE.md` there); the
+result of each step of the plan is recorded in `docs/`.
+
+Status: step 8.0 (toolchain baseline) is done, see `docs/PHASE-8.0.md`. Nothing of the game is
+ported yet; what exists is the build and test machinery plus a banked hello world.
+
+## Quick start
+
+```sh
+cd ports/coco3
+make doctor        # docker, the coco-dev image, ROMs, xroar
+make test          # builds the banked demo, runs it in headless MAME and XRoar, checks the mailbox
+make probe P=byte-arith    # run a CMOC probe on the emulated CoCo 3 and print its results
+make help
+```
+
+## What runs where
+
+| Piece | Where | Why |
+|---|---|---|
+| CMOC 0.1.100, LWTOOLS 4.25 (`lwasm`, `lwlink`), ToolShed (`decb`) | container `jamieleecho/coco-dev` (`make` starts it per command, ports/coco3 mounted at `/work`) | pinned toolchain, same on every machine |
+| Headless MAME 0.287 with Lua | the same container | scripted tests (`lua/mailbox.lua`) |
+| XRoar | the host (`brew install xroar`), `-ui null` for tests, windowed for `make run-demo` | second emulator, raw RAM dumps |
+| Host tools (`tools/*.py`) | host or container, standard library only | symbol export, DECB packing, mailbox dump |
+
+Inside the container (for example a devcontainer) `make` builds in place instead of starting a container.
+
+## ROMs
+
+The firmware is copyrighted and is never committed (`roms/` is ignored by git). Put these in `roms/`:
+
+| File | Used by |
+|---|---|
+| `coco3.zip` (a MAME romset holding `coco3.rom`) | headless MAME |
+| `coco3.rom` (32,768 bytes, Super Extended BASIC), `disk11.rom` (8,192 bytes, RS-DOS cartridge) | XRoar |
+
+`make doctor` says what is missing. The zip from the older `coco3-test` project works (it holds both ROMs).
+
+## Layout
+
+| Path | What |
+|---|---|
+| `Makefile` | the front door (`make help`) |
+| `scripts/` | shell behind the targets: `lib.sh` (container helpers), `mame_run.sh`, `xroar_run.sh`, `doctor.sh`, `toolchain-report.sh`, `asm-probe.sh` |
+| `tools/` | `symexport.py` (core symbols for banks), `mkdecb.py` (DECB packing), `mbdump.py` (mailbox results), `maplimit.py` |
+| `lua/mailbox.lua` | MAME autoboot script: types the LOADM command, waits for the mailbox, dumps it and a screenshot |
+| `src/engine/` | the engine so far: `boot.asm` (takeover), `farcall.asm` (far-call trampoline, bank loader), `banks.inc`, `mailbox.*`, link scripts |
+| `src/demo/` | the banked hello world: a resident core and two code banks |
+| `probes/` | CMOC probes: runtime ones (`*.c`, run on the CoCo) and generated-code ones (`asm/*.c`) |
+| `docs/` | one report per step of the plan |
+| `build/`, `roms/` | generated and local, ignored by git |
+
+## The test mailbox
+
+Every test program ends in `mb_finish()`. Results go through a mailbox at logical `$0100` (physical
+`$70100`, block `$38`): magic `PRAD`, a checkpoint counter, a status byte (1 pass, 2 fail), a failure
+count and 32 result words (`src/engine/mailbox.inc`). MAME's Lua script polls it and writes 80
+bytes; XRoar stops at `_mb_halt` (address from the linker map) and writes a raw 512 KB RAM dump in
+physical address order. `tools/mbdump.py` reads both. This is the checkpoint protocol of
+`../../docs/coco/research/08-emulators-testing-workflow.md` section 5 in its first, small form.
+
+## Conventions
+
+- Source for the CoCo is built with `cmoc --void-target --no-relocate -O2 -Wgives-byte -Wsign-compare`
+  and assembly with `lwasm --6809` (no 6309 opcode may slip in).
+- Banks are linked at `$8000` with no CMOC library: they see the core only through absolute symbols
+  generated from the core's map (`tools/symexport.py`), and fail to link if the core lacks one.
+- Same writing rules as the rest of the repository (`../../AGENTS.md`): evidence tagged **[V]**,
+  **[S]**, **[E]**, **[?]**; no em or en dashes; small commits with the `p8:` prefix.
+- Proprietary material (ROMs, SSI data, the compiler of the Pascal build) is never committed.

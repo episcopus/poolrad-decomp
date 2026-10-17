@@ -1,0 +1,9 @@
+section entries load 8000
+section code
+section rodata
+section initgl_start
+section initgl
+section initgl_end
+section rwdata
+section bss,bss
+section program_end

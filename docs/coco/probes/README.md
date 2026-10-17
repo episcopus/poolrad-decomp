@@ -28,4 +28,4 @@ With `-Wgives-byte`, CMOC 0.1.86 warns only about the addition (line 6), not the
 
 Conclusion: in CMOC a binary operation on two byte-sized operands (an 8-bit constant counts as one) is computed in 8 bits, and the warning does not find every case. The port must cast explicitly (PORTING-GUIDE section 6).
 
-To do in step 8.0: rerun with CMOC 0.1.100 inside `jamieleecho/coco-dev` and record the result here.
+Step 8.0 (2026-10-17): rerun with CMOC 0.1.100 inside `jamieleecho/coco-dev`, on the emulated CoCo 3 (the image has no USim binary). The result is the same (144, 44, 4464 low word of 70000, 253, 144, 0) and is recorded, with more cases, by `ports/coco3/probes/byte-arith.c` (`make probe P=byte-arith` in `ports/coco3`; table in `ports/coco3/docs/PHASE-8.0.md` section 3.1). New probes live there, not here.
