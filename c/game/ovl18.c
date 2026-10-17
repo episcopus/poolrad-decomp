@@ -10,11 +10,11 @@
 void AnimateFinalPicture(u16 Col, u16 Row, u8 Bank, u8 Cycles)
 {
   POOL_TRACE("AnimateFinalPicture");
+  u16 stack_mark = rtl_stack_mark();
   TSpriteList (*Sprites) = (TSpriteList (*))rtl_stack_alloc(66);
   s32 NowTick = 0;
   s32 StartTick = 0;
   u8 DoneCycles = 0;
-  u16 stack_mark = rtl_stack_mark();
   DoneCycles = 0;
   StartTick = GameClock();
   rtl_FillChar((void *)&(*Sprites), 66, 0);

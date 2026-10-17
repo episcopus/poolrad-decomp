@@ -152,12 +152,12 @@ u8 WalkLine(s8 X1, s8 Y1, s8 (*Ex), s8 (*Ey), u16 (*StepCount), PMapRows Map)
 {
   POOL_TRACE("WalkLine");
   u8 Result = 0;
+  u16 stack_mark = rtl_stack_mark();
   TLineState (*Line) = (TLineState (*))rtl_stack_alloc(26);
   TLineState (*Bound) = (TLineState (*))rtl_stack_alloc(26);
   u8 Flag = 0;
   u8 StepDone = 0;
   u16 Limit = 0;
-  u16 stack_mark = rtl_stack_mark();
   Limit = ((*StepCount) * 2) + 1;
   (*Line).X1 = X1;
   (*Line).Y1 = Y1;

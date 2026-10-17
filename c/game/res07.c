@@ -1646,6 +1646,7 @@ void ReleasePicture(void *Pic)
 void FillPictureRect(s16 FirstCol, s16 FirstRow, u16 Width, u16 Height, u8 Color, farptr Palette, farptr Target)
 {
   POOL_TRACE("FillPictureRect");
+  u16 stack_mark = rtl_stack_mark();
   TPalette (*Pal) = (TPalette (*))rtl_stack_alloc(8);
   u16 ClipLeft = 0;
   u16 RightOver = 0;
@@ -1659,7 +1660,6 @@ void FillPictureRect(s16 FirstCol, s16 FirstRow, u16 Width, u16 Height, u8 Color
   u16 TrackRow = 0;
   u16 StartBytes = 0;
   u8 PlaneIndex = 0;
-  u16 stack_mark = rtl_stack_mark();
   memcpy((*Pal), (*FPD(TPalette (*), Palette)), 8);
   if (Target == 0) {
     goto L_exit;

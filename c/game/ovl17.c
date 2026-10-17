@@ -173,12 +173,12 @@ void MergePictureData(farptr Source, farptr Dest)
 void BuildCharacterIcon(u8 Recolor)
 {
   POOL_TRACE("BuildCharacterIcon");
+  u16 stack_mark = rtl_stack_mark();
   u8 UnusedBytes[3] = {0};
   u8 (*MapFrom)[16] = (u8 (*)[16])rtl_stack_alloc(16);
   u8 (*MapTo)[16] = (u8 (*)[16])rtl_stack_alloc(16);
   u8 I = 0;
   u8 UnusedByte = 0;
-  u16 stack_mark = rtl_stack_mark();
   u8 t1[256];
   u8 t2[256];
   u8 t3[256];

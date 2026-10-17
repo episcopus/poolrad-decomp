@@ -1741,6 +1741,7 @@ void DamageTargetInCell(u8 CellX, u8 CellY, u8 Damage, u8 SaveKind_, u8 (*Blocke
 void CastLineBeam(u8 Range, u8 Damage, u8 SaveKind_, u8 Bounce)
 {
   POOL_TRACE("CastLineBeam");
+  u16 stack_mark = rtl_stack_mark();
   TLineState (*Line) = (TLineState (*))rtl_stack_alloc(26);
   TLineState (*Line2) = (TLineState (*))rtl_stack_alloc(26);
   s8 CasterX = 0;
@@ -1755,7 +1756,6 @@ void CastLineBeam(u8 Range, u8 Damage, u8 SaveKind_, u8 Bounce)
   u8 Occupant = 0;
   u8 Tile = 0;
   u8 Length_ = 0;
-  u16 stack_mark = rtl_stack_mark();
   DrawCombatIcon(CastLineBeam_ZapAnimation);
   GetMapCell(SpellAimX, SpellAimY, &PrevOccupant, &Tile);
   DirSign = 1;

@@ -1755,12 +1755,12 @@ static void EditCharacterIcon_DrawIconCell(struct Frame_EditCharacterIcon *up, u
        at the end, without recolouring). It reads nothing of the editor's own variables. */
 static void EditCharacterIcon_CopyPictureSlot(struct Frame_EditCharacterIcon *up, u8 Source, u8 Dest, u8 Recolor)
 {
+  u16 stack_mark = rtl_stack_mark();
   u8 I = 0;
   u8 Spare = 0;
   u8 (*MapFrom)[16] = (u8 (*)[16])rtl_stack_alloc(16);
   u8 (*MapTo)[16] = (u8 (*)[16])rtl_stack_alloc(16);
   u16 PixelBytes = 0;
-  u16 stack_mark = rtl_stack_mark();
   PixelBytes = (*FPD(TMemPic_OVL16 (*), PictureSlots[Dest].FirstPic)).ByteSize;
   if (VideoAdapter == AdapterEga) {
     PixelBytes = (u16)((u16)(u16)((u16)PixelBytes >> 1) >> 1);

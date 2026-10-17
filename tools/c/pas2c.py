@@ -630,9 +630,13 @@ class Gen(DeclMixin, ExprMixin, BuiltinMixin, StmtMixin):
                     text.append("  fr.%s = %s;" % (nm, nm))
             if s.ret is not None and s.ret.kind == "string":
                 text.append("  fr.Result = Result_out;")
+            if ctx.arena:
+                text.append("  u16 stack_mark = rtl_stack_mark();")
             for vs in local_vars:
                 if getattr(vs, "alias", None):
                     text.append("  fr.%s = %s;" % (vs.cname, self.alias_init(vs, ctx, scope=local_scope)))
+                elif getattr(vs, "arena", False):
+                    text.append("  fr.%s = (%s)rtl_stack_alloc(%d);" % (vs.cname, ptr_ctype(vs.type), vs.type.size()))
         else:
             for ps in param_syms:
                 nm = ps.cname
@@ -655,6 +659,8 @@ class Gen(DeclMixin, ExprMixin, BuiltinMixin, StmtMixin):
                     text.append("  u8 *Result = Result_out;")
                 else:
                     text.append("  %s%s;" % (decl(s.ret, "Result"), zero_init(s.ret)))
+            if ctx.arena:
+                text.append("  u16 stack_mark = rtl_stack_mark();")      # before the first allocation
             for vs in local_vars:
                 if getattr(vs, "alias", None):
                     text.append("  %s = %s;" % (decl(vs.type, "(*%s)" % vs.cname), self.alias_init(vs, ctx, scope=local_scope)))
@@ -667,8 +673,6 @@ class Gen(DeclMixin, ExprMixin, BuiltinMixin, StmtMixin):
             pass
         elif False:
             pass
-        if ctx.arena:
-            text.insert(len(text) - 0, "  u16 stack_mark = rtl_stack_mark();")
         for tdecl in ctx.temps:
             text.append("  %s;" % tdecl)
         text.extend(body_lines)

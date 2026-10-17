@@ -491,13 +491,19 @@ u8 platform_retrace_status(void)
 
 void platform_delay_ms(u16 ms) { (void)ms; }
 
+extern void sound_trace_pit0(u16 reload);
+
 void platform_timer_set(u16 divisor, void (*handler)(void))
 {
-  (void)divisor;
+  sound_trace_pit0(divisor);
   timer_handler = handler;
 }
 
-void platform_timer_reset(void) { timer_handler = NULL; }
+void platform_timer_reset(void)
+{
+  sound_trace_pit0(0);
+  timer_handler = NULL;
+}
 
 /* The sound hardware writes are kept for the sound comparison (sound_trace). */
 extern void sound_trace_speaker(u16 divisor, u8 gate);

@@ -1475,6 +1475,7 @@ void DrawCombatIcon(u8 PicIndex)
 void WalkCombatLine(s8 FromX, s8 FromY, s8 ToX, s8 ToY, u8 Count, u8 StepDelay)
 {
   POOL_TRACE("WalkCombatLine");
+  u16 stack_mark = rtl_stack_mark();
   u8 Path[148] = {0};
   TLineState (*Line) = (TLineState (*))rtl_stack_alloc(26);
   u8 PadA = 0;
@@ -1497,7 +1498,6 @@ void WalkCombatLine(s8 FromX, s8 FromY, s8 ToX, s8 ToY, u8 Count, u8 StepDelay)
   s8 DYStep = 0;
   s8 PX = 0;
   s8 PY = 0;
-  u16 stack_mark = rtl_stack_mark();
   StartX = FromX;
   StartY = FromY;
   rtl_FillChar((void *)&Path, 148, DirNone);
