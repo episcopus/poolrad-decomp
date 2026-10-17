@@ -1,0 +1,74 @@
+# parley-combat: load saved game A, rest eight hours until kobolds find the party (12:50), advance to the
+# attitude menu (A, P), answer NICE (N): the kobolds take it badly and the tactical combat map opens. Quick combat
+# (Q) plays the party's turns and the kobolds' for twelve rounds of keys until the game asks to continue the
+# battle. Covers combat setup, movement, the attack and damage rules, the monster AI, the combat screen and the
+# ECL menus. The camp screen is animated, so its keys are `press`.
+clock 12:00:16.58
+wheel
+wait 20
+key L
+wait 20
+key A
+wait 300
+key E
+wait 100
+press R                  # camp: Rest
+wait 60
+press H                  # rest time: Hours
+wait 20
+press I                  # Inc, eight times
+wait 20
+press I
+wait 20
+press I
+wait 20
+press I
+wait 20
+press I
+wait 20
+press I
+wait 20
+press I
+wait 20
+press I
+wait 20
+press R                  # start resting; a monster appears
+wait 900
+shot encounter
+key A
+wait 200
+key P
+wait 200
+shot attitudes
+key N
+wait 400
+shot parley
+key ENTER
+wait 300
+shot fight-start
+key Q
+wait 150
+key Q
+wait 150
+key Q
+wait 150
+key Q
+wait 150
+key Q
+wait 150
+key Q
+wait 150
+key Q
+wait 150
+key Q
+wait 150
+key Q
+wait 150
+key Q
+wait 150
+key Q
+wait 150
+key Q
+wait 150
+shot fight-12
+quit

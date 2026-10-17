@@ -67,12 +67,20 @@ of reads in the same order, show the same screen (a SHA-256 of the four EGA plan
 same files and call `Random` as often. `make c-sound` compares the sound driver's hardware writes for all 20 tunes
 with the oracle's trace.
 
+The sessions (`tests/sessions/*.keys`, goldens in `tests/sessions/golden/`): `boot-title`, `create-character`, `create-elf-mage`
+(a second creation, then Add character to party), `walk-explore` (load the shipped saved game, walk, area map, view, search),
+`camp-save` (the save writes SAVGAMB.DAT and the character files), `camp-rest-combat` (a rest finds kobolds; fight; treasure),
+`parley-combat` (parley fails; twelve rounds of the tactical combat). `sound-driver` is `make c-sound`.
+
 Debugging a difference: `tools/c/bisect_state.py SESSION` finds the first read after which the C state (DGROUP, heap,
 video) differs from the original's, `tools/c/snap_oracle.py --diff` names the globals that differ,
-`tools/c/who_writes.py` names the original's routine that writes an address.
+`tools/c/who_writes.py` names the original's routine that writes an address, and `tools/c/call_trace.py SESSION LO HI --states`
+compares the state on entry to every routine between two reads (build `-DPOOLRAD_TRACE=ON` in `build/cmake-trace` first).
 
-The data segment's digest is reported but does not fail a session yet: pointers into the heap and procedure ids differ
-(the C heap manager is not Turbo Pascal's byte for byte, and a procedure pointer is an index).
+The game's state (DGROUP without the runtime's own bookkeeping, the heap, the video planes: `tools/c/export_replay.py`
+`STATIC_MASKS`) is compared at every checkpoint and fails a session; the heap manager and the procedure pointers are the
+original's, byte for byte, so even the pointers in saved files match. Differences that are not behaviour are listed in
+`tools/c/known_differences.toml`. What Turbo Pascal does that C does not: whitepaper appendix D.
 
 ## Portability rules
 
