@@ -195,6 +195,13 @@ eng-test: eng-data data
 game:
 	@$(TC) scripts/game_build.sh
 
+# Look at it: the game in a window in XRoar (needs `make game` and `make data` first; the program disk in drive 0, BASE in drive 1).
+# It loads for about a minute of emulated time (XRoar is fast); the ssi-logo, the title and the credits follow.
+run-game: game data
+	scripts/tc.sh python3 -I tools/mkgamedisk.py build/game build/gen/vm/DGROUP.IMG build/game/pool.dsk > /dev/null
+	xroar -m coco3 -rompath roms -ram 512 -ram-init clear -tv-input rgb -cart rsdos -no-disk-write-back \
+	  -load-fd0 build/game/pool.dsk -load-fd1 build/data/vol0.dsk -type 'LOADM"POOL":EXEC\r'
+
 # The game on the emulated CoCo 3 (MAME, headless): S=session; the screens it shows against goldens/4bpp (tools/gamecheck.py)
 S ?= boot-title
 game-run: game
