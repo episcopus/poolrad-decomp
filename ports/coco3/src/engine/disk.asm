@@ -43,6 +43,7 @@ dsk_go  orcc    #$50
         lda     12,s                    sector
         sta     DC_SEC
         clr     DC_STA
+        clr     $FF91                   task 0: its slots 4..7 are the ones that show BASIC to DSKCON
         ldd     #$3C3D                  BASIC's blocks for slots 4 and 5
         sta     $FFA4
         stb     $FFA5
@@ -62,6 +63,8 @@ dsk_go  orcc    #$50
         sta     $FFA6
         lda     MMU_SH+3
         sta     $FFA7
+        lda     FC_TASK                the task the caller was in
+        sta     $FF91
         ldb     DC_STA
         clra
         puls    cc,u,y,pc

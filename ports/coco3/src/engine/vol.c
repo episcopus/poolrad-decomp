@@ -11,8 +11,8 @@ Vol vols[4];
 
 static u8 *idx_ptr(u8 drive)
 {
-    mmu_set(6, (u8)(IDX_BLK + (drive >> 1)));
-    return (u8 *)(0xC000u + ((drive & 1) ? 0x1000u : 0));
+    win_set(0, (u8)(IDX_BLK + (drive >> 1)));
+    return (u8 *)(0x8000u + ((drive & 1) ? 0x1000u : 0));
 }
 
 static u32 be32(const u8 *p)

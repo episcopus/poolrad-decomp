@@ -12,6 +12,11 @@ typedef unsigned long u32;
 /* ---- mmu.asm: slots 4 to 7 are the engine's windows; 0 to 3 are fixed (BASIC low RAM, core). */
 void mmu_set(u8 slot, u8 block);          /* map physical block into slot 4..7 (shadowed, restored after disk calls) */
 u8 mmu_get(u8 slot);
+void win_set(u8 w, u8 block);             /* the engine's window w (0: $8000, 1: $A000), task 1 */
+void eng_enter(void);                     /* the CPU into the engine's address space (task 1), eng_leave back to the game's */
+void eng_leave(void);
+#define WIN0 ((u8 *)0x8000)
+#define WIN1 ((u8 *)0xA000)
 
 /* ---- disk.asm (DSKCON through Disk BASIC's ROM) and rsdos.c (a read-only RS-DOS file system). */
 extern u8 dsk_buf[256];
@@ -99,7 +104,7 @@ void gfx_text(u8 col, u8 row, u8 color, const char *s);                      /* 
 #define PIC_LAST_BLK 0x37
 #define PIC_MAX 0x2000                    /* bytes of one picture with its mask: it fits one block */
 typedef struct Pic {
-    u8 blk;                               /* physical block of the data (window slot 6) */
+    u8 blk;                               /* physical block of the data (window 0) */
     u16 off;                              /* of item 0 in the block */
     u16 moff;                             /* of the mask of item 0; 0 = no mask */
     u16 bytesize;                         /* bytes of one item: height * wcols * 4 */

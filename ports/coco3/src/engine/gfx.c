@@ -27,8 +27,8 @@ void gfx_clear(u8 value)
 {
     u8 b;
     for (b = 0; b < 4; b++) {
-        mmu_set(6, (u8)(SCREEN_BLK + b));
-        k_fill((u8 *)0xC000, value, 0x2000);
+        win_set(0, (u8)(SCREEN_BLK + b));
+        k_fill((u8 *)0x8000, value, 0x2000);
     }
 }
 
@@ -85,11 +85,11 @@ static void rowa_init(void)
     }
 }
 
-/* a pointer to screen byte a, with the block holding it mapped into slot 6 */
+/* a pointer to screen byte a, with the block holding it mapped into window 0 */
 static u8 *scr_at(u16 a)
 {
-    mmu_set(6, (u8)(SCREEN_BLK + (HI(a) >> 5)));
-    return (u8 *)(0xC000u + (a & 0x1FFFu));
+    win_set(0, (u8)(SCREEN_BLK + (HI(a) >> 5)));
+    return (u8 *)(0x8000u + (a & 0x1FFFu));
 }
 
 static void scr_putn(u16 a, const u8 *src, u8 n)
@@ -222,8 +222,8 @@ u8 pic_load_e(Pic *p, RsFile *f, const DaxEntry *e, u8 key, u8 masked)
     p->blk = pic_blk;
     p->off = pic_off;
     p->moff = masked ? (u16)(pic_off + size) : 0;
-    mmu_set(6, pic_blk);
-    k_fill((u8 *)(0xC000u + pic_off), 0, total);
+    win_set(0, pic_blk);
+    k_fill((u8 *)(0x8000u + pic_off), 0, total);
     st = dax_unpack(f, e, hdr, 17, pic_blk, pic_off, 0);
     if (st != 0)
         return st;
@@ -235,9 +235,9 @@ u8 pic_load_e(Pic *p, RsFile *f, const DaxEntry *e, u8 key, u8 masked)
         return 7;
     pic_off = (u16)(pic_off + total);
     if (masked) {                         /* UnpackPicturePixels, adapter 2: the colour key becomes a mask */
-        mmu_set(6, p->blk);
-        d = (u8 *)(0xC000u + p->off);
-        m = (u8 *)(0xC000u + p->moff);
+        win_set(0, p->blk);
+        d = (u8 *)(0x8000u + p->off);
+        m = (u8 *)(0x8000u + p->moff);
         k = (u8)(key & 15);
         for (i = 0; i < size; i++) {
             v = d[i];
@@ -266,8 +266,8 @@ void gfx_item(const Pic *p, u8 item, u8 col, u8 row)
     const u8 *src;
     while (h > 0 && y < 200) {
         take = rows_in_buf(h, n);
-        mmu_set(6, p->blk);
-        k_copy(gbuf, (u8 *)(0xC000u + so), (u8)(take * n));
+        win_set(0, p->blk);
+        k_copy(gbuf, (u8 *)(0x8000u + so), (u8)(take * n));
         src = gbuf;
         for (r = 0; r < take && y < 200; r++) {
             if ((a & 0x1FFFu) + n <= 0x2000u)
@@ -291,15 +291,15 @@ void gfx_item(const Pic *p, u8 item, u8 col, u8 row)
 #define DB_ROWBYTES 84
 static u8 db_dirty[DB_ROWS], db_lo[DB_ROWS], db_hi[DB_ROWS];
 
-/* the start of row y of DrawBuf, with its block mapped into slot 6 */
+/* the start of row y of DrawBuf, with its block mapped into window 0 */
 static u8 *db_ptr(u8 y)
 {
     if (y < DB_SPLIT) {
-        mmu_set(6, DB_BLK);
-        return (u8 *)(0xC000u + (u16)y * DB_ROWBYTES);
+        win_set(0, DB_BLK);
+        return (u8 *)(0x8000u + (u16)y * DB_ROWBYTES);
     }
-    mmu_set(6, DB_BLK + 1);
-    return (u8 *)(0xC000u + (u16)(y - DB_SPLIT) * DB_ROWBYTES);
+    win_set(0, DB_BLK + 1);
+    return (u8 *)(0x8000u + (u16)(y - DB_SPLIT) * DB_ROWBYTES);
 }
 
 static void db_clear_trackers(void)
@@ -314,10 +314,10 @@ static void db_clear_trackers(void)
 
 void db_init(void)
 {
-    mmu_set(6, DB_BLK);
-    k_fill((u8 *)0xC000, 0, 0x2000);
-    mmu_set(6, DB_BLK + 1);
-    k_fill((u8 *)0xC000, 0, 0x2000);
+    win_set(0, DB_BLK);
+    k_fill((u8 *)0x8000, 0, 0x2000);
+    win_set(0, DB_BLK + 1);
+    k_fill((u8 *)0x8000, 0, 0x2000);
     db_clear_trackers();
 }
 
@@ -334,10 +334,10 @@ void db_item(const Pic *p, u8 item, u8 col, u8 row, u8 flags)
         return;
     while (h > 0) {
         take = rows_in_buf(h, n);
-        mmu_set(6, p->blk);
-        k_copy(gbuf, (u8 *)(0xC000u + so), (u8)(take * n));
+        win_set(0, p->blk);
+        k_copy(gbuf, (u8 *)(0x8000u + so), (u8)(take * n));
         if (masked)
-            k_copy(mbuf, (u8 *)(0xC000u + mo), (u8)(take * n));
+            k_copy(mbuf, (u8 *)(0x8000u + mo), (u8)(take * n));
         src = gbuf;
         mk = mbuf;
         for (r = 0; r < take; r++) {

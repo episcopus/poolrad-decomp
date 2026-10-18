@@ -18,6 +18,8 @@ MB_STATUS       EQU     MB_BASE+5
 MB_FAILS        EQU     MB_BASE+6
 MB_RESULTS      EQU     MB_BASE+$10
 MB_ACK          EQU     MB_BASE+8       harness sets it to release mb_hold (nonzero), the program clears it
+FC_TASK         EQU     MB_BASE+9       byte: the MMU task the CPU is in (0 the game, 1 the engine); $FF91 cannot be read back.
+*                                       Not in the direct page: Disk BASIC's DSKCON uses $8B (found the hard way: a 1 there makes every read fail with status 128)
 MB_PAL          EQU     MB_BASE+$50     the 16 EGA palette register values the engine has set
 MB_SIZE         EQU     $60
 

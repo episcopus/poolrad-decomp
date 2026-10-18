@@ -24,8 +24,8 @@ static u8 check(const char *name8, u8 id, u8 want_drive, u16 want_sum, u16 want_
     left = e.raw;
     for (blk = TEST_BLK; left > 0; blk++) {
         u16 c = left > 0x2000 ? 0x2000 : left;
-        mmu_set(6, blk);
-        n = (u16)(n + k_sum((u8 *)0xC000, c));
+        win_set(0, blk);
+        n = (u16)(n + k_sum((u8 *)0x8000, c));
         left = (u16)(left - c);
     }
     return (n == want_sum && e.raw == want_raw) ? 0 : 4;

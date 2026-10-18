@@ -6,8 +6,12 @@
         SECTION code
         EXPORT  _mmu_set
         EXPORT  _mmu_get
+        EXPORT  _win_set
+        EXPORT  _eng_enter
+        EXPORT  _eng_leave
 
-* void mmu_set(u8 slot, u8 block)    slot 4..7
+* void mmu_set(u8 slot, u8 block)    slot 4..7 of task 0 (the game); slots 6 and 7 of task 1 follow (the engine sees what
+* the game has mapped there, so a pointer into a data window stays valid inside an engine call)
 _mmu_set
         ldb     3,s                     slot
         lda     5,s                     block
@@ -16,7 +20,33 @@ _mmu_set
         sta     b,x
         ldx     #$FFA4
         sta     b,x
+        cmpb    #2
+        blo     @out
+        ldx     #$FFAC
+        sta     b,x                     task 1 slot 6 and 7
+@out    rts
+
+* void win_set(u8 w, u8 block)       the engine's window w (0: logical $8000, 1: $A000), slots 4 and 5 of task 1
+_win_set
+        ldb     3,s
+        lda     5,s
+        andb    #1
+        ldx     #$FFAC
+        sta     b,x
         rts
+
+* void eng_enter(void): the CPU enters the engine's address space (task 1); eng_leave goes back. Neither disturbs D.
+_eng_enter
+        pshs    a
+        lda     #1
+        sta     FC_TASK
+        sta     $FF91
+        puls    a,pc
+_eng_leave
+        pshs    a
+        clr     FC_TASK
+        clr     $FF91
+        puls    a,pc
 
 * u8 mmu_get(u8 slot)
 _mmu_get
