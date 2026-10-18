@@ -238,7 +238,7 @@ u32 rtl_random_calls(void)
 
 u16 rtl_Random(u16 range)
 {
-  u32 *seed = (u32 *)(pool_ds + 0x4428);
+  u32 *seed = (u32 *)(DGS(0x4428));
   u32 s;
   random_calls++;
   memcpy(&s, seed, 4);
@@ -253,7 +253,7 @@ void rtl_Randomize(void)
   u32 seed;
   rtl_GetTime(&h, &m, &s, &hund);
   seed = (((u32)s << 8 | hund) << 16) | ((u32)h << 8 | m);
-  memcpy(pool_ds + 0x4428, &seed, 4);
+  memcpy(DGS(0x4428), &seed, 4);
 }
 
 /* ---- strings ------------------------------------------------------------------------------------------------ */

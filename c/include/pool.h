@@ -31,6 +31,26 @@ typedef u32 farptr;                      /* segment in the high word, offset in 
 extern u8 pool_arena[POOL_ARENA_SIZE];
 #define pool_ds (pool_arena + POOL_DS_LINEAR)
 
+/* The CoCo layout of DGROUP (step 8.5, ports/coco3/tools/mkvm.py): the generated game reaches a global with VMN (native, in
+ * the 64 KB map for good) or VMV (paged: the 8 KB page is mapped into one of two data windows first). The runtime
+ * reaches the System unit's variables with DGS, which asks the layout. Without POOL_VM all of this is the PC's offset. */
+#ifdef POOL_VM
+struct VmCluster { u16 lo, size; char cls; u8 logic; u16 nw; };
+extern const struct VmCluster vm_clusters[];
+extern const u16 vm_cluster_count, vm_nat_size, vm_paged_end;
+u16 vm_map_ds(u16 off);
+void *vm_ptr(u16 v);
+void *vm_unplaced(u16 off);
+void vm_init(void);
+void vm_export_ds(u8 *dst);          /* DGROUP as the original lays it out (the unplaced bytes are zero): for comparing states */
+#define VMN(o) ((void *)(pool_ds + (o)))
+#define VMV(o) ((void *)vm_ptr(o))
+#define VMU(o) ((void *)vm_unplaced(o))
+#define DGS(off) (pool_ds + vm_map_ds(off))
+#else
+#define DGS(off) (pool_ds + (off))
+#endif
+
 #define POOL_FARPTR(seg, off) ((((u32)(u16)(seg)) << 16) | (u32)(u16)(off))
 #define POOL_LINEAR(p) ((((u32)(p) >> 16) << 4) + ((u32)(p) & 0xFFFFu))
 #define FPD(T, p) ((T)(pool_arena + POOL_LINEAR(p)))

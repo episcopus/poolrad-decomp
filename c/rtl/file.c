@@ -50,8 +50,8 @@ static char cwd[256] = "";              /* current directory below \POOLRAD, upp
 static char deleted[64][256];
 static int ndeleted;
 
-#define IORES (*(u16 *)(pool_ds + 0x4426))
-#define FILEMODE (*(u8 *)(pool_ds + 0x442C))
+#define IORES (*(u16 *)(DGS(0x4426)))
+#define FILEMODE (*(u8 *)(DGS(0x442C)))
 
 static void ioerr(u16 code)
 {
@@ -844,7 +844,7 @@ int rtl_eoln(void *f)
 /* ---- start up ---------------------------------------------------------------------------------------------- */
 void file_init(void)
 {
-  TextRec *in = (TextRec *)(pool_ds + 0x8508), *out = (TextRec *)(pool_ds + 0x8608);
+  TextRec *in = (TextRec *)(DGS(0x8508)), *out = (TextRec *)(DGS(0x8608));
   memset(files, 0, sizeof files);
   in->Handle = 0;
   in->Mode = fmInput;

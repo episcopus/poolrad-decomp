@@ -23,7 +23,7 @@
 #define rtl_freemem real_freemem
 #endif
 
-#define V32(off) (*(u32 *)(pool_ds + (off)))
+#define V32(off) (*(u32 *)DGS(off))
 #define HEAP_ORG V32(0x4400)
 #define HEAP_PTR V32(0x4404)
 #define HEAP_END V32(0x4408)
@@ -44,7 +44,7 @@ static void set_size(u32 b, u32 bytes)
 }
 
 /* the cell that holds the first link of the free list: FreeList itself (its "size" is FreeZero, zero) */
-#define HEAD_CELL (POOL_DS_LINEAR + 0x440Cu)
+#define HEAD_CELL (POOL_DS_LINEAR + (u32)(DGS(0x440C) - pool_ds))
 
 static int at_end(farptr p)
 {
@@ -315,7 +315,11 @@ void rtl_freemem(farptr p, u16 size)
  * Blocks of the mapped class live in the DGROUP segment between MAPPED_LO and MAPPED_HI (the 64 KB map of the CoCo:
  * the pointer is the 16-bit offset, the segment is DGROUP's). The banked class stays in the PC heap; FPB counts how
  * often a block has to be mapped into the data window (two windows, least recently used first out). */
+#ifdef POOL_VM
+#define MAPPED_LO ((u16)((vm_paged_end + 0xFFu) & ~0xFFu))   /* above the layout of mkvm.py */
+#else
 #define MAPPED_LO 0x8800u
+#endif
 #define MAPPED_HI 0xFE00u
 #define MAPPED_MAX 1024
 

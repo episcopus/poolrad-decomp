@@ -10,8 +10,8 @@ extern const u32 pool_image_size;
 extern const u8 pool_image[];
 void file_init(void);
 
-#define V16(off) (*(u16 *)(pool_ds + (off)))
-#define V32(off) (*(u32 *)(pool_ds + (off)))
+#define V16(off) (*(u16 *)DGS(off))
+#define V32(off) (*(u32 *)DGS(off))
 
 /* ---- Crt ------------------------------------------------------------------------------------------------- */
 static u8 pending_scan;                /* ReadKey returns an extended key as 0 and then its scan code */
@@ -198,7 +198,11 @@ void rtl_Halt(u16 code)
 void rtl_init(void)
 {
   memset(pool_arena, 0, sizeof pool_arena);
+#ifdef POOL_VM
+  vm_init();
+#else
   memcpy(pool_ds + pool_image_org, pool_image, pool_image_size);
+#endif
   ega_reset();
   file_init();
   /* the heap: the program ends at paragraph 28F2; DOS gives the rest of conventional memory (the game lowers
@@ -213,11 +217,11 @@ void rtl_init(void)
   HEAP_PTR = HEAP_ORG;
   HEAP_END = POOL_FARPTR(0xA000, 0);
   FREE_LIST = HEAP_ORG;
-  *(u8 *)(pool_ds + 0x84F6) = 7;        /* TextAttr */
+  *(u8 *)(DGS(0x84F6)) = 7;        /* TextAttr */
   V16(0x84F4) = 3;                      /* LastMode */
   V16(0x84F8) = 0;                      /* WindMin */
   V16(0x84FA) = 0x184F;                 /* WindMax */
-  *(u8 *)(pool_ds + 0x84F0) = 1;        /* CheckBreak */
-  *(u8 *)(pool_ds + 0x442C) = 2;        /* FileMode */
+  *(u8 *)(DGS(0x84F0)) = 1;        /* CheckBreak */
+  *(u8 *)(DGS(0x442C)) = 2;        /* FileMode */
   V16(0x4422) = 0x0FF0;                 /* PrefixSeg */
 }

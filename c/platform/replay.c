@@ -469,6 +469,25 @@ static void finish(const char *why)
 static const Run *take(int kind)
 {
   const Run *r;
+  {                                                  /* POOL_DUMP_AT=n POOL_DUMP_FILE=f: DGROUP as the original lays it out, before read n */
+    static long at = -2;
+    if (at == -2) {
+      at = getenv("POOL_DUMP_AT") ? atol(getenv("POOL_DUMP_AT")) : -1;
+    }
+    if (idx == at && getenv("POOL_DUMP_FILE")) {
+      static u8 buf[0x8760];
+      FILE *f = fopen(getenv("POOL_DUMP_FILE"), "wb");
+#ifdef POOL_VM
+      vm_export_ds(buf);
+#else
+      memcpy(buf, pool_ds, sizeof buf);
+#endif
+      if (f) {
+        fwrite(buf, 1, sizeof buf, f);
+        fclose(f);
+      }
+    }
+  }
   /* reads the C runtime does not make (the BIOS tick word the original's Crt polls) pass unseen */
   while (cur_run < nruns && runs[cur_run].kind == K_SKIP) {
     idx += (long)(runs[cur_run].count - used_in_run);

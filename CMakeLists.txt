@@ -27,7 +27,7 @@ else()
 endif()
 
 set(ENGINE_RTL
-  c/rtl/core.c c/rtl/heap.c c/rtl/file.c c/rtl/crt.c c/rtl/ega.c c/rtl/sha256.c c/rtl/soundtrace.c)
+  c/rtl/core.c c/rtl/heap.c c/rtl/file.c c/rtl/crt.c c/rtl/ega.c c/rtl/sha256.c c/rtl/soundtrace.c c/rtl/vm.c)
 # The translated game: c/game (the PC profile), or another directory written by `pas2c.py --profile coco --out DIR`
 # (CoCo port, step 8.2: ports/coco3 builds and tests the CoCo profile on the host this way).
 set(POOLRAD_GAME_DIR "c/game" CACHE PATH "directory of the translated game (game.h and the units)")
