@@ -70,6 +70,12 @@ attack arrives); tunes 12 to 20 are in the driver but nothing plays them. A soun
 (the miss, the step) is cut after 0.1 s by the game's own `PlaySound`, and the arrival of an attack after one tick by
 `ShowAttackAnimation`; the Tandy versions are longer than the speaker's, so the cut is easier to hear.
 
+**Profiles (CoCo port, Phase 8).** `pas2c.py --profile coco --out DIR` writes C that CMOC 0.1.100 compiles (width casts for
+byte arithmetic, named unions, no compound literals, wrapper structs for pointers to arrays); `--placement FILE` adds the
+mapped / banked / engine classes of `ports/coco3/placement.toml`. The default profile writes `c/game`. Build the other
+output on the host with `cmake -DPOOLRAD_GAME_DIR=DIR`; `ports/coco3` (`make coco-host`, `make place-host`) does it and
+replays the sessions. `poolrad_replay --screens4 FILE` records the screen as the CoCo 3 shows it (4 bits a pixel).
+
 ## Proof
 
 `make c-golden` plays every session of `tests/sessions/*.keys` on the C translation. For each, the oracle runs the

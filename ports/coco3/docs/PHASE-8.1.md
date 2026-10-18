@@ -6,6 +6,8 @@ by running a tool, **[E]** estimate, **[?]** open. Reproduce with `make sizes` (
 
 ## Summary
 
+> **Superseded in part by 8.2** (`PHASE-8.2.md`): the sizes below were measured on text-patched C in which byte arithmetic with constants was silently computed in 8 bits. With the translator's width casts (`pas2c --profile coco`) the 35 overlays are 219,273 bytes of code (1.11 times the x86), and three units (`ovl03`, `ovl13`, `ovl16`) need splitting for a 16 KB window. The findings about D4, the data model and the CMOC bugs stand.
+
 1. **Code size is not the problem.** All 46 generated units of Phase 7 (35 overlays and 11 resident game units) compile
    with CMOC 0.1.100 once a handful of mechanical fixes are made (section 2). The 35 overlays come to **209,542 bytes of
    code plus 10,832 of constants, against 197,641 bytes of x86 (1.06 times)**, below the guide's 180 to 300 KB estimate.

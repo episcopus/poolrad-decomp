@@ -15,6 +15,7 @@ if ! ls build/c/replay-place/*.rpl >/dev/null 2>&1; then
 fi
 PY=python3; [ -x .venv/bin/python ] && PY=.venv/bin/python
 $PY tools/c/pas2c.py --profile coco --placement ports/coco3/placement.toml --out build/gen-place | tail -2
+python3 ports/coco3/tools/placement_check.py build/gen-place
 cmake -S . -B build/cmake-place -DCMAKE_BUILD_TYPE=Release -DPOOLRAD_GAME_DIR="$ROOT/build/gen-place" -DCMAKE_C_FLAGS=-DPOOL_PLACEMENT -DCMAKE_C_FLAGS_RELEASE=-O2 >/dev/null   # -O3 exposes a latent out-of-bounds read (ovl25:115, index -1) as a crash in parley-combat
 cmake --build build/cmake-place -j --target poolrad_replay 2>&1 | grep -E "error" || true
 mkdir -p build/c/g4
