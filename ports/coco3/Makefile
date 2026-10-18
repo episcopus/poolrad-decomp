@@ -18,7 +18,7 @@ LINKLIBS := -L$(CMOCLIB) -lcmoc-crt-void -lcmoc-std-void
 ENGINE_OBJ := build/obj/boot.o build/obj/mailbox.o
 P ?= byte-arith
 
-.PHONY: help doctor toolchain sizes heap-stats prof coco-host demo test-demo run-demo probe probes asm-probe bench test clean
+.PHONY: help doctor toolchain sizes heap-stats prof coco-host golden4 golden4-record demo test-demo run-demo probe probes asm-probe bench test clean
 .DEFAULT_GOAL := help
 
 help:
@@ -29,6 +29,8 @@ help:
 	@echo "  make heap-stats     replay the sessions on a heap-stats build of the C game: heap peak, DGROUP use"
 	@echo "  make prof           who references which data per key: profile build of the C game, report (step 8.1c)"
 	@echo "  make coco-host      step 8.2: translate with the coco profile, build on the host, replay the sessions"
+	@echo "  make golden4        check the 4bpp screen goldens (goldens/4bpp) on the PC and coco profile host builds"
+	@echo "  make golden4-record rewrite them from the verified PC profile build"
 	@echo "  make demo           build the banked hello world (build/demo/demo.bin, demo.dsk)"
 	@echo "  make test-demo      build, run in headless MAME and XRoar, check the mailbox"
 	@echo "  make run-demo       run the demo in a windowed XRoar (interactive look)"
@@ -57,6 +59,12 @@ prof:
 
 coco-host:
 	@scripts/coco_host.sh
+
+golden4:
+	@scripts/golden4.sh check
+
+golden4-record:
+	@scripts/golden4.sh record
 
 demo:
 	@$(TC) $(IMAKE) --no-print-directory build/demo/demo.dsk

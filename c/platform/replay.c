@@ -1,7 +1,7 @@
 /* replay.c: the headless platform: plays a recording of the original game (tools/c/export_replay.py) against the
  * C translation and compares the screen with the original's at every recorded checkpoint.
  *
- *   poolrad_replay --data DIR [--save DIR] [--dump PREFIX] SESSION.rpl
+ *   poolrad_replay --data DIR [--save DIR] [--dump PREFIX] [--screens4 FILE] SESSION.rpl
  *
  * Each read of the outside world (key, clock, PIT, retrace) is answered with the value the original read at the
  * same point of its run. The game takes the same path only if the translation behaves like the original, so a
@@ -273,6 +273,43 @@ static void snapshot(void)
   dump_planes("snap");
 }
 
+/* --screens4 FILE: one line per checkpoint, `label sha256`, the digest of the 32,000 bytes of the screen as the CoCo 3
+ * shows it (packed 4 bits a pixel) followed by the 16 palette register values; `label text` when the mode is not 0Dh.
+ * The lines are the 4bpp goldens of tests/sessions/golden-4bpp. */
+static FILE *g_screens4;
+
+static void record_screen4(const char *label)
+{
+  static u8 shot[32000];
+  u8 pal[16], dg[32];
+  char hex[65];
+  Sha256 c;
+  if (!g_screens4) {
+    return;
+  }
+  if (!ega_to_4bpp(shot, pal)) {
+    fprintf(g_screens4, "%s text\n", label);
+    return;
+  }
+  if (g_dump) {                                    /* with --dump PREFIX the raw screen too: PREFIX-LABEL.scr4 */
+    char path[512];
+    FILE *f;
+    snprintf(path, sizeof path, "%s-%s.scr4", g_dump, label);
+    f = fopen(path, "wb");
+    if (f) {
+      fwrite(shot, 1, sizeof shot, f);
+      fwrite(pal, 1, sizeof pal, f);
+      fclose(f);
+    }
+  }
+  sha256_init(&c);
+  sha256_update(&c, shot, sizeof shot);
+  sha256_update(&c, pal, sizeof pal);
+  sha256_final(&c, dg);
+  sha256_hex(dg, hex);
+  fprintf(g_screens4, "%s %s\n", label, hex);
+}
+
 static void check_cps(long at)
 {
   if (at == g_snap && g_dump) {
@@ -288,6 +325,7 @@ static void check_cps(long at)
     screen_digest(scr);
     if (strcmp(scr, c->screen) == 0) {
       screens_ok++;
+      record_screen4(c->label);
     } else {
       screens_bad++;
       if (!failed) {
@@ -399,6 +437,10 @@ static void finish(const char *why)
     }
   }
   dump_screen("final");
+  record_screen4("final");
+  if (g_screens4) {
+    fclose(g_screens4);
+  }
   rtl_written_files(check_file, &w);
   if (w.seen < (int)nwritten && !failed) {
     snprintf(first_problem, sizeof first_problem, "the original wrote %d files, the translation %d",
@@ -555,6 +597,7 @@ int main(int argc, char **argv)
     if (strcmp(argv[i], "--data") == 0 && i + 1 < argc) g_data = argv[++i];
     else if (strcmp(argv[i], "--save") == 0 && i + 1 < argc) g_save = argv[++i];
     else if (strcmp(argv[i], "--dump") == 0 && i + 1 < argc) g_dump = argv[++i];
+    else if (strcmp(argv[i], "--screens4") == 0 && i + 1 < argc) g_screens4 = fopen(argv[++i], "w");
     else if (strcmp(argv[i], "--screens-only") == 0) g_screens_only = 1;
     else if (strcmp(argv[i], "--sound") == 0 && i + 1 < argc) g_sound = argv[++i];
     else if (strcmp(argv[i], "--trace-calls") == 0 && i + 2 < argc) {

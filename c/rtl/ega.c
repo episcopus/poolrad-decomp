@@ -237,3 +237,30 @@ void ega_render(u32 *rgba)
     }
   }
 }
+
+int ega_to_4bpp(u8 out[32000], u8 palette[16])
+{
+  int y, xb, bit, i;
+  u32 start;
+  if (ega.mode != 0x0D) {
+    return 0;
+  }
+  start = ((u32)ega.crtc[0x0C] << 8) | ega.crtc[0x0D];
+  for (i = 0; i < 16; i++) {
+    palette[i] = ega.attr[i] & 0x3F;
+  }
+  for (y = 0; y < 200; y++) {
+    u32 base = (start + (u32)y * 40u) & 0xFFFF;
+    u8 *row = out + y * 160;
+    for (xb = 0; xb < 40; xb++) {
+      u32 a = (base + (u32)xb) & 0xFFFF;
+      u8 b0 = ega.planes[0][a], b1 = ega.planes[1][a], b2 = ega.planes[2][a], b3 = ega.planes[3][a];
+      for (bit = 7; bit >= 0; bit -= 2) {            /* two pixels a byte: the left one in the high nibble */
+        int l = ((b0 >> bit) & 1) | (((b1 >> bit) & 1) << 1) | (((b2 >> bit) & 1) << 2) | (((b3 >> bit) & 1) << 3);
+        int r = ((b0 >> (bit - 1)) & 1) | (((b1 >> (bit - 1)) & 1) << 1) | (((b2 >> (bit - 1)) & 1) << 2) | (((b3 >> (bit - 1)) & 1) << 3);
+        row[xb * 4 + (7 - bit) / 2] = (u8)((l << 4) | r);
+      }
+    }
+  }
+  return 1;
+}
