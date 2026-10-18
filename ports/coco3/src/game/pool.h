@@ -35,17 +35,19 @@ typedef u32 farptr;                      /* segment in the high word, offset in 
 #define POOL_VIDEO(off) ((u8 *)(u16)(off))        /* the EGA window is not there: the engine owns the screen */
 #define POOL_CAP(n) 32767                          /* CMOC arrays stop at 32767 elements */
 
-/* the layout of DGROUP (vmlayout.c is generated with it) */
-void *vm_ptr(u16 v);                     /* the page of DGROUP offset v into a data window; the address is good until the next call */
-void *vm_far(farptr p);                  /* any address the game holds: native, paged or mapped */
+/* the layout of DGROUP (mkvm.py --coco: a DS offset below $8000 is a CoCo address, the paged globals are above) */
+void *vm_ptr(u16 v);                     /* the page of DGROUP offset v (>= $8000) into a data window; the pointer is good until the next call */
+void *vm_far(farptr p);                  /* any address the game holds: native, paged or in the banked heap */
 void *vm_unplaced(u16 off);
+void vm_init(void);
 farptr rtl_far(const void *p);           /* an address the game took (a native one or one in a window) as a far pointer */
-#define VMN(o) ((void *)((u16)NATVARS + (u16)(o)))
+void rtl_fatal_code(u8 code, u16 info);  /* stop the program: result words 30 and 29 of the mailbox say why */
+#define VMN(o) ((void *)(o))
 #define VMV(o) vm_ptr(o)
 #define VMU(o) vm_unplaced(o)
 #define FPD(T, p) ((T)vm_far(p))
 #define FPB(T, p) ((T)vm_far(p))
-#define FPM(T, p) ((T)((u16)(p) - MAPPED_LO + HEAPM_BASE))
+#define FPM(T, p) ((T)((u16)(p) | 0))        /* the | 0: CMOC 0.1.100 crashes on a bare cast here */
 farptr rtl_getmem_m(u16 size);           /* a block of the mapped heap */
 
 /* Every translated routine announces itself on the host (a trace); not here. */

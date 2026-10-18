@@ -22,11 +22,13 @@ BANK_BYTES = 0x4000                      # slots 4 and 5
 BANK_LIMIT = BANK_BYTES - 0x180          # room for the entry table (3 bytes an entry) and a margin
 CORE_UNITS = ["pool", "res02", "res04", "res10", "res11"]   # resident
 SKIP_UNITS = {"image", "poolvars", "vmlayout"}
+RTL_BANK = ("rtl_str", "rtl_heap")                     # the runtime that has no variables lives in a bank of its own (the core is small)
 # Replaced by the engine (step 8.5d): whole units, and routines of units that stay. The engine provides them under the same
 # names; until a routine is written a stub stops the program and says which one was asked for.
 ENGINE_UNITS = ["res05", "res07", "ovl28", "res08"]
+CORE_ROUTINES = {"res06": ["GameClock"]}                  # cut out of the unit, written in src/game (the core)
 ENGINE_ROUTINES = {
-    "res06": ["SetEgaFillRegisters", "SetActivePage", "SetPageSegment", "FillPlaneRect", "LoadGameFont", "DrawGlyph", "GameClock"],
+    "res06": ["SetEgaFillRegisters", "SetActivePage", "SetPageSegment", "FillPlaneRect", "LoadGameFont", "DrawGlyph"],   # GameClock: rtl_sys.c
     "ovl34": ["Put8x8Symbol"],
     "ovl32": ["Load24x24Set", "DrawCellPicture", "DrawIcon"],
 }
@@ -224,9 +226,9 @@ def main(argv):
     core = []
     for u in units:
         src = gen / (u + ".c")
-        if u in ENGINE_ROUTINES:                            # the routines the engine takes over are cut out of the unit
+        if u in ENGINE_ROUTINES or u in CORE_ROUTINES:      # the routines the engine or the core take over are cut out of the unit
             src = out / "src" / (u + ".c")
-            src.write_text(strip_routines((gen / (u + ".c")).read_text(), set(ENGINE_ROUTINES[u])))
+            src.write_text(strip_routines((gen / (u + ".c")).read_text(), set(ENGINE_ROUTINES.get(u, [])) | set(CORE_ROUTINES.get(u, []))))
         o = obj / (u + ".o")
         compile_c(str(src), str(o), incs)
         inf = objinfo(str(o))
@@ -257,6 +259,23 @@ def main(argv):
             banks.append({"name": nm, "objs": [o2], "size": i2["code"] + i2["rodata"], "units": [u]})
             info[nm] = i2
         print("split %s (%d bytes) into %d parts: %s" % (u, size, len(names), ", ".join(str(i["code"] + i["rodata"]) for i in infs)))
+    # the runtime bank
+    robjs = []
+    rincs = [str(here / "shim"), str(inc), str(here / "src/engine")]
+    for stem in RTL_BANK:
+        o2 = obj / (stem + ".o")
+        compile_c(str(here / "src/game" / (stem + ".c")), str(o2), rincs)
+        robjs.append(str(o2))
+    rinfo = {"code": 0, "rodata": 0, "exports": set(), "imports": set(), "funcs": {}}
+    for o2 in robjs:
+        i2 = objinfo(o2)
+        rinfo["code"] += i2["code"]
+        rinfo["rodata"] += i2["rodata"]
+        rinfo["exports"] |= i2["exports"]
+        rinfo["imports"] |= i2["imports"]
+    rinfo["imports"] -= rinfo["exports"]
+    banks.append({"name": "rtl", "objs": robjs, "size": rinfo["code"] + rinfo["rodata"], "units": ["rtl"]})
+    info["rtl"] = rinfo
     p2 = run(["lwasm", "--6809", "-fobj", "-o", str(obj / "proc_table.o"), str(out / "src/proc_table.asm")])
     if p2.returncode:
         raise SystemExit("lwasm failed on proc_table.asm: " + p2.stderr[:300])
@@ -359,11 +378,19 @@ def link_all(out, here, banks, ids, info, core, entries):
     (build/game/missing.txt lists them: that list is the work left)."""
     obj, src = out / "obj", out / "src"
     eobj = here / "build/obj"                                # the engine objects the Makefile builds
-    base = [eobj / n for n in ("boot.o", "mailbox.o", "mmu.o", "farcall.o", "nobanks.o")]
+    base = [eobj / n for n in ("boot.o", "mailbox.o", "mmu.o", "farcall.o", "nobanks.o", "irq.o")]
     (obj / "rtl").mkdir(exist_ok=True)
-    incs = [str(here / "shim"), str(out / "inc"), str(out / "inc")]
+    for stale in (obj / "rtl").glob("*.o"):
+        stale.unlink()
+    incs = [str(here / "shim"), str(out / "inc"), str(here / "src/engine")]
     for c in sorted((here / "src/game").glob("*.c")):          # the runtime and the platform layer of the CoCo
+        if c.stem in RTL_BANK:
+            continue                                            # in the runtime bank (below)
         compile_c(str(c), str(obj / "rtl" / (c.stem + ".o")), incs)
+    for a in sorted((here / "src/game").glob("*.asm")):
+        r = run(["lwasm", "--6809", "-fobj", "-I" + str(here / "src/engine"), "-o", str(obj / "rtl" / (a.stem + ".o")), str(a)])
+        if r.returncode:
+            raise SystemExit("lwasm %s: %s" % (a, r.stderr[:400]))
     rtl = sorted((obj / "rtl").glob("*.o"))
     libs = ["-L/usr/local/share/cmoc/lib", "-lcmoc-crt-void", "-lcmoc-std-void"]
     cobjs = [str(o) for o in base] + [str(obj / (n + ".o")) for n in ("farstubs", "engine_stubs", "init_stubs", "libpull")] + \
@@ -399,6 +426,8 @@ def link_all(out, here, banks, ids, info, core, entries):
            re.finditer(r"^Section: (\S+) \((.*?)\) load at ([0-9A-Fa-f]+), length ([0-9A-Fa-f]+)", (out / "core.map").read_text(), re.M)]
     end = max(a + n for _, a, n in sec)
     print("core: ends at $%04X (%d bytes from $2000); %d symbols still missing" % (end, end - 0x2000, len(missing)))
+    if end > 0x5200:
+        raise SystemExit("the core ends at $%04X, past the heap tables at $5200 (src/game/coco_map.h)" % end)
     for m in missing:
         print("   missing", m)
     # the banks

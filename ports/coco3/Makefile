@@ -192,7 +192,7 @@ eng-test: eng-data data
 	@echo "--- $(T) screens"; python3 -I tools/engcheck.py $(T)
 
 # ---------------------------------------------------------------- the game (step 8.5)
-GAME_OBJ := build/obj/boot.o build/obj/mailbox.o build/obj/mmu.o build/obj/farcall.o build/obj/nobanks.o
+GAME_OBJ := build/obj/boot.o build/obj/mailbox.o build/obj/mmu.o build/obj/farcall.o build/obj/nobanks.o build/obj/irq.o
 game: $(GAME_OBJ)
 	@$(TC) scripts/game_build.sh
 

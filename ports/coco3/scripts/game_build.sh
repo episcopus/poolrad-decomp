@@ -8,6 +8,6 @@ REPO="${REPO:-../..}"
 GEN="${GEN:-build/gen}"
 mkdir -p "$GEN"
 python3 "$REPO/tools/c/pas2c.py" --profile coco --placement placement.toml --out "$GEN/pre" | tail -1
-python3 tools/mkplan.py "$REPO" "$GEN/pre" "${NATIVE_BUDGET:-6000}" > placement-vm.toml
-REPO="$REPO" python3 tools/mkvm.py "$GEN/pre" placement-vm.toml "$GEN/vm"
+python3 tools/mkplan.py "$REPO" "$GEN/pre" "${NATIVE_BUDGET:-2500}" > placement-coco.toml
+REPO="$REPO" python3 tools/mkvm.py --coco "$GEN/pre" placement-coco.toml "$GEN/vm"
 REPO="$REPO" python3 tools/mkgame.py "$GEN/vm" build/game --link
