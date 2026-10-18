@@ -195,6 +195,12 @@ eng-test: eng-data data
 game:
 	@$(TC) scripts/game_build.sh
 
+# The game on the emulated CoCo 3 (MAME, headless): S=session; the screens it shows against goldens/4bpp (tools/gamecheck.py)
+S ?= boot-title
+game-run: game
+	MB_LIMIT=$(or $(LIMIT),300) scripts/game_run.sh build/run/game-$(S)
+	python3 -I tools/gamecheck.py $(S) build/run/game-$(S)
+
 # ---------------------------------------------------------------- data pipeline (step 8.4)
 data:
 	@python3 -I tools/mkvolumes.py $(POOLRAD_DATA) build/data >/dev/null

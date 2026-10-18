@@ -38,10 +38,15 @@ def main(gamedir, dgroup, out):
     (g / "CORE.RAW").write_bytes(core)
     banks = json.loads((g / "banks.json").read_text())["banks"]
     by_id = {b["id"]: b["name"] for b in banks}
+    # the banks to carry: data/bootbanks.txt (names), then build/game/bootbanks.txt (ids or names: what scripts/bank_probe*.sh found)
+    ids = {b["name"]: b["id"] for b in banks}
     want = []
-    bf = g / "bootbanks.txt"
-    if bf.exists():
-        want = [int(x) for x in bf.read_text().split()]
+    for bf in (Path(__file__).resolve().parent.parent / "data/bootbanks.txt", g / "bootbanks.txt"):
+        if bf.exists():
+            for tok in "\n".join(l for l in bf.read_text().split("\n") if not l.startswith("#")).split():
+                i = int(tok) if tok.isdigit() else ids[tok]
+                if i not in want:
+                    want.append(i)
     # development: more banks than the program disk holds go to extra disks, drives 2 and 3 (BANKS.IDX: a byte a bank, its drive)
     disks = [Path(out), Path(out).with_name("bank1.dsk"), Path(out).with_name("bank2.dsk")]
     drives = [0, 2, 3]

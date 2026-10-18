@@ -1,0 +1,2 @@
+# the code banks the program disk carries (tools/mkgamedisk.py): by name; boot-title needs these (scripts/bank_probe_mame.sh finds them)
+ovl00 ovl01 ovl11 ovl12_2 ovl22_2 ovl25 ovl32 ovl34 res03 res05 res06 res09 rtl ovl02

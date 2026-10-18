@@ -69,7 +69,7 @@ def assign(policy, names):
                     raise SystemExit("policy: %s is in volumes %d and %d" % (n, where[n], v["num"]))
                 where[n] = v["num"]
     missing = [n for n in names if n not in where]
-    if missing:
+    if missing and not policy.get("partial"):
         raise SystemExit("policy: not in any volume: " + " ".join(missing))
     return where
 
@@ -114,7 +114,7 @@ def build(data_dir, policy, out_dir):
     volmap = []
     for v in policy["volumes"]:
         num = v["num"]
-        files = sorted(n for n in src if where[n] == num)
+        files = sorted(n for n in src if where.get(n) == num)
         cont, entries = pack(num, files, src)
         if len(cont) > policy["capacity"]:
             raise SystemExit("volume %d (%s) is %d bytes, %d over the capacity of %d" % (num, v["name"], len(cont), len(cont) - policy["capacity"], policy["capacity"]))
