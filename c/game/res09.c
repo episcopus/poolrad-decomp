@@ -6,7 +6,7 @@
      extends one cell past the window on every side (Dec/Inc first), so the coordinates are
      ShortInt and can reach -1. Drawn through Put8x8Symbol; side effect: the screen. Called by
      DrawWindow. */
-void DrawWindowFrame(s8 LeftCol, s8 TopRow, s8 RightCol, s8 BottomRow, u8 FrameSet)
+void DrawWindowFrame(s8 LeftCol, s8 TopRow, s8 RightCol, s8 BottomRow_, u8 FrameSet)
 {
   POOL_TRACE("DrawWindowFrame");
   s8 Edge = 0;
@@ -14,12 +14,12 @@ void DrawWindowFrame(s8 LeftCol, s8 TopRow, s8 RightCol, s8 BottomRow, u8 FrameS
   LeftCol--;
   TopRow--;
   RightCol++;
-  BottomRow++;
+  BottomRow_++;
   TileBase = (FrameSet * TilesPerFrameSet) + FirstFrameTile;
   Put8x8Symbol(LeftCol, TopRow, (u16)(TileBase + TileCorner), 0, 0);
   Put8x8Symbol(RightCol, TopRow, (u16)(TileBase + TileCorner), 0, 0);
-  Put8x8Symbol(LeftCol, BottomRow, (u16)(TileBase + TileCorner), 0, 0);
-  Put8x8Symbol(RightCol, BottomRow, (u16)(TileBase + TileCorner), 0, 0);
+  Put8x8Symbol(LeftCol, BottomRow_, (u16)(TileBase + TileCorner), 0, 0);
+  Put8x8Symbol(RightCol, BottomRow_, (u16)(TileBase + TileCorner), 0, 0);
   {
     s8 limit = (s16)(RightCol - 1);
     s8 first = (s16)(LeftCol + 1);
@@ -27,14 +27,14 @@ void DrawWindowFrame(s8 LeftCol, s8 TopRow, s8 RightCol, s8 BottomRow, u8 FrameS
       Edge = first;
       for (;;) {
           Put8x8Symbol(Edge, TopRow, (u16)(TileBase + TileHorizontal), 0, 0);
-          Put8x8Symbol(Edge, BottomRow, (u16)(TileBase + TileHorizontal), 0, 0);
+          Put8x8Symbol(Edge, BottomRow_, (u16)(TileBase + TileHorizontal), 0, 0);
         if (Edge == limit) break;
         Edge++;
       }
     }
   }
   {
-    s8 limit = (s16)(BottomRow - 1);
+    s8 limit = (s16)(BottomRow_ - 1);
     s8 first = (s16)(TopRow + 1);
     if (first <= limit) {
       Edge = first;
@@ -53,7 +53,7 @@ void DrawWindowFrame(s8 LeftCol, s8 TopRow, s8 RightCol, s8 BottomRow, u8 FrameS
      1 draws through FillPlaneRect twice, 2 fills four graphics planes (VideoGrf0..3).
      The coordinates are ShortInt (sign-extended to Integer); Row stays Word (the for-loop
      exit test is unsigned). Side effect: video memory. Called by DrawWindow. */
-void ClearWindow(s8 LeftCol, s8 TopRow, s8 RightCol, s8 BottomRow)
+void ClearWindow(s8 LeftCol, s8 TopRow, s8 RightCol, s8 BottomRow_)
 {
   POOL_TRACE("ClearWindow");
   s16 TopCode = 0;
@@ -65,7 +65,7 @@ void ClearWindow(s8 LeftCol, s8 TopRow, s8 RightCol, s8 BottomRow)
   case AdapterCga:
   {
     TopCode = TopRow * ScanlinesPerTextRow;
-    BottomCode = (BottomRow * ScanlinesPerTextRow) + LastTextScanline;
+    BottomCode = (BottomRow_ * ScanlinesPerTextRow) + LastTextScanline;
     Width = ((s16)((RightCol - LeftCol) + 1)) * BytesPerTextColumn;
     {
       u16 limit = BottomCode;
@@ -84,14 +84,14 @@ void ClearWindow(s8 LeftCol, s8 TopRow, s8 RightCol, s8 BottomRow)
   }
   case AdapterEga:
   {
-    FillPlaneRect(LeftCol, TopRow, RightCol, BottomRow, 0, 0);
-    FillPlaneRect(LeftCol, TopRow, RightCol, BottomRow, 1, 0);
+    FillPlaneRect(LeftCol, TopRow, RightCol, BottomRow_, 0, 0);
+    FillPlaneRect(LeftCol, TopRow, RightCol, BottomRow_, 1, 0);
     break;
   }
   case AdapterTandy:
   {
     TopCode = TopRow * GraphRowsPerTextRow;
-    BottomCode = (BottomRow * GraphRowsPerTextRow) + LastGraphRow;
+    BottomCode = (BottomRow_ * GraphRowsPerTextRow) + LastGraphRow;
     LeftCode = LeftCol * BytesPerGraphColumn;
     Width = ((s16)((RightCol - LeftCol) + 1)) * BytesPerGraphColumn;
     {
@@ -121,14 +121,14 @@ void ClearWindow(s8 LeftCol, s8 TopRow, s8 RightCol, s8 BottomRow)
      value parameter: the compiler copies it to a hidden stack temporary on entry (the
      StrLCopy at 02EE, limit $28), and Length and the 0626 call read that temporary
      ([bp-$29]). Side effect: the screen. Called from ovl01/02/03/04/05/06 and res12. */
-void DrawWindow(s8 LeftCol, s8 TopRow, s8 RightCol, s8 BottomRow, u8 FrameSet, u8 TextColor, const u8 *Text_in)
+void DrawWindow(s8 LeftCol, s8 TopRow, s8 RightCol, s8 BottomRow_, u8 FrameSet, u8 TextColor_, const u8 *Text_in)
 {
   POOL_TRACE("DrawWindow");
   const u8 *Text = Text_in;
-  ClearWindow(LeftCol, TopRow, RightCol, BottomRow);
-  DrawWindowFrame(LeftCol, TopRow, RightCol, BottomRow, FrameSet);
+  ClearWindow(LeftCol, TopRow, RightCol, BottomRow_);
+  DrawWindowFrame(LeftCol, TopRow, RightCol, BottomRow_, FrameSet);
   if (Text[0] != 0) {
-    DrawTextAt((((s16)((LeftCol + RightCol) - Text[0])) / 2), TopRow, TextColor, Text);
+    DrawTextAt((((s16)((LeftCol + RightCol) - Text[0])) / 2), TopRow, TextColor_, Text);
   }
 }
 

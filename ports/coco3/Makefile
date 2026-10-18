@@ -11,7 +11,7 @@ IMAKE := $(if $(HAVE_TC),$(MAKE),make)
 
 CMOCLIB := /usr/local/share/cmoc/lib
 # CMOC for the bare-metal takeover: the void target has no ROM dependencies; no relocation.
-CC := cmoc -c --void-target --no-relocate -O2 -Wgives-byte -Wsign-compare -Isrc/engine
+CC := cmoc -c --void-target --no-relocate -O2 -Wgives-byte -Wsign-compare -Isrc/engine -Ibuild/game/inc
 AS := lwasm --6809 -fobj -Isrc/engine
 LINKLIBS := -L$(CMOCLIB) -lcmoc-crt-void -lcmoc-std-void
 
@@ -192,8 +192,7 @@ eng-test: eng-data data
 	@echo "--- $(T) screens"; python3 -I tools/engcheck.py $(T)
 
 # ---------------------------------------------------------------- the game (step 8.5)
-GAME_OBJ := build/obj/boot.o build/obj/mailbox.o build/obj/mmu.o build/obj/farcall.o build/obj/nobanks.o build/obj/irq.o
-game: $(GAME_OBJ)
+game:
 	@$(TC) scripts/game_build.sh
 
 # ---------------------------------------------------------------- data pipeline (step 8.4)

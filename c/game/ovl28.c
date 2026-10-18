@@ -78,7 +78,7 @@ void LoadSpriteList(const u8 *Name_in, u8 Bank, u8 Mode, PSpriteList List)
   u8 IsPicOrFinal = 0;
   u8 PrevAllocated = 0;
   u8 Loaded = 0;
-  u8 t1[256];
+  u8 t1[10];
   if (((rtl_str_cmp(Name, LastSpriteFile) == 0)) && ((Bank == LastSpriteBank))) {
     return;
   }
@@ -228,8 +228,8 @@ void LoadHeadBodySprites(u8 HeadBank, u8 BodyBank)
 {
   POOL_TRACE("LoadHeadBodySprites");
   u8 Num[2] = {0};
-  u8 t1[256];
-  u8 t2[256];
+  u8 t1[6];
+  u8 t2[6];
   rtl_str_int(Num, 1, TileSet, 0);
   if (HeadBank != NoBank) {
     if (((HeadBankIndex == NoBank)) || ((HeadBankIndex != HeadBank))) {

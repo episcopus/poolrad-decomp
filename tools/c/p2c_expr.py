@@ -63,8 +63,9 @@ class ExprMixin:
         c.temps.append(decl_text.replace("@", nm))
         return nm
 
-    def str_temp(self) -> str:
-        return self.temp("u8 @[256]")
+    def str_temp(self, maxlen: int = 255) -> str:
+        """A buffer for a string value of at most maxlen characters (the length byte included in the size)."""
+        return self.temp("u8 @[%d]" % (min(maxlen, 255) + 1))
 
     def lit(self, v, t: Ty) -> str:
         if isinstance(v, str):
@@ -518,17 +519,29 @@ class ExprMixin:
         if e.ty.kind == "char":
             if e.strlit is not None:
                 return "S(%s)" % cstr_literal(e.strlit)
-            t = self.str_temp()
+            t = self.str_temp(1)
             return "rtl_str_char(%s, %s)" % (t, e.code)
         raise TransError("not a string: %r" % e.ty)
 
     def concat(self, parts):
         items = [self.to_pstr(p) for p in parts]
-        t = self.str_temp()
+        # the longest the result can be: the parts' longest, 255 at most (a smaller buffer keeps the frames small)
+        total = 0
+        for p in parts:
+            if p.ty.kind == "char":
+                total += 1
+            elif p.strlit is not None:
+                total += len(p.strlit)
+            elif p.ty.kind == "string":
+                total += p.ty.maxlen
+            else:
+                total += 255
+        total = min(total, 255)
+        t = self.str_temp(total)
         if self.coco:                                   # CMOC has no compound literals
-            return E("rtl_str_cat_v(%s, %d, %s)" % (t, len(items), ", ".join(items)), Ty("string", maxlen=255))
+            return E("rtl_str_cat_v(%s, %d, %s)" % (t, len(items), ", ".join(items)), Ty("string", maxlen=total))
         return E("rtl_str_cat(%s, %d, (const u8 *const[]){%s})" % (t, len(items), ", ".join(items)),
-                 Ty("string", maxlen=255))
+                 Ty("string", maxlen=total))
 
     def ex_compare(self, op, a: E, b: E) -> E:
         c = CMP[op]

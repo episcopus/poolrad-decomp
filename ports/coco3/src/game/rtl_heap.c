@@ -6,7 +6,7 @@
 
 /* This code lives in the runtime bank, which holds no variables: the heap's tables are at a fixed place in native memory. */
 #define BHEAP_LIN0 0x2C7C0UL
-#define NBLK 48
+#define NBLK 32
 typedef struct Blk { u16 off, size; u8 used; } Blk;
 struct HeapData { Blk mblk[NBLK]; Blk bblk[NBLK]; u8 nm, nb, ready; };
 #define HD ((struct HeapData *)HEAPDATA)

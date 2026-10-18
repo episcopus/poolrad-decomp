@@ -16,7 +16,7 @@ void ReadSavedCharacterList(PMenuLine (*List))
   TextRec Names = {0};
   u8 t1[256];
   u8 t2[256];
-  u8 t3[256];
+  u8 t3[43];
   (*List) = 0;
   CreateSaveDir();
   if (!FileExists(rtl_str_cat(t1, 2, (const u8 *const[]){SaveDir, S("\014charlist.txt")}))) {
@@ -60,8 +60,8 @@ void RewriteSavedCharacterList(PMenuLine List)
   TextRec Names = {0};
   u16 ErrCode = 0;
   u8 t1[256];
-  u8 t2[256];
-  u8 t3[256];
+  u8 t2[2];
+  u8 t3[20];
   CreateSaveDir();
   do {
     rtl_assign(&Names, rtl_str_cat(t1, 2, (const u8 *const[]){SaveDir, S("\014charlist.txt")}));
@@ -91,8 +91,8 @@ void CreateSaveDir(void)
   POOL_TRACE("CreateSaveDir");
   u16 ErrCode = 0;
   u8 t1[256];
-  u8 t2[256];
-  u8 t3[256];
+  u8 t2[2];
+  u8 t3[20];
   do {
     rtl_MkDir(rtl_str_copy(t1, SaveDir, 1, (s16)(SaveDir[0] - 1)));
     ErrCode = rtl_IOResult();
@@ -179,10 +179,10 @@ void BuildCharacterIcon(u8 Recolor)
   u8 (*MapTo)[16] = (u8 (*)[16])rtl_stack_alloc(16);
   u8 I = 0;
   u8 UnusedByte = 0;
-  u8 t1[256];
-  u8 t2[256];
-  u8 t3[256];
-  u8 t4[256];
+  u8 t1[2];
+  u8 t2[7];
+  u8 t3[2];
+  u8 t4[7];
   SelectTileSet(3);
   {
     TCharacter *w1 = &(*FPD(TCharacter (*), SelectedCharacter));
@@ -249,15 +249,15 @@ void SaveCharacter(PCharacter Who, const u8 *Name_in)
   u8 t2[256];
   u8 t3[256];
   u8 t4[256];
-  u8 t5[256];
-  u8 t6[256];
-  u8 t7[256];
-  u8 t8[256];
-  u8 t9[256];
-  u8 t10[256];
-  u8 t11[256];
-  u8 t12[256];
-  u8 t13[256];
+  u8 t5[45];
+  u8 t6[2];
+  u8 t7[20];
+  u8 t8[45];
+  u8 t9[45];
+  u8 t10[45];
+  u8 t11[45];
+  u8 t12[45];
+  u8 t13[45];
   if (rtl_str_cmp(Name, S("\000")) == 0) {
     ReadSavedCharacterList(&List);
     Walk = List;
@@ -346,10 +346,10 @@ void LoadCharacterFile(const u8 *FileName_in, PCharacter Who, u8 SavedGame, u8 U
   u8 Status = 0;
   u8 t1[256];
   u8 t2[256];
-  u8 t3[256];
-  u8 t4[256];
-  u8 t5[256];
-  u8 t6[256];
+  u8 t3[2];
+  u8 t4[20];
+  u8 t5[2];
+  u8 t6[32];
   u8 t7[256];
   u8 t8[256];
   u8 t9[256];
@@ -424,9 +424,9 @@ void LoadMonster(u8 Kind, farptr Who)
   u8 CharSet[2] = {0};
   u8 I = 0;
   u8 Roll = 0;
-  u8 t1[256];
-  u8 t2[256];
-  u8 t3[256];
+  u8 t1[8];
+  u8 t2[8];
+  u8 t3[8];
   rtl_str_int(CharSet, 1, TileSet, 0);
   LoadDaxBlock(rtl_str_cat(t1, 3, (const u8 *const[]){S("\003MON"), CharSet, S("\003CHA")}), S("\004.dax"), Kind, &Size, &Block);
   if (Size == 0) {
@@ -662,13 +662,13 @@ void LoadGame(void)
   u8 Slot = 0;
   u8 ExtKey = 0;
   u8 GameList[21] = {0};
-  u8 t1[256];
+  u8 t1[2];
   u8 t2[256];
-  u8 t3[256];
-  u8 t4[256];
-  u8 t5[256];
+  u8 t3[2];
+  u8 t4[23];
+  u8 t5[2];
   u8 t6[256];
-  u8 t7[256];
+  u8 t7[2];
   u8 t8[256];
   u8 t9[256];
   u8 t10[256];
@@ -677,12 +677,12 @@ void LoadGame(void)
   u8 t13[256];
   u8 t14[256];
   u8 t15[256];
-  u8 t16[256];
-  u8 t17[256];
-  u8 t18[256];
-  u8 t19[256];
-  u8 t20[256];
-  u8 t21[256];
+  u8 t16[45];
+  u8 t17[45];
+  u8 t18[45];
+  u8 t19[45];
+  u8 t20[45];
+  u8 t21[45];
   CreateSaveDir();
   rtl_str_assign(GameList, 20, S("\000"));
   {
@@ -816,23 +816,23 @@ void SaveGame(void)
   u8 ExtKey = 0;
   u8 Key = 0;
   u16 ErrCode = 0;
-  u8 t1[256];
+  u8 t1[2];
   u8 t2[256];
-  u8 t3[256];
-  u8 t4[256];
-  u8 t5[256];
-  u8 t6[256];
-  u8 t7[256];
-  u8 t8[256];
+  u8 t3[2];
+  u8 t4[20];
+  u8 t5[2];
+  u8 t6[9];
+  u8 t7[2];
+  u8 t8[9];
   u8 t9[256];
   u8 t10[256];
   u8 t11[256];
-  u8 t12[256];
-  u8 t13[256];
-  u8 t14[256];
-  u8 t15[256];
-  u8 t16[256];
-  u8 t17[256];
+  u8 t12[45];
+  u8 t13[45];
+  u8 t14[45];
+  u8 t15[45];
+  u8 t16[45];
+  u8 t17[45];
   do {
     Key = ReadPromptChoice(S("\021Save Which Game: "), S("\023A B C D E F G H I J"), 13, 10, 15, 0, (ViewMode == 2), &ExtKey);
   } while (!(Key == 0x00 || (Key >= 'A' && Key <= 'J')));
@@ -924,7 +924,7 @@ void SaveAndExit(const u8 *AreaScript_in)
   u8 NumText[2] = {0};
   u8 Key = 0;
   u8 ExtKey = 0;
-  u8 t1[256];
+  u8 t1[30];
   if (FileExists(AreaScript)) {
     return;
   }

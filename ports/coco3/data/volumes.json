@@ -1,15 +1,160 @@
 {
-  "why": "A volume is one RS-DOS floppy image (35 tracks, 156,672 bytes of file space) holding one container file POOLVOL.DAT. A file family with a digit n (ECL, GEO, WALLDEF, ITEM, PIC, CPIC, SPRIT, MONnCHA/ITM/SPC, 8X8D) belongs to the game's TileSet n: the original asked for one disk per TileSet (InsertDiskPrompts[TileSet]). The files without a TileSet digit, and HEAD/BODY (picked by picture number), fill the rest. The recorded sessions (build with POOLRAD_TRACE) touch only sets 1 and 2 and the shared files, so base, sets 1 and 3, and set 2 are the disks that matter most. The packing is a policy, not a format: the engine finds a file on whichever volume holds it.",
-  "capacity": 156672,
-  "volumes": [
-    {"num": 0, "name": "BASE", "prompt": "Insert the BASE disk", "files": ["8X8D1", "COMSPR", "CHEAD", "CBODY", "ICON", "ITEMS", "DUNGCOM", "RANDCOM", "WILDCOM", "BACPAC", "SQRPACI"]},
-    {"num": 1, "name": "SETS13", "prompt": "Insert the SETS 1 AND 3 disk", "files": ["ECL[13]", "GEO[13]", "WALLDEF[13]", "ITEM[13]", "PIC[13]", "CPIC[13]", "SPRIT[13]", "MON[13]CHA", "MON[13]ITM", "8X8D3"]},
-    {"num": 2, "name": "SET2", "prompt": "Insert the SET 2 disk", "files": ["ECL2", "GEO2", "WALLDEF2", "ITEM2", "PIC2", "CPIC2", "SPRIT2", "MON2CHA", "MON2ITM", "MON2SPC", "8X8D2"]},
-    {"num": 3, "name": "SET4", "prompt": "Insert the SET 4 disk", "files": ["ECL4", "GEO4", "WALLDEF4", "ITEM4", "CPIC4", "SPRIT4", "MON4CHA", "MON4ITM", "MON4SPC", "8X8D4", "TITLE", "FINAL5"]},
-    {"num": 4, "name": "ART4", "prompt": "Insert the PICTURES 4 disk", "files": ["PIC4", "BODY*"]},
-    {"num": 5, "name": "SET5", "prompt": "Insert the SET 5 disk", "files": ["ECL5", "GEO5", "WALLDEF5", "ITEM5", "PIC5", "CPIC5", "SPRIT5", "MON5CHA", "MON5ITM", "MON5SPC", "8X8D5", "HEAD*"]},
-    {"num": 6, "name": "SET6", "prompt": "Insert the SET 6 disk", "files": ["ECL6", "GEO6", "WALLDEF6", "ITEM6", "PIC6", "CPIC6", "SPRIT6", "MON6CHA", "MON6ITM", "MON6SPC", "8X8D6"]},
-    {"num": 7, "name": "SET7", "prompt": "Insert the SET 7 disk", "files": ["ECL7", "GEO7", "WALLDEF7", "ITEM7", "PIC7", "CPIC7", "SPRIT7", "MON7CHA", "MON7ITM", "MON7SPC", "8X8D7"]},
-    {"num": 8, "name": "SET8", "prompt": "Insert the SET 8 disk", "files": ["ECL8", "GEO8", "WALLDEF8", "ITEM8", "PIC8", "CPIC8", "SPRIT8", "MON8CHA", "MON8ITM", "MON8SPC", "8X8D8"]}
-  ]
+ "why": "A volume is one RS-DOS floppy image (35 tracks, 156,672 bytes of file space) holding one container file POOLVOL.DAT. A file family with a digit n (ECL, GEO, WALLDEF, ITEM, PIC, CPIC, SPRIT, MONnCHA/ITM/SPC, 8X8D) belongs to the game's TileSet n: the original asked for one disk per TileSet (InsertDiskPrompts[TileSet]). The files without a TileSet digit, and HEAD/BODY (picked by picture number), fill the rest. The recorded sessions (build with POOLRAD_TRACE) touch only sets 1 and 2 and the shared files, so base, sets 1 and 3, and set 2 are the disks that matter most. The packing is a policy, not a format: the engine finds a file on whichever volume holds it.",
+ "capacity": 156672,
+ "volumes": [
+  {
+   "num": 0,
+   "name": "BASE",
+   "prompt": "Insert the BASE disk",
+   "files": [
+    "8X8D1",
+    "COMSPR",
+    "CHEAD",
+    "ICON",
+    "ITEMS",
+    "RANDCOM",
+    "BACPAC",
+    "SQRPACI",
+    "TITLE"
+   ]
+  },
+  {
+   "num": 1,
+   "name": "SETS13",
+   "prompt": "Insert the SETS 1 AND 3 disk",
+   "files": [
+    "ECL[13]",
+    "GEO[13]",
+    "WALLDEF[13]",
+    "ITEM[13]",
+    "PIC[13]",
+    "CPIC[13]",
+    "SPRIT[13]",
+    "MON[13]CHA",
+    "MON[13]ITM",
+    "8X8D3"
+   ]
+  },
+  {
+   "num": 2,
+   "name": "SET2",
+   "prompt": "Insert the SET 2 disk",
+   "files": [
+    "ECL2",
+    "GEO2",
+    "WALLDEF2",
+    "ITEM2",
+    "PIC2",
+    "CPIC2",
+    "SPRIT2",
+    "MON2CHA",
+    "MON2ITM",
+    "MON2SPC",
+    "8X8D2"
+   ]
+  },
+  {
+   "num": 3,
+   "name": "SET4",
+   "prompt": "Insert the SET 4 disk",
+   "files": [
+    "ECL4",
+    "GEO4",
+    "WALLDEF4",
+    "ITEM4",
+    "CPIC4",
+    "SPRIT4",
+    "MON4CHA",
+    "MON4ITM",
+    "MON4SPC",
+    "8X8D4",
+    "FINAL5",
+    "CBODY",
+    "DUNGCOM",
+    "WILDCOM"
+   ]
+  },
+  {
+   "num": 4,
+   "name": "ART4",
+   "prompt": "Insert the PICTURES 4 disk",
+   "files": [
+    "PIC4",
+    "BODY*"
+   ]
+  },
+  {
+   "num": 5,
+   "name": "SET5",
+   "prompt": "Insert the SET 5 disk",
+   "files": [
+    "ECL5",
+    "GEO5",
+    "WALLDEF5",
+    "ITEM5",
+    "PIC5",
+    "CPIC5",
+    "SPRIT5",
+    "MON5CHA",
+    "MON5ITM",
+    "MON5SPC",
+    "8X8D5",
+    "HEAD*"
+   ]
+  },
+  {
+   "num": 6,
+   "name": "SET6",
+   "prompt": "Insert the SET 6 disk",
+   "files": [
+    "ECL6",
+    "GEO6",
+    "WALLDEF6",
+    "ITEM6",
+    "PIC6",
+    "CPIC6",
+    "SPRIT6",
+    "MON6CHA",
+    "MON6ITM",
+    "MON6SPC",
+    "8X8D6"
+   ]
+  },
+  {
+   "num": 7,
+   "name": "SET7",
+   "prompt": "Insert the SET 7 disk",
+   "files": [
+    "ECL7",
+    "GEO7",
+    "WALLDEF7",
+    "ITEM7",
+    "PIC7",
+    "CPIC7",
+    "SPRIT7",
+    "MON7CHA",
+    "MON7ITM",
+    "MON7SPC",
+    "8X8D7"
+   ]
+  },
+  {
+   "num": 8,
+   "name": "SET8",
+   "prompt": "Insert the SET 8 disk",
+   "files": [
+    "ECL8",
+    "GEO8",
+    "WALLDEF8",
+    "ITEM8",
+    "PIC8",
+    "CPIC8",
+    "SPRIT8",
+    "MON8CHA",
+    "MON8ITM",
+    "MON8SPC",
+    "8X8D8"
+   ]
+  }
+ ]
 }

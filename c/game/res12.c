@@ -179,13 +179,13 @@ void FormatItemLine(s32 Value, PItem Item, u8 Col, u8 Row, u8 ShowReadied, u8 Sh
   u8 Found = 0;
   u8 Plural = 0;
   PCharacter Member = 0;
-  u8 t1[256];
+  u8 t1[43];
   u8 t2[256];
   u8 t3[256];
-  u8 t4[256];
-  u8 t5[256];
-  u8 t6[256];
-  u8 t7[256];
+  u8 t4[61];
+  u8 t5[42];
+  u8 t6[43];
+  u8 t7[42];
   rtl_str_assign((*FPD(TMenuLine (*), Item)).Text, 40, S("\000"));
   if (ShowReadied) {
     if ((*FPD(TMenuLine (*), Item)).Readied) {
@@ -2073,16 +2073,16 @@ void DrawLocationLine(void)
   u8 Minutes[3] = {0};
   u8 Line[41] = {0};
   u8 t1[256];
-  u8 t2[256];
+  u8 t2[4];
   u8 t3[256];
-  u8 t4[256];
+  u8 t4[4];
   u8 t5[256];
   u8 t6[256];
   u8 t7[256];
-  u8 t8[256];
-  u8 t9[256];
-  u8 t10[256];
-  u8 t11[256];
+  u8 t8[44];
+  u8 t9[46];
+  u8 t10[49];
+  u8 t11[48];
   rtl_str_assign(Line, 40, S("\000"));
   Col = PartyMapColumn;
   Row = PartyMapRow;
@@ -2169,8 +2169,8 @@ void SelectPartyMember(const u8 *Title_in, u8 WithExit, PCharacter (*Selected))
   u8 Animate = 0;
   PCharacter PartyMember = 0;
   u8 Extra[41] = {0};
-  u8 t1[256];
-  u8 t2[256];
+  u8 t1[42];
+  u8 t2[47];
   Key = ' ';
   rtl_str_assign(Extra, 40, S("\000"));
   if (WithExit) {

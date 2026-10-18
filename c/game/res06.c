@@ -497,9 +497,9 @@ u8 *ReadInputLine(u8 *Result_out, const u8 *Prompt_in, u8 Color, u8 MaxLen)
   u8 Line[256] = {0};
   u8 Key = 0;
   s32 t1;
-  u8 t2[256];
+  u8 t2[2];
   u8 t3[256];
-  u8 t4[256];
+  u8 t4[2];
   u8 t5[256];
   ClearTextCells(0, BottomRow, 0, ScreenCols);
   DrawTextAt(0, BottomRow, Color, Prompt);

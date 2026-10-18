@@ -22,17 +22,24 @@ BANK_BYTES = 0x4000                      # slots 4 and 5
 BANK_LIMIT = BANK_BYTES - 0x180          # room for the entry table (3 bytes an entry) and a margin
 CORE_UNITS = ["pool", "res02", "res04", "res10", "res11"]   # resident
 SKIP_UNITS = {"image", "poolvars", "vmlayout"}
-RTL_BANK = ("rtl_str", "rtl_heap")                     # the runtime that has no variables lives in a bank of its own (the core is small)
+RTL_BANK = ("rtl_heap",)                     # the runtime that has no variables lives in a bank of its own (the core is small)
 # Replaced by the engine (step 8.5d): whole units, and routines of units that stay. The engine provides them under the same
 # names; until a routine is written a stub stops the program and says which one was asked for.
-ENGINE_UNITS = ["res05", "res07", "ovl28", "res08"]
-CORE_ROUTINES = {"res06": ["GameClock"]}                  # cut out of the unit, written in src/game (the core)
+ENGINE_UNITS = ["res07", "ovl28", "res08"]
+CORE_ROUTINES = {"res06": ["GameClock"], "ovl34": ["Put8x8Symbol"],
+                 "res05": ["LoadDaxBlock", "OpenDaxFile", "CloseDaxFile", "UnpackRle"]}   # cut out of the unit, written in src/game (the core, engapi.c)
 ENGINE_ROUTINES = {
     "res06": ["SetEgaFillRegisters", "SetActivePage", "SetPageSegment", "FillPlaneRect", "LoadGameFont", "DrawGlyph"],   # GameClock: rtl_sys.c
-    "ovl34": ["Put8x8Symbol"],
     "ovl32": ["Load24x24Set", "DrawCellPicture", "DrawIcon"],
 }
+ENGINE_EXTRA = ["ShowPictureItem", "DaxLoad", "DaxRead", "FileKnown"]                       # engine routines the original does not have (called by src/game/engapi.c)
+WRAPPED = {"LoadPicture", "AllocatePicture", "ReleasePicture", "RemapPictureColors"}   # engine routines with a wrapper in src/game/engapi.c: the stub is _eng_<Name>
+DEBUG_PATCH = {}
 CMOC = ["cmoc", "-c", "--void-target", "--no-relocate", "-O2", "-fomit-frame-pointer", "-w"]
+
+
+def stub_sym(name):
+    return ("_eng_" if name in WRAPPED else "_") + name
 
 
 def run(cmd, **kw):
@@ -155,6 +162,102 @@ def strip_routines(text, names):
     return "\n".join(it[1] if it[0] == "other" else it[3] for it in keep) + "\n"
 
 
+def c_string_len(body):
+    """bytes a C string literal body (between the quotes, escapes unprocessed) stands for"""
+    i = n = 0
+    while i < len(body):
+        if body[i] == "\\":
+            i += 1
+            if body[i] in "01234567":
+                j = i
+                while j < i + 3 and j < len(body) and body[j] in "01234567":
+                    j += 1
+                i = j
+            elif body[i] == "x":
+                j = i + 1
+                while j < len(body) and body[j] in "0123456789abcdefABCDEF":
+                    j += 1
+                i = j
+            else:
+                i += 1
+        else:
+            i += 1
+        n += 1
+    return n
+
+
+def copy_cross_literals(text, unit, fn_unit):
+    """A bank sees only its own rodata: a pointer to a string literal that reaches a routine of another bank would read the
+    wrong bytes there. Every literal S("...") that is an argument of a call to a routine of another (non-core) unit becomes
+    (memcpy(litK, "...", n), litK), a copy in a buffer of the caller's frame (K counts the literals of the statement)."""
+    out = []
+    for kind, *rest in parse_items(text):
+        if kind != "fn":
+            out.append(rest[0] if kind == "other" else rest[2])
+            continue
+        body = rest[2]
+        hits, stack, stmt = [], [], 0
+        i = body.index("\n{\n") + 1
+        L = len(body)
+        while i < L:
+            c = body[i]
+            if body.startswith("/*", i):
+                i = body.index("*/", i) + 2
+            elif body.startswith("//", i):
+                i = body.index("\n", i)
+            elif c == '"':                                    # a string literal outside S(...): skip
+                j = i + 1
+                while body[j] != '"':
+                    j += 2 if body[j] == "\\" else 1
+                i = j + 1
+            elif c == "'":
+                j = i + 1
+                while body[j] != "'":
+                    j += 2 if body[j] == "\\" else 1
+                i = j + 1
+            elif c in ";{}":
+                stmt = 0
+                i += 1
+            elif c == "(":
+                k = i - 1
+                while k >= 0 and body[k] == " ":
+                    k -= 1
+                e = k + 1
+                while k >= 0 and (body[k].isalnum() or body[k] == "_"):
+                    k -= 1
+                name = body[k + 1:e]
+                if name == "S" and body.startswith('"', i + 1):
+                    j = i + 2
+                    while body[j] != '"':
+                        j += 2 if body[j] == "\\" else 1
+                    callee = stack[-1] if stack else None
+                    if body[j + 1] == ")" and callee and callee in fn_unit and fn_unit[callee] != unit:
+                        hits.append((k + 1, j + 2, body[i + 2:j], stmt))
+                        stmt += 1
+                    i = j + 2
+                else:
+                    stack.append(name)
+                    i += 1
+            elif c == ")":
+                if stack:
+                    stack.pop()
+                i += 1
+            else:
+                i += 1
+        if not hits:
+            out.append(rest[2])
+            continue
+        size = {}
+        for a, b, lit, k in hits:
+            size[k] = max(size.get(k, 0), c_string_len(lit) + 1)
+        for a, b, lit, k in reversed(hits):
+            body = body[:a] + '(memcpy(lit%d, "%s", %d), lit%d)' % (k, lit, c_string_len(lit), k) + body[b:]
+        decl = "".join("  u8 lit%d[%d];\n" % (k, size[k]) for k in sorted(size))
+        j = body.index("\n{\n") + 3
+        out.append(body[:j] + decl + body[j:])
+    return "\n".join(out) + "\n"
+
+
 def split_unit(name, text, funcs, parts_wanted):
     """-> [text of part 1, ...]: the non-routine items go to every part, the routines are dealt out in order so that
     each part gets about the same size; static helpers stay with the routine after them."""
@@ -223,9 +326,38 @@ def main(argv):
         engine_api += [n for n in routine_names((gen / (u + ".c")).read_text()) if not n.startswith("init_")]
     for u, names in ENGINE_ROUTINES.items():
         engine_api += names
+    engine_api += ENGINE_EXTRA
+    # the initialisation parts that do nothing (the translation only announces them) are not called: each call would bring its
+    # bank in from the disk at start-up
+    trivial = set()
+    for u in units + ENGINE_UNITS:
+        for m in re.finditer(r"void (init_\w+)\(void\)\s*\{(.*?)\n\}", (gen / (u + ".c")).read_text(), re.S):
+            body = re.sub(r"/\*.*?\*/", "", m.group(2), flags=re.S).replace('POOL_TRACE("init");', "")
+            if not body.strip():
+                trivial.add(m.group(1))
+    fn_unit = {}                                            # routine -> unit, for the routines that live in banks
+    for u in units:
+        if u not in CORE_UNITS:
+            for n in routine_names((gen / (u + ".c")).read_text()):
+                if n not in CORE_ROUTINES.get(u, []) and n not in ENGINE_ROUTINES.get(u, []):
+                    fn_unit[n] = u
     core = []
     for u in units:
         src = gen / (u + ".c")
+        if u not in CORE_UNITS:
+            src = out / "src" / (u + ".c")
+            t = (gen / (u + ".c")).read_text()
+            if u in ENGINE_ROUTINES or u in CORE_ROUTINES:
+                t = strip_routines(t, set(ENGINE_ROUTINES.get(u, [])) | set(CORE_ROUTINES.get(u, [])))
+            for a, b in DEBUG_PATCH.get(u, []):                 # a temporary probe in a unit, from the environment (see the file)
+                t = t.replace(a, b)
+            src.write_text(copy_cross_literals(t, u, fn_unit))
+        if u == "pool":
+            src = out / "src" / "pool.c"
+            t = (gen / "pool.c").read_text()
+            for n in sorted(trivial):
+                t = re.sub(r"^  %s\(\);\n" % n, "", t, flags=re.M)
+            src.write_text(t)
         if u in ENGINE_ROUTINES or u in CORE_ROUTINES:      # the routines the engine or the core take over are cut out of the unit
             src = out / "src" / (u + ".c")
             src.write_text(strip_routines((gen / (u + ".c")).read_text(), set(ENGINE_ROUTINES.get(u, [])) | set(CORE_ROUTINES.get(u, []))))
@@ -307,9 +439,25 @@ def main(argv):
     # the resident stub of every far entry, the entry table at the head of every bank
     with open(out / "src/farstubs.asm", "w") as w:
         w.write("* generated by tools/mkgame.py: the resident stubs of the far entries\n        INCLUDE banks.inc\n        SECTION code\n        IMPORT  __farcall\n")
+        # A bank with few entries: a stub is `ldx #entry` and a branch to the bank's common tail (`ldb #bank` / `jmp __farcall`),
+        # 5 bytes (6 when the tail is out of short range). A bank with many: a stub is a `bsr` (2 bytes) to a tail that
+        # takes the return address back off the stack and turns its distance from the first stub into the entry's address.
         for b in banks:
-            for i, sym in enumerate(entries[b["name"]]):
-                w.write("        FARSTUB %s,%d,%d\n" % (sym[1:], ids[b["name"]], i))
+            syms = entries[b["name"]]
+            k, bid = len(syms), ids[b["name"]]
+            if k >= 8 and k <= 60:
+                for i, sym in enumerate(syms):
+                    w.write("        EXPORT  %s\n%s bsr     fcb%d\n" % (sym, sym, bid))
+                w.write("fcb%d    puls    x\n        tfr     x,d\n        subd    #%s+2\n        pshs    d\n        lsra\n        rorb\n"
+                        "        addd    ,s++\n        addd    #BANK_WINDOW\n        tfr     d,x\n        ldb     #%d\n        jmp     __farcall\n"
+                        % (bid, syms[0], bid))
+                continue
+            for i, sym in enumerate(syms):
+                far = ((k - i) * 6) + 2 > 120                       # worst case distance to the tail
+                w.write("        EXPORT  %s\n%s ldx     #BANK_WINDOW+BANK_ENTRY_SIZE*%d\n        %s    fcb%d\n" %
+                        (sym, sym, i, "lbra" if far else "bra ", bid))
+            if k:
+                w.write("fcb%d    ldb     #%d\n        jmp     __farcall\n" % (bid, bid))
         w.write("        ENDSECTION\n")
     for b in banks:
         with open(out / "src" / (b["name"] + "_entries.asm"), "w") as w:
@@ -322,11 +470,14 @@ def main(argv):
     # the routines the engine provides: a stub that stops the program and says which one was asked for, until it is written
     with open(out / "src/engine_stubs.asm", "w") as w:
         w.write("* generated by tools/mkgame.py: the engine's routines, not written yet\n        INCLUDE mailbox.inc\n        SECTION code\n")
+        w.write("        IMPORT  __engcall\n")
         for sym in engine_api:
-            w.write("        EXPORT  _%s\n" % sym)
+            w.write("        EXPORT  %s\n" % stub_sym(sym))
         for i, sym in enumerate(engine_api):
-            w.write("_%s ldd     #%d\n        lbra    __unimpl\n" % (sym, i + 1))
-        w.write("__unimpl std     MB_BASE+$3C\n        lda     #2\n        sta     MB_STATUS\n        orcc    #$50\n@stop   bra     @stop\n        ENDSECTION\n")
+            w.write("%s ldb     #%d\n        bra     et%d\n" % (stub_sym(sym), i + 1, i // 24))
+            if i % 24 == 23 or i == len(engine_api) - 1:             # a tail every 24 stubs, within short branch range
+                w.write("et%d     jmp     __engcall\n" % (i // 24))
+        w.write("        ENDSECTION\n")
     (out / "engine_names.txt").write_text("\n".join("%d %s" % (i + 1, n) for i, n in enumerate(engine_api)) + "\n")
     # the init parts of the replaced units do nothing here (the engine sets itself up); res08's is written by hand
     with open(out / "src/init_stubs.asm", "w") as w:
@@ -336,7 +487,7 @@ def main(argv):
                 w.write("        EXPORT  _init_%s\n_init_%s rts\n" % (u.upper(), u.upper()))
         w.write("        ENDSECTION\n")
     # helpers of CMOC's library that banks use: pulled into the core, which the banks then call by address
-    stubbed = {"_" + n for n in engine_api} | {sym for v in entries.values() for sym in v}
+    stubbed = {stub_sym(n) for n in engine_api} | {sym for v in entries.values() for sym in v}
     lib = set()
     for who, inf in info.items():
         for sym in inf["imports"]:
@@ -373,12 +524,78 @@ def main(argv):
     return 0
 
 
+ENGINE_C = ["api", "gameboot", "vol", "dax", "gfx", "rsdos", "mailbox"]
+ENGINE_ASM = ["boot", "mmu", "disk", "irq", "kernels", "rle", "engcall", "apitab", "nobanks"]
+
+
+def build_engine(out, here):
+    """The engine's program (POOL.BIN, task 1): the engine objects, the table of the routines the game calls (api_tab.c,
+    from engine_names.txt and the api_ functions of api.c) and gameboot.c's main. Its map gives the core the addresses of
+    the shared section ($0600..$097D: the interrupt handler, the keyboard, __engcall, the bank table) as constants."""
+    eobj = out / "eobj"
+    eobj.mkdir(exist_ok=True)
+    names = [l.split()[1] for l in (out / "engine_names.txt").read_text().split("\n") if l.strip()]
+    have = set(re.findall(r"^\w[\w ]*\bapi_(\w+)\(", (here / "src/engine/api.c").read_text(), re.M))
+    with open(out / "src/api_tab.c", "w") as w:
+        w.write("/* generated by tools/mkgame.py: routine number -> api_ function (0 is the bank loader) */\nvoid api_bankload(void);\nvoid api_unimpl(void);\n")
+        for n in names:
+            if n in have:
+                w.write("void api_%s(void);\n" % n)
+        w.write("void (*api_tab[%d])(void) = {\n  api_bankload,\n" % (len(names) + 1))
+        for n in names:
+            w.write("  api_%s,\n" % (n if n in have else "unimpl"))
+        w.write("};\n")
+    objs = []
+    for c in ENGINE_C:
+        compile_c(str(here / "src/engine" / (c + ".c")), str(eobj / (c + ".o")), [str(here / "src/engine")])
+        objs.append(str(eobj / (c + ".o")))
+    compile_c(str(out / "src/api_tab.c"), str(eobj / "api_tab.o"), [str(here / "src/engine")])
+    objs.append(str(eobj / "api_tab.o"))
+    for a in ENGINE_ASM:
+        r = run(["lwasm", "--6809", "-fobj", "-I" + str(here / "src/engine"), "-o", str(eobj / (a + ".o")), str(here / "src/engine" / (a + ".asm"))])
+        if r.returncode:
+            raise SystemExit("lwasm %s: %s" % (a, r.stderr[:400]))
+        objs.append(str(eobj / (a + ".o")))
+    libs = ["-L/usr/local/share/cmoc/lib", "-lcmoc-crt-void", "-lcmoc-std-void"]
+    r = run(["lwlink", "--format=decb", "--script=" + str(here / "src/engine/core.link"), "--map=" + str(out / "pool.map"),
+             "-o", str(out / "POOL.BIN")] + objs + libs)
+    if r.returncode:
+        raise SystemExit("lwlink engine: " + (r.stderr + r.stdout)[:800])
+    text = (out / "pool.map").read_text()
+    sec = [(m.group(1), int(m.group(3), 16), int(m.group(4), 16)) for m in
+           re.finditer(r"^Section: (\S+) \((.*?)\) load at ([0-9A-Fa-f]+), length ([0-9A-Fa-f]+)", text, re.M)]
+    end = max(a + n for _, a, n in sec if a >= 0x2000)
+    print("engine: %d routines of the game (%d written), ends at $%04X (%d bytes from $2000)" %
+          (len(names), len(have & set(names)), end, end - 0x2000))
+    if end > 0x8000:
+        raise SystemExit("the engine ends at $%04X, past the windows at $8000" % end)
+    sys.path.insert(0, str(here / "tools"))
+    import symexport
+    syms = symexport.read_map(str(out / "pool.map"))
+    with open(obj_dir(out) / "engsyms.asm", "w") as f:
+        f.write("* generated by tools/mkgame.py from pool.map: the engine's shared symbols (slot 0, both tasks see them)\n        SECTION _constants,constant\n")
+        for n in sorted(syms):
+            if n.startswith("_") and 0x0400 <= syms[n] < 0x1000:
+                f.write("%s\tEQU\t$%04X\n\tEXPORT\t%s\n" % (n, syms[n], n))
+        f.write("        ENDSECTION\n")
+    r = run(["lwasm", "--6809", "-fobj", "-o", str(obj_dir(out) / "engsyms.o"), str(obj_dir(out) / "engsyms.asm")])
+    if r.returncode:
+        raise SystemExit("lwasm engsyms: " + r.stderr[:400])
+
+
+def obj_dir(out):
+    return out / "obj"
+
+
 def link_all(out, here, banks, ids, info, core, entries):
     """core.bin and the bank images. The core's undefined symbols that are not written yet become stubs that stop the program
     (build/game/missing.txt lists them: that list is the work left)."""
     obj, src = out / "obj", out / "src"
-    eobj = here / "build/obj"                                # the engine objects the Makefile builds
-    base = [eobj / n for n in ("boot.o", "mailbox.o", "mmu.o", "farcall.o", "nobanks.o", "irq.o")]
+    build_engine(out, here)
+    r = run(["lwasm", "--6809", "-fobj", "-DGAME=1", "-I" + str(here / "src/engine"), "-o", str(obj / "farcallg.o"), str(here / "src/engine/farcall.asm")])
+    if r.returncode:
+        raise SystemExit("lwasm farcallg: " + r.stderr[:400])
+    base = [obj / "farcallg.o", obj / "engsyms.o"]          # (the engine's shared symbols come from the engine's map)
     (obj / "rtl").mkdir(exist_ok=True)
     for stale in (obj / "rtl").glob("*.o"):
         stale.unlink()
@@ -409,7 +626,7 @@ def link_all(out, here, banks, ids, info, core, entries):
                 raise SystemExit("lwasm missing: " + r.stderr[:400])
             extra = [str(obj / "missing.o")]
             (out / "missing.txt").write_text("\n".join("%d %s" % (0x100 + i, m) for i, m in enumerate(missing)) + "\n")
-        r = run(["lwlink", "--format=decb", "--script=" + str(here / "src/engine/core.link"), "--map=" + str(out / "core.map"),
+        r = run(["lwlink", "--format=decb", "--script=" + str(here / "src/engine/gamecore.link"), "--map=" + str(out / "core.map"),
                  "-o", str(out / "core.bin")] + cobjs + extra + libs)
         if r.returncode == 0:
             break
@@ -426,8 +643,8 @@ def link_all(out, here, banks, ids, info, core, entries):
            re.finditer(r"^Section: (\S+) \((.*?)\) load at ([0-9A-Fa-f]+), length ([0-9A-Fa-f]+)", (out / "core.map").read_text(), re.M)]
     end = max(a + n for _, a, n in sec)
     print("core: ends at $%04X (%d bytes from $2000); %d symbols still missing" % (end, end - 0x2000, len(missing)))
-    if end > 0x5200:
-        raise SystemExit("the core ends at $%04X, past the heap tables at $5200 (src/game/coco_map.h)" % end)
+    if end > 0x5400:
+        raise SystemExit("the core ends at $%04X, past the heap tables at $5400 (src/game/coco_map.h)" % end)
     for m in missing:
         print("   missing", m)
     # the banks

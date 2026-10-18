@@ -12,6 +12,10 @@
         INCLUDE banks.inc
 
         SECTION code
+        ifdef   GAME
+        IMPORT  __engcall
+        IMPORT  _banktab
+        endc
 
         EXPORT  __farcall
 __farcall
@@ -28,7 +32,7 @@ __farcall
         pshu    a                       the bank that was mapped
         stu     <FC_BSPTR
         ldu     <FC_U                   caller's U back before the call
-        ldx     #_banktab-1
+@retry  ldx     #_banktab-1
         lda     b,x
         beq     @missing                the bank is not in memory: the loader has to bring it
         sta     MMU_SLOT4               map the callee's bank
@@ -57,14 +61,28 @@ __farcall
         ldd     <FC_D
         jmp     ,x
 @missing
+        ifdef   GAME
+*       the game: the engine loads the bank (api_bankload, routine 0) and the call is tried again
+        clra
+        pshs    u,y,d                   the bank id, the argument of api_bankload (a word on the stack, as C passes it)
+        clrb
+        jsr     __engcall               B = 0: routine 0
+        leas    2,s
+        puls    y,u
+        ldb     <FC_CURBANK
+        lbra    @retry
+        else
         stb     MB_BASE+$3E             which bank: the harness reads it (result word 31)
         lda     #2
         sta     MB_STATUS               finished, failed
         orcc    #$50
 @stop   bra     @stop
+        endc
 
+        ifndef  GAME
         SECTION code
         EXPORT  _banktab
 _banktab RMB    64                      index = bank id - 1: the first of the two blocks of the bank, 0 = not in memory
 *                                       (in the code section, not bss: the loader fills it before CMOC clears bss)
         ENDSECTION
+        endc

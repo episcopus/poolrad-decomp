@@ -13,8 +13,8 @@ void Load8x8Bank(u8 BlockId, u8 Bank)
   u8 NumBlock[4] = {0};
   u8 Unused = 0;
   u8 Key = 0;
-  u8 t1[256];
-  u8 t2[256];
+  u8 t1[6];
+  u8 t2[25];
   if ((Bank >= FirstBank && Bank <= LastBank)) {
     rtl_str_int(NumSet, 1, TileSet, 0);
     rtl_str_int(NumBlock, 3, BlockId, 0);

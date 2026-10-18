@@ -36,8 +36,9 @@ class BuiltinMixin:
 
     def bi_copy(self, a, n):
         s, i, c = self.ex(a[0]), self.ex(a[1]), self.ex(a[2])
-        t = self.str_temp()
-        return E("rtl_str_copy(%s, %s, %s, %s)" % (t, self.to_pstr(s), i.code, c.code), Ty("string", maxlen=255))
+        mx = s.ty.maxlen if s.ty.kind == "string" else 255        # a copy is no longer than its source
+        t = self.str_temp(mx)
+        return E("rtl_str_copy(%s, %s, %s, %s)" % (t, self.to_pstr(s), i.code, c.code), Ty("string", maxlen=mx))
 
     def bi_pos(self, a, n):
         sub, s = self.ex(a[0]), self.ex(a[1])
@@ -201,6 +202,7 @@ class BuiltinMixin:
 
     def incdec(self, a, op):
         x = self.ex(a[0])
+        self.mutate(x)
         step = self.ex(a[1]).code if len(a) > 1 else "1"
         if getattr(x, "memref", None):
             seg, off = x.memref

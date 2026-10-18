@@ -1575,7 +1575,7 @@ void DrainLevels(PCharacter Who, u8 Count)
   fr.Count = Count;
   u8 t1[256];
   u8 t2[256];
-  u8 t3[256];
+  u8 t3[52];
   if (fr.Count > 1) {
     rtl_str_assign(fr.Msg, 40, rtl_str_cat(t2, 2, (const u8 *const[]){ByteToText(t1, fr.Count), S("\007 levels")}));
   } else {

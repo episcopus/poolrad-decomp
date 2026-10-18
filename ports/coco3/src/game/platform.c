@@ -14,11 +14,14 @@ void vm_init(void);
 void init_RES08(void)
 {
     CheckBreak = 0;
-    VideoAdapter = 1;
     SavedVideoMode = 3;
     CurrentVideoMode = 3;
+    VideoAdapter = 1;
+    SetVideoMode(0xD);
     TextPage = 0;
     FillTextPage = 0;
+    SetActivePage(TextPage);
+    SetPageSegment(FillTextPage);
     SoundMode = 2;
     rtl_str_assign(GameDir, 255, S("\013C:\\POOLRAD\\"));
     rtl_str_assign(SaveDir, 255, S("\023C:\\POOLRAD\\SAVE\\"));
@@ -34,7 +37,7 @@ void StopSoundTimer(void) { }
 
 int main(void)
 {
-    eng_leave();                                  /* the game's own address space (boot starts in the engine's) */
+
     vm_init();
     irq_start();
     pool_init_units();

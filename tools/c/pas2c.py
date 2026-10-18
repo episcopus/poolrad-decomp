@@ -51,6 +51,7 @@ class Gen(DeclMixin, ExprMixin, BuiltinMixin, StmtMixin):
         self.taken: dict[str, tuple] = {}
         self.macros: set[str] = set()
         self.taken_global_fn: set[str] = set()
+        self.global_const_names: set[str] = set()
         self.units: dict[str, Unit] = {}
         self.order: list[Unit] = []
         self.h: list[str] = []             # game.h body in order
@@ -442,14 +443,17 @@ class Gen(DeclMixin, ExprMixin, BuiltinMixin, StmtMixin):
             elif d.k == "routine" and d.body is None and "external" in d.mods:
                 pass
 
-    def sig_params(self, s: Sym, frame_parent=None):
+    def sig_params(self, s: Sym, frame_parent=None, renamed=()):
         parts = []
         if s.nested_in is not None:
             parts.append("struct Frame_%s *up" % s.nested_in.cname)
         if s.ret is not None and s.ret.kind == "string":
             parts.append("u8 *Result_out")
         for p in s.params:
-            parts.append(self.param_decl(p))
+            d = self.param_decl(p)
+            if p.name in renamed:
+                d = decl(p.type, self.safe(p.name) + "_in")
+            parts.append(d)
         return ", ".join(parts) or "void"
 
     def param_decl(self, p: Sym) -> str:
@@ -887,13 +891,24 @@ class Gen(DeclMixin, ExprMixin, BuiltinMixin, StmtMixin):
         for u in self.units.values():
             for sym in u.scope.syms.values():
                 if sym.kind == "var" and sym.where == "macro" and hasattr(sym, "offset") and sym.unit == u.name:
-                    gl.append("%04X %d %s %s" % (sym.offset, sym.type.size(), sym.name, "file" if sym.type.kind == "file" else "-"))
+                    gl.append("%04X %d %s %s %s" % (sym.offset, sym.type.size(), sym.name, "file" if sym.type.kind == "file" else "-",
+                                                    swap_text(sym.type)))
         for sym in self.system.syms.values():
             if sym.kind == "var" and sym.where == "macro" and hasattr(sym, "offset"):
-                gl.append("%04X %d %s %s" % (sym.offset, sym.type.size(), sym.name, "file" if sym.type.kind == "file" else "-"))
+                gl.append("%04X %d %s %s %s" % (sym.offset, sym.type.size(), sym.name, "file" if sym.type.kind == "file" else "-",
+                                                swap_text(sym.type)))
         (outdir / "globals.txt").write_text("\n".join(sorted(set(gl))) + "\n")
         return {"units": len(self.order), "routines": self.stats["routines"], "procs": len(pids),
                 "image": len(buf)}
+
+
+def swap_text(ty):
+    """the multi-byte scalars of a global as `offset:width:count,...` for tools/mkvm.py's byte order conversion ('-' = none)"""
+    try:
+        sw = ty.swaps(0)
+    except (ValueError, AttributeError):
+        return "-"
+    return ",".join("%d:%d:%d" % s for s in sw) or "-"
 
 
 def main(argv=None) -> int:
@@ -915,6 +930,16 @@ def main(argv=None) -> int:
                        "banked": {t.lower() for t in pl.get("banked", {}).get("types", [])},
                        "fields": {k.lower(): v.lower() for k, v in pl.get("pointer_fields", {}).items()}}
     g.load(files)
+    # every global constant and enumeration member of every unit: a local or parameter of the same spelling would shadow
+    # it in C, which CMOC mishandles (a one byte parameter BottomRow, shadowing the constant BottomRow = 24, was stored as
+    # a word); such locals get an underscore (safe())
+    for n in g.order_nodes:
+        for decls in (getattr(n, "idecls", None) or [], getattr(n, "decls", None) or []):
+            for d in decls:
+                if d.k == "const":
+                    g.global_const_names.add(d.name)
+                elif d.k == "typedecl" and getattr(d.type, "k", None) == "enum":
+                    g.global_const_names.update(d.type.names)
     errors = 0
     for n in g.order_nodes:
         try:

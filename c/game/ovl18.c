@@ -48,11 +48,11 @@ L_exit:
 void ShowEndingNarrative(void)
 {
   POOL_TRACE("ShowEndingNarrative");
-  u8 t1[256];
-  u8 t2[256];
-  u8 t3[256];
-  u8 t4[256];
-  u8 t5[256];
+  u8 t1[7];
+  u8 t2[7];
+  u8 t3[7];
+  u8 t4[7];
+  u8 t5[7];
   rtl_str_int(FinalPictureNumber, 1, TileSet, 0);
   SavedViewMode = ViewMode;
   ViewMode = 7;

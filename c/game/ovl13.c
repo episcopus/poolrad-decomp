@@ -116,10 +116,10 @@ void ShowAttackResult(PCharacter Attacker, PCharacter Target, u8 Kind, u8 Damage
   u8 Text[81] = {0};
   u8 t1[256];
   u8 t2[256];
-  u8 t3[256];
-  u8 t4[256];
-  u8 t5[256];
-  u8 t6[256];
+  u8 t3[88];
+  u8 t4[89];
+  u8 t5[90];
+  u8 t6[91];
   s32 t7;
   switch (Kind) {
   case 2:
@@ -1688,7 +1688,7 @@ u8 ShowAimPrompt(PCharacter Who, PCharacter Target, u8 Range, u8 ShowRange, u8 U
   u8 Bearing = 0;
   u8 t1[256];
   u8 t2[256];
-  u8 t3[256];
+  u8 t3[69];
   rtl_str_assign(Aim, 40, S("\000"));
   Distance = DistanceToTarget(Who, Target);
   Bearing = BearingTo(Who, Target);
@@ -1801,7 +1801,7 @@ void RunAimCursor(PCharacter Who, PCharacter Target, u8 Range, u8 Automatic, u8 
   u8 Valid = 0;
   u8 t1[256];
   u8 t2[256];
-  u8 t3[256];
+  u8 t3[48];
   rtl_FillChar((void *)&(*Aim), 7, 0);
   CurX = CombatantX(Target);
   CurY = CombatantY(Target);

@@ -197,7 +197,7 @@ u8 *MakeDosFileName(u8 *Result_out, const u8 *Name_in)
   u8 *Result = Result_out;
   u8 I = 0;
   u8 t1[256];
-  u8 t2[256];
+  u8 t2[2];
   u8 t3[256];
   {
     if (1 <= 10) {
@@ -266,10 +266,10 @@ u8 OpenDaxFile(const u8 *Name_in, const u8 *Ext_in, u16 (*HeaderSize), FileRec (
   const u8 *Ext = Ext_in;
   u8 Result = 0;
   u16 Got = 0;
-  u8 t1[256];
-  u8 t2[256];
-  u8 t3[256];
-  u8 t4[256];
+  u8 t1[81];
+  u8 t2[2];
+  u8 t3[32];
+  u8 t4[81];
   if (OpenGameFile(rtl_str_cat(t1, 2, (const u8 *const[]){Name, Ext}), rtl_str_cat(t3, 3, (const u8 *const[]){InsertDiskPrompts[TileSet], rtl_str_char(t2, (u8)DiskDriveLetter), S("\001:")}), OpenNoPrompt, (void *)&(*DataFile)) != 0) {
     rtl_assign(&(*IndexFile), rtl_str_cat(t4, 2, (const u8 *const[]){Name, Ext}));
     rtl_reset(&(*IndexFile), 1);
@@ -313,7 +313,7 @@ void LoadDaxBlock(const u8 *Name_in, const u8 *Ext_in, u8 BlockId, u16 (*Size), 
   u8 UnusedByte = 0;
   u8 SizeText[7] = {0};
   u8 t1[256];
-  u8 t2[256];
+  u8 t2[16];
   if (!OpenDaxFile(rtl_str_cat(t1, 2, (const u8 *const[]){GameDir, Name}), Ext, &HeaderSize, (void *)&DataFile, (void *)&IndexFile)) {
     (*Size) = 0;
     (*Block) = 0;

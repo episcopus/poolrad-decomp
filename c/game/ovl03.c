@@ -787,8 +787,8 @@ void AskMenuCommand(void)
   u16 Target = 0;
   u8 AcceptEnter = 0;
   u8 Animate = 0;
-  u8 HotColor = 0;
-  u8 WordColor = 0;
+  u8 HotColor_ = 0;
+  u8 WordColor_ = 0;
   u8 t1[256];
   u8 t2[256];
   rtl_str_assign(Title, 1, S("\000"));
@@ -801,15 +801,15 @@ void AskMenuCommand(void)
   rtl_str_assign(Options, 50, S("\000"));
   if (Count == 1) {
     AcceptEnter = 1;
-    HotColor = MenuHotColor;
-    WordColor = MenuHotColor;
+    HotColor_ = MenuHotColor;
+    WordColor_ = MenuHotColor;
     if (rtl_str_cmp(EclStrings[1], S("$PRESS <RETURN> OR BUTTON TO CONTINUE")) == 0) {
       rtl_str_assign(EclStrings[1], 255, S("\"PRESS <ENTER>/<RETURN> TO CONTINUE"));
     }
   } else {
     AcceptEnter = 0;
-    HotColor = MenuHotColor;
-    WordColor = MenuTextColor;
+    HotColor_ = MenuHotColor;
+    WordColor_ = MenuTextColor;
   }
   Animate = (((CloseUpShown != 0)) && ((CloseUpHidden != 0)));
   {
@@ -824,7 +824,7 @@ void AskMenuCommand(void)
     }
   }
   rtl_str_assign(Options, 50, rtl_str_cat(t2, 3, (const u8 *const[]){Options, S("\001~"), EclStrings[Count]}));
-  Choice = AskMenu(Title, Options, MenuTitleColor, WordColor, HotColor, AcceptEnter, Animate);
+  Choice = AskMenu(Title, Options, MenuTitleColor, WordColor_, HotColor_, AcceptEnter, Animate);
   WriteVmWord(Target, Choice);
   ClearRect(PromptLeftCol_OVL03, BottomRow, PromptLastCol, BottomRow);
 }
@@ -1216,7 +1216,7 @@ void AddLootCommand(void)
   u16 Size = 0;
   u8 TileSetText[2] = {0};
   farptr Block = 0;
-  u8 t1[256];
+  u8 t1[6];
   DecodeOperands(8);
   {
     if (0 <= 6) {
@@ -1950,7 +1950,7 @@ void ChooseAttitudeCommand(void)
   u8 Values[5] = {0};
   u16 Target = 0;
   u8 BlankTitle = 0;
-  u8 t1[256];
+  u8 t1[2];
   DecodeOperands(6);
   BlankTitle = ' ';
   {

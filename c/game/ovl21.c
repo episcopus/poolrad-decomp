@@ -143,9 +143,9 @@ u16 ReadAmount(u16 Max, const u8 *Prompt_in, u8 Color)
   s32 Typed = 0;
   s16 Code = 0;
   u16 Amount = 0;
-  u8 t1[256];
-  u8 t2[256];
-  u8 t3[256];
+  u8 t1[2];
+  u8 t2[8];
+  u8 t3[7];
   ClearTextCells(0, BottomRow, 0, ScreenCols);
   DrawTextAt(0, BottomRow, Color, Prompt);
   Start = Prompt[0];
@@ -1262,14 +1262,14 @@ void AppraiseGems(u8 (*Redraw))
   u8 Done = 0;
   u8 ExtKey = 0;
   u8 MustSell = 0;
-  u8 t1[256];
-  u8 t2[256];
-  u8 t3[256];
-  u8 t4[256];
-  u8 t5[256];
-  u8 t6[256];
-  u8 t7[256];
-  u8 t8[256];
+  u8 t1[45];
+  u8 t2[46];
+  u8 t3[58];
+  u8 t4[59];
+  u8 t5[50];
+  u8 t6[46];
+  u8 t7[66];
+  u8 t8[68];
   (*Redraw) = 1;
   if ((((*FPD(TCharacter (*), SelectedCharacter)).Money[5] == 0)) && (((*FPD(TCharacter (*), SelectedCharacter)).Money[6] == 0))) {
     ShowFlashMessage(S("\022No Gems or Jewelry"));

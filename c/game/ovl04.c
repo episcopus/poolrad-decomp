@@ -358,7 +358,7 @@ void HealMenu(void)
   u8 Done = 0;
   String40_RES06 Prompt = {0};
   u8 Key = 0;
-  u8 t1[256];
+  u8 t1[38];
   Done = 0;
   List = 0;
   First = 0;

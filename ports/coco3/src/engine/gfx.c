@@ -185,8 +185,133 @@ void gfx_text(u8 col, u8 row, u8 color, const char *s)
 }
 
 /* ---- pictures */
-static u8 pic_blk = PIC_FIRST_BLK;
-static u16 pic_off;
+/* The picture store: the blocks PIC_SEG_A and PIC_SEG_B read as one linear space of 8 KB blocks. A picture is a
+ * run of bytes in it (its items one after the other, then the mask of every item when it has one) that may cross block
+ * borders; pic_ptr maps the block a byte is in. Extents are kept in a small table, first fit, so a picture the game
+ * releases (ReleasePicture) gives its place back. */
+#define PIC_EXTENTS 64
+static const u8 run_first[PIC_RUNS] = {0x08, 0x28, 0x33};      /* physical block of the first block of each run */
+static const u8 run_n[PIC_RUNS] = {6, 8, 5};                  /* blocks in each run */
+#define PIC_NBLK 19                                            /* all runs: linear block indexes 0..18 */
+#define PIC_SPACE ((u32)PIC_NBLK * 0x2000UL)
+static u32 ext_lin[PIC_EXTENTS];          /* start in the linear space */
+static u16 ext_len[PIC_EXTENTS];          /* 0 = free slot */
+
+static u8 pic_phys(u8 idx)                /* linear block index -> physical block */
+{
+    u8 r;
+    for (r = 0; r < PIC_RUNS; r++) {
+        if (idx < run_n[r])
+            return (u8)(run_first[r] + idx);
+        idx = (u8)(idx - run_n[r]);
+    }
+    return 0;
+}
+
+static u8 pic_lin(u8 blk)
+{
+    u8 r, base = 0;
+    for (r = 0; r < PIC_RUNS; r++) {
+        if (blk >= run_first[r] && blk < run_first[r] + run_n[r])
+            return (u8)(base + blk - run_first[r]);
+        base = (u8)(base + run_n[r]);
+    }
+    return 0;
+}
+
+/* the end (linear byte) of the run that holds byte `at` */
+static u32 run_end(u32 at)
+{
+    u8 r;
+    u32 end = 0;
+    for (r = 0; r < PIC_RUNS; r++) {
+        end += (u32)run_n[r] * 0x2000UL;
+        if (at < end)
+            return end;
+    }
+    return end;
+}
+
+static u8 pic_place(u16 total, u8 *blk, u16 *off)
+{
+    u8 i, j;
+    u32 at = 0;
+    if (total > PIC_TOTAL_MAX)
+        return 5;
+    for (;;) {                             /* candidate: 0, then the end of every extent */
+        if (at + total > PIC_SPACE)
+            return 6;
+        if (at + total > run_end(at)) {    /* a picture does not cross from one run of blocks to the next */
+            at = run_end(at);
+            continue;
+        }
+        for (j = 0; j < PIC_EXTENTS; j++)
+            if (ext_len[j] && ext_lin[j] < at + total && ext_lin[j] + ext_len[j] > at)
+                break;
+        if (j == PIC_EXTENTS)
+            break;
+        at = ext_lin[j] + ext_len[j];      /* retry behind the extent in the way */
+    }
+    for (i = 0; i < PIC_EXTENTS && ext_len[i]; i++)
+        ;
+    if (i == PIC_EXTENTS)
+        return 6;
+    ext_lin[i] = at;
+    ext_len[i] = total;
+    *blk = pic_phys((u8)(at >> 13));
+    *off = (u16)(at & 0x1FFFUL);
+    return 0;
+}
+
+void pic_free(const Pic *p)
+{
+    u8 i;
+    u32 at = (u32)pic_lin(p->blk) * 0x2000UL + p->off;
+    for (i = 0; i < PIC_EXTENTS; i++)
+        if (ext_len[i] && ext_lin[i] == at) {
+            ext_len[i] = 0;
+            return;
+        }
+}
+
+/* The byte `rel` of the picture's storage: window 0 is mapped on the block that holds it; *room = the bytes from there to
+ * the end of that block */
+static u8 *pic_ptr(const Pic *p, u16 rel, u16 *room)
+{
+    u16 lin = (u16)(p->off + rel);        /* below 64 KB: a picture is at most PIC_TOTAL_MAX bytes */
+    win_set(0, (u8)(p->blk + (u8)(lin >> 13)));
+    *room = (u16)(0x2000u - (lin & 0x1FFFu));
+    return (u8 *)(0x8000u + (lin & 0x1FFFu));
+}
+
+/* n bytes of the picture from `rel` to dst (RAM below $8000) */
+static void pic_rd(const Pic *p, u16 rel, u8 *dst, u16 n)
+{
+    u16 room, c;
+    u8 *src;
+    while (n > 0) {
+        src = pic_ptr(p, rel, &room);
+        c = n < room ? n : room;
+        if (c > 255)
+            c = 255;
+        k_copy(dst, src, (u8)c);
+        dst += c;
+        rel += c;
+        n -= c;
+    }
+}
+
+static void pic_zero(const Pic *p, u16 total)
+{
+    u16 rel = 0, room, c;
+    u8 *d;
+    while (rel < total) {
+        d = pic_ptr(p, rel, &room);
+        c = (u16)(total - rel) < room ? (u16)(total - rel) : room;
+        k_fill(d, 0, c);
+        rel += c;
+    }
+}
 
 static u16 le16(const u8 *p)
 {
@@ -205,50 +330,119 @@ u8 pic_load(Pic *p, RsFile *f, u8 id, u8 key, u8 masked)
 u8 pic_load_e(Pic *p, RsFile *f, const DaxEntry *e, u8 key, u8 masked)
 {
     u8 hdr[17];
-    u8 st, *d, *m, v, k;
-    u16 size, total, i;
+    u8 st, v, k, d[128], m[128];
+    u16 size, total, i, n, rel;
     if (e->raw <= 17)
         return 4;
     size = (u16)(e->raw - 17);             /* the pixels of every item */
     total = masked ? (u16)(2 * size) : size;
-    if (total > PIC_MAX)
+    if (masked && size > 0x7FFFu)
         return 5;
-    if (pic_off + total > PIC_MAX) {
-        pic_blk++;
-        pic_off = 0;
-    }
-    if (pic_blk > PIC_LAST_BLK)
-        return 6;
-    p->blk = pic_blk;
-    p->off = pic_off;
-    p->moff = masked ? (u16)(pic_off + size) : 0;
-    win_set(0, pic_blk);
-    k_fill((u8 *)(0x8000u + pic_off), 0, total);
-    st = dax_unpack(f, e, hdr, 17, pic_blk, pic_off, 0);
+    st = pic_place(total, &p->blk, &p->off);
     if (st != 0)
         return st;
+    p->moff = masked ? size : 0;
+    pic_zero(p, total);
+    st = dax_unpack(f, e, hdr, 17, p->blk, p->off, 0);
+    if (st != 0) {
+        pic_free(p);
+        return st;
+    }
     p->height = (u8)le16(hdr);
     p->wcols = (u8)le16(hdr + 2);
     p->items = hdr[8];
     p->bytesize = (u16)((u16)p->height * p->wcols * 4u);
-    if ((u16)(p->bytesize * p->items) != size)
+    if ((u16)(p->bytesize * p->items) != size) {
+        pic_free(p);
         return 7;
-    pic_off = (u16)(pic_off + total);
+    }
     if (masked) {                         /* UnpackPicturePixels, adapter 2: the colour key becomes a mask */
-        win_set(0, p->blk);
-        d = (u8 *)(0x8000u + p->off);
-        m = (u8 *)(0x8000u + p->moff);
+        u16 room;
+        u8 *w;
         k = (u8)(key & 15);
-        for (i = 0; i < size; i++) {
-            v = d[i];
-            if ((v >> 4) == k)
-                m[i] = 0xF0;
-            if ((v & 15) == k)
-                m[i] = (u8)(m[i] + 0x0F);
-            d[i] = (u8)(v & ~m[i]);
+        for (rel = 0; rel < size; rel = (u16)(rel + n)) {
+            n = (u16)(size - rel) < 128 ? (u16)(size - rel) : 128;
+            pic_rd(p, rel, d, n);
+            for (i = 0; i < n; i++) {
+                v = d[i];
+                m[i] = 0;
+                if ((v >> 4) == k)
+                    m[i] = 0xF0;
+                if ((v & 15) == k)
+                    m[i] = (u8)(m[i] + 0x0F);
+                d[i] = (u8)(v & ~m[i]);
+            }
+            for (i = 0; i < n;) {          /* back to the pixels and the mask, mind the block border */
+                u16 c;
+                w = pic_ptr(p, (u16)(rel + i), &room);
+                c = (u16)(n - i) < room ? (u16)(n - i) : room;
+                k_copy(w, d + i, (u8)c);
+                w = pic_ptr(p, (u16)(size + rel + i), &room);
+                c = (u16)(n - i) < room ? (u16)(n - i) : room;
+                k_copy(w, m + i, (u8)c);
+                i = (u16)(i + c);
+            }
         }
     }
     return 0;
+}
+
+/* A blank picture of height x wcols cells, items items (the data of AllocatePicture), masked: with room for a mask. */
+u8 pic_alloc(Pic *p, u8 height, u8 wcols, u8 items, u8 masked)
+{
+    u16 size = (u16)((u16)height * wcols * 4u * items), total = masked ? (u16)(2 * size) : size;
+    u8 st;
+    if (total == 0 || (masked && size > 0x7FFFu))
+        return 5;
+    st = pic_place(total, &p->blk, &p->off);
+    if (st != 0)
+        return st;
+    p->moff = masked ? size : 0;
+    p->height = height;
+    p->wcols = wcols;
+    p->items = items;
+    p->bytesize = (u16)((u16)height * wcols * 4u);
+    pic_zero(p, total);
+    return 0;
+}
+
+/* RemapPictureColors, 4 bits a pixel: every pixel of item `item` becomes lut[pixel] (the mask stays) */
+void pic_remap(const Pic *p, u8 item, const u8 *lut)
+{
+    u16 rel = (u16)((u16)item * p->bytesize), end = (u16)(rel + p->bytesize), room, c, i;
+    u8 *d;
+    while (rel < end) {
+        d = pic_ptr(p, rel, &room);
+        c = (u16)(end - rel) < room ? (u16)(end - rel) : room;
+        for (i = 0; i < c; i++)
+            d[i] = (u8)((lut[d[i] >> 4] << 4) | lut[d[i] & 15]);
+        rel = (u16)(rel + c);
+    }
+}
+
+/* FillPlaneRect (res06): the cells (8 pixels wide, 8 rows high) l..r, t..b solid in one colour */
+void gfx_fill_cells(u8 l, u8 t, u8 r, u8 b, u8 color)
+{
+    u8 y, y1, v = (u8)(color * 17);
+    u16 n;
+    if (l > r || t > b || l > 39 || t > 24)
+        return;
+    if (r > 39)
+        r = 39;
+    if (b > 24)
+        b = 24;
+    n = (u16)(r - l + 1) * 4u;
+    y1 = (u8)(b * 8 + 7);
+    for (y = (u8)(t * 8); y <= y1; y++) {
+        u16 a = (u16)(rowa[y] + (u8)(l * 4)), rem = n, room, c;
+        while (rem > 0) {                 /* a row may cross into the next block */
+            room = (u16)(0x2000u - (a & 0x1FFFu));
+            c = rem < room ? rem : room;
+            k_fill(scr_at(a), v, c);
+            a += c;
+            rem -= c;
+        }
+    }
 }
 
 /* How many rows of n bytes fit gbuf, at most h of them. */
@@ -261,13 +455,12 @@ static u8 rows_in_buf(u8 h, u8 n)
 void gfx_item(const Pic *p, u8 item, u8 col, u8 row)
 {
     u8 n = (u8)(p->wcols * 4), h = p->height, take, r, y = (u8)(row * 8);
-    u16 so = (u16)(p->off + (u16)item * p->bytesize);
+    u16 so = (u16)((u16)item * p->bytesize);
     u16 a = rowa[y] + (u8)(col * 4);
     const u8 *src;
     while (h > 0 && y < 200) {
         take = rows_in_buf(h, n);
-        win_set(0, p->blk);
-        k_copy(gbuf, (u8 *)(0x8000u + so), (u8)(take * n));
+        pic_rd(p, so, gbuf, (u16)(take * n));
         src = gbuf;
         for (r = 0; r < take && y < 200; r++) {
             if ((a & 0x1FFFu) + n <= 0x2000u)
@@ -326,7 +519,7 @@ void db_item(const Pic *p, u8 item, u8 col, u8 row, u8 flags)
     u8 n = (u8)(p->wcols * 4), h = p->height, x0 = (u8)(col * 4), x1 = (u8)(x0 + n - 1);
     u8 y = (u8)(row * 8), take, r;
     u8 masked = (flags & 1) && p->moff != 0;
-    u16 so = (u16)(p->off + (u16)item * p->bytesize);
+    u16 so = (u16)((u16)item * p->bytesize);
     u16 mo = (u16)(p->moff + (u16)item * p->bytesize);
     u8 *d;
     const u8 *src, *mk;
@@ -334,10 +527,9 @@ void db_item(const Pic *p, u8 item, u8 col, u8 row, u8 flags)
         return;
     while (h > 0) {
         take = rows_in_buf(h, n);
-        win_set(0, p->blk);
-        k_copy(gbuf, (u8 *)(0x8000u + so), (u8)(take * n));
+        pic_rd(p, so, gbuf, (u16)(take * n));
         if (masked)
-            k_copy(mbuf, (u8 *)(0x8000u + mo), (u8)(take * n));
+            pic_rd(p, mo, mbuf, (u16)(take * n));
         src = gbuf;
         mk = mbuf;
         for (r = 0; r < take; r++) {

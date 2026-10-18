@@ -171,7 +171,7 @@ void LoadEcl(u8 BlockId)
   u8 Num[2] = {0};
   u16 Size = 0;
   farptr Block = 0;
-  u8 t1[256];
+  u8 t1[5];
   rtl_FillChar((void *)&(*FPD(TEclCode (*), EclCode)), 0x1E00, 0);
   OpenNoPrompt = 0;
   do {
@@ -1042,9 +1042,9 @@ void DecodeString(u8 Len, u8 Index)
   u8 Code = 0;
   u8 Phase = 0;
   u8 Ch = 0;
-  u8 t1[256];
+  u8 t1[2];
   u8 t2[256];
-  u8 t3[256];
+  u8 t3[2];
   u8 t4[256];
   rtl_str_assign(EclStrings[Index], 255, S("\000"));
   Count = 0;
@@ -1107,13 +1107,13 @@ void ReadVmString(u8 Index, u16 Addr)
   POOL_TRACE("ReadVmString");
   u8 Region = 0;
   u8 I = 0;
-  u8 t1[256];
+  u8 t1[2];
   u8 t2[256];
-  u8 t3[256];
+  u8 t3[2];
   u8 t4[256];
-  u8 t5[256];
+  u8 t5[2];
   u8 t6[256];
-  u8 t7[256];
+  u8 t7[2];
   u8 t8[256];
   Region = MemRegion(Addr);
   rtl_str_assign(EclStrings[Index], 255, S("\000"));
@@ -1167,8 +1167,8 @@ void ParseHotkeys(u8 (*Text)[256], String40_RES06 (*Keys))
   POOL_TRACE("ParseHotkeys");
   u8 I = 0;
   s32 t1;
-  u8 t2[256];
-  u8 t3[256];
+  u8 t2[2];
+  u8 t3[42];
   rtl_str_assign((*Keys), 40, S("\000"));
   {
     u8 limit = (*Text)[0];
@@ -1196,7 +1196,7 @@ void ParseHotkeys(u8 (*Text)[256], String40_RES06 (*Keys))
      (so '~Yes ~No' gives 0 or 1), 0 for Return, $FF for a letter or digit that is not a hotkey.
      An extended key goes to UpdateSelectedCharacter and the selected character is redrawn (DrawPartyRoster)
      before asking again. Callers: ovl03, the Temple, the treasure menu and the shop. */
-u8 AskMenu(const u8 *Title_in, const u8 *Text_in, u8 TitleColor, u8 WordColor, u8 HotColor, u8 AcceptEnter, u8 Animate)
+u8 AskMenu(const u8 *Title_in, const u8 *Text_in, u8 TitleColor_, u8 WordColor_, u8 HotColor_, u8 AcceptEnter, u8 Animate)
 {
   POOL_TRACE("AskMenu");
   const u8 *Title = Title_in;
@@ -1209,7 +1209,7 @@ u8 AskMenu(const u8 *Title_in, const u8 *Text_in, u8 TitleColor, u8 WordColor, u
   u8 ExtKey = 0;
   ParseHotkeys(&Text, &Keys);
   do {
-    Key = ReadPromptChoice(Title, Text, TitleColor, WordColor, HotColor, 1, Animate, &ExtKey);
+    Key = ReadPromptChoice(Title, Text, TitleColor_, WordColor_, HotColor_, 1, Animate, &ExtKey);
     if (ExtKey != 0) {
       UpdateSelectedCharacter(Key);
       DrawPartyRoster(SelectedCharacter);
@@ -1609,8 +1609,8 @@ void DamageWithMessage(u16 Damage, PCharacter Who)
   u8 Text[256] = {0};
   u8 Num[4] = {0};
   u8 ClearFirst = 0;
-  u8 t1[256];
-  u8 t2[256];
+  u8 t1[25];
+  u8 t2[51];
   if ((*FPD(TCharacter (*), Who)).Status == StatusDead) {
     return;
   }

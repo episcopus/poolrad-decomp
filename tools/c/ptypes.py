@@ -75,6 +75,36 @@ class Ty:
             return self.size_ or 6
         raise ValueError("size of %s" % k)
 
+    def swaps(self, base=0):
+        """[(offset, width, count)] of the multi-byte scalars of a value of this type laid out as Turbo Pascal stores it: each
+        entry is `count` scalars of `width` bytes (2 or 4) from `offset` on. A big endian machine reverses each (the CoCo,
+        tools/mkvm.py). Variant parts of records are left out (their arms share bytes); reals, sets and strings are bytes."""
+        k = self.kind
+        if k in ("int", "enum", "bool", "char"):
+            n = self.size()
+            return [(base, n, 1)] if n in (2, 4) else []
+        if k in ("ptr", "proc"):
+            return [(base, 4, 1)]
+        if k == "array":
+            n = self.hi - self.lo + 1
+            es = self.elem.size()
+            inner = self.elem.swaps(0)
+            if not inner:
+                return []
+            if len(inner) == 1 and inner[0][0] == 0 and inner[0][2] == 1 and inner[0][1] == es:
+                return [(base, es, n)]                               # an array of plain scalars: one run
+            out = []
+            for i in range(n):
+                out += [(base + i * es + o, w, c) for o, w, c in inner]
+            return out
+        if k == "record":
+            out, off = [], 0
+            for _n, t in self.fields:
+                out += t.swaps(base + off)
+                off += t.size()
+            return out
+        return []
+
     def int_range(self):
         """(lo, hi) of an ordinal type."""
         return self.lo, self.hi

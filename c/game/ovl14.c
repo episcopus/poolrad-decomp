@@ -802,12 +802,12 @@ void DoWildernessMenu(void)
   u8 MenuFlag = 0;
   u8 Menu[41] = {0};
   u8 Key2 = 0;
-  u8 t1[256];
-  u8 t2[256];
-  u8 t3[256];
-  u8 t4[256];
-  u8 t5[256];
-  u8 t6[256];
+  u8 t1[46];
+  u8 t2[47];
+  u8 t3[46];
+  u8 t4[46];
+  u8 t5[47];
+  u8 t6[46];
   Done = 0;
   switch (AreaViewKind) {
   case 1:

@@ -233,8 +233,8 @@ void ShowAbilityScore(s8 Index, u8 Highlight)
   u8 Color = 0;
   u8 t1[256];
   u8 t2[256];
-  u8 t3[256];
-  u8 t4[256];
+  u8 t3[42];
+  u8 t4[43];
   if (Highlight) {
     Color = ShowAbilityScore_HighlightColor;
   } else {
@@ -282,11 +282,11 @@ void ViewSelectedCharacter(u8 (*Done))
   u8 Spell = 0;
   s8 Kind = 0;
   u16 Choice = 0;
-  u8 t1[256];
-  u8 t2[256];
-  u8 t3[256];
-  u8 t4[256];
-  u8 t5[256];
+  u8 t1[47];
+  u8 t2[48];
+  u8 t3[47];
+  u8 t4[46];
+  u8 t5[45];
   if (ViewMode == ViewModeCombat) {
     RestorePaletteColors0And8();
   }
@@ -432,14 +432,14 @@ void RunItemMenu(u8 (*Done))
   PCharacter Character = 0;
   u8 OldCount = 0;
   u8 Spare3 = 0;
-  u8 t1[256];
-  u8 t2[256];
-  u8 t3[256];
-  u8 t4[256];
-  u8 t5[256];
-  u8 t6[256];
-  u8 t7[256];
-  u8 t8[256];
+  u8 t1[45];
+  u8 t2[47];
+  u8 t3[46];
+  u8 t4[47];
+  u8 t5[46];
+  u8 t6[46];
+  u8 t7[44];
+  u8 t8[66];
   Character = SelectedCharacter;
   Key = ' ';
   Selected = (*FPD(TCharacter (*), Character)).Items;
@@ -594,7 +594,7 @@ void ReadyItem(PMenuLine Item)
   u8 Reason = 0;
   u8 Slot = 0;
   PCharacter Character = 0;
-  u8 t1[256];
+  u8 t1[55];
   AffectOn = ((*FPD(TMenuLine (*), Item)).Affects[2] > AffectThreshold);
   Character = SelectedCharacter;
   if ((*FPD(TMenuLine (*), Item)).Readied) {
@@ -914,9 +914,9 @@ void IdentifyItem(PMenuLine Item, u8 (*Redraw))
   s32 CharacterGold = 0;
   s32 PooledGold = 0;
   u8 Paid = 0;
-  u8 t1[256];
-  u8 t2[256];
-  u8 t3[256];
+  u8 t1[80];
+  u8 t2[78];
+  u8 t3[68];
   Paid = 0;
   FormatItemLine((s32)SheetCharacter, Item, 0, 0, 0, 0);
   ShowPagedText(IdentifyItem_MessageLeft, IdentifyItem_MessageTop, IdentifyItem_MessageRight, IdentifyItem_MessageBottom, IdentifyItem_MessageColor, ClearTextBeforeMessage, rtl_str_cat(t1, 2, (const u8 *const[]){S("'For 200 gold pieces I'll identify your "), (*FPD(TMenuLine (*), Item)).Text}));
@@ -986,7 +986,7 @@ void TradeMoney(void)
   u8 Finished = 0;
   u8 Done = 0;
   u8 Redraw = 0;
-  u8 t1[256];
+  u8 t1[31];
   u8 t2[256];
   do {
     Recipient = ViewedCharacter;
@@ -1103,7 +1103,7 @@ void ChooseAndDropMoney(void)
   u8 Text[256] = {0};
   u8 Key = 0;
   u16 Amount = 0;
-  u8 t1[256];
+  u8 t1[31];
   u8 t2[256];
   do {
     ShowCharacterMoney();
@@ -1276,7 +1276,7 @@ u8 ChooseSpellFromList(u8 SpellListKind, u8 DisplayMode, u16 (*Choice), u8 (*Lis
   POOL_TRACE("ChooseSpellFromList");
   u8 Result = 0;
   String40_RES06 ModeDescription = {0};
-  u8 t1[256];
+  u8 t1[48];
   switch (SpellListKind) {
   case ChooseSpellFromList_SpellListInMemory:
   {

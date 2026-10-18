@@ -107,22 +107,22 @@ void DrawWallDescriptors(void)
 void DrawWallPiece(s8 Col, s8 Row, u8 Wall, u8 Piece)
 {
   POOL_TRACE("DrawWallPiece");
-  s16 LastCol = 0;
-  s16 LastRow = 0;
+  s16 LastCol_ = 0;
+  s16 LastRow_ = 0;
   s16 TileCol = 0;
   s16 TileRow = 0;
   u8 Tile = 0;
   Tile = WallPieceFirstTile[Piece];
-  LastCol = (WallPieceWidth[Piece] + Col) - 1;
-  LastRow = (WallPieceHeight[Piece] + Row) - 1;
+  LastCol_ = (WallPieceWidth[Piece] + Col) - 1;
+  LastRow_ = (WallPieceHeight[Piece] + Row) - 1;
   {
-    s16 limit = LastRow;
+    s16 limit = LastRow_;
     s16 first = Row;
     if (first <= limit) {
       TileRow = first;
       for (;;) {
           {
-            s16 limit = LastCol;
+            s16 limit = LastCol_;
             s16 first = Col;
             if (first <= limit) {
               TileCol = first;
@@ -331,7 +331,7 @@ void DrawWallView(s8 Col0, s8 Row0, u8 Dir)
   s16 Shift = 0;
   u8 Depth = 0;
   u8 FrontWall = 0;
-  u8 SideWall = 0;
+  u8 SideWall_ = 0;
   u8 Unused1 = 0;
   u8 EdgeWall = 0;
   u8 Unused2 = 0;
@@ -420,12 +420,12 @@ void DrawWallView(s8 Col0, s8 Row0, u8 Dir)
         Count = 0;
         Shift = 0;
         while (Count < 3) {
-          SideWall = WallIdAt(Col, Row, DirLeft);
-          if (SideWall != 0) {
+          SideWall_ = WallIdAt(Col, Row, DirLeft);
+          if (SideWall_ != 0) {
             if (Count == 0) {
-              DrawWallPiece((s16)(WallPieceCol[1] + Shift), WallPieceRow[1], SideWall, PieceFarLeft);
+              DrawWallPiece((s16)(WallPieceCol[1] + Shift), WallPieceRow[1], SideWall_, PieceFarLeft);
             } else {
-              DrawWallPiece((s16)((WallPieceCol[1] + Shift) - 1), WallPieceRow[1], SideWall, PieceFarLeft);
+              DrawWallPiece((s16)((WallPieceCol[1] + Shift) - 1), WallPieceRow[1], SideWall_, PieceFarLeft);
             }
           }
           Count++;
@@ -438,12 +438,12 @@ void DrawWallView(s8 Col0, s8 Row0, u8 Dir)
         Count = 0;
         Shift = 0;
         while (Count < 3) {
-          SideWall = WallIdAt(Col, Row, DirRight);
-          if (SideWall != 0) {
+          SideWall_ = WallIdAt(Col, Row, DirRight);
+          if (SideWall_ != 0) {
             if (Count == 0) {
-              DrawWallPiece((s16)(WallPieceCol[2] + Shift), WallPieceRow[2], SideWall, PieceFarRight);
+              DrawWallPiece((s16)(WallPieceCol[2] + Shift), WallPieceRow[2], SideWall_, PieceFarRight);
             } else {
-              DrawWallPiece((s16)((WallPieceCol[2] + Shift) + 1), WallPieceRow[2], SideWall, PieceFarRight);
+              DrawWallPiece((s16)((WallPieceCol[2] + Shift) + 1), WallPieceRow[2], SideWall_, PieceFarRight);
             }
           }
           Count++;
@@ -466,9 +466,9 @@ void DrawWallView(s8 Col0, s8 Row0, u8 Dir)
           if (FrontWall != 0) {
             DrawWallPiece((s16)(WallPieceCol[3] + Shift), WallPieceRow[3], FrontWall, PieceMidFront);
           }
-          SideWall = WallIdAt(Col, Row, DirLeft);
-          if (SideWall != 0) {
-            DrawWallPiece((s16)(WallPieceCol[4] + Shift), WallPieceRow[4], SideWall, PieceMidLeft);
+          SideWall_ = WallIdAt(Col, Row, DirLeft);
+          if (SideWall_ != 0) {
+            DrawWallPiece((s16)(WallPieceCol[4] + Shift), WallPieceRow[4], SideWall_, PieceMidLeft);
           }
           Count++;
           Shift += MidCellStep;
@@ -486,9 +486,9 @@ void DrawWallView(s8 Col0, s8 Row0, u8 Dir)
           if (FrontWall != 0) {
             DrawWallPiece((s16)(WallPieceCol[3] + Shift), WallPieceRow[3], FrontWall, PieceMidFront);
           }
-          SideWall = WallIdAt(Col, Row, DirRight);
-          if (SideWall != 0) {
-            DrawWallPiece((s16)(WallPieceCol[5] + Shift), WallPieceRow[5], SideWall, PieceMidRight);
+          SideWall_ = WallIdAt(Col, Row, DirRight);
+          if (SideWall_ != 0) {
+            DrawWallPiece((s16)(WallPieceCol[5] + Shift), WallPieceRow[5], SideWall_, PieceMidRight);
           }
           Count++;
           Shift -= MidCellStep;
@@ -508,9 +508,9 @@ void DrawWallView(s8 Col0, s8 Row0, u8 Dir)
           if (FrontWall != 0) {
             DrawWallPiece((s16)(WallPieceCol[6] + Shift), WallPieceRow[6], FrontWall, PieceNearFront);
           }
-          SideWall = WallIdAt(Col, Row, DirLeft);
-          if (SideWall != 0) {
-            DrawWallPiece((s16)(WallPieceCol[7] + Shift), WallPieceRow[7], SideWall, PieceNearLeft);
+          SideWall_ = WallIdAt(Col, Row, DirLeft);
+          if (SideWall_ != 0) {
+            DrawWallPiece((s16)(WallPieceCol[7] + Shift), WallPieceRow[7], SideWall_, PieceNearLeft);
           }
           Count++;
           Shift += NearCellStep;
@@ -526,9 +526,9 @@ void DrawWallView(s8 Col0, s8 Row0, u8 Dir)
           if (FrontWall != 0) {
             DrawWallPiece((s16)(WallPieceCol[6] + Shift), WallPieceRow[6], FrontWall, PieceNearFront);
           }
-          SideWall = WallIdAt(Col, Row, DirRight);
-          if (SideWall != 0) {
-            DrawWallPiece((s16)(WallPieceCol[8] + Shift), WallPieceRow[8], SideWall, PieceNearRight);
+          SideWall_ = WallIdAt(Col, Row, DirRight);
+          if (SideWall_ != 0) {
+            DrawWallPiece((s16)(WallPieceCol[8] + Shift), WallPieceRow[8], SideWall_, PieceNearRight);
           }
           Count++;
           Shift -= NearCellStep;
@@ -570,7 +570,7 @@ void LoadWallSet(u8 BlockId, u8 First)
   u8 Count = 0;
   u8 Num[2] = {0};
   u8 Key = 0;
-  u8 t1[256];
+  u8 t1[9];
   if (((First < 1)) || ((First > LastWallSlot))) {
     return;
   }
@@ -655,7 +655,7 @@ void Load3DMap(u8 BlockId)
   u16 Offset = 0;
   u8 Num[2] = {0};
   u8 Key = 0;
-  u8 t1[256];
+  u8 t1[5];
   rtl_str_int(Num, 1, TileSet, 0);
   LoadDaxBlock(rtl_str_cat(t1, 2, (const u8 *const[]){S("\003GEO"), Num}), S("\004.dax"), BlockId, &Size, &Block);
   if (((Size == 0)) || ((Size != GeoBlockSize))) {

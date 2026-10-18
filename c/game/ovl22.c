@@ -123,7 +123,7 @@ void AddSpellMenuLine(u8 Spell)
   PMenuLine Line = 0;
   s8 Count = 0;
   s8 PrevLevel = 0;
-  u8 t1[256];
+  u8 t1[81];
   Line = SpellMenuList;
   if (SpellMenuList == 0) {
     Line = rtl_getmem(MenuLineBytes);
@@ -170,7 +170,7 @@ void AddSpellMenuLine(u8 Spell)
      (ClassLevels[0] > 0) sees a cleric's scroll (ItemTable[CurrentItem^.ItemType].Slot =
      ClericScrollClass); an item whose HiddenNames is not cleared is skipped. Called by BuildSpellList
      (Kind 2) and AddScrollSpells. */
-void AddItemSpells(u8 Pending)
+void AddItemSpells(u8 Pending_)
 {
   POOL_TRACE("AddItemSpells");
   u8 I = 0;
@@ -183,7 +183,7 @@ void AddItemSpells(u8 Pending)
       if (1 <= 3) {
         I = 1;
         for (;;) {
-            if (((((Pending != 0)) && (((*FPD(TMenuLine (*), CurrentItem)).Affects[I - 1] > AddItemSpells_PendingSpell)))) || ((((Pending == 0)) && (((*FPD(TMenuLine (*), CurrentItem)).Affects[I - 1] > 0))))) {
+            if (((((Pending_ != 0)) && (((*FPD(TMenuLine (*), CurrentItem)).Affects[I - 1] > AddItemSpells_PendingSpell)))) || ((((Pending_ == 0)) && (((*FPD(TMenuLine (*), CurrentItem)).Affects[I - 1] > 0))))) {
               AddSpellMenuLine((*FPD(TMenuLine (*), CurrentItem)).Affects[I - 1]);
               SpellMenuItems[SpellMenuItemCount] = CurrentItem;
               SpellMenuItemCount++;
@@ -201,7 +201,7 @@ void AddItemSpells(u8 Pending)
      SpellMenuItems and SpellMenuItemCount, then walks SelectedCharacter^.Items and, for every scroll
      (IsScroll), calls AddItemSpells with its Pending argument. Called by BuildSpellList for the "on Scrolls"
      (Pending 0) and "to be scribed" (Pending 1) lists. */
-void AddScrollSpells(u8 Pending)
+void AddScrollSpells(u8 Pending_)
 {
   POOL_TRACE("AddScrollSpells");
   u8 I = 0;
@@ -219,7 +219,7 @@ void AddScrollSpells(u8 Pending)
   CurrentItem = (*FPD(TCharacter (*), SelectedCharacter)).Items;
   while (CurrentItem != 0) {
     if (IsScroll(CurrentItem)) {
-      AddItemSpells(Pending);
+      AddItemSpells(Pending_);
     }
     CurrentItem = (*FPD(TMenuLine (*), CurrentItem)).Next;
   }
@@ -2157,7 +2157,7 @@ void ShowSpellMessage(PCharacter Who, const u8 *Message_in, u8 Spell)
 {
   POOL_TRACE("ShowSpellMessage");
   const u8 *Message = Message_in;
-  u8 t1[256];
+  u8 t1[47];
   if (ViewMode == ViewModeCombat) {
     ShowCharacterMessage(Who, S("\015Casts a Spell"), ShowSpellMessage_MessageColor, TimedMessage);
     ClearWindow(0, 0x17, 0x27, 0x17);

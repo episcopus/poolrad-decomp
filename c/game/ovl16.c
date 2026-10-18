@@ -66,8 +66,8 @@ void RunCharacterMenu(void)
   s8 Row = 0;
   u8 Show = 0;
   u8 Mode = 0;
-  u8 t1[256];
-  u8 t2[256];
+  u8 t1[2];
+  u8 t2[41];
   u8 t3[256];
   TileSet = 3;
   Mode = 4;
@@ -309,11 +309,11 @@ void CreateCharacter(void)
   u8 GoldDiceTotal = 0;
   u8 WithExit = 0;
   u8 Redraw = 0;
-  u8 t1[256];
-  u8 t2[256];
-  u8 t3[256];
-  u8 t4[256];
-  u8 t5[256];
+  u8 t1[12];
+  u8 t2[12];
+  u8 t3[9];
+  u8 t4[29];
+  u8 t5[19];
   u8 t6[256];
   NewCharacter = rtl_getmem(CharacterSize);
   rtl_FillChar((void *)&(*FPD(TCharacter (*), NewCharacter)), CharacterSize, 0);
@@ -1006,10 +1006,10 @@ void DropCharacter(void)
 {
   POOL_TRACE("DropCharacter");
   u8 Unused = 0;
-  u8 t1[256];
-  u8 t2[256];
-  u8 t3[256];
-  u8 t4[256];
+  u8 t1[31];
+  u8 t2[35];
+  u8 t3[35];
+  u8 t4[43];
   if (SelectedCharacter == 0) {
     return;
   }
@@ -1070,7 +1070,7 @@ void ModifyCharacter(void)
   POOL_TRACE("ModifyCharacter");
   Frame_ModifyCharacter fr;
   memset(&fr, 0, sizeof fr);
-  u8 t1[256];
+  u8 t1[35];
   if ((*FPD(TCharacter (*), SelectedCharacter)).Experience > 0) {
     FlashMessageLine(rtl_str_cat(t1, 2, (const u8 *const[]){(*FPD(TCharacter (*), SelectedCharacter)).Name, S("\023 can't be modified.")}), ModifyCharacter_MessageColor);
     return;
@@ -1555,7 +1555,7 @@ void AddSavedCharacters(void)
   u8 WithExit = 0;
   u8 Redraw = 0;
   u8 Count = 0;
-  u8 t1[256];
+  u8 t1[43];
   ClearWindow(1, 1, 0x26, 0x16);
   ReadSavedCharacterList(&List);
   if (List == 0) {
@@ -1717,7 +1717,7 @@ typedef struct Frame_EditCharacterIcon {
   EditCharacterIcon_TFigureColors SavedFigure;
   u8 ColorPart;
   u8 EditFace;
-  u8 LowNibble;
+  u8 LowNibble_;
   u8 HighNibble;
   u8 Mode;
   u8 PartKey;
@@ -1835,7 +1835,7 @@ void EditCharacterIcon(void)
   POOL_TRACE("EditCharacterIcon");
   Frame_EditCharacterIcon fr;
   memset(&fr, 0, sizeof fr);
-  u8 t1[256];
+  u8 t1[46];
   DrawWindow(EditCharacterIcon_WindowLeft, EditCharacterIcon_WindowTop, EditCharacterIcon_WindowRight, EditCharacterIcon_WindowBottom, 0, 0, S("\000"));
   SwapPaletteColors0And8();
   do {
@@ -2096,7 +2096,7 @@ void EditCharacterIcon(void)
               }
               case EditCharacterIcon_StateColorPart:
               {
-                fr.LowNibble = (w1->Figure[fr.ColorPart] & 0xF);
+                fr.LowNibble_ = (w1->Figure[fr.ColorPart] & 0xF);
                 fr.HighNibble = (s16)((u16)((w1->Figure[fr.ColorPart] & 0xF0)) >> 4);
                 switch ((u8)fr.Key) {
                 case 'N':
@@ -2104,9 +2104,9 @@ void EditCharacterIcon(void)
                   if (fr.EditFace) {
                     fr.HighNibble = (((s16)(fr.HighNibble + 1)) % 16);
                   } else {
-                    fr.LowNibble = (((s16)(fr.LowNibble + 1)) % 16);
+                    fr.LowNibble_ = (((s16)(fr.LowNibble_ + 1)) % 16);
                   }
-                  w1->Figure[fr.ColorPart] = ((s16)(fr.HighNibble << 4)) + fr.LowNibble;
+                  w1->Figure[fr.ColorPart] = ((s16)(fr.HighNibble << 4)) + fr.LowNibble_;
                   break;
                 }
                 case 'P':
@@ -2114,9 +2114,9 @@ void EditCharacterIcon(void)
                   if (fr.EditFace) {
                     fr.HighNibble = (((s16)(fr.HighNibble - 1)) & 0xF);
                   } else {
-                    fr.LowNibble = (((s16)(fr.LowNibble - 1)) & 0xF);
+                    fr.LowNibble_ = (((s16)(fr.LowNibble_ - 1)) & 0xF);
                   }
-                  w1->Figure[fr.ColorPart] = ((s16)(fr.HighNibble << 4)) + fr.LowNibble;
+                  w1->Figure[fr.ColorPart] = ((s16)(fr.HighNibble << 4)) + fr.LowNibble_;
                   break;
                 }
                 case 'K':

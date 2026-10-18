@@ -60,6 +60,7 @@ extern Vol vols[4];
 u8 vol_mount(Vol *v, u8 drive);           /* 0 = ok, 1 = no valid POOLVOL.DAT, else the disk status; reads the index into RAM */
 u8 vol_find(const Vol *v, const char *name8, u8 id, DaxEntry *e);   /* name8: 8 characters, space padded, e.g. "ECL2    "; 0 = found, 1 = file not on this volume, 2 = no such block */
 u8 vol_entry(const Vol *v, u16 i, u8 *file, u8 *id, DaxEntry *e);   /* the i-th index entry, 1 past the end */
+u8 vol_has(const char *name8);                                  /* 1 = a mounted volume holds the file */
 u8 vol_lookup(const char *name8, u8 id, Vol **vp, DaxEntry *e);     /* over every mounted volume; 1 = on none of them, 2 = a volume has the file but not the block */
 
 /* ---- kernels.asm: the inner loops. Nothing here maps a window; the pointers must be valid when called. */
@@ -97,21 +98,26 @@ u8 gfx_font_load_e(RsFile *f, const DaxEntry *e);   /* the same from the entry a
 void gfx_glyph(u8 col, u8 row, u8 color, u8 count, u8 glyph, u8 textset);   /* DrawGlyph; textset: fold to the 64-glyph set */
 void gfx_text(u8 col, u8 row, u8 color, const char *s);                      /* DrawTextAt */
 
-/* Pictures (res07): kept in physical blocks from PIC_FIRST_BLK up (a picture never crosses a block), items of
+/* Pictures (res07): kept in physical blocks from PIC_FIRST_BLK up as one linear space (gfx.c), items of
  * height x wcols cells packed 4 bits a pixel, wcols * 4 bytes a row, optionally with a mask picture of the same layout
  * (a mask byte keeps the bits of the destination where the picture's colour key was). */
-#define PIC_FIRST_BLK 8
-#define PIC_LAST_BLK 0x37
-#define PIC_MAX 0x2000                    /* bytes of one picture with its mask: it fits one block */
+/* The blocks the game leaves to pictures (build/game memory map, src/engine/gamemap.h): three runs of blocks, $08..$0D,
+ * $28..$2F (what the bank pool does not use) and $33..$37; a picture lies wholly in one run. */
+#define PIC_RUNS 3
+#define PIC_TOTAL_MAX 0xE000u             /* bytes of one picture with its mask (it may cross block borders) */
 typedef struct Pic {
     u8 blk;                               /* physical block of the data (window 0) */
     u16 off;                              /* of item 0 in the block */
-    u16 moff;                             /* of the mask of item 0; 0 = no mask */
+    u16 moff;                             /* of the mask of item 0, from item 0; 0 = no mask */
     u16 bytesize;                         /* bytes of one item: height * wcols * 4 */
     u8 height, wcols, items;
 } Pic;
 u8 pic_load(Pic *p, RsFile *f, u8 id, u8 key, u8 masked);   /* LoadPicture + UnpackPicturePixels; 0 = ok */
 u8 pic_load_e(Pic *p, RsFile *f, const DaxEntry *e, u8 key, u8 masked);   /* the same from a DaxEntry (a volume's index) */
+void pic_free(const Pic *p);
+void pic_remap(const Pic *p, u8 item, const u8 *lut);   /* RemapPictureColors: pixel -> lut[pixel] in one item */
+u8 pic_alloc(Pic *p, u8 height, u8 wcols, u8 items, u8 masked);   /* a blank picture (AllocatePicture); 0 = ok */
+void gfx_fill_cells(u8 l, u8 t, u8 r, u8 b, u8 color);   /* FillPlaneRect: solid cells on the screen */              /* give the picture's place back */
 void gfx_item(const Pic *p, u8 item, u8 col, u8 row);       /* ShowPicture: one item to the screen at cell col, pixel row 8*row */
 
 /* The staging buffer DrawBuf (168 rows of 21 cells, blocks 4 and 5): blits mark what they change, the flush copies the

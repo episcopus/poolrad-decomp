@@ -113,6 +113,6 @@ _mb_hold
 
         ENDSECTION
 
-        SECTION shared
+        SECTION shared2
 _eng_init0      RMB     1               the value last written to GIME $FF90 (a write only register), for irq_start and gfx_init
         ENDSECTION

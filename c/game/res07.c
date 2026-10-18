@@ -1067,8 +1067,8 @@ void ShowPicture(s16 PicCol, s16 PicRow, farptr Buf)
   s16 Row = 0;
   u16 FirstCol = 0;
   u16 FirstRow = 0;
-  u16 LastCol = 0;
-  u16 LastRow = 0;
+  u16 LastCol_ = 0;
+  u16 LastRow_ = 0;
   u16 RowBytes = 0;
   u16 SourceOfs = 0;
   u8 Plane = 0;
@@ -1083,10 +1083,10 @@ void ShowPicture(s16 PicCol, s16 PicRow, farptr Buf)
         RowBytes = w1->WidthCols * 2;
         SourceOfs = 0;
         FirstRow = PicRow * 8;
-        LastRow = (FirstRow + w1->Height) - 1;
+        LastRow_ = (FirstRow + w1->Height) - 1;
         FirstCol = PicCol * 2;
         {
-          s16 limit = LastRow;
+          s16 limit = LastRow_;
           s16 first = FirstRow;
           if (first <= limit) {
             Row = first;
@@ -1104,18 +1104,18 @@ void ShowPicture(s16 PicCol, s16 PicRow, farptr Buf)
       {
         SourceOfs = 0;
         FirstRow = PicRow * 8;
-        LastRow = (FirstRow + w1->Height) - 1;
+        LastRow_ = (FirstRow + w1->Height) - 1;
         FirstCol = PicCol;
-        LastCol = (FirstCol + w1->WidthCols) - 1;
+        LastCol_ = (FirstCol + w1->WidthCols) - 1;
         rtl_outp(SeqIndex, SeqMapMask);
         {
-          s16 limit = LastRow;
+          s16 limit = LastRow_;
           s16 first = FirstRow;
           if (first <= limit) {
             Row = first;
             for (;;) {
                 {
-                  s16 limit = LastCol;
+                  s16 limit = LastCol_;
                   s16 first = FirstCol;
                   if (first <= limit) {
                     Col = first;
@@ -1150,10 +1150,10 @@ void ShowPicture(s16 PicCol, s16 PicRow, farptr Buf)
         RowBytes = w1->WidthCols * 4;
         SourceOfs = 0;
         FirstRow = PicRow * 8;
-        LastRow = (FirstRow + w1->Height) - 1;
+        LastRow_ = (FirstRow + w1->Height) - 1;
         FirstCol = PicCol * 4;
         {
-          s16 limit = LastRow;
+          s16 limit = LastRow_;
           s16 first = FirstRow;
           if (first <= limit) {
             Row = first;
@@ -1653,7 +1653,7 @@ void FillPictureRect(s16 FirstCol, s16 FirstRow, u16 Width, u16 Height, u8 Color
   u16 StartCol = 0;
   u16 RightRoom = 0;
   u16 Count = 0;
-  u16 LastRow = 0;
+  u16 LastRow_ = 0;
   u16 DestOfs = 0;
   u16 Row = 0;
   u8 Mask[4] = {0};
@@ -1681,15 +1681,15 @@ void FillPictureRect(s16 FirstCol, s16 FirstRow, u16 Width, u16 Height, u8 Color
   if (FirstRow < 0) {
     DestOfs = 0;
     TrackRow = 0;
-    LastRow = Height - rtl_abs(FirstRow);
+    LastRow_ = Height - rtl_abs(FirstRow);
   } else {
     TrackRow = FirstRow;
     DestOfs = TrackRow * (*FPD(TPicture (*), Target)).WidthCols;
-    LastRow = Height - 1;
+    LastRow_ = Height - 1;
     if (FirstRow + Height > (*FPD(TPicture (*), Target)).Height) {
-      LastRow = ((*FPD(TPicture (*), Target)).Height - 1) - FirstRow;
+      LastRow_ = ((*FPD(TPicture (*), Target)).Height - 1) - FirstRow;
     } else {
-      LastRow = Height - 1;
+      LastRow_ = Height - 1;
     }
   }
   switch (VideoAdapter) {
@@ -1710,7 +1710,7 @@ void FillPictureRect(s16 FirstCol, s16 FirstRow, u16 Width, u16 Height, u8 Color
       StartBytes = StartCol;
     }
     {
-      u16 limit = LastRow;
+      u16 limit = LastRow_;
       if (0 <= limit) {
         Row = 0;
         for (;;) {
@@ -1759,7 +1759,7 @@ void FillPictureRect(s16 FirstCol, s16 FirstRow, u16 Width, u16 Height, u8 Color
       }
     }
     {
-      u16 limit = LastRow;
+      u16 limit = LastRow_;
       if (0 <= limit) {
         Row = 0;
         for (;;) {

@@ -71,7 +71,7 @@ class DeclMixin:
 
     def safe(self, name):
         """A C name for a local, parameter, field or label."""
-        if name in C_RESERVED or name in self.macros or name in self.taken_global_fn:
+        if name in C_RESERVED or name in self.macros or name in self.taken_global_fn or name in self.global_const_names:
             return name + "_"
         return name
 

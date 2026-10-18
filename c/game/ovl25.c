@@ -43,9 +43,9 @@ s16 CountMenuLines(PMenuLine List)
 typedef struct Frame_ReadPromptChoice {
   String40_RES06 Title;
   String40_RES06 Prompt;
-  u8 TitleColor;
-  u8 WordColor;
-  u8 HotColor;
+  u8 TitleColor_;
+  u8 WordColor_;
+  u8 HotColor_;
   u8 ExtKeys;
   u8 Animate;
   u8 (*ExtKey);
@@ -112,12 +112,12 @@ static void ReadPromptChoice_DrawPromptWords(struct Frame_ReadPromptChoice *up, 
       if (1 <= limit) {
         I = 1;
         for (;;) {
-            if ((((up->Words[Chosen - 1].Start <= I)) && ((up->Words[Chosen - 1].Stop >= I))) && ((up->HotColor != 0))) {
-              DrawGlyph((s16)((up->WordsCol + I) - 1), BottomRow, up->HotColor, 1, up->Prompt[I], 1);
+            if ((((up->Words[Chosen - 1].Start <= I)) && ((up->Words[Chosen - 1].Stop >= I))) && ((up->HotColor_ != 0))) {
+              DrawGlyph((s16)((up->WordsCol + I) - 1), BottomRow, up->HotColor_, 1, up->Prompt[I], 1);
             } else if ((up->Prompt[I] >= '0' && up->Prompt[I] <= '9') || (up->Prompt[I] >= 'A' && up->Prompt[I] <= 'Z')) {
-              DrawGlyph((s16)((up->WordsCol + I) - 1), BottomRow, up->HotColor, 1, up->Prompt[I], 1);
+              DrawGlyph((s16)((up->WordsCol + I) - 1), BottomRow, up->HotColor_, 1, up->Prompt[I], 1);
             } else {
-              DrawGlyph((s16)((up->WordsCol + I) - 1), BottomRow, up->WordColor, 1, up->Prompt[I], 1);
+              DrawGlyph((s16)((up->WordsCol + I) - 1), BottomRow, up->WordColor_, 1, up->Prompt[I], 1);
             }
           if (I == limit) break;
           I++;
@@ -147,21 +147,21 @@ static void ReadPromptChoice_DrawPromptWords(struct Frame_ReadPromptChoice *up, 
      QUIRK ovl25:0662: a hotkey that is a capital inside a word, not its first letter, searches the
      word spans past their end (the loop has no bound).
      QUIRK ovl25:0530: the timeout counts from the last animation frame, not from the start. */
-u8 ReadPromptChoice(const u8 *Title_in, const u8 *Prompt_in, u8 TitleColor, u8 WordColor, u8 HotColor, u8 ExtKeys, u8 Animate, u8 (*ExtKey))
+u8 ReadPromptChoice(const u8 *Title_in, const u8 *Prompt_in, u8 TitleColor_, u8 WordColor_, u8 HotColor_, u8 ExtKeys, u8 Animate, u8 (*ExtKey))
 {
   POOL_TRACE("ReadPromptChoice");
   Frame_ReadPromptChoice fr;
   memset(&fr, 0, sizeof fr);
   rtl_str_assign(fr.Title, 40, Title_in);
   rtl_str_assign(fr.Prompt, 40, Prompt_in);
-  fr.TitleColor = TitleColor;
-  fr.WordColor = WordColor;
-  fr.HotColor = HotColor;
+  fr.TitleColor_ = TitleColor_;
+  fr.WordColor_ = WordColor_;
+  fr.HotColor_ = HotColor_;
   fr.ExtKeys = ExtKeys;
   fr.Animate = Animate;
   fr.ExtKey = ExtKey;
   LastPromptExtKey = 0;
-  fr.AcceptsEnter = (((fr.WordColor != 0)) || ((fr.HotColor != 0)));
+  fr.AcceptsEnter = (((fr.WordColor_ != 0)) || ((fr.HotColor_ != 0)));
   ReadPromptChoice_SplitPromptWords(&fr, fr.Prompt);
   if (PromptWordChoice > fr.WordCount) {
     PromptWordChoice = 1;
@@ -174,7 +174,7 @@ u8 ReadPromptChoice(const u8 *Title_in, const u8 *Prompt_in, u8 TitleColor, u8 W
   fr.Unused30 = GameClock() + 30;
   fr.Unused80 = fr.Unused30 + 50;
   if (fr.Title[0] != 0) {
-    DrawTextAt(PromptLeftCol, BottomRow, fr.TitleColor, fr.Title);
+    DrawTextAt(PromptLeftCol, BottomRow, fr.TitleColor_, fr.Title);
   }
   fr.WordsCol = fr.Title[0] + PromptLeftCol;
   ReadPromptChoice_DrawPromptWords(&fr, PromptWordChoice);
@@ -416,7 +416,7 @@ static void ChooseFromList_HighlightListLine(struct Frame_ChooseFromList *up, s1
   PMenuLine Line = 0;
   u8 First = 0;
   u8 Len = 0;
-  u8 t1[256];
+  u8 t1[41];
   Line = GetMenuLine(LineNo, up->List);
   First = ChooseFromList_FirstNonBlank(up, (*FPD(TMenuLine (*), Line)).Text);
   Len = (ChooseFromList_LastNonBlank(up, (*FPD(TMenuLine (*), Line)).Text) - First) + 1;
@@ -430,8 +430,8 @@ static void ChooseFromList_UnhighlightListLine(struct Frame_ChooseFromList *up, 
   PMenuLine Line = 0;
   u8 First = 0;
   u8 Len = 0;
-  u8 t1[256];
-  u8 t2[256];
+  u8 t1[41];
+  u8 t2[41];
   Line = GetMenuLine(LineNo, up->List);
   First = ChooseFromList_FirstNonBlank(up, (*FPD(TMenuLine (*), Line)).Text);
   Len = (ChooseFromList_LastNonBlank(up, (*FPD(TMenuLine (*), Line)).Text) - First) + 1;
@@ -552,9 +552,9 @@ u8 ChooseFromList(const u8 *Title_in, const u8 *Prompt_in, u8 HeadingColor, u8 L
   fr.Redraw = Redraw;
   fr.Choice = Choice;
   fr.Selected = Selected;
-  u8 t1[256];
-  u8 t2[256];
-  u8 t3[256];
+  u8 t1[46];
+  u8 t2[46];
+  u8 t3[46];
   if (fr.List == 0) {
     (*fr.Choice) = 0;
     (*fr.Selected) = 0;
@@ -672,7 +672,7 @@ u8 ChooseFromList(const u8 *Title_in, const u8 *Prompt_in, u8 HeadingColor, u8 L
 /* ovl25:10D1. Asks Prompt with the words "Yes No" (the highlight starts on No) through
      ReadPromptChoice until the key is Y or N and returns it; Escape asks again. Called by the Temple
      (AskCastAnyway, ChargeForCure) and ovl08, ovl13, ovl15, ovl16. */
-u8 AskYesNo(const u8 *Prompt_in, u8 TitleColor, u8 WordColor, u8 HotColor)
+u8 AskYesNo(const u8 *Prompt_in, u8 TitleColor_, u8 WordColor_, u8 HotColor_)
 {
   POOL_TRACE("AskYesNo");
   const u8 *Prompt = Prompt_in;
@@ -681,7 +681,7 @@ u8 AskYesNo(const u8 *Prompt_in, u8 TitleColor, u8 WordColor, u8 HotColor)
   u8 Key = 0;
   PromptWordChoice = 2;
   do {
-    Key = ReadPromptChoice(Prompt, S("\006Yes No"), TitleColor, WordColor, HotColor, 0, 0, &ExtKey);
+    Key = ReadPromptChoice(Prompt, S("\006Yes No"), TitleColor_, WordColor_, HotColor_, 0, 0, &ExtKey);
   } while (!(Key == KeyYes || Key == KeyNo));
   Result = Key;
   return Result;

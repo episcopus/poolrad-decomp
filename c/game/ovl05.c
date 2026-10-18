@@ -285,8 +285,8 @@ void ShowBattleResult(s32 Xp)
   u8 Key = 0;
   u8 Title[2] = {0};
   u8 ExtKey = 0;
-  u8 t1[256];
-  u8 t2[256];
+  u8 t1[32];
+  u8 t2[35];
   rtl_str_assign(Title, 1, S("\000"));
   DrawWindow(1, 1, 0x26, 0x16, 0, 0xF, S("\000"));
   if (((MonstersLooted != 0)) || ((DuelMode != 0))) {
@@ -466,8 +466,8 @@ void TreasureMenu(void)
   u8 DetectSpell = 0;
   u8 HasDetect = 0;
   u8 ExitText[14] = {0};
-  u8 t1[256];
-  u8 t2[256];
+  u8 t1[34];
+  u8 t2[28];
   rtl_str_assign(Title, 1, S("\000"));
   Done = 0;
   RedrawView();
@@ -608,7 +608,7 @@ void TakeHirelingShares(void)
   u8 Taken = 0;
   u8 ExtKey = 0;
   u8 Key = 0;
-  u8 t1[256];
+  u8 t1[43];
   Taken = 0;
   Who = PartyListHead;
   HirelingShares = 0;

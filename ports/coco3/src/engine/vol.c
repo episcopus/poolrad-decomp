@@ -113,6 +113,16 @@ u8 vol_entry(const Vol *v, u16 i, u8 *file, u8 *id, DaxEntry *e)
     return 0;
 }
 
+/* 1 when a mounted volume holds the file at all */
+u8 vol_has(const char *name8)
+{
+    u8 d, base;
+    for (d = 0; d < 4; d++)
+        if (vols[d].mounted && file_index(&vols[d], name8, &base) != 0xFF)
+            return 1;
+    return 0;
+}
+
 u8 vol_lookup(const char *name8, u8 id, Vol **vp, DaxEntry *e)
 {
     u8 d, st, seen = 0;

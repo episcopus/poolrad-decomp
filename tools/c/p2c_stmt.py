@@ -342,7 +342,7 @@ class StmtMixin:
         k = t.kind
         if k == "string":
             if r.ty.kind == "char" and r.strlit is None:
-                tmp = self.str_temp()
+                tmp = self.str_temp(1)
                 return "rtl_str_assign(%s, %d, rtl_str_char(%s, %s))" % (tgt.code, t.maxlen, tmp, r.code)
             return "rtl_str_assign(%s, %d, %s)" % (tgt.code, t.maxlen, self.to_pstr(r))
         if k in ("array", "set"):

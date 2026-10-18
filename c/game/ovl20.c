@@ -264,8 +264,8 @@ u8 *TwoDigitText(u8 *Result_out, u8 Number)
   u8 *Result = Result_out;
   String40_RES06 Digits = {0};
   u8 t1[256];
-  u8 t2[256];
-  u8 t3[256];
+  u8 t2[42];
+  u8 t3[41];
   rtl_str_assign(Digits, 40, ByteToText(t1, Number));
   if (Number < 10) {
     rtl_str_assign(Digits, 40, rtl_str_cat(t2, 2, (const u8 *const[]){S("\0010"), Digits}));

@@ -244,8 +244,25 @@ static void dump_screen(const char *label)
 #ifdef POOL_TRACE_CALLS
 static void canon_digest(char out[65]);
 static void snapshot(void);
+static struct { const char *name; long n; } g_calls[600];     /* POOL_CALLS=1: how often each routine ran, listed at exit */
+static int g_ncall_names;
+static void calls_report(void)
+{
+  int i;
+  for (i = 0; i < g_ncall_names; i++) fprintf(stderr, "calls %ld %s\n", g_calls[i].n, g_calls[i].name);
+}
 void pool_trace(const char *name)
 {
+  if (getenv("POOL_CALLS")) {
+    int i;
+    for (i = 0; i < g_ncall_names && g_calls[i].name != name; i++) ;
+    if (i == g_ncall_names && i < 600) {
+      if (!i) atexit(calls_report);
+      g_calls[i].name = name; g_ncall_names++;
+    }
+    if (i < 600) g_calls[i].n++;
+    return;
+  }
   if (g_trace_lo >= 0 && idx >= g_trace_lo && idx < g_trace_hi) {
     char d[65];
     if (g_ncalls++ == g_snap_call && g_dump) {

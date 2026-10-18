@@ -35,6 +35,9 @@ _dsk_read_to
         ldd     13,s
 dsk_go  orcc    #$50
         std     DC_BUF
+        lda     #3
+        sta     >dsk_try
+dsk_again
         lda     #2                      DSKCON op 2: read sector
         sta     DC_OPC
         lda     8,s                     drive
@@ -57,10 +60,23 @@ dsk_go  orcc    #$50
         ldd     #$3E3F
         sta     2,x
         stb     3,x
+        ldx     #dsk_dp                 Disk BASIC's own direct page variables live in $80..$9F too: park the engine's, give DSKCON
+        ldy     #$80                    zeros there (as it finds them in BASIC), put ours back after
+@sv     lda     ,y
+        sta     ,x+
+        clr     ,y+
+        cmpy    #$A0
+        bne     @sv
         sta     $FFDE                   ROM mode
         sta     $FFD8                   0.89 MHz
         jsr     [DSKCON_VEC]
         sta     $FFD9                   1.79 MHz
+        ldx     #dsk_dp
+        ldy     #$80
+@rs     lda     ,x+
+        sta     ,y+
+        cmpy    #$A0
+        bne     @rs
         sta     $FFDF                   all-RAM mode
         ldx     #$FFA4
         tst     FC_TASK
@@ -70,7 +86,18 @@ dsk_go  orcc    #$50
         sty     ,x
         stu     2,x
         ldb     DC_STA
-        clra
+        cmpb    #128                    not ready: the first read after the drive sat idle fails, because DSKCON's spin-up wait
+        bne     @done                   is timed by Disk BASIC's IRQ, which the engine has replaced; the next try finds the
+        dec     >dsk_try                drive turning
+        beq     @done
+        ldy     #3                      wait about half a second (the motor is spinning up) with the CPU's interrupts as they are
+@w1     ldx     #0
+@w2     leax    -1,x
+        bne     @w2
+        leay    -1,y
+        bne     @w1
+        lbra    dsk_again
+@done   clra
         puls    cc,u,y,pc
 
 * void dsk_motor_off(void): IRQ is off, so Disk BASIC's motor timeout never runs
@@ -81,4 +108,6 @@ _dsk_motor_off
 
 _dsk_buf
         RMB     256
+dsk_try RMB     1
+dsk_dp  RMB     32
         ENDSECTION

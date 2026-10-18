@@ -169,9 +169,9 @@ u8 MayUseMagic(u8 Action)
   POOL_TRACE("MayUseMagic");
   u8 Result = 0;
   String40_RES06 Reason = {0};
-  u8 t1[256];
-  u8 t2[256];
-  u8 t3[256];
+  u8 t1[56];
+  u8 t2[56];
+  u8 t3[59];
   rtl_str_assign(Reason, 40, S("\000"));
   if (((Action == ActionCast)) && (((*FPD(TGameVars (*), GameVars))[229] > 0))) {
     rtl_str_assign(Reason, 40, S("\037cannot cast spells in this area"));
@@ -611,7 +611,7 @@ void DisplaySpellEffects(void)
   memset(&fr, 0, sizeof fr);
   u8 t1[256];
   u8 t2[256];
-  u8 t3[256];
+  u8 t3[42];
   fr.List = rtl_getmem(MenuLineBytes);
   fr.Last = fr.List;
   (*FPD(TMenuLine (*), fr.Last)).Flag29 = PlainLine;
@@ -977,9 +977,9 @@ void CampSpeedMenu(void)
   String40_RES06 Prompt = {0};
   u8 t1[256];
   u8 t2[256];
-  u8 t3[256];
-  u8 t4[256];
-  u8 t5[256];
+  u8 t3[48];
+  u8 t4[48];
+  u8 t5[46];
   do {
     DrawTextAt(1, 0x12, TextColor, rtl_str_cat(t2, 3, (const u8 *const[]){S("\015Game Speed = "), ByteToText(t1, GameSpeed), S("\026 (0=fastest 9=slowest)")}));
     rtl_str_assign(Prompt, 40, S("\000"));
@@ -1036,9 +1036,9 @@ void AlterMenu(void)
   u8 Choice = 0;
   u8 ExtKey = 0;
   String40_RES06 Prompt = {0};
-  u8 t1[256];
-  u8 t2[256];
-  u8 t3[256];
+  u8 t1[55];
+  u8 t2[56];
+  u8 t3[45];
   Key = ' ';
   while (!((Key == KeyNone_OVL15 || Key == 'E'))) {
     Key = ReadPromptChoice(S("\007Alter: "), AlterMenuText, TitleColor, WordColor, HotColor, 1, 1, &ExtKey);

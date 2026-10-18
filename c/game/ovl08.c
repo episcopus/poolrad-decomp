@@ -271,12 +271,12 @@ void CombatMenu(PCharacter Who, u8 (*Cmd))
   u8 Menu[41] = {0};
   u8 I = 0;
   u8 Flag = 0;
-  u8 t1[256];
-  u8 t2[256];
-  u8 t3[256];
-  u8 t4[256];
-  u8 t5[256];
-  u8 t6[256];
+  u8 t1[46];
+  u8 t2[50];
+  u8 t3[45];
+  u8 t4[46];
+  u8 t5[46];
+  u8 t6[51];
   s32 t7;
   s32 t8;
   RunAffectHooks(0xF, Who);
@@ -520,10 +520,10 @@ void EndTurnMenu(PCharacter Who, u8 (*Done))
   POOL_TRACE("EndTurnMenu");
   u8 Menu[41] = {0};
   u8 Key = 0;
-  u8 t1[256];
-  u8 t2[256];
-  u8 t3[256];
-  u8 t4[256];
+  u8 t1[47];
+  u8 t2[52];
+  u8 t3[49];
+  u8 t4[51];
   (*Done) = 0;
   rtl_str_assign(Menu, 40, S("\000"));
   if (!IsRangedWeapon(Who) || RangedWeaponCanMelee(Who)) {
@@ -606,9 +606,9 @@ void GameSpeedMenu(void)
   u8 Key = 0;
   u8 t1[256];
   u8 t2[256];
-  u8 t3[256];
-  u8 t4[256];
-  u8 t5[256];
+  u8 t3[48];
+  u8 t4[48];
+  u8 t5[45];
   Key = ' ';
   while (!((Key == 0x00 || Key == 'E'))) {
     rtl_str_assign(Title, 40, rtl_str_cat(t2, 3, (const u8 *const[]){S("\013GameSpeed ("), ByteToText(t1, GameSpeed), S("\003) :")}));

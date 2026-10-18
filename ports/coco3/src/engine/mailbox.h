@@ -10,6 +10,12 @@
 #define MB_FAILS      (*(unsigned int *)(MB_BASE + 6))
 #define MB_RESULT(i)  (*(unsigned int *)(MB_BASE + 0x10 + 2 * (i)))
 
+/* An event log for the harnesses: the last 64 events, a tag (0..15) and a 12 bit value each, in shared RAM; lua/watch.lua
+ * prints it. */
+#define DBGLOG ((unsigned int *)0x0F40)
+#define DBGN (*(unsigned char *)0x0FC0)
+#define DBG(tag, v) do { DBGLOG[DBGN & 63] = (unsigned int)(((unsigned int)(tag) << 12) | ((v) & 0x0FFF)); DBGN++; } while (0)
+
 #define MB_RUNNING 0
 #define MB_PASS    1
 #define MB_FAIL    2

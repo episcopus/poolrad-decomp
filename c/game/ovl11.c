@@ -18,8 +18,8 @@
 void StartGame(void)
 {
   POOL_TRACE("StartGame");
-  u8 t1[256];
-  u8 t2[256];
+  u8 t1[2];
+  u8 t2[32];
   GameVars = rtl_getmem(2048);
   GameVars2 = rtl_getmem(2048);
   GameVars3 = rtl_getmem(1024);

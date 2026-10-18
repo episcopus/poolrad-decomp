@@ -11,7 +11,7 @@
 * through a disk read (t_irq: 330 frames counted over 5.5 s of reading).
 * Keyboard: PIA0 ($FF00 rows in, $FF02 columns out) scanned once a frame; a key counts when two consecutive scans agree
 * (debounce), its code goes to a 16-entry queue (kbd_get).
-* All of it, code, tables and variables, is in the section `shared` ($1060..$13FF, below the mailbox's neighbour): the
+* All of it, code, tables and variables, is in the section `shared` (the code at $0400, where the text screen was, the data at $0E00: both tasks see slot 0 and the game's stack gets the room above the mailbox): the
 * frame interrupt can arrive in either MMU task, and both see slot 0 the same.
         INCLUDE mailbox.inc
 
@@ -26,6 +26,7 @@
         EXPORT  _kbd_mods
         EXPORT  _game_launch
         IMPORT  _eng_init0
+        EXPORT  _eng_halt
 
 * void irq_start(void): vectors, GIME sources on, interrupts unmasked
 _irq_start
@@ -139,7 +140,16 @@ _game_launch
         jmp     $2000
 
 irq_isr
-        lda     $FF03                   bit 7: the vertical sync flag
+        cmps    #$1100                  a guard: the stack must not reach the mailbox ($1000..$105F) and the shared data
+        bhs     @sok                    below it; if it has, say so and stop (result words 28 = $E5E5, 29 = S, status 2)
+        lds     #$1F00
+        ldd     #$E5E5
+        std     MB_BASE+$10+56
+        lda     #2
+        sta     MB_STATUS
+        orcc    #$50
+        jmp     >_eng_halt
+@sok    lda     $FF03                   bit 7: the vertical sync flag
         bpl     @out
         lda     $FF02                   reading the data register clears it
         ldx     >frames
@@ -231,7 +241,10 @@ kbd_tick
 
         ENDSECTION
 
-        SECTION shared
+        SECTION shared2
+* the program has failed or finished: the harnesses look for the CPU here
+_eng_halt
+        bra     _eng_halt
 frames          RMB     2
 ticks           RMB     2
 kcur            RMB     8
@@ -245,7 +258,7 @@ kq_tail         RMB     1
 kq              RMB     16
         ENDSECTION
 
-        SECTION shared
+        SECTION shared2
 * key number = row * 8 + column: row = the PIA0 data bit that reads low, column = the strobed bit of $FF02
 ktab    FCC     "@ABCDEFG"
         FCC     "HIJKLMNO"

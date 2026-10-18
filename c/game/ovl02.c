@@ -15,7 +15,7 @@ void CheckCodeWheel(void)
   u8 Answer[41] = {0};
   u8 Question = 0;
   u8 Attempt = 0;
-  u8 t1[256];
+  u8 t1[13];
   u8 t2[256];
   {
     if (1 <= MaxAttempts) {
