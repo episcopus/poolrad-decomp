@@ -1,9 +1,10 @@
 -- mailbox.lua: MAME autoboot script. Types a command at the BASIC prompt, waits for the
--- test program to finish (mailbox at logical $0100, see src/engine/mailbox.inc), dumps the
+-- test program to finish (mailbox at logical $1000, see src/engine/mailbox.inc), dumps the
 -- mailbox and a screenshot, then exits. Parameters come from the environment:
 --   MB_OUT   output prefix, writes <prefix>.mbx (the 80 mailbox bytes) and <prefix>.png
 --   MB_CMD   text typed at BASIC (default LOADM"DEMO":EXEC)
 --   MB_SCREENS if set: at every checkpoint dump the screen (the program called mb_hold) to <prefix>-cp<N>.scr4 and release it
+--   MB_KEYS, MB_KEYS_CP if set: type MB_KEYS (\n is Enter) into the keyboard when the checkpoint counter reaches MB_KEYS_CP
 --   MB_LIMIT emulated seconds to wait in total (default 60)
 local m = manager.machine
 local mem = m.devices[":maincpu"].spaces["program"]
@@ -33,6 +34,9 @@ while m.time:as_double() - t0 < limit do
     if c ~= last then
       last = c
       cps[#cps + 1] = string.format("%d %.6f", c, m.time:as_double() - t0)
+      if os.getenv("MB_KEYS") and c == tonumber(os.getenv("MB_KEYS_CP") or "0") then
+        m.natkeyboard:post((os.getenv("MB_KEYS"):gsub("\\n", "\n")))   -- the program waits for keys after this checkpoint
+      end
       if os.getenv("MB_SCREENS") then
         -- mb_hold has mapped the screen (physical blocks 0..3) at $4000..$BFFF: keep 32,000 bytes and the 16 palette
         -- register values from the mailbox, the format of poolrad_replay --dump (PREFIX-LABEL.scr4)
@@ -40,7 +44,7 @@ while m.time:as_double() - t0 < limit do
         sf:write(mem:read_range(0x4000, 0x4000 + 31999, 8))
         for i = 0, 15 do sf:write(string.char(mem:read_u8(0x1050 + i))) end
         sf:close()
-        mem:write_u8(0x1007, 1)
+        mem:write_u8(0x1008, 1)
       end
     end
     if mem:read_u8(0x1005) ~= 0 then break end
@@ -55,5 +59,12 @@ local f = io.open(out .. ".mbx", "wb")
 for i = 0, 0x4F do f:write(string.char(mem:read_u8(0x1000 + i))) end
 f:close()
 pcall(function() m.screens[":screen"]:snapshot(out .. ".png") end)
-print(ok and "mailbox: program finished" or "mailbox: TIMEOUT")
+if not ok then   -- a hang: say where the CPU is
+  local cpu = m.devices[":maincpu"]
+  local st = cpu.state
+  print(string.format("mailbox: TIMEOUT pc=%04X cc=%02X s=%04X vectors irq=%04X firq=%04X",
+    st["PC"].value, st["CC"].value, st["S"].value, mem:read_u16(0xFFF8), mem:read_u16(0xFFF6)))
+else
+  print("mailbox: program finished")
+end
 m:exit()

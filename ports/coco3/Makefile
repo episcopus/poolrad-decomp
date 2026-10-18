@@ -18,7 +18,7 @@ LINKLIBS := -L$(CMOCLIB) -lcmoc-crt-void -lcmoc-std-void
 ENGINE_OBJ := build/obj/boot.o build/obj/mailbox.o
 P ?= byte-arith
 
-.PHONY: help doctor toolchain eng-data eng-test eng-tests sizes heap-stats prof coco-host place-host golden4 golden4-record demo test-demo run-demo probe probes asm-probe bench test clean
+.PHONY: help doctor toolchain eng-data eng-test eng-tests gfx-ref sizes heap-stats prof coco-host place-host golden4 golden4-record demo test-demo run-demo probe probes asm-probe bench test clean
 .DEFAULT_GOAL := help
 
 help:
@@ -26,7 +26,10 @@ help:
 	@echo "  make doctor         check docker, the image, ROMs, xroar"
 	@echo "  make toolchain      print the toolchain versions (in the container)"
 	@echo "  make eng-test T=t_disk   step 8.3: build an engine test (src/engtest), its .DSK, run in MAME and XRoar, check"
+	@echo "                      t_disk t_pic (8.3a, b: disk, DAX, title screens) t_gfx (c: text, tiles, blits) t_irq (d: frame clock, keys)"
+	@echo "                      t_perf (e: what drawing costs) t_scene (a picture, text and tiles from one disk)"
 	@echo "  make eng-tests      every engine test"
+	@echo "  make gfx-ref        rerun the Phase 7 C engine on the t_gfx script and compare with goldens/engine (WRITE=1 rewrites)"
 	@echo "  make sizes          compile every generated unit of ../../c/game with CMOC, tabulate the sizes (step 8.1)"
 	@echo "  make heap-stats     replay the sessions on a heap-stats build of the C game: heap peak, DGROUP use"
 	@echo "  make prof           who references which data per key: profile build of the C game, report (step 8.1c)"
@@ -106,10 +109,13 @@ bench: demo
 	@scripts/mame_run.sh build/demo/demo.dsk DEMO build/run/demo-mame
 	@python3 -I tools/cpbench.py build/run/demo-mame.cp
 
-test: test-demo
+test: test-demo eng-tests gfx-ref
+
+gfx-ref:
+	@scripts/gfx_ref.sh $(if $(WRITE),--write)
 
 clean:
-	rm -rf build/demo build/obj build/probe build/run build/exp
+	rm -rf build/eng build/gfxref build/demo build/obj build/probe build/run build/exp
 
 # ---------------------------------------------------------------- builds (inside the toolchain)
 
@@ -156,16 +162,17 @@ build/demo/demo.dsk: build/demo/demo.bin
 
 # ---------------------------------------------------------------- engine tests (step 8.3)
 POOLRAD_DATA ?= ../../poolrad
-ENG_OBJ := build/obj/boot.o build/obj/mailbox.o build/obj/mmu.o build/obj/disk.o build/obj/rsdos.o build/obj/rle.o build/obj/dax.o build/obj/gfx.o build/obj/nobanks.o
+ENG_OBJ := build/obj/boot.o build/obj/mailbox.o build/obj/mmu.o build/obj/disk.o build/obj/irq.o build/obj/rsdos.o build/obj/rle.o build/obj/kernels.o build/obj/dax.o build/obj/gfx.o build/obj/nobanks.o
 ENG_TESTS := $(patsubst src/engtest/%.c,%,$(wildcard src/engtest/t_*.c))
 T ?= t_disk
+ENG_KEYS_t_irq := 12 !A\\n
 
 eng-data:
 	@python3 -I tools/engdata.py $(POOLRAD_DATA) build/eng
 
 eng-test: eng-data
 	@$(TC) $(IMAKE) --no-print-directory build/eng/$(T).dsk build/eng/$(T).bin
-	@MB_SCREENS=1 scripts/mame_run.sh build/eng/$(T).dsk TEST build/run/$(T)-mame
+	@MB_SCREENS=1 $(if $(ENG_KEYS_$(T)),MB_KEYS="$(ENG_KEYS_$(T))" MB_KEYS_CP=5) scripts/mame_run.sh build/eng/$(T).dsk TEST build/run/$(T)-mame
 	@echo "--- $(T) in MAME"; python3 -I tools/mbdump.py build/run/$(T)-mame.mbx --check
 	@scripts/xroar_run.sh build/eng/$(T).bin build/eng/$(T).map build/run/$(T)-xroar.ram build/eng/$(T).dsk; rc=$$?; \
 	  if [ $$rc -eq 77 ]; then echo "xroar skipped"; elif [ $$rc -ne 0 ]; then exit $$rc; \

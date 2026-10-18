@@ -24,15 +24,15 @@ DRGRAM          EQU     $0986           Disk BASIC's copy of the DSKREG latch
 
 * u8 dsk_read(u8 drive, u8 track, u8 sector): reads one 256-byte sector into dsk_buf; returns DCSTA (0 = ok)
 _dsk_read
-        pshs    u,y
+        pshs    cc,u,y                  the caller's interrupt mask comes back at the end
         orcc    #$50
         lda     #2                      DSKCON op 2: read sector
         sta     DC_OPC
-        lda     7,s                     drive
+        lda     8,s                     drive
         sta     DC_DRV
-        lda     9,s                     track
+        lda     10,s                    track
         sta     DC_TRK
-        lda     11,s                    sector
+        lda     12,s                    sector
         sta     DC_SEC
         ldd     #_dsk_buf
         std     DC_BUF
@@ -58,7 +58,7 @@ _dsk_read
         sta     $FFA7
         ldb     DC_STA
         clra
-        puls    u,y,pc
+        puls    cc,u,y,pc
 
 * void dsk_motor_off(void): IRQ is off, so Disk BASIC's motor timeout never runs
 _dsk_motor_off

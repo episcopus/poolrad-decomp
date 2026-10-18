@@ -10,6 +10,7 @@
         EXPORT  boot
         IMPORT  program_start
         IMPORT  _load_banks
+        EXPORT  _eng_init0
 
 boot
         orcc    #$50                    mask IRQ and FIRQ
@@ -40,6 +41,7 @@ boot
         lda     #$CC                    GIME: CoCo-compatible video (BASIC's text screen stays
 *                                       valid for the demo), MMU on, $FE00 constant page
         sta     $FF90
+        sta     >_eng_init0
         clr     $FF91                   MMU task 0
         lds     #SYSSTK_TOP
         ldx     #MB_BASE                clear the mailbox
@@ -91,4 +93,8 @@ _mb_hold
         sta     $FFA5
         puls    u,y,pc
 
+        ENDSECTION
+
+        SECTION bss
+_eng_init0      RMB     1               the value last written to GIME $FF90 (a write only register), for irq_start and gfx_init
         ENDSECTION

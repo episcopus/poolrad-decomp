@@ -33,8 +33,9 @@ u8 dax_find(RsFile *f, u8 id, DaxEntry *e)
 }
 
 /* Unpack block e. The first hdr_n bytes of the result go to hdr (RAM); the rest goes either to ram_dst (RAM; first_blk
- * is 0xFF) or into physical blocks first_blk, first_blk+1 ... through window slot 6 (8 KB each). */
-u8 dax_unpack(RsFile *f, const DaxEntry *e, u8 *hdr, u8 hdr_n, u8 first_blk, u8 *ram_dst)
+ * is 0xFF) or into physical blocks first_blk, first_blk+1 ... through window slot 6 (8 KB each), starting first_off
+ * bytes into the first block. */
+u8 dax_unpack(RsFile *f, const DaxEntry *e, u8 *hdr, u8 hdr_n, u8 first_blk, u16 first_off, u8 *ram_dst)
 {
     Rle r;
     u8 buf[256];
@@ -54,7 +55,7 @@ u8 dax_unpack(RsFile *f, const DaxEntry *e, u8 *hdr, u8 hdr_n, u8 first_blk, u8 
         r.dstend = ram_dst + e->raw;
     } else {
         mmu_set(6, blk);
-        r.dst = (u8 *)0xC000;
+        r.dst = (u8 *)(0xC000u + first_off);
         r.dstend = (u8 *)0xE000;
     }
     while (left > 0) {
@@ -76,7 +77,7 @@ u8 dax_unpack(RsFile *f, const DaxEntry *e, u8 *hdr, u8 hdr_n, u8 first_blk, u8 
                         r.dstend = ram_dst + e->raw - hdr_n;
                     } else {
                         mmu_set(6, blk);
-                        r.dst = (u8 *)0xC000;
+                        r.dst = (u8 *)(0xC000u + first_off);
                         r.dstend = (u8 *)0xE000;
                     }
                 } else if (first_blk != 0xFF) {

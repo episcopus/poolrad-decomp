@@ -5,9 +5,11 @@ sources, the probes and the build output all live here and use paths relative to
 plan are in `../../docs/coco/` (start with `README.md` and `PORTING-GUIDE.md` there); the
 result of each step of the plan is recorded in `docs/`.
 
-Status: steps 8.0 (toolchain baseline), 8.1 (measure), 8.1c (data model study) and 8.2 (translator profile,
-placement model, 4bpp goldens) are done, see `docs/PHASE-8.0.md` ... `docs/PHASE-8.2.md`. Nothing of the game is ported yet; what exists is the build and test machinery, a banked
-hello world and the measurements of the generated C on CMOC. Next: 8.3, the engine core (boot, MMU, trampolines, blits) judged by the 4bpp goldens.
+Status: steps 8.0 (toolchain baseline), 8.1 (measure), 8.1c (data model study), 8.2 (translator profile,
+placement model, 4bpp goldens) and 8.3 (the engine core) are done, see `docs/PHASE-8.0.md` ... `docs/PHASE-8.3.md`. The engine
+(`src/engine`) boots the machine, reads a `.DSK`, unpacks DAX pictures, draws text, tiles and blits, runs the frame clock
+and the keyboard, and reproduces the original's screens bit for bit in MAME and XRoar. The game itself is not ported yet.
+Next: 8.4, the data pipeline.
 
 ## Quick start
 
@@ -22,6 +24,9 @@ make prof          # 8.1c: references to data per key by routine and unit, on a 
 make coco-host     # 8.2: translate with --profile coco, build on the host, replay the sessions (full state compared)
 make place-host    # 8.2: the placement model (mapped 16-bit heap, banked windows) on the host
 make golden4       # 8.2: the 4bpp screen goldens on both host builds
+make eng-tests     # 8.3: every engine test on the emulated CoCo 3 (MAME and XRoar), screens compared with the goldens
+make eng-test T=t_scene   # one test; t_scene draws a picture, text and tiles from a .DSK (build/run/t_scene-mame.png)
+make gfx-ref       # 8.3: rerun the Phase 7 C engine on the t_gfx script and compare with goldens/engine
 make help
 ```
 
@@ -52,13 +57,14 @@ The firmware is copyrighted and is never committed (`roms/` is ignored by git). 
 | Path | What |
 |---|---|
 | `Makefile` | the front door (`make help`) |
-| `scripts/` | shell behind the targets: `lib.sh` (container helpers), `mame_run.sh`, `xroar_run.sh`, `doctor.sh`, `toolchain-report.sh`, `asm-probe.sh`, `sizes.sh`, `heap_stats.sh`, `prof_run.sh`, `coco_host.sh`, `place_host.sh`, `golden4.sh` |
+| `scripts/` | shell behind the targets: `lib.sh` (container helpers), `mame_run.sh`, `xroar_run.sh`, `doctor.sh`, `toolchain-report.sh`, `asm-probe.sh`, `sizes.sh`, `heap_stats.sh`, `prof_run.sh`, `coco_host.sh`, `place_host.sh`, `golden4.sh`, `gfx_ref.sh` (the host reference of 8.3), `mame_vec.sh` (what MAME's CPU sees in the vector page) |
 | `tools/` | step 8.0: `symexport.py` (core symbols for banks), `mkdecb.py` (DECB packing), `mbdump.py` (mailbox results), `maplimit.py`, `bankcheck.py`, `cpbench.py`; step 8.1: `mkshim.py` (the CMOC shim of `pool.h`; the translator's own `--profile coco` replaced `cmocify.py`), `unitsizes.py`, `unitgraph.py`, `dgroup_stats.py`; step 8.1c: `mkprof.py`, `prof_report.py`, `constplace.py` |
 | `prof/` | `prof_rt.c`, the runtime of the profiling build (call edges, DGROUP references, far pointer dereferences per key) |
 | `shim/` | stand-ins for the C library headers CMOC lacks (`stdint.h`, `stddef.h`, `string.h`) |
-| `placement.toml`, `goldens/4bpp/` | step 8.2: where each pointer type's blocks live (mapped, banked, engine); the 4bpp screen digests of the seven sessions |
+| `placement.toml`, `goldens/4bpp/`, `goldens/engine/` | step 8.2: where each pointer type's blocks live (mapped, banked, engine); the 4bpp screen digests of the seven sessions; step 8.3: the digests of the engine script (`t_gfx.s4`) |
 | `lua/mailbox.lua` | MAME autoboot script: types the LOADM command, waits for the mailbox, dumps it and a screenshot |
-| `src/engine/` | the engine so far: `boot.asm` (takeover), `farcall.asm` (far-call trampoline, bank loader), `banks.inc`, `mailbox.*`, link scripts |
+| `src/engine/` | the engine: `boot.asm` (takeover), `mmu.asm`, `farcall.asm` (far-call trampoline, bank loader), `disk.asm` + `rsdos.c` (DSKCON, RS-DOS), `rle.asm` + `dax.c`, `gfx.c` + `kernels.asm` (screen, text, pictures, blits), `irq.asm` (frame clock, tick, keyboard), `eng.h`, `mailbox.*`, link scripts |
+| `src/engtest/`, `test/` | the engine tests (`t_disk t_pic t_gfx t_irq t_perf t_scene`, run by `make eng-test T=`) and the host reference `test/gfx_ref.c` |
 | `src/demo/` | the banked hello world: a resident core and two code banks |
 | `probes/` | CMOC probes: runtime ones (`*.c`, run on the CoCo) and generated-code ones (`asm/*.c`) |
 | `docs/` | one report per step of the plan |
@@ -66,9 +72,9 @@ The firmware is copyrighted and is never committed (`roms/` is ignored by git). 
 
 ## The test mailbox
 
-Every test program ends in `mb_finish()`. Results go through a mailbox at logical `$0100` (physical
-`$70100`, block `$38`): magic `PRAD`, a checkpoint counter, a status byte (1 pass, 2 fail), a failure
-count and 32 result words (`src/engine/mailbox.inc`). MAME's Lua script polls it and writes 80
+Every test program ends in `mb_finish()`. Results go through a mailbox at logical `$1000` (physical
+`$71000`, block `$38`; Disk BASIC's RAM vectors and disk variables below `$0E00` must stay intact for DSKCON): magic `PRAD`, a checkpoint counter, a status byte (1 pass, 2 fail), a failure
+count, the acknowledge byte of `mb_hold` and 32 result words (`src/engine/mailbox.inc`). MAME's Lua script polls it and writes 80
 bytes; XRoar stops at `_mb_halt` (address from the linker map) and writes a raw 512 KB RAM dump in
 physical address order. `tools/mbdump.py` reads both. This is the checkpoint protocol of
 `../../docs/coco/research/08-emulators-testing-workflow.md` section 5 in its first, small form.

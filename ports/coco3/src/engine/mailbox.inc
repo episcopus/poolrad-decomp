@@ -7,7 +7,8 @@
 *   $1004  1   checkpoint counter, incremented by mb_checkpoint()
 *   $1005  1   status: 0 running, 1 finished and every check passed, 2 finished with a failure
 *   $1006  2   number of failed checks
-*   $1008  8   reserved
+*   $1008  1   mb_hold's acknowledge: the harness sets it nonzero to release mb_hold
+*   $1009  7   reserved
 *   $1010  64  result words r0..r31, big endian
 
 MB_BASE         EQU     $1000
@@ -16,7 +17,7 @@ MB_CHECKPOINT   EQU     MB_BASE+4
 MB_STATUS       EQU     MB_BASE+5
 MB_FAILS        EQU     MB_BASE+6
 MB_RESULTS      EQU     MB_BASE+$10
-MB_ACK          EQU     MB_BASE+7       harness sets it to release mb_hold (nonzero), the program clears it
+MB_ACK          EQU     MB_BASE+8       harness sets it to release mb_hold (nonzero), the program clears it
 MB_PAL          EQU     MB_BASE+$50     the 16 EGA palette register values the engine has set
 MB_SIZE         EQU     $60
 
