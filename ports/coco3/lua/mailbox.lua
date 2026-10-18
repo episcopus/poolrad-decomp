@@ -17,8 +17,8 @@ emu.wait(2)
 m.natkeyboard:post(cmd .. "\n")
 
 local function magic()
-  return mem:read_u8(0x100) == 0x50 and mem:read_u8(0x101) == 0x52
-     and mem:read_u8(0x102) == 0x41 and mem:read_u8(0x103) == 0x44
+  return mem:read_u8(0x1000) == 0x50 and mem:read_u8(0x1001) == 0x52
+     and mem:read_u8(0x1002) == 0x41 and mem:read_u8(0x1003) == 0x44
 end
 
 -- Timestamp every change of the checkpoint counter (emulated seconds since the script
@@ -28,18 +28,18 @@ local cps, last = {}, 0
 while m.time:as_double() - t0 < limit do
   emu.wait(0.0002)
   if magic() then
-    local c = mem:read_u8(0x104)
+    local c = mem:read_u8(0x1004)
     if c ~= last then last = c; cps[#cps + 1] = string.format("%d %.6f", c, m.time:as_double() - t0) end
-    if mem:read_u8(0x105) ~= 0 then break end
+    if mem:read_u8(0x1005) ~= 0 then break end
   end
 end
 local cf = io.open(out .. ".cp", "wb")
 for _, l in ipairs(cps) do cf:write(l, "\n") end
 cf:close()
 
-local ok = magic() and mem:read_u8(0x105) ~= 0
+local ok = magic() and mem:read_u8(0x1005) ~= 0
 local f = io.open(out .. ".mbx", "wb")
-for i = 0, 0x4F do f:write(string.char(mem:read_u8(0x100 + i))) end
+for i = 0, 0x4F do f:write(string.char(mem:read_u8(0x1000 + i))) end
 f:close()
 pcall(function() m.screens[":screen"]:snapshot(out .. ".png") end)
 print(ok and "mailbox: program finished" or "mailbox: TIMEOUT")

@@ -4,7 +4,7 @@
 
 /* CMOC ignores `volatile` (and warns), so nothing here uses it: the mailbox is only touched
  * from the main line, never from an interrupt handler. */
-#define MB_BASE       0x0100u
+#define MB_BASE       0x1000u
 #define MB_CHECKPOINT (*(unsigned char *)(MB_BASE + 4))
 #define MB_STATUS     (*(unsigned char *)(MB_BASE + 5))
 #define MB_FAILS      (*(unsigned int *)(MB_BASE + 6))

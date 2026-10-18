@@ -18,13 +18,15 @@ LINKLIBS := -L$(CMOCLIB) -lcmoc-crt-void -lcmoc-std-void
 ENGINE_OBJ := build/obj/boot.o build/obj/mailbox.o
 P ?= byte-arith
 
-.PHONY: help doctor toolchain sizes heap-stats prof coco-host place-host golden4 golden4-record demo test-demo run-demo probe probes asm-probe bench test clean
+.PHONY: help doctor toolchain eng-data eng-test eng-tests sizes heap-stats prof coco-host place-host golden4 golden4-record demo test-demo run-demo probe probes asm-probe bench test clean
 .DEFAULT_GOAL := help
 
 help:
 	@echo "ports/coco3: CoCo 3 port dev workflow (root of the port)"
 	@echo "  make doctor         check docker, the image, ROMs, xroar"
 	@echo "  make toolchain      print the toolchain versions (in the container)"
+	@echo "  make eng-test T=t_disk   step 8.3: build an engine test (src/engtest), its .DSK, run in MAME and XRoar, check"
+	@echo "  make eng-tests      every engine test"
 	@echo "  make sizes          compile every generated unit of ../../c/game with CMOC, tabulate the sizes (step 8.1)"
 	@echo "  make heap-stats     replay the sessions on a heap-stats build of the C game: heap peak, DGROUP use"
 	@echo "  make prof           who references which data per key: profile build of the C game, report (step 8.1c)"
@@ -151,3 +153,33 @@ build/demo/demo.bin: build/demo/core.bin build/demo/bank1.raw build/demo/bank2.r
 build/demo/demo.dsk: build/demo/demo.bin
 	rm -f $@; decb dskini $@; decb copy -2 -b $< $@,DEMO.BIN
 .SECONDARY:
+
+# ---------------------------------------------------------------- engine tests (step 8.3)
+POOLRAD_DATA ?= ../../poolrad
+ENG_OBJ := build/obj/boot.o build/obj/mailbox.o build/obj/mmu.o build/obj/disk.o build/obj/rsdos.o build/obj/nobanks.o
+ENG_TESTS := $(patsubst src/engtest/%.c,%,$(wildcard src/engtest/t_*.c))
+T ?= t_disk
+
+eng-data:
+	@python3 -I tools/engdata.py $(POOLRAD_DATA) build/eng
+
+eng-test: eng-data
+	@$(TC) $(IMAKE) --no-print-directory build/eng/$(T).dsk build/eng/$(T).bin
+	@scripts/mame_run.sh build/eng/$(T).dsk TEST build/run/$(T)-mame
+	@echo "--- $(T) in MAME"; python3 -I tools/mbdump.py build/run/$(T)-mame.mbx --check
+	@scripts/xroar_run.sh build/eng/$(T).bin build/eng/$(T).map build/run/$(T)-xroar.ram build/eng/$(T).dsk; rc=$$?; \
+	  if [ $$rc -eq 77 ]; then echo "xroar skipped"; elif [ $$rc -ne 0 ]; then exit $$rc; \
+	  else echo "--- $(T) in XRoar"; python3 -I tools/mbdump.py build/run/$(T)-xroar.ram --ram --check; fi
+
+eng-tests:
+	@for t in $(ENG_TESTS); do $(MAKE) --no-print-directory eng-test T=$$t || exit 1; done
+
+build/eng/%.o: src/engtest/%.c src/engine/eng.h src/engine/mailbox.h
+	@mkdir -p $(@D); $(CC) -Ibuild/eng -o $@ $<
+build/eng/%.bin build/eng/%.map: build/eng/%.o $(ENG_OBJ) src/engine/core.link
+	lwlink --format=decb --script=src/engine/core.link --map=build/eng/$*.map \
+	  -o build/eng/$*.bin $(ENG_OBJ) build/eng/$*.o $(LINKLIBS)
+	python3 -I tools/maplimit.py build/eng/$*.map program_end 5FFF
+build/eng/%.dsk: build/eng/%.bin
+	rm -f $@; decb dskini $@; decb copy -2 -b $< $@,TEST.BIN
+	for f in build/eng/disk/*; do decb copy -2 -b $$f $@,$$(basename $$f); done
