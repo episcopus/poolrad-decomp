@@ -37,6 +37,16 @@ extern u8 pool_arena[POOL_ARENA_SIZE];
 
 #define S(x) ((const u8 *)(x))
 
+/* Helpers of the CoCo profile of the translator (tools/c/pas2c.py --profile coco, step 8.2). They do nothing
+ * for the PC profile; the CoCo build (CMOC) defines its own versions. */
+#ifndef POOL_VIDEO
+#define POOL_VIDEO(off) (pool_arena + (off))     /* EGA window addresses, 20 bit: the CoCo has no EGA planes */
+#endif
+#ifndef POOL_CAP
+#define POOL_CAP(n) (n)                          /* an array bound: CMOC arrays stop at 32767 elements */
+#endif
+
+
 /* Every translated routine announces itself, so a run can be compared call by call with the original's
  * (tools/c/call_trace.py); empty unless built with -DPOOL_TRACE_CALLS (cmake -DPOOLRAD_TRACE=ON). */
 #ifdef POOL_TRACE_CALLS
@@ -115,6 +125,7 @@ s32 rtl_round(double x);
 /* ---- strings (length byte first) -------------------------------------------------------------------- */
 u8 *rtl_str_assign(u8 *dst, int maxlen, const u8 *src);
 u8 *rtl_str_cat(u8 *dst, int n, const u8 *const parts[]);
+u8 *rtl_str_cat_v(u8 *dst, int n, ...);          /* the same with the parts as arguments (CoCo profile: no compound literals) */
 u8 *rtl_str_char(u8 *dst, u8 c);
 int rtl_str_cmp(const u8 *a, const u8 *b);
 u8 *rtl_str_copy(u8 *dst, const u8 *s, int idx, int cnt);

@@ -51,7 +51,7 @@ The firmware is copyrighted and is never committed (`roms/` is ignored by git). 
 |---|---|
 | `Makefile` | the front door (`make help`) |
 | `scripts/` | shell behind the targets: `lib.sh` (container helpers), `mame_run.sh`, `xroar_run.sh`, `doctor.sh`, `toolchain-report.sh`, `asm-probe.sh`, `sizes.sh`, `heap_stats.sh`, `prof_run.sh` |
-| `tools/` | step 8.0: `symexport.py` (core symbols for banks), `mkdecb.py` (DECB packing), `mbdump.py` (mailbox results), `maplimit.py`, `bankcheck.py`, `cpbench.py`; step 8.1: `mkshim.py` and `cmocify.py` (make the Phase 7 C readable by CMOC), `unitsizes.py`, `unitgraph.py`, `dgroup_stats.py`; step 8.1c: `mkprof.py`, `prof_report.py`, `constplace.py` |
+| `tools/` | step 8.0: `symexport.py` (core symbols for banks), `mkdecb.py` (DECB packing), `mbdump.py` (mailbox results), `maplimit.py`, `bankcheck.py`, `cpbench.py`; step 8.1: `mkshim.py` (the CMOC shim of `pool.h`; the translator's own `--profile coco` replaced `cmocify.py`), `unitsizes.py`, `unitgraph.py`, `dgroup_stats.py`; step 8.1c: `mkprof.py`, `prof_report.py`, `constplace.py` |
 | `prof/` | `prof_rt.c`, the runtime of the profiling build (call edges, DGROUP references, far pointer dereferences per key) |
 | `shim/` | stand-ins for the C library headers CMOC lacks (`stdint.h`, `stddef.h`, `string.h`) |
 | `lua/mailbox.lua` | MAME autoboot script: types the LOADM command, waits for the mailbox, dumps it and a screenshot |

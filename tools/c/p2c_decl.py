@@ -197,6 +197,20 @@ class DeclMixin:
                 return r
         return None
 
+    def field_path(self, rec: Ty, name: str) -> str:
+        """The member path to a field of a variant record in the CoCo profile, where the variant part is a named union
+        (`u.a1.`; nested variants add `u.aN.` again); empty for a field of the fixed part (always empty in the PC
+        profile, which uses anonymous unions)."""
+        if not self.coco or getattr(rec, "cname", None) == "Registers":     # Registers: c/include/pool.h's own
+            return ""
+        k = name.lower()
+        if any(nm.lower() == k for nm, _ in rec.fields):
+            return ""
+        for i, arm in enumerate(rec.arms):
+            if self.field_type(arm, name):
+                return "u.a%d.%s" % (i, self.field_path(arm, name))
+        return ""
+
     def resolve_params(self, params, scope):
         out = []
         for p in params:

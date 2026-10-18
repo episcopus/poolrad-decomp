@@ -88,7 +88,7 @@ class ExprMixin:
             for rec, prefix in reversed(c.withs):
                 f = self.field_type(rec, name)
                 if f:
-                    return ("field", f, prefix)
+                    return ("field", f, prefix + self.field_path(rec, name))
             s = c.scope.find_local(name)
             if s is not None:
                 return ("sym", s, None)
@@ -210,7 +210,7 @@ class ExprMixin:
         f = self.field_type(t, n.name)
         if not f:
             raise TransError("no field %s (line %d)" % (n.name, n.line))
-        e = E("%s.%s" % (a.code, self.safe(f[0])), f[1], lv=True)
+        e = E("%s.%s%s" % (a.code, self.field_path(t, n.name), self.safe(f[0])), f[1], lv=True)
         e.root = a.root
         return e
 
@@ -329,7 +329,7 @@ class ExprMixin:
                 return E("(-%s)" % a.code, a.ty, prec=1)
             cls = combine(int_class(a.ty), "b") if int_class(a.ty) != "w" else "l"
             t = CLS_TYPE[cls]
-            code = "-%s" % self.paren(a)
+            code = "-%s" % (self.widen(a, cls) if self.coco else self.paren(a))
             if not wrap:
                 code = "%s(%s)" % (CLS_CAST[cls], code)
             return E("(%s)" % code if wrap else code, t, prec=0 if not wrap else 1) if wrap else E(code, t)
@@ -361,10 +361,18 @@ class ExprMixin:
         else:
             cls = combine(ca, cb)
         t = CLS_TYPE[cls]
-        code = "%s %s %s" % (self.paren(a), op, self.paren(b))
+        code = "%s %s %s" % (self.widen(a, cls), op, self.paren(b))
         if cls == "l" or wrap:
             return E(code, t, prec=1)
         return E("%s(%s)" % (CLS_CAST[cls], code), t)
+
+    def widen(self, a: E, cls: str) -> str:
+        """The left operand of an arithmetic operation. Under CMOC an operation on two byte-sized operands is done in
+        8 bits, and Word with Integer in 16 (Turbo Pascal: Longint): the CoCo profile casts the left operand to the
+        class of the result, so that the operation has the width the Pascal gives it (probes/byte-arith.c)."""
+        if not self.coco or cls not in CLS_CAST:
+            return self.paren(a)
+        return "%s%s" % (CLS_CAST[cls], self.paren(a))
 
     def ex_bin(self, n, wrap=False):
         op = n.op
@@ -391,7 +399,7 @@ class ExprMixin:
             if av is not None and bv is not None and bv != 0:
                 r = int(av / bv) if op == "div" else av - int(av / bv) * bv
                 return E(str(r) if r >= 0 else "(%d)" % r, P.INTEGER, val=r)
-            code = "%s %s %s" % (self.paren(a), "/" if op == "div" else "%", self.paren(b))
+            code = "%s %s %s" % (self.widen(a, cls), "/" if op == "div" else "%", self.paren(b))
             if cls in ("i", "w") and a.ty.kind == "int" and b.ty.kind == "int":
                 # the dividend is read as its own 16 bit type: wrapped operands keep their meaning
                 pass
@@ -428,7 +436,7 @@ class ExprMixin:
                 cls = ca
             t = CLS_TYPE[cls]
             if op == "shl":
-                code = "%s << %s" % (self.paren(a), self.paren(b))
+                code = "%s << %s" % (self.widen(a, cls), self.paren(b))
                 if cls == "l" or wrap:
                     return E(code, t, prec=1)
                 return E("%s(%s)" % (CLS_CAST[cls], code), t)
@@ -489,6 +497,8 @@ class ExprMixin:
     def concat(self, parts):
         items = [self.to_pstr(p) for p in parts]
         t = self.str_temp()
+        if self.coco:                                   # CMOC has no compound literals
+            return E("rtl_str_cat_v(%s, %d, %s)" % (t, len(items), ", ".join(items)), Ty("string", maxlen=255))
         return E("rtl_str_cat(%s, %d, (const u8 *const[]){%s})" % (t, len(items), ", ".join(items)),
                  Ty("string", maxlen=255))
 
@@ -508,13 +518,23 @@ class ExprMixin:
             return E("(%s %s %s)" % (self.real(a), c, self.real(b)), P.BOOLEAN)
         ac = a.code if not (a.ty.kind == "char" and a.val is not None and False) else a.code
         # a word against an integer compares as longints: promote the unsigned one explicitly
-        return E("(%s %s %s)" % (self.cmp_operand(a, b), c, self.cmp_operand(b, a)), P.BOOLEAN)
+        return E("(%s %s %s)" % (self.cmp_operand(a, b), c, self.cmp_operand(b, a, left=False)), P.BOOLEAN)
 
-    def cmp_operand(self, a: E, other: E) -> str:
-        if a.ty.kind == "int" and other.ty.kind == "int" and a.val is None and other.val is None:
+    def cmp_operand(self, a: E, other: E, left: bool = True) -> str:
+        if self.coco and left and a.ty.kind in ("int", "bool", "char", "enum") and other.ty.kind in ("int", "bool", "char", "enum"):
+            # CMOC compares with the signedness of the left operand and, for two bytes, in 8 bits: widen the left
+            # operand when the two do not agree (Turbo Pascal compares as Integer, Word or Longint)
             ca, co = int_class(a.ty), int_class(other.ty)
-            if ca == "l" and co == "l":
-                return a.code
+            av = a.val if isinstance(a.val, int) else None
+            bv = other.val if isinstance(other.val, int) else None
+            if bv is not None:
+                co = with_const(co, bv)
+            if av is not None:
+                ca = with_const(ca, av)
+            unsigned = lambda c: c in ("b", "w")
+            cls = combine(ca, co)
+            if unsigned(ca) != unsigned(co) or cls == "l":
+                return "%s%s" % (CLS_CAST[cls if cls in CLS_CAST else "i"], self.paren(a))
         return a.code
 
     def ex_in(self, n):

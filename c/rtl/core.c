@@ -291,6 +291,19 @@ u8 *rtl_str_cat(u8 *dst, int n, const u8 *const parts[])
   return dst;
 }
 
+u8 *rtl_str_cat_v(u8 *dst, int n, ...)
+{
+  const u8 *parts[16];
+  va_list ap;
+  int i;
+  va_start(ap, n);
+  for (i = 0; i < n && i < 16; i++) {
+    parts[i] = va_arg(ap, const u8 *);
+  }
+  va_end(ap);
+  return rtl_str_cat(dst, i, parts);
+}
+
 u8 *rtl_str_char(u8 *dst, u8 c)
 {
   dst[0] = 1;

@@ -24,6 +24,8 @@ subs = [
     (r"#define FPD\(T, p\)[^\n]*", "#define FPD(T, p) ((T)(p))"),
     (r"void \(\*rtl_proc\(farptr id\)\)\(void\);", "typedef void (*rtl_proc_t)(void);\nrtl_proc_t rtl_proc(farptr id);"),
     (r"u8 \*rtl_str_cat\(u8 \*dst, int n, const u8 \*const parts\[\]\);", "u8 *rtl_str_cat(u8 *dst, int n, ...);   /* CoCo shim: the parts as arguments */"),
+    (r"#define POOL_VIDEO\(off\)[^\n]*", "#define POOL_VIDEO(off) ((u8 *)(u16)(off))     /* CoCo shim: the EGA window is not there */"),
+    (r"#define POOL_CAP\(n\)[^\n]*", "#define POOL_CAP(n) 32767                       /* CoCo shim: CMOC arrays stop at 32767 */"),
     (r"#define POOL_DS_LINEAR[^\n]*\n", ""),
     (r"#define POOL_ARENA_SIZE[^\n]*\n", ""),
 ]
