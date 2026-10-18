@@ -1,0 +1,28 @@
+# placement.toml: where the blocks a pointer type points to live in the CoCo port (decision D12, hybrid; step 8.2).
+# Read by tools/c/pas2c.py --profile coco --placement. A pointee type (the Pascal type the pointer is declared
+# ^TType) is in one of three classes; the default is "engine":
+#
+#   mapped  hot data, a native 16-bit address in the 64 KB map, read with FPM, allocated from the mapped heap
+#   banked  cold data, read with FPB (the block is mapped into the data window first), allocated in physical memory
+#   engine  pictures, staging screens, DAX buffers: opaque handles only the engine dereferences (PC heap here).
+#           Game logic that dereferences one anyway is listed in placement-report.txt: it needs an engine call.
+#
+# Chosen from the measurements of docs/PHASE-8.1c.md: references per key by class, live bytes, who touches them.
+# Names are matched case-insensitively against the C type name of the pointee.
+
+[mapped]
+types = [
+  "TCharacter", "TAffect", "TMenuLine", "TCombatant", "TCombatNode", "TLineState", "TReturnEntry",
+  "TCombatMap", "TMapRows", "TWallTiles", "TWallSets", "TGeoCellBlock", "TBlock400", "TScoredCharacter",
+  "TVmWords9700", "TSheetFields", "TAbilityBlock", "TDamageDice", "TResistView",
+]
+
+[banked]
+types = [
+  "TGameVars", "TEclCode", "TVmWords4900", "TVmWords6B00", "TMemPic", "TPictureHeader",
+]
+
+# A field declared as an untyped Pointer that the game uses as a typed list: what it holds, for the allocation
+# (GetMem(Who^.Affects, 9) must come from the same class as the TAffect it is read through).
+[pointer_fields]
+"TCharacter.Affects" = "TAffect"

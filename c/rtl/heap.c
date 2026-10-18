@@ -8,6 +8,13 @@
  * ends with a pointer whose segment is HeapPtr's (the end marker: an empty list is FreeList = HeapPtr). A block
  * taken from the top of the heap makes the last link point at the new HeapPtr. */
 #include "pool.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#if defined(__APPLE__) || defined(__GLIBC__)
+#include <execinfo.h>
+#endif
 
 /* -DPOOL_HEAP_STATS (cmake -DCMAKE_C_FLAGS=-DPOOL_HEAP_STATS): count the heap in use and print the peak
  * on exit (CoCo 3 port, step 8.1: how much RAM the heap needs). No effect on the heap itself. */
@@ -115,10 +122,17 @@ static void merge_free(u32 next, u32 blk)
   set_size(blk, blk_size(blk) + blk_size(next));
 }
 
+static int mapped_free(farptr p, u16 size);
+static int is_mapped(farptr p);
+
 void rtl_freemem(farptr p, u16 size)
 {
   u32 n, at, prev, cur;
   if (size == 0) {
+    return;
+  }
+  if (is_mapped(p)) {                                   /* a block of the mapped class (CoCo placement model) */
+    mapped_free(p, size);
     return;
   }
   if ((p & 0xFFFFu) & 0xFFF7u) {
@@ -293,5 +307,181 @@ void rtl_freemem(farptr p, u16 size)
     unmatched++;
   }
   real_freemem(p, size);
+}
+#endif
+
+
+/* ---- the mapped heap and the bank window (CoCo placement model, step 8.2) ----------------------------------------
+ * Blocks of the mapped class live in the DGROUP segment between MAPPED_LO and MAPPED_HI (the 64 KB map of the CoCo:
+ * the pointer is the 16-bit offset, the segment is DGROUP's). The banked class stays in the PC heap; FPB counts how
+ * often a block has to be mapped into the data window (two windows, least recently used first out). */
+#define MAPPED_LO 0x8800u
+#define MAPPED_HI 0xFE00u
+#define MAPPED_MAX 1024
+
+static struct { u16 off, size; u8 used; } mblk[MAPPED_MAX];
+static int nmblk;
+static u32 m_live, m_peak, m_allocs, m_frees;
+static u32 bank_maps, bank_misses;
+#ifdef POOL_PLACEMENT
+static u32 fpm_derefs, fpm_nil, fpm_stack;
+#endif
+
+static void mapped_init(void)
+{
+  if (nmblk == 0) {
+    mblk[0].off = MAPPED_LO;
+    mblk[0].size = (u16)(MAPPED_HI - MAPPED_LO);
+    mblk[0].used = 0;
+    nmblk = 1;
+  }
+}
+
+static void mapped_print(void)
+{
+  if (getenv("POOL_PLACEMENT_STATS")) {
+    fprintf(stderr, "PLACEMENT mapped heap: peak %u bytes live of %u, %u allocations, %u frees; "
+            "bank window: %u maps, %u misses\n", m_peak, MAPPED_HI - MAPPED_LO, m_allocs, m_frees, bank_maps, bank_misses);
+#ifdef POOL_PLACEMENT
+    fprintf(stderr, "PLACEMENT mapped dereferences %u, of which %u through nil and %u into the stack (every other one checked to be a 16-bit address of the mapped region)\n", fpm_derefs, fpm_nil, fpm_stack);
+#endif
+  }
+}
+
+farptr rtl_getmem_m(u16 size)
+{
+  static int registered;
+  u32 n = ((u32)size + 7u) & ~7u;
+  int i, j;
+  if (!registered) {
+    registered = 1;
+    atexit(mapped_print);
+  }
+  if (size == 0) {
+    return 0;
+  }
+  mapped_init();
+  for (i = 0; i < nmblk; i++) {
+    if (!mblk[i].used && mblk[i].size >= n) {
+      if (mblk[i].size > n) {                         /* split */
+        if (nmblk == MAPPED_MAX) {
+          rtl_fatal("mapped heap: too many blocks");
+        }
+        for (j = nmblk; j > i + 1; j--) {
+          mblk[j] = mblk[j - 1];
+        }
+        nmblk++;
+        mblk[i + 1].off = (u16)(mblk[i].off + n);
+        mblk[i + 1].size = (u16)(mblk[i].size - n);
+        mblk[i + 1].used = 0;
+        mblk[i].size = (u16)n;
+      }
+      mblk[i].used = 1;
+      m_live += n;
+      m_allocs++;
+      if (m_live > m_peak) {
+        m_peak = m_live;
+      }
+      return POOL_FARPTR(POOL_DS_SEG, mblk[i].off);
+    }
+  }
+  rtl_fatal("mapped heap full: %u bytes asked, %u live", (unsigned)n, m_live);
+  return 0;
+}
+
+static int mapped_free(farptr p, u16 size)
+{
+  int i;
+  u16 off = (u16)(p & 0xFFFFu);
+  (void)size;
+  for (i = 0; i < nmblk; i++) {
+    if (mblk[i].off == off && mblk[i].used) {
+      mblk[i].used = 0;
+      m_live -= mblk[i].size;
+      m_frees++;
+      if (i + 1 < nmblk && !mblk[i + 1].used) {       /* merge with the next, then the previous */
+        mblk[i].size = (u16)(mblk[i].size + mblk[i + 1].size);
+        memmove(&mblk[i + 1], &mblk[i + 2], (size_t)(nmblk - i - 2) * sizeof mblk[0]);
+        nmblk--;
+      }
+      if (i > 0 && !mblk[i - 1].used) {
+        mblk[i - 1].size = (u16)(mblk[i - 1].size + mblk[i].size);
+        memmove(&mblk[i], &mblk[i + 1], (size_t)(nmblk - i - 1) * sizeof mblk[0]);
+        nmblk--;
+      }
+      return 1;
+    }
+  }
+  rtl_fatal("mapped heap: free of an address that is not a live block ($%04X)", off);
+  return 0;
+}
+
+/* a pointer into the mapped region of the DGROUP segment */
+static int is_mapped(farptr p)
+{
+  return (p >> 16) == POOL_DS_SEG && (p & 0xFFFFu) >= MAPPED_LO && (p & 0xFFFFu) < MAPPED_HI;
+}
+
+void *pool_bank_map(farptr p)
+{
+  static u32 win[2];                                  /* the block (its start) each of the two windows holds */
+  static int last;
+  u32 lin = POOL_LINEAR(p);
+  int w;
+  bank_maps++;
+  for (w = 0; w < 2; w++) {
+    if (win[w] && lin >= win[w] && lin < win[w] + 0x2000u) {   /* the window holds the 8 KB page of this block */
+      last = w;
+      return pool_arena + lin;
+    }
+  }
+  bank_misses++;
+  last ^= 1;
+  win[last] = lin & ~0x1FFFu;
+  return pool_arena + lin;
+}
+
+#ifdef POOL_PLACEMENT
+void *pool_fpm(farptr p)
+{
+  fpm_derefs++;
+  if (p == 0) {                       /* a nil pointer is read through (the Pascal reads Next of a possibly empty list and */
+    fpm_nil++;                        /* does not use it): the same bytes as the PC build reads, counted */
+    return pool_arena;
+  }
+  if (POOL_LINEAR(p) >= 0x8000u && POOL_LINEAR(p) < 0xF000u) {   /* a local whose address was taken: the pseudo stack of */
+    fpm_stack++;                                                   /* core.c, which is part of the 64 KB map on the CoCo */
+    return pool_arena + POOL_LINEAR(p);
+  }
+  if ((p >> 16) != POOL_DS_SEG || (p & 0xFFFFu) >= MAPPED_HI) {
+#if defined(__APPLE__) || defined(__GLIBC__)
+    void *bt[8];
+    int k = backtrace(bt, 8);
+    backtrace_symbols_fd(bt + 1, k - 1, 2);               /* who dereferenced it: the routine names of the game */
+#endif
+    rtl_fatal("a mapped-class pointer ($%08X) is not a 16-bit address of the DGROUP segment", (unsigned)p);
+  }
+  return pool_arena + POOL_LINEAR(p);
+}
+#endif
+
+#ifdef POOL_PLACEMENT
+#include <signal.h>
+/* a crash prints the routines of the game on the stack (the placement model makes the game touch memory in new ways) */
+static void on_segv(int sig)
+{
+#if defined(__APPLE__) || defined(__GLIBC__)
+  void *bt[12];
+  int k = backtrace(bt, 12);
+  fprintf(stderr, "poolrad: signal %d\n", sig);
+  backtrace_symbols_fd(bt, k, 2);
+#endif
+  _exit(139);
+}
+
+__attribute__((constructor)) static void install_segv(void)
+{
+  signal(SIGSEGV, on_segv);
+  signal(SIGBUS, on_segv);
 }
 #endif

@@ -32,6 +32,9 @@ subs = [
 # CMOC has no anonymous unions; the register block is only passed to Intr/MsDos.
 reg = re.search(r"typedef struct Registers \{.*?\} Registers;", src, re.S)
 src = src[:reg.start()] + "typedef struct Registers { u16 AX, BX, CX, DX, BP, SI, DI, DS, ES, Flags; u8 AL, AH, BL, BH, CL, CH, DL, DH; } Registers;" + src[reg.end():]
+# the mapped class is a native 16-bit address (step 8.2 placement); the banked class goes through an accessor
+src, n = re.subn(r"#ifdef POOL_PLACEMENT\nvoid \*pool_fpm.*?#endif", "#define FPM(T, p) ((T)(u16)(p))               /* CoCo shim: a mapped pointer is a 16-bit address */", src, flags=re.S)
+assert n == 1, "FPM block"
 for pat, rep in subs:
     src, n = re.subn(pat, lambda m, r=rep: r, src)
     if n == 0:

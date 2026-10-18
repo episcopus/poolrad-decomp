@@ -218,9 +218,23 @@ class BuiltinMixin:
     def bi_halt(self, a, n):
         return E("rtl_Halt(%s)" % (self.ex(a[0]).code if a else "0"), P.VOID)
 
+    def alloc_fn(self, ptr_ty: Ty, node=None) -> str:
+        cls = self.ptr_class(ptr_ty)
+        if cls == "engine" and self.placement and node is not None and node.k == "field":
+            # a field declared as an untyped Pointer (TCharacter.Affects) that the game uses as a typed list:
+            # placement.toml [pointer_fields] says what it holds
+            try:
+                rec = self.ex(node.a).ty
+                over = self.placement["fields"].get("%s.%s" % ((rec.cname or "").lower(), node.name.lower()))
+            except TransError:
+                over = None
+            if over:
+                cls = "mapped" if over in self.placement["mapped"] else "banked" if over in self.placement["banked"] else "engine"
+        return "rtl_getmem_m" if cls == "mapped" else "rtl_getmem"
+
     def bi_getmem(self, a, n):
         p, sz = self.ex(a[0]), self.ex(a[1])
-        return E("%s = rtl_getmem(%s)" % (p.code, sz.code), P.VOID)
+        return E("%s = %s(%s)" % (p.code, self.alloc_fn(p.ty, a[0]), sz.code), P.VOID)
 
     def bi_freemem(self, a, n):
         p, sz = self.ex(a[0]), self.ex(a[1])
@@ -238,7 +252,7 @@ class BuiltinMixin:
     def bi_new(self, a, n):
         p = self.ex(a[0])
         sz = self.ptr_target(p.ty).size()
-        return E("%s = rtl_getmem(%d)" % (p.code, sz), P.VOID)
+        return E("%s = %s(%d)" % (p.code, self.alloc_fn(p.ty, a[0]), sz), P.VOID)
 
     def bi_dispose(self, a, n):
         p = self.ex(a[0])

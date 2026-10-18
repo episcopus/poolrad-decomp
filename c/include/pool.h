@@ -42,6 +42,19 @@ extern u8 pool_arena[POOL_ARENA_SIZE];
 #ifndef POOL_VIDEO
 #define POOL_VIDEO(off) (pool_arena + (off))     /* EGA window addresses, 20 bit: the CoCo has no EGA planes */
 #endif
+/* Placement (step 8.2, pas2c --placement): a pointer to a block of the mapped class is a 16-bit address in the
+ * game's 64 KB map (here: an offset in the DGROUP segment above the variables), read with FPM; a block of the banked
+ * class is read with FPB, which maps it into the data window first (here: counts the map and the eviction). */
+#ifdef POOL_PLACEMENT
+void *pool_fpm(farptr p);                /* checks that p is a 16-bit address of the DGROUP segment, then counts */
+#define FPM(T, p) ((T)pool_fpm(p))
+#else
+#define FPM(T, p) ((T)(pool_arena + POOL_LINEAR(p)))
+#endif
+void *pool_bank_map(farptr p);
+#define FPB(T, p) ((T)pool_bank_map(p))
+farptr rtl_getmem_m(u16 size);           /* a block of the mapped heap */
+
 #ifndef POOL_CAP
 #define POOL_CAP(n) (n)                          /* an array bound: CMOC arrays stop at 32767 elements */
 #endif

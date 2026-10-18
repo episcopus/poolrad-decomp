@@ -118,7 +118,29 @@ def known_differences() -> dict:
     return {f["name"].upper(): [tuple(r) for r in f["ranges"]] for f in d.get("file", [])}
 
 
-def lines(summary, recording, rec) -> list[str]:
+# Heap pointers inside the records the game saves (CoCo port, step 8.2): with the placement model the blocks are
+# elsewhere, so the pointer fields of a saved record differ from the original's although the game did the same. Offsets
+# from the record types (TCharacter 285 bytes: Affects 127, Items 200, SlotItems 204 (13), Next 260, Combat 264;
+# TMenuLine 63: Next 42; TAffect 9: Next 5).
+POINTER_FIELDS = {
+    (".ITM", 63): [(42, 46)],
+    (".SPC", 9): [(5, 9)],
+    (".SAV", 285): [(127, 131), (200, 204), (204, 256), (260, 264), (264, 268)],
+    (".CHA", 285): [(127, 131), (200, 204), (204, 256), (260, 264), (264, 268)],
+}
+
+
+def pointer_ranges(path: str, size: int) -> list[tuple[int, int]]:
+    ext = path.upper()[-4:]
+    out = []
+    for (e, rec), fields in POINTER_FIELDS.items():
+        if e == ext and size % rec == 0:
+            for base in range(0, size, rec):
+                out += [(base + lo, base + hi) for lo, hi in fields]
+    return out
+
+
+def lines(summary, recording, rec, pointer_masks=False) -> list[str]:
     out = ["RPL 1", "H %d" % len(rec.order)]
     for lo, hi in rec.ranges:
         out.append("M %d %d" % (lo, hi))
@@ -146,6 +168,11 @@ def lines(summary, recording, rec) -> list[str]:
     out.append("F %d" % recording.final["random_calls"])
     known = known_differences()
     layer = summary["_machine"].vfs.layer
+    if pointer_masks:
+        for path in recording.final["written_files"]:
+            r = pointer_ranges(path, len(layer[path])) if path in layer else []
+            if r:
+                known[path] = sorted(set(known.get(path, []) + r))
     for path, digest in sorted(recording.final["written_files"].items()):
         if digest == pinned_digest(path):
             continue                          # opened for update but not changed: nothing was written
@@ -163,7 +190,7 @@ def lines(summary, recording, rec) -> list[str]:
     return out
 
 
-def export(session: str, out: Path, check_golden: bool = True) -> int:
+def export(session: str, out: Path, check_golden: bool = True, pointer_masks: bool = False) -> int:
     text = (golden.SESSIONS / (session + ".keys")).read_text()
     s, recording, rec = record_ordered(text)
     if s["reason"] not in ("input-exhausted", "quit"):
@@ -177,7 +204,7 @@ def export(session: str, out: Path, check_golden: bool = True) -> int:
                   file=sys.stderr)
             return 1
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text("\n".join(lines(s, recording, rec)) + "\n")
+    out.write_text("\n".join(lines(s, recording, rec, pointer_masks)) + "\n")
     print("[%s] %s: %d reads, %d checkpoints" % (session, out, len(rec.order),
                                                   sum(len(v) for v in recording.checkpoints.values())))
     return 0
@@ -188,10 +215,12 @@ def main(argv=None) -> int:
     ap.add_argument("session", nargs="+")
     ap.add_argument("--out-dir", default=str(ROOT / "build/c/replay"))
     ap.add_argument("--no-golden-check", action="store_true")
+    ap.add_argument("--pointer-masks", action="store_true",
+                    help="mask the heap pointer fields of saved records (for builds whose heap is not the original's)")
     a = ap.parse_args(argv)
     rc = 0
     for s in a.session:
-        rc |= export(s, Path(a.out_dir) / (s + ".rpl"), not a.no_golden_check)
+        rc |= export(s, Path(a.out_dir) / (s + ".rpl"), not a.no_golden_check, a.pointer_masks)
     return rc
 
 

@@ -203,7 +203,13 @@ void rtl_init(void)
   file_init();
   /* the heap: the program ends at paragraph 28F2; DOS gives the rest of conventional memory (the game lowers
    * HeapEnd by 400h paragraphs itself) */
+#ifdef POOL_PLACEMENT
+  /* the CoCo placement model: the DGROUP segment above the variables is the mapped heap (heap.c), so the PC heap
+   * starts above the 64 KB of that segment (DS 1C7C + 1000 paragraphs) instead of at 28F2 */
+  HEAP_ORG = POOL_FARPTR(0x2C7C, 0);
+#else
   HEAP_ORG = POOL_FARPTR(0x28F2, 0);
+#endif
   HEAP_PTR = HEAP_ORG;
   HEAP_END = POOL_FARPTR(0xA000, 0);
   FREE_LIST = HEAP_ORG;

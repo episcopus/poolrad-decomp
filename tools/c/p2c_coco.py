@@ -236,22 +236,24 @@ class Coco:
             self.log["array_ptr"] += 1
         s = "".join(out)
         out, i = [], 0
-        while True:                                   # (*FPD(T (*)[N], e))[  ->  FPD(W *, e)->a[
-            j = s.find("(*FPD(", i)
-            if j < 0:
+        fp = re.compile(r"\(\*(FP[DMB])\(")
+        while True:                                   # (*FPD(T (*)[N], e))[  ->  FPD(W *, e)->a[   (FPM, FPB likewise)
+            m = fp.search(s, i)
+            if not m:
                 out.append(s[i:])
                 break
+            j, mac = m.start(), m.group(1)
             close_fpd = find_close(s, j + 5, "(", ")")
             close_outer = find_close(s, j, "(", ")")
-            args = s[j + 6:close_fpd]
+            args = s[m.end():close_fpd]
             if close_outer == close_fpd + 1 and self.arr_ptr_type.match(args):
                 self.log["array_ptr"] += 1
                 out.append(s[i:j])
-                out.append("FPD(" + self.arr_ptr_type.sub(lambda m: self.pa(m.group(1), self.bound(m.group(2))) + " *", args, 1) + ")->a")
+                out.append(mac + "(" + self.arr_ptr_type.sub(lambda mm: self.pa(mm.group(1), self.bound(mm.group(2))) + " *", args, 1) + ")->a")
                 i = close_outer + 1
             else:
-                out.append(s[i:j + 6])
-                i = j + 6
+                out.append(s[i:m.end()])
+                i = m.end()
         s = "".join(out)
 
         def named(m):

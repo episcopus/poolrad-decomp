@@ -46,6 +46,8 @@ class Unit:
 class Gen(DeclMixin, ExprMixin, BuiltinMixin, StmtMixin):
     def __init__(self):
         self.coco = False                  # the CoCo profile (CMOC-readable C, step 8.2)
+        self.placement = None              # pointee type name -> mapped | banked (default engine), --placement FILE
+        self.engine_derefs = {}            # (unit, type) -> dereferences of an engine-class block by game logic
         self.taken: dict[str, tuple] = {}
         self.macros: set[str] = set()
         self.taken_global_fn: set[str] = set()
@@ -899,11 +901,19 @@ def main(argv=None) -> int:
     ap.add_argument("--out", default=str(ROOT / "c/game"))
     ap.add_argument("--profile", choices=("pc", "coco"), default="pc",
                     help="pc: the PC memory model (c/game); coco: C that CMOC reads (step 8.2, tools/c/p2c_coco.py)")
+    ap.add_argument("--placement", help="a TOML file placing pointer types: mapped (a native 16-bit address), banked (an accessor), "
+                    "engine (default: the PC heap); only with --profile coco (ports/coco3/placement.toml)")
     ap.add_argument("units", nargs="*", help="unit ids to translate (default: all)")
     a = ap.parse_args(argv)
     files = sorted((ROOT / "src").glob("*.PAS"))
     g = Gen()
     g.coco = a.profile == "coco"
+    if a.placement:
+        import tomllib
+        pl = tomllib.loads(Path(a.placement).read_text())
+        g.placement = {"mapped": {t.lower() for t in pl.get("mapped", {}).get("types", [])},
+                       "banked": {t.lower() for t in pl.get("banked", {}).get("types", [])},
+                       "fields": {k.lower(): v.lower() for k, v in pl.get("pointer_fields", {}).items()}}
     g.load(files)
     errors = 0
     for n in g.order_nodes:
@@ -921,6 +931,10 @@ def main(argv=None) -> int:
     print(g.write(Path(a.out)), "errors:", len(g.errors))
     if g.coco:
         print("coco profile:", {k: v for k, v in g.coco_log.items() if v})
+    if g.placement:
+        rep = sorted(g.engine_derefs.items(), key=lambda kv: -kv[1])
+        Path(a.out, "placement-report.txt").write_text("".join("%5d %s dereferences %s (engine class) \n" % (c, u, t) for (u, t), c in rep))
+        print("placement: %d dereferences of engine-class blocks by game logic (placement-report.txt)" % sum(c for _, c in rep))
     return 0
 
 

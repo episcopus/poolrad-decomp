@@ -1,6 +1,8 @@
 """p2c_expr.py: expressions, calls and the built-in procedures of the Pascal to C translator."""
 from __future__ import annotations
 
+import re
+
 import ptypes as P
 from p2c_base import Sym, c_char, cstr_literal, ctype, decl, ptr_ctype
 from p2c_decl import DS_SEG, E, TransError
@@ -234,7 +236,33 @@ class ExprMixin:
                 return E("(*FPD(u8 *, %s))" % a.code, P.BYTE, lv=True)      # an untyped pointer: raw bytes
             if t.kind != "ptr" or t.elem is None:
                 raise TransError("dereference of %r (line %d)" % (t, n.line))
-        return E("(*FPD(%s, %s))" % (ptr_ctype(t.elem), a.code), t.elem, lv=True)
+        return E("(*%s(%s, %s))" % (self.deref_macro(t), ptr_ctype(t.elem), a.code), t.elem, lv=True)
+
+    ENGINE_UNITS = {"RES05", "RES06", "RES07", "RES09", "OVL28", "OVL32", "OVL34"}
+
+    def ptr_class(self, t: Ty) -> str:
+        """mapped, banked or engine: where the blocks a pointer of type t points to live (placement.toml, by pointee type)."""
+        if not self.placement or t.kind != "ptr":
+            return "engine"
+        if t.elem is None:
+            try:
+                self.ptr_target(t)
+            except TransError:
+                return "engine"
+        name = re.sub(r"_(res|ovl)\d+$", "", (t.elem.cname or t.elem.name or "").lower())    # TMemPic_OVL16 -> tmempic
+        if name in self.placement["mapped"]:
+            return "mapped"
+        if name in self.placement["banked"]:
+            return "banked"
+        return "engine"
+
+    def deref_macro(self, t: Ty) -> str:
+        """FPM (mapped: a 16-bit address in the 64 KB map), FPB (banked: map the block into the data window) or FPD."""
+        c = self.ptr_class(t)
+        if c == "engine" and self.placement and self.unit is not None and self.unit.name.upper() not in self.ENGINE_UNITS:
+            key = (self.unit.name.upper(), t.elem.cname or t.elem.name or "?")
+            self.engine_derefs[key] = self.engine_derefs.get(key, 0) + 1
+        return {"mapped": "FPM", "banked": "FPB"}.get(c, "FPD")
 
     def ex_index(self, n):
         a = n.a
