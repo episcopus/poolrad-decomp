@@ -20,6 +20,9 @@ void mb_halt(void);
 /* Mark the run finished (status 1 or 2) and stop. Never returns. */
 void mb_finish(void);
 
+/* Let the harness look at the screen (slots 2..5 show physical blocks 0..3 meanwhile); returns after it has. */
+void mb_hold(void);
+
 /* Write text on the BASIC text screen (32 columns, 16 rows, ASCII upper case and digits). */
 void scr_clear(void);
 void scr_puts(unsigned char row, unsigned char col, const char *s);

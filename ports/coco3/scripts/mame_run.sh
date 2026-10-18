@@ -12,7 +12,7 @@ dsk="${1:?disk image}"; prog="${2:?program name on the disk}"; out="${3:?output 
 mkdir -p "$ROOT/$(dirname "$out")"
 unlink "$ROOT/$out.mbx" 2>/dev/null || true
 unlink "$ROOT/$out.png" 2>/dev/null || true
-run_toolchain env MB_OUT="/work/$out" MB_CMD="LOADM\"$prog\":EXEC" MB_LIMIT="${MB_LIMIT:-90}" \
+run_toolchain env MB_OUT="/work/$out" MB_CMD="LOADM\"$prog\":EXEC" ${MB_SCREENS:+MB_SCREENS=1} MB_LIMIT="${MB_LIMIT:-90}" \
   mame coco3 -rompath /work/roms -pluginspath /usr/local/share/mame/plugins \
     -ramsize 512K -flop1 "/work/$dsk" -video soft -sound none -nothrottle \
     -skip_gameinfo -nvram_directory /tmp/nvram -cfg_directory /tmp/cfg \

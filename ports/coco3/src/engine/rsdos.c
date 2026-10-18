@@ -41,7 +41,7 @@ static void locate(u8 g, u8 s, u8 *track, u8 *sector)
     if (t >= 17)
         t++;
     *track = t;
-    *sector = (u8)(((g & 1) ? 10 : 1) + s);
+    *sector = (u8)((u16)((g & 1) ? 10 : 1) + s);
 }
 
 u8 rs_open(RsFile *f, u8 drive, const char *name8, const char *ext3)

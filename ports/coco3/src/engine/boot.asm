@@ -57,4 +57,38 @@ boot
         lbsr    _load_banks             copy staged bank images into their physical blocks
         lbra    program_start
 
+
+* void mb_hold(void): the test harness looks at the screen. Maps the screen blocks (physical $00..$03) into slots 2..5
+* ($4000..$BFFF), counts a checkpoint, waits for the harness to set MB_ACK (MAME's Lua script does; without a harness
+* it gives up after about a second) and maps the slots back. It lives in slot 1 (this section) so that it keeps running
+* while the slots it is called from are away; slots 2 and 3 return to BASIC's blocks, 4 and 5 to the shadow.
+        EXPORT  _mb_hold
+_mb_hold
+        pshs    u,y
+        clr     MB_ACK
+        lda     #0
+        sta     $FFA2
+        inca
+        sta     $FFA3
+        inca
+        sta     $FFA4
+        inca
+        sta     $FFA5
+        inc     MB_CHECKPOINT
+        ldx     #0
+@wait   tst     MB_ACK
+        bne     @go
+        leax    -1,x
+        bne     @wait
+@go     clr     MB_ACK
+        lda     #$3A
+        sta     $FFA2
+        inca
+        sta     $FFA3
+        lda     MMU_SH
+        sta     $FFA4
+        lda     MMU_SH+1
+        sta     $FFA5
+        puls    u,y,pc
+
         ENDSECTION

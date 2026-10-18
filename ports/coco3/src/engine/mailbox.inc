@@ -16,7 +16,9 @@ MB_CHECKPOINT   EQU     MB_BASE+4
 MB_STATUS       EQU     MB_BASE+5
 MB_FAILS        EQU     MB_BASE+6
 MB_RESULTS      EQU     MB_BASE+$10
-MB_SIZE         EQU     $50
+MB_ACK          EQU     MB_BASE+7       harness sets it to release mb_hold (nonzero), the program clears it
+MB_PAL          EQU     MB_BASE+$50     the 16 EGA palette register values the engine has set
+MB_SIZE         EQU     $60
 
 * Engine direct page variables (DP = 0). $80..$9F is the engine's.
 FC_CURBANK      EQU     $80     byte: bank mapped in the window now (0 = none)

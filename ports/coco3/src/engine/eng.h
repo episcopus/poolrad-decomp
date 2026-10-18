@@ -29,4 +29,28 @@ u8 rs_mount(u8 drive);                    /* read the FAT; 0 = ok */
 u8 rs_open(RsFile *f, u8 drive, const char *name8, const char *ext3);   /* 0 = ok, 1 = not found, else disk status */
 u8 rs_read(RsFile *f, u32 offset, u8 *dst, u16 n);                       /* 0 = ok */
 
+/* ---- rle.asm and dax.c */
+typedef struct Rle {
+    u8 *src, *srcend, *dst, *dstend;
+    u8 pad, count, mode, val;
+} Rle;
+u8 k_rle(Rle *r);
+
+typedef struct DaxEntry {
+    u32 offset;                           /* of the packed data, from the start of the file */
+    u16 raw, packed;
+} DaxEntry;
+u8 dax_find(RsFile *f, u8 id, DaxEntry *e);
+u8 dax_unpack(RsFile *f, const DaxEntry *e, u8 *hdr, u8 hdr_n, u8 first_blk, u8 *ram_dst);
+
+/* ---- gfx.c: the 320x200x16 screen (physical blocks 0..3), the palette, pictures */
+#define SCREEN_BLK 0
+#define GFX_ROWBYTES 160
+extern u8 gfx_pal[16];                    /* EGA register values last set (also copied to the mailbox for the harness) */
+void gfx_init(void);
+void gfx_palette(u8 reg, u8 ega);
+void gfx_default_palette(void);
+void gfx_clear(u8 value);                 /* both pixels of every byte */
+u8 gfx_show_title(RsFile *f, u8 block);   /* a full-screen picture record into the screen */
+
 #endif

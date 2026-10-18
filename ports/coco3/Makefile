@@ -156,7 +156,7 @@ build/demo/demo.dsk: build/demo/demo.bin
 
 # ---------------------------------------------------------------- engine tests (step 8.3)
 POOLRAD_DATA ?= ../../poolrad
-ENG_OBJ := build/obj/boot.o build/obj/mailbox.o build/obj/mmu.o build/obj/disk.o build/obj/rsdos.o build/obj/nobanks.o
+ENG_OBJ := build/obj/boot.o build/obj/mailbox.o build/obj/mmu.o build/obj/disk.o build/obj/rsdos.o build/obj/rle.o build/obj/dax.o build/obj/gfx.o build/obj/nobanks.o
 ENG_TESTS := $(patsubst src/engtest/%.c,%,$(wildcard src/engtest/t_*.c))
 T ?= t_disk
 
@@ -165,11 +165,13 @@ eng-data:
 
 eng-test: eng-data
 	@$(TC) $(IMAKE) --no-print-directory build/eng/$(T).dsk build/eng/$(T).bin
-	@scripts/mame_run.sh build/eng/$(T).dsk TEST build/run/$(T)-mame
+	@MB_SCREENS=1 scripts/mame_run.sh build/eng/$(T).dsk TEST build/run/$(T)-mame
 	@echo "--- $(T) in MAME"; python3 -I tools/mbdump.py build/run/$(T)-mame.mbx --check
 	@scripts/xroar_run.sh build/eng/$(T).bin build/eng/$(T).map build/run/$(T)-xroar.ram build/eng/$(T).dsk; rc=$$?; \
 	  if [ $$rc -eq 77 ]; then echo "xroar skipped"; elif [ $$rc -ne 0 ]; then exit $$rc; \
-	  else echo "--- $(T) in XRoar"; python3 -I tools/mbdump.py build/run/$(T)-xroar.ram --ram --check; fi
+	  else echo "--- $(T) in XRoar"; python3 -I tools/mbdump.py build/run/$(T)-xroar.ram --ram --check; \
+	  fi
+	@echo "--- $(T) screens"; python3 -I tools/engcheck.py $(T)
 
 eng-tests:
 	@for t in $(ENG_TESTS); do $(MAKE) --no-print-directory eng-test T=$$t || exit 1; done

@@ -3,6 +3,7 @@
 -- mailbox and a screenshot, then exits. Parameters come from the environment:
 --   MB_OUT   output prefix, writes <prefix>.mbx (the 80 mailbox bytes) and <prefix>.png
 --   MB_CMD   text typed at BASIC (default LOADM"DEMO":EXEC)
+--   MB_SCREENS if set: at every checkpoint dump the screen (the program called mb_hold) to <prefix>-cp<N>.scr4 and release it
 --   MB_LIMIT emulated seconds to wait in total (default 60)
 local m = manager.machine
 local mem = m.devices[":maincpu"].spaces["program"]
@@ -29,7 +30,19 @@ while m.time:as_double() - t0 < limit do
   emu.wait(0.0002)
   if magic() then
     local c = mem:read_u8(0x1004)
-    if c ~= last then last = c; cps[#cps + 1] = string.format("%d %.6f", c, m.time:as_double() - t0) end
+    if c ~= last then
+      last = c
+      cps[#cps + 1] = string.format("%d %.6f", c, m.time:as_double() - t0)
+      if os.getenv("MB_SCREENS") then
+        -- mb_hold has mapped the screen (physical blocks 0..3) at $4000..$BFFF: keep 32,000 bytes and the 16 palette
+        -- register values from the mailbox, the format of poolrad_replay --dump (PREFIX-LABEL.scr4)
+        local sf = io.open(string.format("%s-cp%d.scr4", out, c), "wb")
+        sf:write(mem:read_range(0x4000, 0x4000 + 31999, 8))
+        for i = 0, 15 do sf:write(string.char(mem:read_u8(0x1050 + i))) end
+        sf:close()
+        mem:write_u8(0x1007, 1)
+      end
+    end
     if mem:read_u8(0x1005) ~= 0 then break end
   end
 end
