@@ -11,9 +11,11 @@
 * through a disk read (t_irq: 330 frames counted over 5.5 s of reading).
 * Keyboard: PIA0 ($FF00 rows in, $FF02 columns out) scanned once a frame; a key counts when two consecutive scans agree
 * (debounce), its code goes to a 16-entry queue (kbd_get).
+* All of it, code, tables and variables, is in the section `shared` ($1060..$13FF, below the mailbox's neighbour): the
+* frame interrupt can arrive in either MMU task, and both see slot 0 the same.
         INCLUDE mailbox.inc
 
-        SECTION code
+        SECTION shared
         EXPORT  _irq_start
         EXPORT  _irq_stop
         EXPORT  _frame_count
@@ -22,6 +24,7 @@
         EXPORT  _tick_count
         EXPORT  _kbd_get
         EXPORT  _kbd_mods
+        EXPORT  _game_launch
         IMPORT  _eng_init0
 
 * void irq_start(void): vectors, GIME sources on, interrupts unmasked
@@ -126,6 +129,15 @@ _kbd_mods
 @e      clra
         rts
 
+* void game_launch(void): the engine hands the machine to the game. It is here, in memory both tasks see, because the next
+* instruction after the switch is fetched from the game's slot 1, not the engine's.
+_game_launch
+        orcc    #$50
+        clr     FC_TASK
+        clr     $FF91
+        lds     #SYSSTK_TOP
+        jmp     $2000
+
 irq_isr
         lda     $FF03                   bit 7: the vertical sync flag
         bpl     @out
@@ -219,7 +231,7 @@ kbd_tick
 
         ENDSECTION
 
-        SECTION bss
+        SECTION shared
 frames          RMB     2
 ticks           RMB     2
 kcur            RMB     8
@@ -233,7 +245,7 @@ kq_tail         RMB     1
 kq              RMB     16
         ENDSECTION
 
-        SECTION rodata
+        SECTION shared
 * key number = row * 8 + column: row = the PIA0 data bit that reads low, column = the strobed bit of $FF02
 ktab    FCC     "@ABCDEFG"
         FCC     "HIJKLMNO"

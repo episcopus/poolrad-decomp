@@ -1,5 +1,6 @@
 define basesympat s_%s
 define lensympat l_%s
+section shared load 1060
 section boot load 2000
 section start
 section code
