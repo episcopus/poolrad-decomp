@@ -8,6 +8,8 @@
         EXPORT  _k_fill
         EXPORT  _k_mcopy
         EXPORT  _k_glyph8
+        EXPORT  _k_sum
+        EXPORT  _k_sum
 
 * void k_copy(u8 *dst, const u8 *src, u8 n): n bytes, eight at a time
 _k_copy
@@ -123,5 +125,24 @@ _k_glyph8
         leax    160,x
         dec     <FC_D+1
         bne     @row
+        puls    u,y,pc
+
+* u16 k_sum(const u8 *p, u16 n): the sum of n bytes, modulo 65536
+_k_sum
+        pshs    u,y
+        ldx     6,s
+        ldy     8,s
+        clra
+        clrb
+        std     <FC_Y
+        cmpy    #0
+        beq     @out
+@l      ldb     ,x+
+        clra
+        addd    <FC_Y
+        std     <FC_Y
+        leay    -1,y
+        bne     @l
+@out    ldd     <FC_Y
         puls    u,y,pc
         ENDSECTION

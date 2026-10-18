@@ -12,9 +12,12 @@ dsk="${1:?disk image}"; prog="${2:?program name on the disk}"; out="${3:?output 
 mkdir -p "$ROOT/$(dirname "$out")"
 unlink "$ROOT/$out.mbx" 2>/dev/null || true
 unlink "$ROOT/$out.png" 2>/dev/null || true
+# MB_FLOPS: more disk images (paths relative to ports/coco3) for drives 1, 2, 3: -flop2, -flop3, -flop4
+extra=(); n=2
+for f in ${MB_FLOPS:-}; do extra+=(-flop$n "/work/$f"); n=$((n + 1)); done
 run_toolchain env MB_OUT="/work/$out" MB_CMD="LOADM\"$prog\":EXEC" ${MB_SCREENS:+MB_SCREENS=1} ${MB_KEYS:+"MB_KEYS=$MB_KEYS"} ${MB_KEYS_CP:+MB_KEYS_CP=$MB_KEYS_CP} MB_LIMIT="${MB_LIMIT:-90}" \
   mame coco3 -rompath /work/roms -pluginspath /usr/local/share/mame/plugins \
-    -ramsize 512K -flop1 "/work/$dsk" -video soft -sound none -nothrottle \
+    -ramsize 512K -flop1 "/work/$dsk" ${extra[@]+"${extra[@]}"} -video soft -sound none -nothrottle \
     -skip_gameinfo -nvram_directory /tmp/nvram -cfg_directory /tmp/cfg \
     -snapshot_directory "/work/$(dirname "$out")" \
     -autoboot_script /work/lua/mailbox.lua -seconds_to_run "${MB_SECONDS:-120}" 2>&1 \

@@ -7,6 +7,9 @@ import sys
 
 BASE = {
     "t_pic": {"mame": {1: ("boot-title", "ssi-logo"), 2: ("boot-title", "title")}, "xroar": ("boot-title", "title")},
+    "t_gfxv": {"mame": {i + 1: ("goldens/engine/t_gfx.s4", l) for i, l in
+                        enumerate(["blank", "text", "tiles", "flush", "fill", "palette"])},
+               "xroar": ("goldens/engine/t_gfx.s4", "palette")},
     "t_gfx": {"mame": {i + 1: ("goldens/engine/t_gfx.s4", l) for i, l in
                        enumerate(["blank", "text", "tiles", "flush", "fill", "palette"])},
               "xroar": ("goldens/engine/t_gfx.s4", "palette")},

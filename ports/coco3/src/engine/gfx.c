@@ -117,9 +117,15 @@ u8 gfx_font_load(RsFile *f)
     u8 st = dax_find(f, 201, &e);
     if (st != 0)
         return st;
-    if (e.raw > 1416)
+    return gfx_font_load_e(f, &e);
+}
+
+u8 gfx_font_load_e(RsFile *f, const DaxEntry *e)
+{
+    u8 st;
+    if (e->raw > 1416)
         return 4;
-    st = dax_unpack(f, &e, font, 0, 0xFF, 0, font);
+    st = dax_unpack(f, e, font, 0, 0xFF, 0, font);
     if (st == 0)
         font_ok = 1;
     return st;
@@ -190,15 +196,20 @@ static u16 le16(const u8 *p)
 u8 pic_load(Pic *p, RsFile *f, u8 id, u8 key, u8 masked)
 {
     DaxEntry e;
+    u8 st = dax_find(f, id, &e);
+    if (st != 0)
+        return st;
+    return pic_load_e(p, f, &e, key, masked);
+}
+
+u8 pic_load_e(Pic *p, RsFile *f, const DaxEntry *e, u8 key, u8 masked)
+{
     u8 hdr[17];
     u8 st, *d, *m, v, k;
     u16 size, total, i;
-    st = dax_find(f, id, &e);
-    if (st != 0)
-        return st;
-    if (e.raw <= 17)
+    if (e->raw <= 17)
         return 4;
-    size = (u16)(e.raw - 17);             /* the pixels of every item */
+    size = (u16)(e->raw - 17);             /* the pixels of every item */
     total = masked ? (u16)(2 * size) : size;
     if (total > PIC_MAX)
         return 5;
@@ -213,7 +224,7 @@ u8 pic_load(Pic *p, RsFile *f, u8 id, u8 key, u8 masked)
     p->moff = masked ? (u16)(pic_off + size) : 0;
     mmu_set(6, pic_blk);
     k_fill((u8 *)(0xC000u + pic_off), 0, total);
-    st = dax_unpack(f, &e, hdr, 17, pic_blk, pic_off, 0);
+    st = dax_unpack(f, e, hdr, 17, pic_blk, pic_off, 0);
     if (st != 0)
         return st;
     p->height = (u8)le16(hdr);

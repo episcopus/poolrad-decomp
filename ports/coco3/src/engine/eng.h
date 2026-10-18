@@ -16,6 +16,7 @@ u8 mmu_get(u8 slot);
 /* ---- disk.asm (DSKCON through Disk BASIC's ROM) and rsdos.c (a read-only RS-DOS file system). */
 extern u8 dsk_buf[256];
 u8 dsk_read(u8 drive, u8 track, u8 sector);   /* 0 = ok; else Disk BASIC's status byte */
+u8 dsk_read_to(u8 drive, u8 track, u8 sector, u8 *buf);   /* the same, into buf (below $8000) instead of dsk_buf */
 void dsk_motor_off(void);
 
 typedef struct RsFile {
@@ -43,11 +44,25 @@ typedef struct DaxEntry {
 u8 dax_find(RsFile *f, u8 id, DaxEntry *e);
 u8 dax_unpack(RsFile *f, const DaxEntry *e, u8 *hdr, u8 hdr_n, u8 first_blk, u16 first_off, u8 *ram_dst);
 
+/* ---- vol.c: volumes. One RS-DOS floppy holds POOLVOL.DAT, the container of tools/mkvolumes.py with the blocks of many
+ * DAX files and their index; up to four are mounted at once, one a drive. */
+typedef struct Vol {
+    u8 drive, num, nfiles, mounted;
+    u16 nent;
+    RsFile f;
+} Vol;
+extern Vol vols[4];
+u8 vol_mount(Vol *v, u8 drive);           /* 0 = ok, 1 = no valid POOLVOL.DAT, else the disk status; reads the index into RAM */
+u8 vol_find(const Vol *v, const char *name8, u8 id, DaxEntry *e);   /* name8: 8 characters, space padded, e.g. "ECL2    "; 0 = found, 1 = file not on this volume, 2 = no such block */
+u8 vol_entry(const Vol *v, u16 i, u8 *file, u8 *id, DaxEntry *e);   /* the i-th index entry, 1 past the end */
+u8 vol_lookup(const char *name8, u8 id, Vol **vp, DaxEntry *e);     /* over every mounted volume; 1 = on none of them, 2 = a volume has the file but not the block */
+
 /* ---- kernels.asm: the inner loops. Nothing here maps a window; the pointers must be valid when called. */
 void k_copy(u8 *dst, const u8 *src, u8 n);                      /* n = 0 copies nothing */
 void k_fill(u8 *dst, u8 value, u16 n);
 void k_mcopy(u8 *dst, const u8 *mask, const u8 *src, u8 n);     /* dst = (dst & mask) | src, n >= 1 */
 void k_glyph8(u8 *scr, const u8 *glyph, const u8 *tab);         /* 8 font rows to rows 160 bytes apart */
+u16 k_sum(const u8 *p, u16 n);                                  /* the sum of the bytes, modulo 65536 */
 
 /* ---- irq.asm: the 60 Hz frame clock (GIME vertical border IRQ), a fast tick (GIME timer FIRQ) and the keyboard. */
 extern u8 eng_init0;                      /* the value last written to GIME $FF90 */
@@ -73,6 +88,7 @@ void gfx_pal_reg(u8 reg, u8 color);       /* SetPaletteRegister (res07 0464:2A0D
 
 /* Text (res06): the 8x8 font of DAX block 201 of 8X8D1, 40x25 cells of 8x8 pixels, colour a 4-bit pixel value. */
 u8 gfx_font_load(RsFile *f);              /* LoadGameFont; the file is the open 8X8D1.DAX; 0 = ok */
+u8 gfx_font_load_e(RsFile *f, const DaxEntry *e);   /* the same from the entry a volume gave (block 201 of 8X8D1) */
 void gfx_glyph(u8 col, u8 row, u8 color, u8 count, u8 glyph, u8 textset);   /* DrawGlyph; textset: fold to the 64-glyph set */
 void gfx_text(u8 col, u8 row, u8 color, const char *s);                      /* DrawTextAt */
 
@@ -90,6 +106,7 @@ typedef struct Pic {
     u8 height, wcols, items;
 } Pic;
 u8 pic_load(Pic *p, RsFile *f, u8 id, u8 key, u8 masked);   /* LoadPicture + UnpackPicturePixels; 0 = ok */
+u8 pic_load_e(Pic *p, RsFile *f, const DaxEntry *e, u8 key, u8 masked);   /* the same from a DaxEntry (a volume's index) */
 void gfx_item(const Pic *p, u8 item, u8 col, u8 row);       /* ShowPicture: one item to the screen at cell col, pixel row 8*row */
 
 /* The staging buffer DrawBuf (168 rows of 21 cells, blocks 4 and 5): blits mark what they change, the flush copies the

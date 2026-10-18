@@ -44,6 +44,7 @@ u8 dax_unpack(RsFile *f, const DaxEntry *e, u8 *hdr, u8 hdr_n, u8 first_blk, u16
     u8 phase = hdr_n ? 0 : 1;
     u8 blk = first_blk;
     u8 st, rs;
+    u16 got;
 
     r.mode = 0;
     r.count = 0;
@@ -91,5 +92,11 @@ u8 dax_unpack(RsFile *f, const DaxEntry *e, u8 *hdr, u8 hdr_n, u8 first_blk, u16
             }
         } while (rs == 1);
     }
-    return 0;
+    if (phase == 0)
+        return 4;                                /* the block ended inside the header */
+    if (first_blk == 0xFF)
+        got = (u16)((u16)(r.dst - ram_dst) + hdr_n);
+    else
+        got = (u16)((u16)(blk - first_blk) * 0x2000u + (u16)((u16)r.dst - 0xC000u) - first_off + hdr_n);
+    return got == e->raw ? 0 : 4;               /* fewer bytes than the index says */
 }

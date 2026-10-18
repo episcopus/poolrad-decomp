@@ -93,10 +93,10 @@ maps a window twice and pays CMOC's call overhead. **[E]** a flush written as on
 about 15 cycles a byte (210 k for the whole window), a tile about 1.5 k. That is a task for 8.5, when the profiler of 8.1c can
 say which of these the game actually spends its time in; the numbers above are the baseline.
 
-The disk is the other cost: reading `TITLE.DAX` (33,898 bytes, 133 sectors) took 5.5 s of emulated time, 6.1 KB/s, in both emulators
-[V, `t_irq`]. Pictures, area files and the 8X8D tile sets all come from the disk, so load times will dominate the feel of the port
-until files are cached in banks. **[?]** how much of that is the emulators' disk model and how much a real drive does (a real
-controller cannot beat one sector per revolution without interleave tuning, which `decb dskini` does not do).
+The disk is the other cost. **Correction made in 8.4**: the 6.1 KB/s first measured for `TITLE.DAX` (33,898 bytes, 133 sectors,
+5.5 s) was `rs_read` copying every sector byte by byte and walking the FAT, not the disk: a DSKCON sector read takes 18 ms in
+both emulators whatever the order of the sectors (`t_skew`), and with the copy removed `rs_read` reads a file at 1.2 frames
+(20 ms) a sector, 12.6 KB/s, so the title screen loads in 2.7 s (`PHASE-8.4.md` section 4).
 
 ## 4. Interrupts and the keyboard [V]
 
@@ -114,7 +114,7 @@ controller cannot beat one sector per revolution without interleave tuning, whic
   real CoCo 3 uses in all-RAM mode; both emulators work.
 * **DSKCON with interrupts on**: `dsk_read` masks IRQ and FIRQ for its own set-up and hands the caller's mask back; DSKCON
   itself lets the frame interrupt through between sectors, so `frame_count` kept time over a 5.5 s read (331 frames in MAME,
-  329 in XRoar) and the data read were correct.
+  329 in XRoar, with the slower `rs_read` of 8.3) and the data read were correct.
 * **Keyboard**: the PIA0 matrix is scanned once a frame (a key counts when two consecutive scans agree), decoded to codes
   by a table, queued (`kbd_get`). The matrix is: the row is the data bit of `$FF00` that reads low, the column the strobed bit
   of `$FF02`; key number = row x 8 + column, in the order `@ABCDEFG`, `HIJKLMNO`, `PQRSTUVW`, `XYZ` up down left right

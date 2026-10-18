@@ -42,8 +42,22 @@ static void checkpoint(void)
 
 int main(void)
 {
+#ifndef FROM_VOLUME
     RsFile f;
+#endif
     u8 i;
+#ifdef FROM_VOLUME
+    DaxEntry e;
+    mb_check(0, vol_mount(&vols[1], 1), 0);
+    mb_check(1, vol_find(&vols[1], "8X8D1   ", 201, &e), 0);
+    mb_check(2, gfx_font_load_e(&vols[1].f, &e), 0);
+    mb_check(6, vol_find(&vols[1], "8X8D1   ", 0xCB, &e), 0);
+    mb_check(3, pic_load_e(&banks[0], &vols[1].f, &e, 13, 1), 0);
+    loaded[0] = 1;
+    mb_check(7, vol_find(&vols[1], "8X8D1   ", 0xCA, &e), 0);
+    mb_check(4, pic_load_e(&banks[4], &vols[1].f, &e, 13, 1), 0);
+    loaded[4] = 1;
+#else
     mb_check(0, rs_mount(0), 0);
     mb_check(1, rs_open(&f, 0, "8X8D1   ", "DAX"), 0);
     mb_check(2, gfx_font_load(&f), 0);
@@ -51,6 +65,7 @@ int main(void)
     loaded[0] = 1;
     mb_check(4, pic_load(&banks[4], &f, 0xCA, 13, 1), 0);       /* Load8x8Bank($CA, 4) */
     loaded[4] = 1;
+#endif
     dsk_motor_off();
     gfx_init();
     db_init();

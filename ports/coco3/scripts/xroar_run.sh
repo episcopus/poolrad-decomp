@@ -13,8 +13,10 @@ fin=$(grep '^Symbol: _mb_halt ' "$ROOT/$map" | sed 's/.*= //')
 unlink "$ROOT/$out" 2>/dev/null || true
 if [[ -n "$dsk" ]]; then
   [[ -f "$ROOT/roms/disk11.rom" ]] || { echo "roms/disk11.rom missing (README, ROMs)" >&2; exit 1; }
+  extra=(); n=1
+  for f in ${XROAR_FLOPS:-}; do extra+=(-load-fd$n "$ROOT/$f"); n=$((n + 1)); done
   xroar -ui null -ao null -m coco3 -rompath "$ROOT/roms" -ram 512 -ram-init clear -tv-input rgb \
-    -no-ratelimit -cart rsdos -no-disk-write-back -load-fd0 "$ROOT/$dsk" -type 'LOADM"TEST":EXEC\r' \
+    -no-ratelimit -cart rsdos -no-disk-write-back -load-fd0 "$ROOT/$dsk" ${extra[@]+"${extra[@]}"} -type 'LOADM"TEST":EXEC\r' \
     -trap "pc=0x$fin" -trap-snap "$ROOT/$out" -trap-timeout 0 -timeout "${XROAR_SECONDS:-120}" >/dev/null 2>&1 || true
 else
   xroar -ui null -ao null -m coco3 -rompath "$ROOT/roms" -ram 512 -ram-init clear -tv-input rgb \

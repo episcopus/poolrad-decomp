@@ -19,13 +19,21 @@ DRGRAM          EQU     $0986           Disk BASIC's copy of the DSKREG latch
 
         SECTION code
         EXPORT  _dsk_read
+        EXPORT  _dsk_read_to
         EXPORT  _dsk_motor_off
         EXPORT  _dsk_buf
 
 * u8 dsk_read(u8 drive, u8 track, u8 sector): reads one 256-byte sector into dsk_buf; returns DCSTA (0 = ok)
 _dsk_read
         pshs    cc,u,y                  the caller's interrupt mask comes back at the end
-        orcc    #$50
+        ldd     #_dsk_buf
+        bra     dsk_go
+* u8 dsk_read_to(u8 drive, u8 track, u8 sector, u8 *buf): the same into buf, which must be below $8000
+_dsk_read_to
+        pshs    cc,u,y
+        ldd     13,s
+dsk_go  orcc    #$50
+        std     DC_BUF
         lda     #2                      DSKCON op 2: read sector
         sta     DC_OPC
         lda     8,s                     drive
@@ -34,8 +42,6 @@ _dsk_read
         sta     DC_TRK
         lda     12,s                    sector
         sta     DC_SEC
-        ldd     #_dsk_buf
-        std     DC_BUF
         clr     DC_STA
         ldd     #$3C3D                  BASIC's blocks for slots 4 and 5
         sta     $FFA4

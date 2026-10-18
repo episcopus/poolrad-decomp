@@ -4,7 +4,7 @@
  * the last sector read is cached so that a header read as nine-byte entries costs one DSKCON call per sector. */
 #include "eng.h"
 
-static u8 fat[68];
+static u8 fat[4][68];                     /* the FAT of each mounted drive */
 static u8 cache_drive = 0xFF, cache_track, cache_sector;
 
 static u8 read_sector(u8 drive, u8 track, u8 sector)
@@ -30,7 +30,7 @@ u8 rs_mount(u8 drive)
     if (st != 0)
         return st;
     for (i = 0; i < 68; i++)
-        fat[i] = dsk_buf[i];
+        fat[drive & 3][i] = dsk_buf[i];
     return 0;
 }
 
@@ -47,6 +47,7 @@ static void locate(u8 g, u8 s, u8 *track, u8 *sector)
 u8 rs_open(RsFile *f, u8 drive, const char *name8, const char *ext3)
 {
     u8 sec, e, i, st;
+    const u8 *ft = fat[drive & 3];
     for (sec = 3; sec <= 11; sec++) {
         st = read_sector(drive, 17, sec);
         if (st != 0)
@@ -70,11 +71,11 @@ u8 rs_open(RsFile *f, u8 drive, const char *name8, const char *ext3)
                 f->drive = drive;
                 f->gran0 = g;
                 f->last_bytes = (u16)(((u16)d[14] << 8) | d[15]);
-                while (!(fat[g] & 0x80)) {      /* count the sectors of the chain */
+                while (!(ft[g] & 0x80)) {       /* count the sectors of the chain */
                     n += 9;
-                    g = fat[g];
+                    g = ft[g];
                 }
-                n += (u16)(fat[g] & 0x1F);
+                n += (u16)(ft[g] & 0x1F);
                 f->sectors = n;
                 return 0;
             }
@@ -87,28 +88,37 @@ u8 rs_read(RsFile *f, u32 offset, u8 *dst, u16 n)
 {
     u16 idx = (u16)(offset >> 8);
     u16 skip = (u16)(offset & 255);
+    const u8 *ft = fat[f->drive & 3];
+    u8 g, track, sector, st;
+    u16 gi, chunk;
     while (n > 0) {
-        u8 g = f->gran0, track, sector, st;
-        u16 gi = idx / 9;
-        u16 chunk;
+        g = f->gran0;
+        gi = idx / 9;
         while (gi-- > 0) {
-            if (fat[g] & 0x80)
+            if (ft[g] & 0x80)
                 return 2;                       /* read past the end */
-            g = fat[g];
+            g = ft[g];
         }
         locate(g, (u8)(idx % 9), &track, &sector);
-        st = read_sector(f->drive, track, sector);
-        if (st != 0)
-            return st;
         chunk = (u16)(256 - skip);
         if (chunk > n)
             chunk = n;
-        {
-            const u8 *s = dsk_buf + skip;
-            u16 i;
-            for (i = 0; i < chunk; i++)
-                *dst++ = *s++;
+        if (chunk == 256 && !(f->drive == cache_drive && track == cache_track && sector == cache_sector)) {
+            st = dsk_read_to(f->drive, track, sector, dst);     /* a whole sector, straight to the caller */
+            if (st != 0)
+                return st;
+        } else {
+            st = read_sector(f->drive, track, sector);
+            if (st != 0)
+                return st;
+            if (chunk == 256) {
+                k_copy(dst, dsk_buf, 128);
+                k_copy(dst + 128, dsk_buf + 128, 128);
+            } else {
+                k_copy(dst, dsk_buf + skip, (u8)chunk);
+            }
         }
+        dst += chunk;
         n -= chunk;
         skip = 0;
         idx++;
