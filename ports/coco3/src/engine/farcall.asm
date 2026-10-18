@@ -28,11 +28,14 @@ __farcall
         pshu    a                       the bank that was mapped
         stu     <FC_BSPTR
         ldu     <FC_U                   caller's U back before the call
-        ldx     #banktab-1
+        ldx     #_banktab-1
         lda     b,x
+        beq     @missing                the bank is not in memory: the loader has to bring it
         sta     MMU_SLOT4               map the callee's bank
+        sta     MMU_SH
         inca
         sta     MMU_SLOT5
+        sta     MMU_SH+1
         jsr     [FC_X]
         std     <FC_D                   result
         stu     <FC_U                   U as the callee left it (= the caller's)
@@ -40,67 +43,28 @@ __farcall
         pulu    a                       the bank to restore
         sta     <FC_CURBANK
         beq     @nomap                  0: the caller was resident code
-        ldx     #banktab-1
+        ldx     #_banktab-1
         lda     a,x
         sta     MMU_SLOT4
+        sta     MMU_SH
         inca
         sta     MMU_SLOT5
+        sta     MMU_SH+1
 @nomap  pulu    y                       caller's Y
         pulu    x                       caller's return address
         stu     <FC_BSPTR
         ldu     <FC_U
         ldd     <FC_D
         jmp     ,x
+@missing
+        stb     MB_BASE+$3E             which bank: the harness reads it (result word 31)
+        lda     #2
+        sta     MB_STATUS               finished, failed
+        orcc    #$50
+@stop   bra     @stop
 
-* _load_banks: copy the staged bank images into their physical blocks.
-        EXPORT  _load_banks
-_load_banks
-        ldx     #STAGE1
-        lda     #BANK1_BLK
-        bsr     @copy
-        ldx     #STAGE2
-        lda     #BANK2_BLK
-@copy   sta     MMU_SLOT4
-        inca
-        sta     MMU_SLOT5
-        ldy     #BANK_WINDOW
-        ldb     #STAGE_BYTES/32
-@loop   ldu     ,x++                    16 words per pass
-        stu     ,y++
-        ldu     ,x++
-        stu     ,y++
-        ldu     ,x++
-        stu     ,y++
-        ldu     ,x++
-        stu     ,y++
-        ldu     ,x++
-        stu     ,y++
-        ldu     ,x++
-        stu     ,y++
-        ldu     ,x++
-        stu     ,y++
-        ldu     ,x++
-        stu     ,y++
-        ldu     ,x++
-        stu     ,y++
-        ldu     ,x++
-        stu     ,y++
-        ldu     ,x++
-        stu     ,y++
-        ldu     ,x++
-        stu     ,y++
-        ldu     ,x++
-        stu     ,y++
-        ldu     ,x++
-        stu     ,y++
-        ldu     ,x++
-        stu     ,y++
-        ldu     ,x++
-        stu     ,y++
-        decb
-        bne     @loop
-        rts
-
-banktab FCB     BANK1_BLK,BANK2_BLK     index = bank id - 1
-
+        SECTION code
+        EXPORT  _banktab
+_banktab RMB    64                      index = bank id - 1: the first of the two blocks of the bank, 0 = not in memory
+*                                       (in the code section, not bss: the loader fills it before CMOC clears bss)
         ENDSECTION

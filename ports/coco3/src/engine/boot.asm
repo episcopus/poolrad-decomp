@@ -56,6 +56,7 @@ boot
         clr     FC_CURBANK
         ldd     #BANKSTK_TOP
         std     FC_BSPTR
+        lbsr    _load_banks             copy staged bank images into their physical blocks (task 0's windows)
 *       task 1, the engine's address space: slots 0..3 as task 0, 4 and 5 its own windows, 6 and 7 as the game's data
 *       windows (mmu_set keeps both tasks equal there). Programs start in task 1 (the engine tests are the engine); the
 *       game leaves it (eng_leave) and enters it only for the length of an engine call.
@@ -70,7 +71,6 @@ boot
         lda     #1
         sta     FC_TASK
         sta     $FF91
-        lbsr    _load_banks             copy staged bank images into their physical blocks
         lbra    program_start
 
 

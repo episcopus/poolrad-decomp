@@ -18,7 +18,7 @@ LINKLIBS := -L$(CMOCLIB) -lcmoc-crt-void -lcmoc-std-void
 ENGINE_OBJ := build/obj/boot.o build/obj/mailbox.o
 P ?= byte-arith
 
-.PHONY: help doctor toolchain eng-data eng-test eng-tests gfx-ref data data-verify vol-test vol-tests sizes heap-stats prof coco-host place-host golden4 golden4-record demo test-demo run-demo probe probes asm-probe bench test clean
+.PHONY: game help doctor toolchain eng-data eng-test eng-tests gfx-ref data data-verify vol-test vol-tests sizes heap-stats prof coco-host place-host golden4 golden4-record demo test-demo run-demo probe probes asm-probe bench test clean
 .DEFAULT_GOAL := help
 
 help:
@@ -143,10 +143,10 @@ build/demo/%.o: src/demo/%.c src/engine/mailbox.h
 	@mkdir -p $(@D); $(CC) -o $@ $<
 build/demo/%.o: src/demo/%.asm src/engine/banks.inc
 	@mkdir -p $(@D); $(AS) -o $@ $<
-build/demo/core.bin build/demo/core.map: build/obj/boot.o build/obj/farcall.o build/demo/farstubs.o \
+build/demo/core.bin build/demo/core.map: build/obj/boot.o build/obj/farcall.o build/demo/demoload.o build/demo/farstubs.o \
     build/demo/core.o build/obj/mailbox.o src/engine/core.link
 	lwlink --format=decb --script=src/engine/core.link --map=build/demo/core.map \
-	  -o build/demo/core.bin build/obj/boot.o build/obj/farcall.o build/demo/farstubs.o \
+	  -o build/demo/core.bin build/obj/boot.o build/obj/farcall.o build/demo/demoload.o build/demo/farstubs.o \
 	  build/demo/core.o build/obj/mailbox.o $(LINKLIBS)
 	python3 -I tools/maplimit.py build/demo/core.map program_end 3FFF
 # A bank sees the core only through the absolute symbols it references (tools/symexport.py).
@@ -190,6 +190,11 @@ eng-test: eng-data data
 	  else echo "--- $(T) in XRoar"; python3 -I tools/mbdump.py build/run/$(T)-xroar.ram --ram --check; \
 	  fi
 	@echo "--- $(T) screens"; python3 -I tools/engcheck.py $(T)
+
+# ---------------------------------------------------------------- the game (step 8.5)
+GAME_OBJ := build/obj/boot.o build/obj/mailbox.o build/obj/mmu.o build/obj/farcall.o build/obj/nobanks.o
+game: $(GAME_OBJ)
+	@$(TC) scripts/game_build.sh
 
 # ---------------------------------------------------------------- data pipeline (step 8.4)
 data:
