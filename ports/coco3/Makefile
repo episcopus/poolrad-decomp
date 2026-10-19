@@ -195,12 +195,17 @@ eng-test: eng-data data
 game:
 	@$(TC) scripts/game_build.sh
 
-# Look at it: the game in a window in XRoar (needs `make game` and `make data` first; the program disk in drive 0, BASE in drive 1).
-# It loads for about a minute of emulated time (XRoar is fast); the ssi-logo, the title and the credits follow.
-run-game: game data
-	scripts/tc.sh python3 -I tools/mkgamedisk.py build/game build/gen/vm/DGROUP.IMG build/game/pool.dsk > /dev/null
-	xroar -m coco3 -rompath roms -ram 512 -ram-init clear -tv-input rgb -cart rsdos -no-disk-write-back \
-	  -load-fd0 build/game/pool.dsk -load-fd1 build/data/vol0.dsk -type 'LOADM"POOL":EXEC\r'
+# Look at it. The game reads its storage through sec_io (decision D13); the development backend is the harness' own, a write tap
+# of MAME's Lua, so there is no window to play in until a backend XRoar or a real CoCo can serve (DriveWire, after 8.9).
+# Until then: play a session headless and watch what the game showed, as an animated GIF (every screen that stayed for
+# a moment, in order) opened in the default viewer. S=<session> (boot-title, create-character), LIMIT=<emulated seconds>.
+game-view: game
+	MB_SESSION=/repo/tests/sessions/$(S).keys MB_LIMIT=$(or $(LIMIT),$(if $(filter create-character,$(S)),700,300)) scripts/game_run.sh build/run/game-$(S) > /dev/null
+	python3 -I tools/scr4gif.py build/run/game-$(S) build/run/game-$(S).gif
+	@if command -v open >/dev/null 2>&1; then open build/run/game-$(S).gif; else echo "open build/run/game-$(S).gif"; fi
+
+run-game:
+	@echo "make run-game: the game's storage is the harness' (D13): use 'make game-view S=create-character' for now" >&2; exit 2
 
 # The game on the emulated CoCo 3 (MAME, headless): S=session; the screens it shows against goldens/4bpp (tools/gamecheck.py)
 S ?= boot-title

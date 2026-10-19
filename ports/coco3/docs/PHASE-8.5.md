@@ -6,141 +6,140 @@ menu, character creation; exit: the `boot-title` and `create-character` sessions
 
 ## 0. Result
 
-**`boot-title` plays on the emulated CoCo 3 (MAME, 512 KB, headless) and shows the original's three screens, bit for bit:
-the SSI logo, the title picture and the credits** (the digests of `goldens/4bpp/boot-title.s4`), then goes on to the copy
-protection prompt, as the original does. `make game-run S=boot-title` builds the game, runs it and prints the check [V]:
+**Both sessions play on the emulated CoCo 3 (MAME, 512 KB, headless) and match the original's goldens [V]**, from the container
+image of decision D13 (`make first-light`):
 
 ```
-  ssi-logo       equal (our screen 4)
-  title          equal (our screen 5)
-  credits        equal (our screen 7)
-boot-title: 3 of 3 golden screens shown in order, 9 screens kept
+boot-title: 3 of 3 labelled golden screens shown in order            ssi-logo, title, credits: equal, bit for bit
+create-character: 4 of 4 labelled golden screens shown in order      race-human, sheet, head-body-keep, icon-editor, final (the main menu): equal
+                  16 of 23 unlabelled ones                           the per-key screens of the recorder; the 7 that are not are the code wheel's
+  file CHARLIST.TXT  5 bytes: equal
+  file RAD.CHA       285 bytes, character record: equal (words turned, pointers left out)
+  dgroup: 391 places equal, 58 differ for a reason in data/state_ignore.txt (representation, platform), 0 open, 15 not on the CoCo (the engine's)
 ```
 
-**`create-character` does not play yet.** The first screen it needs, the code wheel answer and the main menu, are blocked by
-the items of section 6 (disk swaps, keys, file writes, byte order of loaded records, a few engine routines). The state
-comparison (the host compares DGROUP, heap and planes at every checkpoint) is not built for the CoCo either: the layout, the
-byte order and the pointer format all differ and need an inverse map. So the exit criterion is **met for the screens of
-`boot-title`, not for state, not for `create-character`.**
+What the session does on the CoCo: the code wheel is answered (the harness reads which question the game asked), Create new character,
+Human, Male, Fighter, Lawful good, the rolled sheet (the scores equal the original's: the random generator is lined up at the
+main menu), the portrait window with the head and the body, the icon editor with its old and new icons, the character is saved
+(the character list and the record), and the main menu comes back. The game is the translated Pascal, unchanged except for what
+the CoCo forces (section 3).
 
-The game is the translated Pascal, unchanged except for what the CoCo forces (section 3): 47 code banks, a resident core,
-the engine in its own MMU task. The engine's API has 41 routines the game calls (the PC's res05 to res08 and parts of res06, ovl28, ovl32); 21 are written.
+What is not part of this step: a window to play in (section 5), the byte order of files the game loads and reads as records (ITEMS
+as a record array, monsters, saves from the PC), sound, the engine routines the 3D view and combat need (section 6).
 
 ## 1. How it is built
 
-Memory (physical 8 KB blocks of the 512 KB, see `src/engine/gamemap.h`):
+Memory (physical 8 KB blocks of the 512 KB, `src/engine/gamemap.h`; unchanged by this step except the stack):
 
 | Blocks | Use |
 |---|---|
 | `$00..$03` | the 320x200x16 screen |
 | `$04,$05` | DrawBuf (the 168-row staging buffer of the blits) |
-| `$06,$07` | volume index (4 KB a drive) |
+| `$06,$07` | the file table of the image (6 sectors at a time) |
 | `$08..$0D`, `$28..$2F`, `$33..$37` | pictures: three runs, 19 blocks (152 KB), one linear store (`gfx.c`) |
 | `$0E,$0F` | the stage: the unpacked DAX block the game is loading |
 | `$10..$13` | the paged part of DGROUP (four pages) |
 | `$14..$17` | the banked heap |
 | `$18..$27` | the bank pool: 8 code banks of two blocks |
 | `$30..$32` | the game core (task 0, `$2000..$7FFF`) |
-| `$38` | slot 0 of both tasks: BASIC's low RAM, the mailbox (`$1000`), the shared code (`$0400`) and data (`$0E00`), the stack |
-| `$39..$3B` | the engine (task 1, `$2000..$7FFF`) |
-| `$3C..$3F` | Disk BASIC's ROM images (DSKCON) |
+| `$38` | slot 0 of both tasks: the shared code, the shared data, the mailbox, the stack |
+| `$39..$3B` | the engine (task 1) |
+| `$3C..$3F` | Disk BASIC's ROM images (DSKCON, unused by the image backend) |
 
-Two MMU tasks. The engine runs in task 1 (its code at `$2000..$680D`, windows 0 and 1 at `$8000`/`$A000` for its data), the game
-in task 0 (core at `$2000..$537F`, native DGROUP at `$5600`, the mapped heap to `$7FFF`, a code bank in slots 4 and 5, two data
-windows in 6 and 7). Slot 0 and the constant page are shared: the interrupt handler, the call gate (`__engcall`), the bank table
-and the keyboard state live there.
+**Slot 0, as of this step**: `$0400..$05DF` the shared code (the frame interrupt, the keyboard, the call gate), `$0600..$06FF` the
+sector buffer, `$0700..$08FF` the shared data (variables, the call ring, the bank table, the key queue, the event log at `$0860`),
+`$0900..$096F` the mailbox and the request block of the storage, `$0A00..$1F7F` **the stack, 5.5 KB (was 3.8 KB)**, `$1F80..$1FFF`
+the bank stack. Disk BASIC keeps its buffers in `$0600..$0DFF` until `LOADM` is done with `POOL.BIN`: the shared data therefore is
+not in `POOL.BIN` at its address but as one image at `$7400` that `boot.asm` copies into place (`tools/mkgame.py strip_low_records`;
+`$7E00` and up is BASIC's own stack and string space, an image there was overwritten before the engine ran).
 
-Calls into the engine are C calls through a gate [V] (`src/engine/engcall.asm`): the stub `_Name: ldb #n / bra tail` in the core
-jumps to `__engcall`, which saves the game's return address, switches to task 1 and jumps to the table (`api_tab`, generated);
-the engine routine finds its arguments on the shared stack exactly as the game's compiler pushed them. Pointers in the
-arguments can therefore point only into the stack: `src/game/engapi.c` wraps the routines that take strings or give results back
-(LoadPicture, AllocatePicture, ReleasePicture, RemapPictureColors) and implements Put8x8Symbol and LoadDaxBlock on the game side.
-A far call into a bank that is not in memory lands in the same gate (routine 0, `api_bankload`): the engine reads `BANKnn.BIN`
-from the disk into a free pool entry (never one on the bank stack) and the call is tried again.
+**Storage (D13)**: `sec_io(cmd, lsn, count, block, offset)` fills the request block and rings the doorbell; the harness (a write tap in
+`lua/watch.lua`) copies sectors between the image file and physical RAM and answers in the status byte (`src/engine/img.c`). The image
+is "PIM2" (`tools/mkimage.py`): a header, a table of files, the entries (file, id, byte offset, packed size, raw size: the same entries
+as the volumes of 8.4), then the blocks of the 117 files (the 48 code banks, the core, DGROUP, every DAX block and ITEMS) and a **save
+area of 256 sectors**. 6,718 sectors, 1.64 MB. The engine mounts it, loads the core and the initial DGROUP from it, and loads the banks
+and DAX blocks on demand (`api_bankload`, `DaxLoad`). `rs_read` reads from the image when the file's drive is `IMG_DRIVE`, so the
+unpacker and the picture loader are the ones of 8.4.
 
-Pictures are handles (1..48) in the low word of the game's picture variables; the pixels stay in the engine's store. DAX blocks the
-game loads with `LoadDaxBlock` (maps, fonts, items, monsters) are unpacked by the engine into the stage and come over in 128 byte
-pieces. The Pascal file runtime (`rtl_assign/reset/blockread/close`) knows the files of the mounted volumes (ITEMS is block 0 of
-the pseudo file ITEMS).
+**Files the game writes**: `src/game/rtl_file.c`, in the runtime bank (no variables: the state of an open file is in the file variable's
+UserData). A directory in the save area (header "PSAV" and the first free 256 byte unit, 31 entries: name as 8 + 3 characters, start unit, room in
+units, size) and files of 4 KB (10 KB for `.DAT`) made when the file is rewritten. `SaveRead`/`SaveWrite` are the engine's byte
+access to the area (one sector read, changed, written back). Text files read and write lines (`ReadLn`, `WriteLn`, `Eof`). The files of the volumes
+(ITEMS) stay read-only. A real backend decides how files are stored after 8.9.
 
-Boot: BASIC `LOADM"POOL":EXEC` loads the engine (`POOL.BIN`); it clears the game's memory (a real CoCo's is not zero), reads `CORE.BIN`
-and `DGROUP.IMG` from drive 0 into their blocks, mounts the data volume in drive 1, gives task 0 its slots and jumps to the game's
-entry. `tools/mkgamedisk.py` writes the program disk (35 tracks, `decb`): POOL.BIN 14.5 KB, CORE.BIN 12.9 KB, DGROUP.IMG 11.9 KB
-(run length coded, 36.8 KB raw), BANKS.IDX and the code banks the session needs (`data/bootbanks.txt`, 14 banks, 46 KB).
+**The session driver** (`lua/watch.lua`): the keys of `tests/sessions/*.keys` go straight into the engine's key queue, one command when the
+screen has been still for 2 s **and the game is waiting for a key** (the game counts its keyboard polls in the mailbox: a screen that does not change is not
+a game that is idle: the editor computes for seconds); the `wheel` command reads the question the game chose (`wheel_pick`, set by
+`Random(13)`), types the answer from the table of 13 words and, once the menu has settled, **sets the generator to the original's seed at that point**
+(`0x074494E8`, the `RandSeed` of the host replay at the main menu), so the rolls are the recorded ones. `wait` and `shot` are not needed:
+every screen that stays for 0.2 s is kept and compared by hash with the goldens in order.
+
+**Keys (D8)**: the engine's key queue holds characters and the codes of keys that are not characters; `kbd_get` returns the PC's pair for
+those (0, then the scan code) from a table (`kext`), `rtl_ReadKey` hands it out as two reads. Arrows, F1 and F2 as on the PC;
+**SHIFT with an arrow is PgUp, PgDn, Home, End** (up, down, left, right): the harness types the same codes, so the matrix path (8.3) is
+the only thing not exercised by the session.
 
 ## 2. Numbers
 
 | | |
 |---|---|
-| Engine (task 1) | 18,445 bytes with data (`$2000..$680D`); 21 of 41 game routines written |
-| Core (task 0) | 13,183 bytes, ends `$537F`; limit `$5400` (the heap tables, 323 bytes, then 4,040 bytes of native DGROUP) |
-| Code banks | 47, 327,174 bytes, largest 14,130 (limit 16,000); 14 are on the program disk for `boot-title` |
-| Far stubs | 2 bytes an entry for banks with 8 or more entries (a `bsr` to a tail that turns the return address into the entry), 5 bytes below |
-| Stack | `$1060..$1F7F`, 3.8 KB; the boot path uses all but about 100 bytes of it [V] (a guard in the interrupt handler stops the program if it goes below `$1100`) |
-| Pictures in `boot-title` | SqrPaci banks 2 x 36 KB, the title 32 KB while it is shown, tile banks, 26 sprites: 152 KB of store is enough |
-| Time to the first screen | about 25 s of BASIC loading the engine (one revolution a sector), 9 s of engine boot, about 60 s of "LOADING...PLEASE WAIT" (bank and picture loads from the floppy), ssi-logo at 122 s of emulated time, credits at 193 s |
+| Engine (task 1) | 20,668 bytes with data (`$2000..$70BC`; the shared image at `$7400`); 27 of 38 game routines written |
+| Core (task 0) | 12,541 bytes, ends `$50FD` (the limit is `$5400`); the file runtime left it (700 bytes more room than before) |
+| Code banks | 48, 330,812 bytes, largest 14,117 (limit 16,000); the runtime bank holds the heaps and the files |
+| Stack | `$1F7F` down to `$0A00`; `create-character` reaches `$11F9`, 3.4 KB; the first run in the old 3.8 KB overran into the mailbox at the sheet |
+| Image | 6,718 sectors; header, file table (117 files), 1,297 entries, the blocks, 256 sectors of saves |
+| Time | the engine is up at 15 s of emulated time, the ssi-logo at 26 s, the title at 55 s, the credits at 84 s, the wheel question at 140 s; `create-character` ends at about 200 s and is given 700 (the harness waits for the screen to be still); a run takes 2 to 4 minutes of the host (the container, MAME at 30 times real time, the Lua taps) |
 
-## 3. Findings and defects (each one cost hours; each is now in the build)
+Not on the CoCo (the engine's, 11 routines): the PC's pixel/mirror helpers (`ColorMatchMask`, `PaletteColor`, `UnpackPicturePixels`, `MirrorByte`,
+`MirrorWord`, `SwapNibbles`, `MirrorPicture`: the engine's pictures are 4bpp already) and `Load24x24Set`, `DrawCellPicture`, `LoadSpriteList`,
+`Show3DSprite` (the 3D view and the area view, step 8.6).
 
-1. **CMOC miscompiles assignments to a variable that shares its name with a global enum constant.** The translated DrawWindowFrame
-   has a parameter `BottomRow`; the unit also has `enum { BottomRow = 24 }`. `BottomRow++` (or `BottomRow = BottomRow + 1`) was
-   stored as a word, wiping the parameter. Every window frame came out one row short. Fix: the translator renames locals and
-   parameters that spell a global constant or enumeration member (`tools/c/p2c_decl.py` `safe()`); verified on the PC profile
-   (`make c-golden`, all seven sessions equal, state included) and on the host model.
-2. **A bank sees only its own constants.** A string literal passed from one bank to a routine in another bank is read through the
-   callee's window: garbage. `tools/mkgame.py` copies every literal argument of a call into another unit to the caller's frame
-   (`copy_cross_literals`: 413 call sites); the string runtime and the engine wrappers are resident for the same reason (the core
-   grew by about 4 KB, and that is why the heap tables moved twice).
-3. **Byte order.** The CoCo is big endian, the game's data little endian. Done: the initial DGROUP image (468 values, from the
-   swap specs the translator writes into `globals.txt`). Not done: everything the game loads and then reads as multi-byte fields
-   (ITEMS rows, monster and save records), see 6.
-4. **Pascal string temporaries were 256 bytes each**: frames of 1 to 2 KB, which overflowed the 3.8 KB stack in the loader. They are
-   now sized by the longest value the expression can have.
-5. **DSKCON.** It reads its time-out from direct page `$8A:$8B` (the engine kept its far-call variables there), needs a retry with a
-   delay on "not ready" after the drive sat idle, and cannot be given a task while the MMU slots hold the engine's windows: the
-   wrapper (`disk.asm`) parks the engine's direct page, maps BASIC's blocks, switches to ROM mode and 0.89 MHz, retries, puts it all back.
-6. **MAME, the memory test, and the harness.** MAME has two floppy drives (XRoar four, but its traps fire at the wrong time under a
-   four drive setup, so MAME is the reference). Physical RAM is not zero at power on (MAME fills `$FF`): the game's heap tables
-   and the stack area must be cleared by the loader. The harness reads physical RAM through the RAM device's save item; screens
-   are kept when stable for two looks (`lua/watch.lua`).
-7. Smaller: the picture store is linear and pictures may cross block borders (the SqrPaci bank is 36 KB), the bank pool is eight
-   banks (the rest of its blocks are pictures), `-fomit-frame-pointer` is not the culprit of any defect found (the enum defect is
-   independent of it).
+## 3. Findings and defects (each one is in the build now)
+
+1. **CMOC miscompiles assignments to a variable named like a global enum constant** (8.5 earlier; unchanged): the translator renames them.
+2. **CMOC: `(u8)x0 < db_lo[y]` with `x0` an `s16` marks the wrong rows.** Four icons drawn, two of them half or not flushed. The cast of a signed
+   word in a comparison with a byte array element is wrong; the fix is a `u8` local (`ux0`, `uy`) for both the index and the compare.
+3. **CMOC 0.1.100 in general**: `u8 * constant` in 8 bits (use `(u16)`), `s8` byte arithmetic, a bare cast of a pointer (`| 0`), no compound literals.
+4. **The write tap of MAME's Lua must stay referenced** (`secreq_tap` is global): when the collector freed it MAME crashed or dropped the tap (all later
+   sector reads answered with nothing). A run that ends in 3 s with no output has crashed MAME: run it by hand and look at the exit code (139).
+5. **Aliased tables and byte order** (`tools/mkvm.py`): the PC's data segment has tables declared over each other (an index base that lies over the next
+   table: `StartingAgeTable` row 0 over the Human and Half-Orc rows of `RaceClassChoices`; `ExperienceTable` over `ConstitutionHitPointTable` and the
+   spell slot tables; `TreasureItemRows` over `SpellLevelNames`). Reversing every word of a typed view corrupted the byte tables it overlaps: the class
+   list of the Human was empty. The layout now leaves a value alone when it lies in the real extent (declaration cut to its storage array) of another
+   global read as bytes, when it straddles the border of two storage arrays, and for two named index bases (`NOSWAP`); 61 values are left, 416 turned.
+   **Open for 8.6**: bytes written at run time over a word view (`PartyMapRow`..`PartyCellEventByte` over `WallSetSlotPairs`, `PictureAnimationBase`, `LoadSlots`,
+   `SpellTargetCount`): the values are right as long as they are read the way they were written (the state check accepts either order).
+6. **The PC's picture records are not the engine's**: game code reaches into a picture (`Tail`, `Pixels`, `ByteSize`) in `MergePictureData`, the editor's
+   `CopyPictureSlot`, `DrawIcon`, `Load24x24Set`, `LoadSpriteList`, `Show3DSprite`, res12 (combat animation) and ovl13. A picture is a handle on the CoCo; these
+   are rewritten through the engine (`PATCHES` in `tools/mkgame.py` and `ENGINE_ROUTINES`: `DrawIconPic`, `PictureCopy`, `MergePictureData`,
+   `DrawPictureItemClipped`). The ones left (res12, ovl13, `Load24x24Set`) fail loudly when reached (`vm_far` stops on a handle). Merge and copy are done on the
+   engine's own pictures (colours OR, masks AND): the PC's two buffers are not the CoCo's one pixel and one mask plane.
+7. **`ovl28` is game code** again (the whole unit had been given to the engine): `DrawSprite`, the head and body window, `FreeSpriteList` run on the handles. Only `LoadSpriteList` and
+   `Show3DSprite` need the picture record's fields and stay in the engine (not written).
+8. **Stack**: `create-character` needed more than 3.8 KB (the sheet, `DrawLocationLine` with five 256 byte string temporaries over the editor's frames). Slot 0 was
+   rearranged (above) and **string temporaries are shared between statements** (`tools/c/p2c_expr.py`: a temporary lives inside one statement, so each routine declares `ts1..tn` once at the
+   size of the busiest statement; the PC's C is regenerated, all seven goldens equal). Still room: 2.0 KB of the 5.5.
+9. **The key queue and the wheel**: typing a word all at once loses letters (the game polls between keys); the driver types one key every 0.4 s.
+10. **`SaveDir` had a wrong length** in `platform.c` (an octal escape: `\023` is 19, the 16 characters need `\020`): the game made file names with three bytes of the next global in them.
 
 ## 4. Tools added
 
-`make game` (the whole build, in the container), `make game-run S=<session>` (MAME run and screen check),
-`scripts/game_run.sh`, `scripts/game_xroar.sh` (fast, four drives, traps unreliable), `scripts/bank_probe_mame.sh` (which banks
-a run needs), `lua/watch.lua` (screens, the engine's event log `DBG`, memory dumps, the stack depth), `tools/gamecheck.py`,
-`tools/mkgame.py` (split, stubs, link, engine build), `tools/mkvm.py` (DGROUP.IMG), `tools/mkgamedisk.py`, `tools/dis6809.py` (a
-6809 disassembler, used on Disk BASIC's ROM), `probes/strtest.c`.
+`make first-light` (both sessions, screens and state), `make game-run S=` (a session in MAME and its screen check), `make game-state S=` (`tools/statecheck.py`:
+the files written and DGROUP place by place, against the host replay, `data/state_ignore.txt` lists what cannot be equal and why), `make game-view S=` (a GIF of what the game showed),
+`tools/mkimage.py` (the container image), `tools/scr4gif.py`, `lua/watch.lua` (the storage backend, the session driver, `MB_WATCH=lo-hi` to log writes to a range, `MB_PEEK`,
+`MB_PCLOG=t0-t1` the program counter every frame, `MB_SECLOG` the sector requests, dumps of memory, DrawBuf and the picture table).
 
-## 5. Decisions
+## 5. Decisions and open questions
 
-D12 stays (hybrid). New in this step: the engine is a second MMU task (answered in 8.5a); farptr stays 32 bits (the whole game is
-about 330 KB of code; 16 bit would save a fifth, at the price of the CoCo's own record layouts); the picture store is a linear
-space in three runs of blocks, not one picture per block; one program disk plus data volumes, with disk swap prompts the engine
-does not do yet.
+D13 holds: one interface, the development backend in the harness; it made this step possible (the first plan needed disk swaps for 22 banks). **D8**: SHIFT with the arrows for the diagonal keys
+(not yet tried on a keyboard). No window to play in until a real backend exists: XRoar would need the DriveWire (Becker) backend of D13 and a small host server for the image, a
+good first task of the storage work after 8.9; `make run-game` says so, `make game-view` is the stand-in.
 
-## 6. What is left of 8.5 (`create-character`), in the order it blocks
+## 6. What 8.6 starts with
 
-1. **Disk swaps.** The session needs 22 code banks (133 KB), the BASE volume and three more (CHEAD, CBODY, HEAD3, BODY3 are on
-   other volumes), 354 KB in all against two 153 KB drives. The engine must ask for a volume (a mailbox word and a prompt on
-   the screen), the harness must change the image in the drive (MAME's Lua can), the engine must remount, and the bank files need
-   to live on volumes too.
-2. **Keys.** The PC-only keys (the lists answer to END and HOME; Home, End, PgUp, PgDn move diagonally elsewhere) need a mapping
-   (D8) and `rtl_ReadKey` must give the game the PC's two-byte codes for extended keys. The harness needs a key queue in the
-   mailbox and a session driver that waits for a stable screen between keys; the code wheel question differs from the recorded
-   one (the title loop's Random calls depend on CPU speed), so the driver reads the question off the screen and types the answer.
-3. **Engine routines the session calls**: DrawPictureItemClipped, DrawIcon, DrawSprite, DrawHeadSprite, DrawBodySprite,
-   ShowHeadBodyWindow, LoadHeadBodySprites, ShowHeadBodySprites, the flicker of RemapPictureColors (needs the game's Random).
-4. **File writes** (`SAVE\RAD.CHA`, `.ITM`, `.SPC`, `CHARLIST.TXT`) and the text file runtime (`read_str`, `write_str`).
-5. **Byte order of loaded data**: swap descriptors per file for ITEMS, monster and save records.
-6. **Budgets**: the stack has about 100 bytes to spare on the boot path, the core 130 bytes below its limit; character creation will
-   go deeper. Options: shrink frames further (the 135 string temporaries still 256 bytes), move more of the runtime to the engine
-   (it has the room: task 1 has 24 KB and uses 18), or give the stack more of slot 0 (move the shared data to `$0E00` is done; the
-   mailbox at `$1000` is next).
-7. **State comparison** on the CoCo: read DGROUP (native area and four pages) from the RAM dump, undo the layout map and the byte
-   order, compare with the host's digests at the checkpoints.
-
-An honest estimate: items 1 to 5 are each a day of the kind of work this step was; item 1 is the one with design in it.
+1. The area view and the 3D view: `LoadSpriteList`, `Show3DSprite`, `Load24x24Set`, `DrawCellPicture`, the combat animation (res12, ovl13), and the byte order of files read as
+   records (ITEMS rows, monster records, saved characters of the PC).
+2. The aliased runtime variables of finding 5.
+3. The picture store: 19 blocks held `create-character`; combat and the 3D view hold more pictures at once.
+4. Sound (8.9), the matrix keyboard in a session (the driver bypasses it), `RemapPictureColors` with the flicker (needs the game's Random: it stops with `0xF1`).
+5. The unlabelled per-key screens: 7 are the wheel's, the others are screens caught while the game was still drawing; the labelled ones decide.

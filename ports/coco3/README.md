@@ -6,12 +6,15 @@ plan are in `../../docs/coco/` (start with `README.md` and `PORTING-GUIDE.md` th
 result of each step of the plan is recorded in `docs/`.
 
 Status: steps 8.0 (toolchain baseline), 8.1 (measure), 8.1c (data model study), 8.2 (translator profile,
-placement model, 4bpp goldens), 8.3 (the engine core) and 8.4 (the data pipeline) are done, see `docs/PHASE-8.0.md` ... `docs/PHASE-8.4.md`.
-Step 8.5 (first light) is partly done, see `docs/PHASE-8.5.md`: the game itself, translated, runs on the emulated CoCo 3 (`make game-run`):
-`boot-title` shows the original's ssi-logo, title and credits screens bit for bit in MAME. `create-character` does not play yet
-(disk swaps, keys, file writes, a few engine routines, byte order of loaded records). The engine (`src/engine`) boots the machine, reads
-`.DSK` volumes, unpacks DAX pictures, draws text, tiles and blits, runs the frame clock and the keyboard, and serves the game through a
-call gate between two MMU tasks; the game's 47 code banks load on demand.
+placement model, 4bpp goldens), 8.3 (the engine core), 8.4 (the data pipeline) and 8.5 (first light) are done, see `docs/PHASE-8.0.md` ... `docs/PHASE-8.5.md`.
+Step 8.5: the game itself, translated, runs on the emulated CoCo 3 (`make first-light`, headless MAME). `boot-title` shows the original's
+ssi-logo, title and credits screens bit for bit; `create-character` plays the whole session (wheel, race, sex, class, alignment, the
+rolled sheet, head and body, the icon editor, the save) and its labelled screens are equal to the goldens, the character record and
+the character list it wrote are equal to the original's, and 391 places of DGROUP are equal (58 differ for reasons written down in
+`data/state_ignore.txt`: pointers, the PC's System variables). The game's storage is one container image behind `sec_io` (decision D13);
+the development backend is the harness' own, so there is no window to play in yet (`make game-view` shows what a session showed).
+The engine (`src/engine`) boots the machine, runs the frame clock and the keyboard, unpacks DAX pictures, draws text, tiles and blits, and serves
+the game through a call gate between two MMU tasks; the game's 48 code banks load on demand.
 
 ## Quick start
 
@@ -29,7 +32,10 @@ make golden4       # 8.2: the 4bpp screen goldens on both host builds
 make eng-tests     # 8.3: every engine test on the emulated CoCo 3 (MAME and XRoar), screens compared with the goldens
 make eng-test T=t_scene   # one test; t_scene draws a picture, text and tiles from a .DSK (build/run/t_scene-mame.png)
 make game          # 8.5: translate, lay out DGROUP, compile and link the game (core, banks, engine); build/game
-make game-run S=boot-title   # 8.5: run it in MAME, keep the screens (build/run/game-<S>-sNN.scr4) and check them against goldens/4bpp
+make game-run S=create-character   # 8.5: run a session in MAME, keep the screens (build/run/game-<S>-sNN.scr4), check them against goldens/4bpp
+make game-state S=create-character # 8.5: the files it wrote and DGROUP against the host's (needs `make host` and `make c-golden` once)
+make first-light   # 8.5: both sessions, screens and state
+make game-view S=create-character  # 8.5: play a session and open what it showed as an animated GIF
 make data          # 8.4: the nine volumes (build/data/*.dsk); make data-verify checks them, make vol-tests reads every block on the CoCo
 make gfx-ref       # 8.3: rerun the Phase 7 C engine on the t_gfx script and compare with goldens/engine
 make help
@@ -71,8 +77,8 @@ The firmware is copyrighted and is never committed (`roms/` is ignored by git). 
 | `src/engine/` | the engine: `boot.asm` (takeover), `mmu.asm`, `farcall.asm` (far-call trampoline, bank loader), `disk.asm` + `rsdos.c` (DSKCON, RS-DOS), `rle.asm` + `dax.c`, `vol.c` (volumes), `gfx.c` + `kernels.asm` (screen, text, pictures, blits), `irq.asm` (frame clock, tick, keyboard), `eng.h`, `mailbox.*`, link scripts |
 | `data/volumes.json`, `tools/mkvolumes.py`, `tools/rsdos.py` | step 8.4: which files go on which volume; the packer; the RS-DOS image writer and reader |
 | `src/engtest/`, `test/` | the engine tests (`t_disk t_pic t_gfx t_gfxv t_irq t_perf t_scene t_skew t_vol t_vol2`, run by `make eng-test T=`) and the host reference `test/gfx_ref.c` |
-| `src/game/`, `src/engine/api.c`, `engcall.asm`, `gameboot.c` | step 8.5: the game's side (the CoCo runtime in C: strings, heaps, paging, system, the wrappers of the engine's routines, the game's start) and the engine's side of the call gate, its API and its loader |
-| `tools/mkgame.py`, `mkvm.py`, `mkplan.py`, `mkgamedisk.py`, `gamecheck.py`, `dis6809.py`, `data/bootbanks.txt`, `lua/watch.lua`, `scripts/game_*.sh` | step 8.5: the build of the game (split into banks, stubs, link, the engine), the DGROUP layout and image, the program disk, the screen check against the goldens, a 6809 disassembler, the banks the program disk carries, the MAME harness that keeps screens and memory |
+| `src/game/`, `src/engine/api.c`, `engcall.asm`, `gameboot.c`, `img.c` | step 8.5: the game's side (the CoCo runtime in C: strings, heaps, paging, system, files, the wrappers of the engine's routines, the game's start) and the engine's side of the call gate, its API, its loader and the sector interface |
+| `tools/mkgame.py`, `mkvm.py`, `mkplan.py`, `mkimage.py`, `mkgamedisk.py`, `gamecheck.py`, `statecheck.py`, `scr4gif.py`, `dis6809.py`, `data/state_ignore.txt`, `lua/watch.lua`, `scripts/game_*.sh` | step 8.5: the build of the game (split into banks, stubs, link, the engine), the DGROUP layout and image, the container image and the program disk, the screen and state checks against the goldens and the host, a 6809 disassembler, the MAME harness that serves the storage, plays the session script and keeps screens and memory |
 | `src/demo/` | the banked hello world: a resident core and two code banks |
 | `probes/` | CMOC probes: runtime ones (`*.c`, run on the CoCo) and generated-code ones (`asm/*.c`) |
 | `docs/` | one report per step of the plan |
