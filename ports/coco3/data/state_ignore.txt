@@ -85,3 +85,7 @@ AttackTarget a pointer to a character
 Raw6826 the low word of AttackTarget (a pointer)
 ds6828 the low word of AttackTarget (the pointer's second word overlaps the table that follows, as on the PC)
 AffectHandlers its first word is the low word of AttackTarget's pointer (the same overlap)
+SpellMenuList the head of the spell menu list: a pointer into a heap (the list is freed again when the menu closes; the stale pointer stays)
+PickedSpellCharacter the character the spell picker chose: a pointer into a heap
+Raw6C95 the same pointer seen as the first bytes of the table behind it
+PooledItems the head of the loot list: a pointer into a heap (the party record check compares the characters themselves)

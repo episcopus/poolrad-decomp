@@ -325,6 +325,9 @@ class StmtMixin:
             e = self.ex_call(c)
         else:
             e = self.ex(c)
+            if e.ty.kind == "proc":
+                # `SpellHandlers[Spell];`: a procedure variable named as a statement is called (TP 6.0), whatever its path
+                e = self.call_var(e, e.ty, [], n)
         self.emit("%s;" % e.code)
 
     def st_assign(self, n):

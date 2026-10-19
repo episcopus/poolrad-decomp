@@ -94,7 +94,7 @@ def record_ordered(script_text: str):
     def prepare(m):
         holder["rec"] = OrderedRecorder(m)
 
-    s = run_session(script_text, max_insns=golden.MAX_INSNS, quiet=True, prepare=prepare,
+    s = run_session(script_text, max_insns=golden.session_limit(script_text), quiet=True, prepare=prepare,
                     insn_per_sec=golden.INSN_PER_SEC)
     return s, replay.Recording.of(s, holder["rec"]), holder["rec"]
 
@@ -193,7 +193,7 @@ def lines(summary, recording, rec, pointer_masks=False) -> list[str]:
 def export(session: str, out: Path, check_golden: bool = True, pointer_masks: bool = False) -> int:
     text = (golden.SESSIONS / (session + ".keys")).read_text()
     s, recording, rec = record_ordered(text)
-    if s["reason"] not in ("input-exhausted", "quit"):
+    if s["reason"] not in golden.session_ends(text):
         print("[%s] the oracle stopped: %s %s" % (session, s["reason"], s["error"] or ""), file=sys.stderr)
         return 1
     gp = golden.GOLDEN / session / golden.RECORDING

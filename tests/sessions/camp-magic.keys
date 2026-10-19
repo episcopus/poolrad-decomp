@@ -1,0 +1,40 @@
+# camp-magic: load saved game A, make camp (E) and use the camp menus: the magic menu (cast, memorise, the slots left, the effects of
+# spells in force), scrolls, the party order (move a member up or down). Covers ovl15 (CampMagicMenu, MemorizeSpells, PartyOrderMenu,
+# DisplaySpellEffects, ...), the spell lists of ovl22 and the party's menus of ovl19/ovl20. Found with the coverage-guided
+# explorer (tools/c/explore_climb.py), pruned to the keys that matter. The camp screen is animated, so its keys are `press` with long waits (the game drops a key that arrives while it is busy).
+clock 12:00:16.58
+wheel
+wait 20
+key L
+wait 20
+key A
+wait 300
+press E
+wait 30
+press HOME
+wait 100
+press M
+wait 100
+press S
+wait 100
+press M
+wait 100
+press D
+wait 100
+press ENTER
+wait 100
+press C
+wait 100
+press R
+wait 100
+press M
+wait 100
+press 2
+wait 100
+press E
+wait 100
+press HOME
+wait 100
+shot camp-end
+wait 30
+quit

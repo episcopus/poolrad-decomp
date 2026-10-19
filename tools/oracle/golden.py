@@ -31,6 +31,7 @@ Phase 5, playbook 50) against the goldens recorded on the original. Two tiers, b
 """
 from __future__ import annotations
 
+import re
 import argparse
 import hashlib
 import json
@@ -95,10 +96,25 @@ def first_difference(a: dict, b: dict, a_reads: list[str] = (), b_reads: list[st
     return None
 
 
+def session_limit(text: str) -> int:
+    """The instruction limit of a session: MAX_INSNS, unless its script says `# max-insns: N` (a long session says how long it runs;
+    a comment, so the script's hash is its text)."""
+    m = re.search(r"^# max-insns: *(\d[\d_]*)", text, re.M)
+    return int(m.group(1).replace("_", "")) if m else MAX_INSNS
+
+
+def session_ends(text: str) -> tuple:
+    """The stop reasons a session may end with: the script ran out or quit, or (`# stop: exit` in its script) the game itself ended."""
+    ends = ("input-exhausted", "quit")
+    if re.search(r"^# stop: exit", text, re.M):
+        ends += ("exit",)                       # the party is beaten and the program stops
+    return ends
+
+
 def run_once(name: str, out_dir: Path | None = None):
     """One run of the original with its script; returns (summary, replay.Recording)."""
     text = (SESSIONS / (name + ".keys")).read_text()
-    return replay.record(text, max_insns=MAX_INSNS, out_dir=out_dir, insn_per_sec=INSN_PER_SEC)
+    return replay.record(text, max_insns=session_limit(text), out_dir=out_dir, insn_per_sec=INSN_PER_SEC)
 
 
 def record(name: str, out_root: Path) -> int:
@@ -107,7 +123,7 @@ def record(name: str, out_root: Path) -> int:
     print("[%s] run 2 ..." % name, flush=True)
     b, rec_b = run_once(name)
     sa, sb = summarise(a), summarise(b)
-    if a["reason"] not in ("input-exhausted", "quit"):
+    if a["reason"] not in session_ends((SESSIONS / (name + ".keys")).read_text()):
         print("[%s] FAIL: unexpected stop %s %s" % (name, a["reason"], a["error"] or ""), file=sys.stderr)
         return 1
     diff = first_difference(sa, sb, a["read_digests"], b["read_digests"])

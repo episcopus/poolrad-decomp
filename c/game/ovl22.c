@@ -78,7 +78,7 @@ u8 PickSpellFromMenu(u8 Mode, u16 (*Choice))
     WithExit = 1;
   }
   Redraw = 0;
-  if ((*Choice) < 0) {
+  if ((*(s16 (*))&(*Choice)) < 0) {
     DrawWindow(PickSpellFromMenu_WindowLeft, PickSpellFromMenu_WindowFrameTop, PickSpellFromMenu_WindowRight, Bottom, 0, 0, S("\000"));
     Redraw = 1;
     (*Choice) = 0;
@@ -88,7 +88,7 @@ u8 PickSpellFromMenu(u8 Mode, u16 (*Choice))
   }
   Selected = 0;
   do {
-    Key = ChooseFromList(Title, Prompt, PickSpellFromMenu_HeadingColor, PickSpellFromMenu_LineColor, PickSpellFromMenu_HighlightColor, PickSpellFromMenu_WindowLeft, PickSpellFromMenu_ListTop, PickSpellFromMenu_WindowRight, Bottom, SpellMenuList, WithExit, &Redraw, &(*Choice), &Selected);
+    Key = ChooseFromList(Title, Prompt, PickSpellFromMenu_HeadingColor, PickSpellFromMenu_LineColor, PickSpellFromMenu_HighlightColor, PickSpellFromMenu_WindowLeft, PickSpellFromMenu_ListTop, PickSpellFromMenu_WindowRight, Bottom, SpellMenuList, WithExit, &Redraw, &(*(s16 (*))&(*Choice)), &Selected);
   } while (!(Key == PickSpellFromMenu_KeyNone || Key == PickSpellFromMenu_KeyEnter || Key == 'C' || Key == 'E' || Key == 'L' || Key == 'M' || Key == 'S'));
   WalkPtr = SpellMenuList;
   SpellIndex = 0;
@@ -623,7 +623,7 @@ void CastChosenSpell(u8 Spell, u8 Quick, u8 Announce, u8 (*Done))
         ForgetSpell(Spell);
       }
       CastingSpell = Spell;
-      SpellHandlers[CastingSpell];
+      ((void (*)(void))rtl_proc(SpellHandlers[CastingSpell]))();
       CastingSpell = 0;
       SpellAppliedToArea = 0;
     } else {

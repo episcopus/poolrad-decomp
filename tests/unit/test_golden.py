@@ -34,7 +34,7 @@ def test_golden_belongs_to_current_script_and_executable(name):
     assert g["script_sha256"] == golden.sha256_file(golden.SESSIONS / (name + ".keys")), \
         "script changed after the golden was recorded"
     assert g["exe_sha256"] == golden.sha256_file(golden.EXE)
-    assert g["recorded_runs"] == 2 and g["stop_reason"] in ("input-exhausted", "quit")
+    assert g["recorded_runs"] == 2 and g["stop_reason"] in golden.session_ends((golden.SESSIONS / (name + ".keys")).read_text())
 
 
 @pytest.mark.parametrize("name", SESSIONS)

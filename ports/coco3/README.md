@@ -11,6 +11,10 @@ Step 8.6: `walk-explore` (the 3D view and the area map) and `camp-save` (camp, s
 the goldens on screen and state (`make exploration`): the saved files are the ones the original wrote, byte for byte except record pointers.
 Step 8.7: the two combat sessions (`camp-rest-combat`, `parley-combat`) match too (`make combat`): the monsters' AI, the movement, the attacks and the
 animations throw and use the original's dice; a party member's turn takes 5 to 8 s of the machine (the AI's scans, step 8.9 has to speed them up).
+Step 8.7b (not a row of the plan): the answer to the review of the approach. `make coverage` measures what the sessions prove (39.5 % of the lines of the translated game before,
+52.4 % after), `tools/c/explore_*.py` find the missing sessions on the translation, ten new sessions cover the shop, the temple, the party menus, camp casting, spells in combat,
+the end of a fight and a scripted fight, `make risk-scan` looks for the classes of defect already met in the code no session runs. The new sessions found three defects of the translation
+and some of the CoCo build (heap, record byte order, a combat that leaves the original's dice stream); `docs/PHASE-8.7b.md` has the baseline table and `docs/RISKS.md` the open classes.
 Sound (8.8) is next.
 Step 8.5: the game itself, translated, runs on the emulated CoCo 3 (`make first-light`, headless MAME). `boot-title` shows the original's
 ssi-logo, title and credits screens bit for bit; `create-character` plays the whole session (wheel, race, sex, class, alignment, the
@@ -42,6 +46,8 @@ make game-state S=create-character # 8.5: the files it wrote and DGROUP against 
 make first-light   # 8.5: both sessions, screens and state
 make exploration   # 8.6: walk-explore and camp-save, screens and state
 make combat        # 8.7: camp-rest-combat and parley-combat, screens and state
+make baseline      # 8.7b: every session of tests/sessions on the CoCo (screens and state), see docs/PHASE-8.7b.md
+make risk-scan     # 8.7b: the static checks (docs/RISKS.md)
 make game-view S=create-character  # 8.5: play a session and open what it showed as an animated GIF
 make data          # 8.4: the nine volumes (build/data/*.dsk); make data-verify checks them, make vol-tests reads every block on the CoCo
 make gfx-ref       # 8.3: rerun the Phase 7 C engine on the t_gfx script and compare with goldens/engine

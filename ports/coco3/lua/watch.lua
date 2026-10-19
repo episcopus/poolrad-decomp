@@ -267,6 +267,9 @@ do   -- the paged globals (physical blocks $10..$13) and the native area of the 
   local lf = io.open(out .. ".low", "wb")                -- slot 0: the shared page (stack, mailbox, bank stack)
   lf:write(ram:read_block(0x38 * 0x2000, 0x2000))
   lf:close()
+  local bf = io.open(out .. ".bheap", "wb")              -- the banked heap: its four pages are the physical blocks $14..$17 (VMBLK_HEAP); a heap pointer is
+  bf:write(ram:read_block(0x14 * 0x2000, 0x8000))        -- the linear address BHEAP_LIN0 ($2C7C0, rtl_heap.c) + page * $2000 + the offset in the page
+  bf:close()
   local nf = io.open(out .. ".core", "wb")
   nf:write(ram:read_block(0x30 * 0x2000, 0x6000))
   nf:close()

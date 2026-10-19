@@ -62,7 +62,9 @@ def host_state(session, outdir):
     return save, os.path.join(outdir, "x-snap.dgroup")
 
 
-SNAP = {"create-character": 616000, "walk-explore": 1580000, "camp-save": 1400000, "camp-rest-combat": 3865800, "parley-combat": 7394000}                # a read in the last idle stretch of the session (the main menu again)
+SNAP = {"create-character": 616000, "walk-explore": 1580000, "camp-save": 1400000, "camp-rest-combat": 3865800, "parley-combat": 7394000,
+        "shop-buy": 1547290, "temple-cast": 1413560, "battle-aftermath": 7570950, "combat-spells": 4901940, "temple-heal": 9104300,
+        "camp-magic": 1605180, "council-guards": 1033490, "character-menu": 2838740, "character-view": 1724570, "camp-cast": 1367960}                # a read in the last idle stretch of the session (the main menu again)
 
 
 def save_files(prefix):
@@ -224,6 +226,60 @@ def check_dgroup(prefix, dump):
     return len(diffs)
 
 
+def check_party(session, prefix):
+    """The party list: the records of the characters (and, in a fight, the monsters) the party list holds, one by one: every one byte field and every
+    word (put in the PC's order) of the CoCo's records against the host's, at the same read (poolrad_replay POOL_PARTYHEX). The records live in the
+    heap, which the dgroup check does not see; a combat that goes another way shows here first (step 8.7b: hit points of the party)."""
+    exe = os.path.join(ROOT, "build/cmake/poolrad_replay")
+    rpl = os.path.join(ROOT, "build/c/replay", session + ".rpl")
+    env = dict(os.environ, POOL_PARTYHEX="1", POOL_PARTYLOG=os.environ.get("STATE_SNAP") or str(SNAP.get(session, 0)))
+    p = subprocess.run([exe, "--data", os.path.join(ROOT, "poolrad"), "--save", os.path.join(COCO, "build/run/host-" + session + "-party"), rpl],
+                       capture_output=True, text=True, env=env)
+    host = [bytes.fromhex(l.strip()[4:]) for l in p.stderr.split("\n") if l.startswith("hex:")]
+    if not host:
+        print("  party: the host printed no records (build the host first)")
+        return 1
+    h = open(os.path.join(ROOT, "c/game/game.h")).read()
+    fields, size = struct_fields(h, "TCharacter")
+    core = open(prefix + ".core", "rb").read()
+    gen = os.path.join(COCO, "build/gen/vm")
+    clusters = [(int(m.group(1), 16), int(m.group(2)), m.group(3), int(m.group(4), 16))
+                for m in re.finditer(r"\{0x([0-9A-F]+), (\d+), '(\w)', \d+, 0x([0-9A-F]+)\}", open(gen + "/vmlayout.c").read())]
+    head = None
+    for ln in open(gen + "/globals.txt"):
+        f = ln.split()
+        if len(f) >= 3 and f[2] == "PartyListHead":
+            head = int(f[0], 16)
+    a = next(new + head - lo for lo, sz, c, new in clusters if lo <= head < lo + sz and c == "N")
+    ptr = struct.unpack(">I", core[a - 0x2000:a - 0x2000 + 4])[0] & 0xFFFF
+    coco = []
+    while ptr and len(coco) < 30:
+        r = core[ptr - 0x2000:ptr - 0x2000 + 0x120]
+        coco.append(r)
+        nxt = struct.unpack(">I", r[0x104:0x108])[0]
+        ptr = nxt & 0xFFFF if nxt else 0
+    bad = 0
+    if len(coco) != len(host):
+        print("  party: %d records on the CoCo, %d on the host" % (len(coco), len(host)))
+        bad += 1
+    names = []
+    for k, (c, hh) in enumerate(zip(coco, host)):
+        diffs = []
+        for off, w, isptr in fields:
+            if isptr or off + w > 0x120:
+                continue
+            cv, hv = c[off:off + w], hh[off:off + w]
+            if cv[::-1] != hv if w > 1 else cv != hv:
+                diffs.append("+%03X" % off)
+        nm = hh[1:1 + hh[0]].decode("latin1")
+        if diffs:
+            bad += 1
+            print("  party %2d %-16s differs at %s" % (k, nm, " ".join(diffs[:12])))
+        names.append(nm)
+    print("  party: %d records, %d differ" % (len(host), bad))
+    return 1 if bad else 0
+
+
 def main():
     if len(sys.argv) != 3:
         print(__doc__)
@@ -236,6 +292,7 @@ def main():
     print("%s: state" % session)
     bad = check_files(prefix, hostsave)
     bad += check_dgroup(prefix, dump)
+    bad += check_party(session, prefix)
     return 1 if bad else 0
 
 

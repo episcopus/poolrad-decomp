@@ -16,7 +16,7 @@ q = '$(subst ','\'',$(1))'
         packet claim lock locks unlock handoff handoffs handoff-done integrate start-run stop-run run-add run-status heartbeat agents watch-agents worker inbox \
         agent-control agent-step safety-check merge-check hooks match-gate merge-driver \
         agent-register agent-usage agent-meter performance learn learning-check expert-budget expert-request expert-take expert-step expert-finish expert-result experts expert-scan expert-candidates task-approve \
-        oracle-run oracle-dosbox timing-scan golden match test test-slow check review-pass rebuild dgroup stub-order rebuild-golden rebuild-diff sound-golden skeleton stubs readability rename host c-translate c-golden c-sound coco3
+        oracle-run oracle-dosbox timing-scan golden match test test-slow check review-pass rebuild dgroup stub-order rebuild-golden rebuild-diff sound-golden skeleton stubs readability rename host c-translate c-golden c-sound coverage risk-scan coco3
 
 help:
 	@echo "Available now:  setup doctor inputs unexepack overlays map dax smoke"
@@ -290,6 +290,13 @@ host:              ## Phase 7: build the C translation (the game `poolrad` and t
 	cmake --build build/cmake -j
 c-translate:       ## Phase 7: translate src/*.PAS into c/game (tools/c/pas2c.py)
 	$(PY) tools/c/pas2c.py
+risk-scan:         ## the static checks for the defect classes the ports met (the sessions only catch the code they run): clang's tautological comparisons on c/game, then the CoCo build's scan (ports/coco3/docs/RISKS.md)
+	tools/c/risk_clang.sh
+	$(MAKE) -C ports/coco3 risk-scan
+
+coverage:          ## how much of the game the recorded sessions run (clang source coverage of the C translation): WRITE=1 updates tests/sessions/COVERAGE.md and coverage.json; UNCOVERED=1 lists the routines nobody runs
+	$(PY) tools/c/coverage.py $(if $(WRITE),--write) $(if $(UNCOVERED),--uncovered) $(if $(SESSIONS),--sessions $(SESSIONS))
+
 c-golden:          ## Phase 7: play the sessions on the C translation and compare with the original: SESSION=name (default all)
 	$(PY) tools/c/c_golden.py $(foreach s,$(SESSION),--session $(s))
 c-sound:           ## Phase 7: the C sound driver's hardware trace against the oracle's (after `make host`)

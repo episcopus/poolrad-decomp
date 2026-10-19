@@ -1,0 +1,998 @@
+{
+ "only": {
+  "battle-aftermath": 52,
+  "boot-title": 0,
+  "camp-cast": 84,
+  "camp-magic": 259,
+  "camp-rest-combat": 6,
+  "camp-save": 99,
+  "character-menu": 0,
+  "character-view": 320,
+  "combat-spells": 360,
+  "council-guards": 503,
+  "create-character": 11,
+  "create-elf-mage": 80,
+  "parley-combat": 0,
+  "shop-buy": 457,
+  "temple-cast": 45,
+  "temple-heal": 149,
+  "walk-explore": 97
+ },
+ "sessions": [
+  "battle-aftermath",
+  "boot-title",
+  "camp-cast",
+  "camp-magic",
+  "camp-rest-combat",
+  "camp-save",
+  "character-menu",
+  "character-view",
+  "combat-spells",
+  "council-guards",
+  "create-character",
+  "create-elf-mage",
+  "parley-combat",
+  "shop-buy",
+  "temple-cast",
+  "temple-heal",
+  "walk-explore"
+ ],
+ "total": {
+  "branches": [
+   5360,
+   13674
+  ],
+  "functions": [
+   524,
+   806
+  ],
+  "lines": [
+   15894,
+   30143
+  ]
+ },
+ "uncovered_functions": [
+  "ovl03:AddComputerMemberCommand",
+  "ovl03:ChooseFromListCommand",
+  "ovl03:ChoosePartyMemberCommand",
+  "ovl03:ClearPictureWindowCommand",
+  "ovl03:ComparePartyItemCommand",
+  "ovl03:DamagePartyCommand",
+  "ovl03:DrawGlyphRunCommand",
+  "ovl03:FindMemorizedSpellCommand",
+  "ovl03:LoseMoneyAndItemsCommand",
+  "ovl03:NewLineCommand",
+  "ovl03:PassTimeCommand",
+  "ovl03:ReadNumberCommand",
+  "ovl03:ReadStringCommand",
+  "ovl03:RedrawAreaViewCommand",
+  "ovl03:ScanPartyCommand",
+  "ovl03:ScanPartyCommand_WriteScanResults",
+  "ovl03:ShowSpecialScreenCommand",
+  "ovl03:StoreIndexedWordCommand",
+  "ovl04:CureDisease",
+  "ovl05:ChooseLootItem",
+  "ovl05:TakeLootItems",
+  "ovl05:TakeTreasure",
+  "ovl07:AskListMenu",
+  "ovl07:DamageWithMessage",
+  "ovl07:LoseItems",
+  "ovl07:PartyIndexOf",
+  "ovl07:ScaleMoney",
+  "ovl07:SetupDuel",
+  "ovl08:EndTurnMenu",
+  "ovl08:GameSpeedMenu",
+  "ovl08:MeleeAttack",
+  "ovl08:MoveCharacter",
+  "ovl09:SpellAccepted_DifferentSideInArea",
+  "ovl10:BlockTerrainFlags",
+  "ovl10:BuildWildernessMap",
+  "ovl10:PlaceRiver",
+  "ovl10:PlaceRiver_PlaceBridge",
+  "ovl10:PlaceTallFeatures",
+  "ovl10:ScatterTerrainFeatures",
+  "ovl12:AcidAttackTargetFor1d4",
+  "ovl12:AddHealingBlockAndHeal",
+  "ovl12:AddTrainedOutAndHeal",
+  "ovl12:AlignmentBoundWeaponHurtsOthers",
+  "ovl12:ApplyCharmPerson",
+  "ovl12:ApplyHaste",
+  "ovl12:ApplyItemSecondAffect",
+  "ovl12:ApplySlow",
+  "ovl12:ApplyStrengthAffect",
+  "ovl12:AvoidDistantAttack",
+  "ovl12:AvoidDistantAttackByChance",
+  "ovl12:AvoidDistantAttackForBoulder",
+  "ovl12:BoostAttackAgainstUndead",
+  "ovl12:BoostAttackVsKoboldGoblin",
+  "ovl12:BoostFireAttackByTarget",
+  "ovl12:CamouflageGivesInvisibility",
+  "ovl12:CancelColdDamage",
+  "ovl12:CancelDamageUnlessEnchantedSlotItem",
+  "ovl12:CancelDamageUnlessMagicSlotItem",
+  "ovl12:CancelFireDamage",
+  "ovl12:CancelHookByHalfChance",
+  "ovl12:CancelHookByLowChance",
+  "ovl12:CancelParalysisHook",
+  "ovl12:CancelPoisonAndParalysisHooks",
+  "ovl12:CauseDiseaseAndDamage",
+  "ovl12:CauseRotOnAttackTarget",
+  "ovl12:ClearCloud",
+  "ovl12:CollapseAndChangeSide",
+  "ovl12:CoughStopsCasting",
+  "ovl12:DieIfPoisoned",
+  "ovl12:DrainAttackTargetLevel",
+  "ovl12:DrainAttackTargetTwoLevels",
+  "ovl12:DrainBloodFromCombatant",
+  "ovl12:DrainLevels",
+  "ovl12:DrainLevels_HighestLevelClass",
+  "ovl12:DropFromFight",
+  "ovl12:DwarfGnomeHalflingWandSpellSaveBonus",
+  "ovl12:DwarfHalflingPoisonSaveBonus",
+  "ovl12:EndSpiritualHammerWhenHammerRemoved",
+  "ovl12:FallDeadIfInFight",
+  "ovl12:FireAttackTargetFor2d10",
+  "ovl12:FirstSlotItem",
+  "ovl12:ForceFirstAttackMiss",
+  "ovl12:FrightenSideWithFear",
+  "ovl12:GazeCharmsTarget",
+  "ovl12:GazeStonesTarget",
+  "ovl12:GiveAffectUnlessFireOrAcid",
+  "ovl12:GiveExceptionalStrength",
+  "ovl12:GiveInvisibilityForOneRound",
+  "ovl12:GiveRegainHitPointsAffect",
+  "ovl12:GiveRegeneratingUnlessAffected",
+  "ovl12:GiveSpiritualHammer",
+  "ovl12:HalveColdDamage",
+  "ovl12:HalveColdDamageNoSave",
+  "ovl12:HalveDamageByFirstSlotItemRow",
+  "ovl12:HalveDamageForEnchantedSlotItem",
+  "ovl12:HalveDamageForFirstSlotItem",
+  "ovl12:HalveElectricityDamage",
+  "ovl12:HalveFireDamage",
+  "ovl12:HalveFireDamageNoSave",
+  "ovl12:HalveOrCancelDamageForUnenchantedSlotItem",
+  "ovl12:HoldWeakTargetFast",
+  "ovl12:IgnoreAffect",
+  "ovl12:IgnoreAffect36",
+  "ovl12:IgnoreAffect37",
+  "ovl12:IgnoreAffectShared",
+  "ovl12:ImageAbsorbsHit",
+  "ovl12:ImmuneToCharmAndSleep",
+  "ovl12:ImmuneToCharmSleepHoldAndPoison",
+  "ovl12:ImmuneToMagicMissileAndElectricity",
+  "ovl12:InvisibleTargetCannotBeTargeted",
+  "ovl12:InvisibleTargetHardToHit",
+  "ovl12:LowerAttackAndMorale",
+  "ovl12:LowerAttackAndSave",
+  "ovl12:LowerAttackIfSelectedIsBugbearOrGnoll",
+  "ovl12:LowerAttackSaveAndResistance",
+  "ovl12:ParalyzeAttackTarget",
+  "ovl12:ParalyzeAttackTargetFor1d9Plus10",
+  "ovl12:ParalyzeAttackTargetFor2d8",
+  "ovl12:ParalyzeAttackTargetUnlessImmune",
+  "ovl12:ParalyzeSideWithFear",
+  "ovl12:PoisonAttackTarget",
+  "ovl12:PoisonAttackTargetBonus0",
+  "ovl12:PoisonAttackTargetBonus2",
+  "ovl12:PoisonAttackTargetBonus4",
+  "ovl12:PoisonAttackTargetBonusMinus2",
+  "ovl12:ProgressRot",
+  "ovl12:ProtectFromNormalMissiles",
+  "ovl12:RaiseAttackAndMorale",
+  "ovl12:RaiseAttackAndSave",
+  "ovl12:RaiseOrLowerAttackAndSave",
+  "ovl12:RaiseResistanceAndSave",
+  "ovl12:ReduceDamageByQuarter",
+  "ovl12:ReduceFireDamageByRoll",
+  "ovl12:ReduceFireDamageOnePerDie",
+  "ovl12:RegainHitPoints",
+  "ovl12:RequireGiantStrength",
+  "ovl12:RetryRevivalAtFullHitPoints",
+  "ovl12:ReviveDyingCharacter",
+  "ovl12:ReviveOrRetryRevival",
+  "ovl12:RollMagicResistance",
+  "ovl12:RunDiseaseHandlers",
+  "ovl12:SetAttackMissIfTurnPending",
+  "ovl12:SetCharismaFromAffect",
+  "ovl12:SetDamageFromHolyWater",
+  "ovl12:SetDamageFromOilFlask",
+  "ovl12:ShiftAttackToSaveVsEvil",
+  "ovl12:ShiftAttackToSaveVsGood",
+  "ovl12:ShowSilenceAndStopCasting",
+  "ovl12:SlowPoisonDamage",
+  "ovl12:SpitAcidAtTarget",
+  "ovl12:StartBloodDrain",
+  "ovl12:StartTrainingWithManual",
+  "ovl12:StopMovement",
+  "ovl12:TrainConstitution",
+  "ovl12:TryAddAffect",
+  "ovl12:TurnGaseousAndEscape",
+  "ovl12:VetoTargetWithMirrorOrWoodenHolySymbol",
+  "ovl12:WeakenStrength",
+  "ovl13:ConfirmAttackTarget",
+  "ovl13:FindNearbyTarget",
+  "ovl13:ForcedAttack",
+  "ovl13:GodsIntervene",
+  "ovl13:RakeAttack",
+  "ovl13:RunAimCursor",
+  "ovl13:TryFlee",
+  "ovl14:AnyMemberHasClassLevel",
+  "ovl14:CheckMapCell",
+  "ovl14:ClearIconBits",
+  "ovl14:DoBash",
+  "ovl14:DoKnock",
+  "ovl14:DoPick",
+  "ovl14:FindMemberWithSpell",
+  "ovl14:FindSpellSlot",
+  "ovl14:SetIconBits",
+  "ovl15:AlterMenu",
+  "ovl15:CampSpeedMenu",
+  "ovl15:DropPartyMember",
+  "ovl15:MoveMemberDown",
+  "ovl15:MoveMemberUp",
+  "ovl15:PartyOrderMenu",
+  "ovl15:SortMemorizedSpells",
+  "ovl16:DropCharacter",
+  "ovl16:MaxHitPoints",
+  "ovl16:MinHitPoints",
+  "ovl16:ModifyCharacter",
+  "ovl16:ModifyCharacter_ShowStat",
+  "ovl16:PayGold",
+  "ovl16:TrainCharacter",
+  "ovl17:AddMonsterToParty",
+  "ovl18:AnimateAreaDoors",
+  "ovl18:AnimateFinalPicture",
+  "ovl18:ShowEndingNarrative",
+  "ovl19:IdentifyItem",
+  "ovl19:SellItem",
+  "ovl20:ProcessMemorizedSpell",
+  "ovl20:ProcessPendingScribedSpell",
+  "ovl21:BuildTreasureItem",
+  "ovl21:GivePlatinum",
+  "ovl21:RollItemBonus",
+  "ovl21:TransferMoney",
+  "ovl22:AddItemSpells",
+  "ovl22:ApplySpellToSide",
+  "ovl22:ApplySpellToSideUpToLevel",
+  "ovl22:CastAnimateDead",
+  "ovl22:CastBestowCurse",
+  "ovl22:CastBless",
+  "ovl22:CastBlink",
+  "ovl22:CastBurningHands",
+  "ovl22:CastCauseBlindness",
+  "ovl22:CastCauseDisease",
+  "ovl22:CastCauseLightWounds",
+  "ovl22:CastCharmPerson",
+  "ovl22:CastCureBlindness",
+  "ovl22:CastCureDisease",
+  "ovl22:CastCurse",
+  "ovl22:CastDispelMagic",
+  "ovl22:CastEnlarge",
+  "ovl22:CastFireball",
+  "ovl22:CastFriends",
+  "ovl22:CastHaste",
+  "ovl22:CastHoldPerson",
+  "ovl22:CastInvisibility",
+  "ovl22:CastKnock",
+  "ovl22:CastLightningBolt",
+  "ovl22:CastLineBeam",
+  "ovl22:CastMagicMissile",
+  "ovl22:CastMirrorImage",
+  "ovl22:CastMonsterBeam",
+  "ovl22:CastMonsterHaste",
+  "ovl22:CastMonsterHeal",
+  "ovl22:CastMonsterHealWounds",
+  "ovl22:CastMonsterInvisibility",
+  "ovl22:CastMonsterNoEffect",
+  "ovl22:CastMonsterParalyze",
+  "ovl22:CastMonsterReadMagic",
+  "ovl22:CastMonsterStrength",
+  "ovl22:CastPrayer",
+  "ovl22:CastProtection",
+  "ovl22:CastRayOfEnfeeblement",
+  "ovl22:CastReduce",
+  "ovl22:CastRemoveCurse",
+  "ovl22:CastResistCold",
+  "ovl22:CastResistFire",
+  "ovl22:CastRestoration",
+  "ovl22:CastShield",
+  "ovl22:CastShockingGrasp",
+  "ovl22:CastSilence",
+  "ovl22:CastSlow",
+  "ovl22:CastSlowPoison",
+  "ovl22:CastSnakeCharm",
+  "ovl22:CastSpiritualHammer",
+  "ovl22:CastStinkingCloud",
+  "ovl22:CastStrength",
+  "ovl22:ConsumeScrollSpell",
+  "ovl22:CureDiseaseAffects",
+  "ovl22:DamageTargetInCell",
+  "ovl22:MonsterBreath",
+  "ovl23:AddWisdomBonusSpells",
+  "ovl24:CureAffect",
+  "ovl24:DecodeStrength",
+  "ovl24:EncodeStrength",
+  "ovl24:RaiseStrength",
+  "ovl24:ReviveCombatant",
+  "ovl24:RollBeatsResistance",
+  "ovl24:SavingThrow",
+  "ovl26:DrawPartyMarker",
+  "ovl27:DrawAdventureScreen",
+  "ovl27:DrawAreaView",
+  "ovl31:PlaceCombatant",
+  "ovl33:ShowDebugTrace",
+  "res05:FillBlocksAt",
+  "res05:ShowBottomMessage",
+  "res05:WriteCharsAt",
+  "res05:WriteTextAt",
+  "res06:FlashMessageLine",
+  "res06:ReadNumber",
+  "res07:MirrorWord",
+  "res07:PaletteColor",
+  "res07:RestoreVideoMode",
+  "res07:SwapNibbles",
+  "res12:DrawWildernessScreen",
+  "res12:IsMaxClassLevel"
+ ],
+ "units": {
+  "ovl00": {
+   "branches": [
+    1,
+    6
+   ],
+   "functions": [
+    2,
+    2
+   ],
+   "lines": [
+    11,
+    24
+   ]
+  },
+  "ovl01": {
+   "branches": [
+    14,
+    18
+   ],
+   "functions": [
+    4,
+    4
+   ],
+   "lines": [
+    106,
+    107
+   ]
+  },
+  "ovl02": {
+   "branches": [
+    2,
+    6
+   ],
+   "functions": [
+    2,
+    2
+   ],
+   "lines": [
+    33,
+    41
+   ]
+  },
+  "ovl03": {
+   "branches": [
+    372,
+    1170
+   ],
+   "functions": [
+    38,
+    56
+   ],
+   "lines": [
+    1197,
+    2413
+   ]
+  },
+  "ovl04": {
+   "branches": [
+    89,
+    178
+   ],
+   "functions": [
+    11,
+    12
+   ],
+   "lines": [
+    285,
+    497
+   ]
+  },
+  "ovl05": {
+   "branches": [
+    145,
+    290
+   ],
+   "functions": [
+    9,
+    12
+   ],
+   "lines": [
+    373,
+    613
+   ]
+  },
+  "ovl06": {
+   "branches": [
+    58,
+    76
+   ],
+   "functions": [
+    5,
+    5
+   ],
+   "lines": [
+    198,
+    240
+   ]
+  },
+  "ovl07": {
+   "branches": [
+    376,
+    664
+   ],
+   "functions": [
+    27,
+    33
+   ],
+   "lines": [
+    764,
+    1453
+   ]
+  },
+  "ovl08": {
+   "branches": [
+    109,
+    264
+   ],
+   "functions": [
+    10,
+    14
+   ],
+   "lines": [
+    231,
+    553
+   ]
+  },
+  "ovl09": {
+   "branches": [
+    266,
+    428
+   ],
+   "functions": [
+    14,
+    15
+   ],
+   "lines": [
+    639,
+    850
+   ]
+  },
+  "ovl10": {
+   "branches": [
+    301,
+    966
+   ],
+   "functions": [
+    17,
+    23
+   ],
+   "lines": [
+    803,
+    1449
+   ]
+  },
+  "ovl11": {
+   "branches": [
+    19,
+    20
+   ],
+   "functions": [
+    2,
+    2
+   ],
+   "lines": [
+    162,
+    166
+   ]
+  },
+  "ovl12": {
+   "branches": [
+    15,
+    656
+   ],
+   "functions": [
+    8,
+    127
+   ],
+   "lines": [
+    190,
+    1740
+   ]
+  },
+  "ovl13": {
+   "branches": [
+    313,
+    816
+   ],
+   "functions": [
+    32,
+    39
+   ],
+   "lines": [
+    984,
+    1854
+   ]
+  },
+  "ovl14": {
+   "branches": [
+    57,
+    612
+   ],
+   "functions": [
+    5,
+    14
+   ],
+   "lines": [
+    167,
+    842
+   ]
+  },
+  "ovl15": {
+   "branches": [
+    151,
+    450
+   ],
+   "functions": [
+    16,
+    23
+   ],
+   "lines": [
+    392,
+    1011
+   ]
+  },
+  "ovl16": {
+   "branches": [
+    256,
+    946
+   ],
+   "functions": [
+    12,
+    19
+   ],
+   "lines": [
+    765,
+    2104
+   ]
+  },
+  "ovl17": {
+   "branches": [
+    137,
+    238
+   ],
+   "functions": [
+    13,
+    14
+   ],
+   "lines": [
+    580,
+    761
+   ]
+  },
+  "ovl18": {
+   "branches": [
+    0,
+    34
+   ],
+   "functions": [
+    1,
+    4
+   ],
+   "lines": [
+    3,
+    163
+   ]
+  },
+  "ovl19": {
+   "branches": [
+    260,
+    462
+   ],
+   "functions": [
+    19,
+    21
+   ],
+   "lines": [
+    827,
+    1112
+   ]
+  },
+  "ovl20": {
+   "branches": [
+    123,
+    210
+   ],
+   "functions": [
+    13,
+    15
+   ],
+   "lines": [
+    384,
+    548
+   ]
+  },
+  "ovl21": {
+   "branches": [
+    95,
+    1080
+   ],
+   "functions": [
+    18,
+    22
+   ],
+   "lines": [
+    412,
+    1568
+   ]
+  },
+  "ovl22": {
+   "branches": [
+    146,
+    566
+   ],
+   "functions": [
+    17,
+    74
+   ],
+   "lines": [
+    488,
+    1606
+   ]
+  },
+  "ovl23": {
+   "branches": [
+    35,
+    70
+   ],
+   "functions": [
+    4,
+    5
+   ],
+   "lines": [
+    100,
+    165
+   ]
+  },
+  "ovl24": {
+   "branches": [
+    129,
+    268
+   ],
+   "functions": [
+    17,
+    24
+   ],
+   "lines": [
+    450,
+    742
+   ]
+  },
+  "ovl25": {
+   "branches": [
+    197,
+    242
+   ],
+   "functions": [
+    20,
+    20
+   ],
+   "lines": [
+    507,
+    570
+   ]
+  },
+  "ovl26": {
+   "branches": [
+    24,
+    64
+   ],
+   "functions": [
+    5,
+    6
+   ],
+   "lines": [
+    61,
+    162
+   ]
+  },
+  "ovl27": {
+   "branches": [
+    0,
+    40
+   ],
+   "functions": [
+    1,
+    3
+   ],
+   "lines": [
+    3,
+    100
+   ]
+  },
+  "ovl28": {
+   "branches": [
+    51,
+    72
+   ],
+   "functions": [
+    10,
+    10
+   ],
+   "lines": [
+    197,
+    212
+   ]
+  },
+  "ovl29": {
+   "branches": [
+    176,
+    220
+   ],
+   "functions": [
+    13,
+    13
+   ],
+   "lines": [
+    534,
+    589
+   ]
+  },
+  "ovl30": {
+   "branches": [
+    163,
+    192
+   ],
+   "functions": [
+    8,
+    8
+   ],
+   "lines": [
+    334,
+    345
+   ]
+  },
+  "ovl31": {
+   "branches": [
+    155,
+    234
+   ],
+   "functions": [
+    22,
+    23
+   ],
+   "lines": [
+    501,
+    599
+   ]
+  },
+  "ovl32": {
+   "branches": [
+    21,
+    28
+   ],
+   "functions": [
+    6,
+    6
+   ],
+   "lines": [
+    87,
+    97
+   ]
+  },
+  "ovl33": {
+   "branches": [
+    0,
+    2
+   ],
+   "functions": [
+    1,
+    2
+   ],
+   "lines": [
+    3,
+    20
+   ]
+  },
+  "ovl34": {
+   "branches": [
+    20,
+    36
+   ],
+   "functions": [
+    3,
+    3
+   ],
+   "lines": [
+    48,
+    59
+   ]
+  },
+  "pool": {
+   "branches": [
+    1,
+    2
+   ],
+   "functions": [
+    2,
+    2
+   ],
+   "lines": [
+    61,
+    61
+   ]
+  },
+  "res02": {
+   "branches": [
+    0,
+    0
+   ],
+   "functions": [
+    1,
+    1
+   ],
+   "lines": [
+    3,
+    3
+   ]
+  },
+  "res03": {
+   "branches": [
+    22,
+    32
+   ],
+   "functions": [
+    6,
+    6
+   ],
+   "lines": [
+    74,
+    101
+   ]
+  },
+  "res04": {
+   "branches": [
+    6,
+    22
+   ],
+   "functions": [
+    5,
+    5
+   ],
+   "lines": [
+    35,
+    59
+   ]
+  },
+  "res05": {
+   "branches": [
+    41,
+    60
+   ],
+   "functions": [
+    14,
+    18
+   ],
+   "lines": [
+    208,
+    280
+   ]
+  },
+  "res06": {
+   "branches": [
+    96,
+    186
+   ],
+   "functions": [
+    18,
+    20
+   ],
+   "lines": [
+    324,
+    558
+   ]
+  },
+  "res07": {
+   "branches": [
+    215,
+    508
+   ],
+   "functions": [
+    16,
+    20
+   ],
+   "lines": [
+    930,
+    1636
+   ]
+  },
+  "res08": {
+   "branches": [
+    12,
+    24
+   ],
+   "functions": [
+    1,
+    1
+   ],
+   "lines": [
+    55,
+    97
+   ]
+  },
+  "res09": {
+   "branches": [
+    12,
+    26
+   ],
+   "functions": [
+    4,
+    4
+   ],
+   "lines": [
+    67,
+    111
+   ]
+  },
+  "res10": {
+   "branches": [
+    0,
+    0
+   ],
+   "functions": [
+    1,
+    1
+   ],
+   "lines": [
+    3,
+    3
+   ]
+  },
+  "res11": {
+   "branches": [
+    0,
+    0
+   ],
+   "functions": [
+    1,
+    1
+   ],
+   "lines": [
+    3,
+    3
+   ]
+  },
+  "res12": {
+   "branches": [
+    679,
+    1190
+   ],
+   "functions": [
+    50,
+    52
+   ],
+   "lines": [
+    1312,
+    1856
+   ]
+  }
+ }
+}

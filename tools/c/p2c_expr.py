@@ -707,7 +707,11 @@ class ExprMixin:
             if e.ty.kind == "real":
                 raise TransError("cast of real")
             if e.lv and e.ty.kind in ("int", "enum", "bool", "char") and e.ty.size() == t.size():
-                r = E(e.code, t, lv=True)
+                if ctype(e.ty) != ctype(t) and e.ty.size() > 1:
+                    # Integer(WordVar): the variable is read (and written) as the other type, or `Integer(W) < 0` compares an unsigned
+                    r = E("(*(%s)&%s)" % (ptr_ctype(t), self.paren(e)), t, lv=True)
+                else:
+                    r = E(e.code, t, lv=True)
                 r.root = e.root
                 return r
             if e.val is not None and not isinstance(e.val, str):
@@ -796,11 +800,21 @@ class ExprMixin:
         has it, little endian): the CoCo's variable is big endian, so the value is turned round after (into a variable) or around
         (out of one) the copy."""
         cnt = self.ex(args[2]).code
-        if not cnt.isdigit() or int(cnt) not in (2, 4):
+        if not cnt.isdigit():
             return code
         try:
             sty, dty = self.ex(args[0]).ty, self.ex(args[1]).ty
         except TransError:
+            return code
+        byte = lambda t: t.kind in ("int", "enum", "char", "bool") and t.size() == 1
+        whole = lambda t: t.kind in ("record", "array") and t.size() == int(cnt)
+        if byte(sty) and whole(dty):              # Move(Block^[Offset], Item, SizeOf(Item)): a record out of a DAX block's bytes
+            d = self.swap_descriptor(dty)
+            return "%s, rtl_swapdesc(%s, %s)" % (code, out[1], d) if d else code
+        if byte(dty) and whole(sty):
+            d = self.swap_descriptor(sty)
+            return "rtl_swapdesc(%s, %s), %s, rtl_swapdesc(%s, %s)" % (out[0], d, code, out[0], d) if d else code
+        if int(cnt) not in (2, 4):
             return code
         scalar = lambda t: t.kind in ("int", "enum", "ptr") and t.size() == int(cnt)
         if scalar(dty) and not scalar(sty):

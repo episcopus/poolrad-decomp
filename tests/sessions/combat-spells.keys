@@ -1,0 +1,82 @@
+# combat-spells: the parley-combat fight, but the party casts: Brother Sean blesses (C, End to the first spell, Enter), Rhiannon and Darkstar cast Sleep
+# (C, ENTER, then T for the aim prompt's Target: the spell lands on whoever is in the cursor, a party member included), the others
+# take quick turns (Q); then quick turns to the Continue Battle prompt. Covers the combat spell menus (ovl22 PickSpellFromMenu,
+# CastBless, CastSleep, ApplySpellToTargets), the affects they apply (ovl12) and the aim prompt (ovl13/ovl24). Found by trying
+# the party's spells turn by turn on the oracle. Waits give the combat animations time; shots follow a key at once.
+clock 12:00:16.58
+wheel
+wait 20
+key L
+wait 20
+key A
+wait 300
+key E
+wait 100
+press R                  # camp: Rest
+wait 60
+press H                  # rest time: Hours
+wait 20
+press I                  # Inc, eight times
+wait 20
+press I
+wait 20
+press I
+wait 20
+press I
+wait 20
+press I
+wait 20
+press I
+wait 20
+press I
+wait 20
+press I
+wait 20
+press R                  # start resting; a monster appears
+wait 900
+shot encounter
+key A
+wait 200
+key P
+wait 200
+shot attitudes
+key N
+wait 400
+shot parley
+key ENTER
+wait 300
+shot fight-start
+key Q
+key C
+key END
+key ENTER
+wait 40
+key Q
+wait 40
+key C
+wait 10
+key ENTER
+wait 20
+key T
+shot sleep-cast
+wait 60
+key C
+wait 10
+key ENTER
+wait 20
+key T
+shot darkstar-cast
+wait 60
+key Q
+key Q
+key Q
+key Q
+key Q
+key Q
+key Q
+key Q
+key Q
+key Q
+key Q
+key Q
+shot fight-12

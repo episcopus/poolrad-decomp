@@ -732,7 +732,7 @@ void LoadGame(void)
         for (;;) {
             WallSetSlotPairs[I].A = (*FPD(TVmWords4900 (*), VarsAt4900))[(s16)(0x4AF9 + I) - 18688];
             WallSetSlotPairs[I].B = (*FPD(TVmWords4900 (*), VarsAt4900))[(s16)(0x4AFC + I) - 18688];
-            if (WallSetSlotPairs[I].A >= 0) {
+            if ((*(s16 (*))&WallSetSlotPairs[I].A) >= 0) {
               LoadWallSet(WallSetSlotPairs[I].A, WallSetSlotPairs[I].B);
             }
           if (I == 3) break;

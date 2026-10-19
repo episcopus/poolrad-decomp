@@ -33,6 +33,15 @@ RTL_UNITS = {"system", "crt", "dos", "overlay", "printer", "graph"}
 LAYOUT_NAME = re.compile(r"^(ds|Raw)([0-9A-Fa-f]{4})$")
 
 
+
+# Locals the original reads before it writes them: the byte its frame held before the call decides, and the translation has to hold the
+# value the original had there (a local is zero in C otherwise). Found by a session whose replay diverged; each entry says where it was seen.
+STALE_LOCALS = {
+    # ovl19:2468, QUIRK in src/OVL19.PAS: TradeMoney's `until Finished` after the coin list was cancelled before any transfer. The original
+    # leaves the loop (the byte is not zero in the View prompt of the camp: session character-menu), so Finished starts True.
+    ("TradeMoney", "Finished"): "1",
+}
+
 class Unit:
     def __init__(self, node: N):
         self.node = node
@@ -695,7 +704,9 @@ class Gen(DeclMixin, ExprMixin, BuiltinMixin, StmtMixin):
                 elif getattr(vs, "arena", False):
                     text.append("  %s = (%s)rtl_stack_alloc(%d);" % (decl(vs.type, "(*%s)" % vs.cname), ptr_ctype(vs.type), vs.type.size()))
                 else:
-                    text.append("  %s%s;" % (decl(vs.type, vs.cname), zero_init(vs.type, vs.cname)))
+                    stale = STALE_LOCALS.get((s.name, vs.name))
+                    init = " = %s" % stale if stale is not None else zero_init(vs.type, vs.cname)
+                    text.append("  %s%s;" % (decl(vs.type, vs.cname), init))
                     if vs.cname in ctx.padded:
                         text.append("  u8 %s_pad[3];     /* room for a wider value written through an untyped var parameter */" % vs.cname)
         if ctx.has_frame:

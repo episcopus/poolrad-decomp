@@ -1,0 +1,94 @@
+# battle-aftermath: the parley-combat fight to its end (answer N to Continue Battle), then the aftermath: the treasure and
+# experience screens (ovl05), the treasure menus and money (ovl21), the inventory menus (ovl19) reached from them.
+# Found with the coverage-guided explorer (tools/c/explore_climb.py), pruned to the keys that matter (explore_prune.py).
+# The prefix is parley-combat's. Keys after the fight are `press` with a wait of 30 ticks: the treasure screen animates, and a longer wait stalls the oracle at a blocking prompt.
+clock 12:00:16.58
+wheel
+wait 20
+key L
+wait 20
+key A
+wait 300
+key E
+wait 100
+press R                  # camp: Rest
+wait 60
+press H                  # rest time: Hours
+wait 20
+press I                  # Inc, eight times
+wait 20
+press I
+wait 20
+press I
+wait 20
+press I
+wait 20
+press I
+wait 20
+press I
+wait 20
+press I
+wait 20
+press I
+wait 20
+press R                  # start resting; a monster appears
+wait 900
+shot encounter
+key A
+wait 200
+key P
+wait 200
+shot attitudes
+key N
+wait 400
+shot parley
+key ENTER
+wait 300
+shot fight-start
+key Q
+wait 150
+key Q
+wait 150
+key Q
+wait 150
+key Q
+wait 150
+key Q
+wait 150
+key Q
+wait 150
+key Q
+wait 150
+key Q
+wait 150
+key Q
+wait 150
+key Q
+wait 150
+key Q
+wait 150
+key Q
+wait 150
+shot fight-12
+key N
+key ENTER
+wait 100
+press 1
+wait 30
+press S
+wait 30
+press P
+wait 30
+press V
+wait 30
+press I
+wait 30
+press T
+wait 30
+press E
+wait 30
+press S
+wait 30
+press E
+shot aftermath-end
+wait 30

@@ -1,0 +1,62 @@
+# temple-cast: load saved game A, walk to the temple of the unsettled area (map 20, cell 1,3), enter it (Y), use its menu
+# (heal, cure: ovl04, ovl21), leave, make camp and cast spells (ovl15, ovl22, ovl12), memorise/view menus.
+# Found with the coverage-guided explorer (tools/c/explore_climb.py), pruned (explore_prune.py). Shots come right after a key:
+# a shot after a `wait` can fall in the middle of a redraw.
+clock 12:00:16.58
+wheel
+wait 20
+key L
+wait 20
+key A
+wait 300
+key RIGHT
+wait 20
+key RIGHT
+wait 20
+key UP
+wait 20
+key UP
+wait 20
+key LEFT
+wait 20
+key UP
+wait 20
+key Y
+shot temple
+wait 20
+key H
+wait 20
+key ENTER
+wait 20
+key Y
+wait 20
+key Y
+wait 20
+key E
+shot temple-menu
+wait 20
+key DOWN
+wait 20
+key E
+wait 20
+key END
+wait 20
+key C
+wait 20
+key 1
+wait 20
+key HOME
+wait 20
+key C
+wait 20
+key 9
+wait 20
+key HOME
+wait 20
+key C
+wait 20
+key A
+wait 20
+key DOWN
+shot cast-end
+wait 20

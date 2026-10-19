@@ -245,6 +245,8 @@ void rtl_dbg2(u16 a, u16 b)
     fprintf(stderr, "R 0 %u %u\n", a, b);
 }
 
+u8 rtl_wheel_pick;                 /* the last Random(13) with bit 7 set: the code wheel's question (c/platform/explore.c answers it) */
+
 u16 rtl_Random(u16 range)
 {
   u32 *seed = (u32 *)(DGS(0x4428));
@@ -260,6 +262,8 @@ u16 rtl_Random(u16 range)
       rlog = getenv("POOL_RLOG") != NULL;
     if (rlog)
       fprintf(stderr, "R %u %u %u\n", (unsigned)random_calls, range, r);       /* debugging aid: the dice, to compare with the CoCo's (tools lua/watch.lua MB_RLOG) */
+    if (range == 13)
+      rtl_wheel_pick = (u8)(r | 0x80);
     return r;
   }
 }

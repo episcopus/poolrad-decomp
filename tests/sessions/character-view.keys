@@ -1,0 +1,59 @@
+# character-view: load saved game A, make camp (E), View (V) a character and use the sheet's menus: items (ready, trade, drop, halve, join),
+# money (trade, drop). Covers ovl19 (RunItemMenu, TradeItem, TradeMoney, ChooseAndDropMoney, ...), ovl21 money, ovl20. Found with the
+# coverage-guided explorer (tools/c/explore_climb.py), pruned to the keys that matter. The camp screen is animated, so its keys are `press` with a wait of 30 ticks (a longer wait stalls the oracle at a blocking prompt).
+clock 12:00:16.58
+wheel
+wait 20
+key L
+wait 20
+key A
+wait 300
+press E
+wait 30
+press V
+wait 30
+press I
+wait 30
+press J
+wait 30
+press U
+wait 30
+press R
+wait 30
+press H
+wait 30
+press T
+wait 30
+press 1
+wait 30
+press ENTER
+wait 30
+press R
+wait 30
+press D
+wait 30
+press Y
+wait 30
+press D
+wait 30
+press HOME
+wait 30
+press SPACE
+wait 30
+press ESC
+wait 30
+press ESC
+wait 30
+press T
+wait 30
+press S
+wait 30
+press ESC
+wait 30
+press HOME
+wait 30
+press HOME
+wait 30
+shot view-end
+wait 30
+quit

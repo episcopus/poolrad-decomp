@@ -955,7 +955,7 @@ void TradeMoney(void)
   u8 Text[256] = {0};
   u8 Key = 0;
   u16 Amount = 0;
-  u8 Finished = 0;
+  u8 Finished = 1;
   u8 Done = 0;
   u8 Redraw = 0;
   u8 ts1[256];
@@ -1290,7 +1290,7 @@ u8 ChooseSpellFromList(u8 SpellListKind, u8 DisplayMode, u16 (*Choice), u8 (*Lis
   }
   (*Listed) = BuildSpellList(SpellListKind);
   if ((*Listed) != 0) {
-    if ((*Choice) < 0) {
+    if ((*(s16 (*))&(*Choice)) < 0) {
       DrawWindow(1, 1, 0x26, 1, 0, 0, S("\000"));
       DrawCharacterName(SelectedCharacter, 1, 1, 1);
       DrawTextAt((s16)((*FPD(TCharacter (*), SelectedCharacter)).Name[0] + 4), ChooseSpellFromList_TitleRow, ChooseSpellFromList_TitleColor, rtl_str_cat(ts1, 2, (const u8 *const[]){S("\007Spells "), ModeDescription}));

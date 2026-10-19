@@ -1,0 +1,56 @@
+# camp-cast: load saved game A, make camp, Magic (M), pick Bakshi (End) and cast: Cure Light Wounds twice (Home to the spell, Enter, then Enter on
+# the one to heal), Detect Magic; then Brother Sean's turn at the list. Covers the camp casting path: ovl15 (CampMagicMenu, the party pick),
+# ovl19 (ChooseSpellFromList), ovl22 (PickSpellFromMenu, CastCureLightWounds, CastDetectionSpell, ApplySpellToTargets), ovl24
+# (HealCharacter), ovl12 affects. Found by trying the camp menus on the explorer (tools/c/explore_run.sh). The camp screen is animated, so its keys
+# are `press` with waits of 30 ticks (a longer wait stalls the oracle at a blocking prompt).
+clock 12:00:16.58
+wheel
+wait 20
+key L
+wait 20
+key A
+wait 300
+press E
+wait 100
+press M
+wait 30
+press END
+wait 30
+press C
+wait 30
+press HOME
+wait 30
+press HOME
+wait 30
+press ENTER
+wait 30
+press ENTER
+wait 60
+shot cure-one
+press HOME
+wait 30
+press HOME
+wait 30
+press ENTER
+wait 30
+press ENTER
+wait 60
+press HOME
+wait 30
+press ENTER
+wait 60
+press ESC
+wait 30
+press END
+wait 30
+press END
+wait 30
+press C
+wait 30
+press ENTER
+wait 30
+press ENTER
+wait 60
+shot cast-end
+wait 30
+quit

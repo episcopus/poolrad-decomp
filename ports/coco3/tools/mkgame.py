@@ -130,14 +130,11 @@ PATCHES = {
 }""")],
     "ovl13": [("between", "ShowAttackAnimation", "  PixelBytes = (*FPB(TPictureHeader *, CombatAnimationPicture)).ByteSize;\n",
                "    PixelBytes = ((u16)PixelBytes / 4);\n  }\n", "")],
-    # ovl17 LoadMonster: the monster, affect and item records come out of a DAX block as bytes (Pointer arguments, so the translation does not
-    # know their type): the words in them turn from the file's order into the CoCo's, as BlockRead does for the records of a character file
+    # ovl17 LoadMonster: the monster record comes out of a DAX block as bytes (a Pointer argument, so the translation does not know its type): the words
+    # in it turn from the file's order into the CoCo's, as BlockRead does for the records of a character file. The affect and item records are Move
+    # destinations of a known type: the translator turns them round itself (p2c_expr move_swaps, step 8.7b); the patches that did it by hand swapped twice.
     "ovl17": [("all", "  rtl_Move((void *)&(*FPD(u8 *, Block)), (void *)&(*FPD(u8 *, Who)), 285);\n",
-               "  rtl_Move((void *)&(*FPD(u8 *, Block)), (void *)&(*FPD(u8 *, Who)), 285);\n  rtl_swapdesc((void *)&(*FPM(TCharacter *, Who)), swd_ovl17_0);\n"),
-              ("all", "      rtl_Move((void *)&FPD(struct PA_u8_1 *, Block)->a[Offset], (void *)&(*FPM(TAffect *, Affect)), 9);\n",
-               "      rtl_Move((void *)&FPD(struct PA_u8_1 *, Block)->a[Offset], (void *)&(*FPM(TAffect *, Affect)), 9);\n      rtl_swapdesc((void *)&(*FPM(TAffect *, Affect)), swd_ovl17_2);\n"),
-              ("all", "      rtl_Move((void *)&FPD(struct PA_u8_1 *, Block)->a[Offset], (void *)&(*FPM(TMenuLine *, Item)), 63);\n",
-               "      rtl_Move((void *)&FPD(struct PA_u8_1 *, Block)->a[Offset], (void *)&(*FPM(TMenuLine *, Item)), 63);\n      rtl_swapdesc((void *)&(*FPM(TMenuLine *, Item)), swd_ovl17_1);\n")],
+               "  rtl_Move((void *)&(*FPD(u8 *, Block)), (void *)&(*FPD(u8 *, Who)), 285);\n  rtl_swapdesc((void *)&(*FPM(TCharacter *, Who)), swd_ovl17_0);\n")],
     "ovl32": [("between", "Load24x24Set", "  CopyBytes = (u16)(*FPB(TMemPic *, Loaded))", "Tail[DestOfs], CopyBytes);\n  }\n",
                "  if (SqrPaciBank1 != 0) {\n    PictureAppend((u16)Loaded, (u16)SqrPaciBank1, Index);\n  }\n"),
               ("fn", "DrawIcon", """void DrawIcon(s8 CellCol, s8 CellRow, u8 IconSet, u8 Mirror, u8 PicIndex)
@@ -168,9 +165,12 @@ def patch_unit(u, text):
             items.insert(hit[0], ("other", p[2]))
             text = "\n".join(it[1] if it[0] == "other" else it[3] for it in items) + "\n"
         elif p[0] == "all":                                  # every occurrence of a text in the unit
-            if p[1] not in text:
+            old, new = p[1], p[2]
+            if old not in text and "FPM(TMenuLine" in old:   # placement.toml may put the type in the banked class (FPB)
+                old, new = old.replace("FPM(TMenuLine", "FPB(TMenuLine"), new.replace("FPM(TMenuLine", "FPB(TMenuLine")
+            if old not in text:
                 raise SystemExit("patch %s: %r not found" % (u, p[1]))
-            text = text.replace(p[1], p[2])
+            text = text.replace(old, new)
         elif p[0] == "fn":
             items = parse_items(text)
             hit = [i for i, it in enumerate(items) if it[0] == "fn" and it[1] == p[1]]
@@ -351,12 +351,37 @@ def c_string_len(body):
 STRDEFS = {}                      # Pascal string constants of game.h written as #define NAME S("...") -> the literal's text
 
 
+def string_forwarders(items, unit, fn_unit):
+    """The routines of `unit` that pass one of their string value parameters (`const u8 *X = X_in;`) on to a routine of another unit (or
+    of such a routine): a literal handed to them from this very unit points into this bank's rodata and the other bank would read
+    the wrong bytes (the temple's "is not blind." reached ShowCharacterMessage through AskCastAnyway as junk), so the callers copy it too."""
+    fns = {it[1]: it[3] for it in items if it[0] == "fn"}
+    pars = {n: set(re.findall(r"const u8 \*(\w+) = \1_in;", b)) for n, b in fns.items()}
+    fwd = set()
+    changed = True
+    while changed:
+        changed = False
+        for n, b in fns.items():
+            if n in fwd or not pars[n]:
+                continue
+            for m in re.finditer(r"\b(\w+)\(([^;]*)\)", b):
+                callee = m.group(1)
+                if callee in fn_unit and (fn_unit[callee] != unit or callee in fwd) and any(
+                        re.search(r"(?:^|[(,]\s*)%s\s*(?:,|\)|$)" % re.escape(p), m.group(2)) for p in pars[n]):
+                    fwd.add(n)
+                    changed = True
+                    break
+    return fwd
+
+
 def copy_cross_literals(text, unit, fn_unit, same_unit=False):
     """A bank sees only its own rodata: a pointer to a string literal that reaches a routine of another bank would read the
     wrong bytes there. Every literal S("...") that is an argument of a call to a routine of another (non-core) unit becomes
     (memcpy(litK, "...", n), litK), a copy in a buffer of the caller's frame (K counts the literals of the statement)."""
     out = []
-    for kind, *rest in parse_items(text):
+    items = parse_items(text)
+    fwd = string_forwarders(items, unit, fn_unit)          # same-unit routines that hand their string parameter on to another bank
+    for kind, *rest in items:
         if kind != "fn":
             out.append(rest[0] if kind == "other" else rest[2])
             continue
@@ -396,7 +421,7 @@ def copy_cross_literals(text, unit, fn_unit, same_unit=False):
                     while body[j] != '"':
                         j += 2 if body[j] == "\\" else 1
                     callee = stack[-1] if stack else None
-                    if body[j + 1] == ")" and callee and callee in fn_unit and (same_unit or fn_unit[callee] != unit):
+                    if body[j + 1] == ")" and callee and callee in fn_unit and (same_unit or fn_unit[callee] != unit or callee in fwd):
                         hits.append((k + 1, j + 2, body[i + 2:j], stmt))
                         stmt += 1
                     i = j + 2
@@ -418,7 +443,7 @@ def copy_cross_literals(text, unit, fn_unit, same_unit=False):
                 while body[q] == " ":
                     q += 1
                 callee = stack[-1] if stack else None
-                if tok in STRDEFS and body[p] in "(," and body[q] in ",)" and callee and callee in fn_unit and (same_unit or fn_unit[callee] != unit):
+                if tok in STRDEFS and body[p] in "(," and body[q] in ",)" and callee and callee in fn_unit and (same_unit or fn_unit[callee] != unit or callee in fwd):
                     hits.append((i, j, STRDEFS[tok], stmt))               # a string constant handed over: copied like a literal
                     stmt += 1
                 i = j

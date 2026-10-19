@@ -35,7 +35,7 @@ void StartCombatantRound(PCharacter Who)
         /* QUIRK ovl13:00C5: the original widens Side with cbw (a sign extend) and ANDs it with a
            16-bit signed word, then tests the low byte only; the casts reproduce that shape (Side is
            a Byte elsewhere: ovl09 and res12 compare it unsigned). */
-        if ((u8)(((s16)((*FPD(TCharacter (*), Who)).Side + 1)) & (*FPD(TGameVars (*), GameVars2))[715]) != 0) {
+        if ((u8)(((s16)((*FPD(TCharacter (*), Who)).Side + 1)) & (*(s16 (*))&(*FPD(TGameVars (*), GameVars2))[715])) != 0) {
           w1->Initiative -= InitiativePenalty;
         }
         if (((w1->Initiative < 0)) || ((w1->Initiative > MaxInitiative))) {

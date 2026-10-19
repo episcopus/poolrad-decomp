@@ -18,7 +18,7 @@ LINKLIBS := -L$(CMOCLIB) -lcmoc-crt-void -lcmoc-std-void
 ENGINE_OBJ := build/obj/boot.o build/obj/mailbox.o
 P ?= byte-arith
 
-.PHONY: game help doctor toolchain eng-data eng-test eng-tests gfx-ref data data-verify vol-test vol-tests sizes heap-stats prof coco-host place-host golden4 golden4-record demo test-demo run-demo probe probes asm-probe bench test clean
+.PHONY: game help doctor toolchain eng-data eng-test eng-tests gfx-ref data data-verify vol-test vol-tests sizes heap-stats prof coco-host place-host golden4 golden4-record demo test-demo run-demo probe probes asm-probe bench test clean risk-scan baseline
 .DEFAULT_GOAL := help
 
 help:
@@ -67,6 +67,12 @@ heap-stats:
 prof:
 	@scripts/prof_run.sh >/dev/null
 	@python3 tools/prof_report.py ../..
+
+# the static checks for the classes of defect steps 8.5 to 8.7 met (docs/RISKS.md): run after `make game`; section 8 needs the CMOC warnings
+risk-scan:
+	@scripts/risk_cmoc.sh
+	@python3 -I tools/riskscan.py --write
+	@echo 'report: build/risk/report.md'
 
 coco-host:
 	@scripts/coco_host.sh
@@ -231,6 +237,13 @@ combat:
 	$(MAKE) game-state S=camp-rest-combat
 	$(MAKE) game-run S=parley-combat LIMIT=800
 	$(MAKE) game-state S=parley-combat
+
+# step 8.7b: every session on the CoCo, five at a time (one disk image: built first), then the verdicts (docs/PHASE-8.7b.md)
+BASELINE_SESSIONS := $(filter-out create-elf-mage,$(patsubst ../../tests/sessions/%.keys,%,$(wildcard ../../tests/sessions/*.keys)))
+baseline: game
+	@MB_SESSION=/repo/tests/sessions/boot-title.keys MB_LIMIT=300 scripts/game_run.sh build/run/game-boot-title > /dev/null 2>&1
+	@printf '%s\n' $(filter-out boot-title,$(BASELINE_SESSIONS)) | xargs -P 5 -I{} sh -c 'MB_NOBUILD=1 MB_SESSION=/repo/tests/sessions/{}.keys MB_LIMIT=2500 scripts/game_run.sh build/run/game-{} > build/run/game-{}.out 2>&1'
+	@for s in $(BASELINE_SESSIONS); do printf '%-18s ' $$s; python3 -I tools/gamecheck.py $$s build/run/game-$$s 2>&1 | tail -1; done
 
 # step 8.6: the exploration sessions on the CoCo, screens and state
 exploration:

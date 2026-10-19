@@ -333,8 +333,44 @@ static void record_screen4(const char *label)
   fprintf(g_screens4, "%s %s\n", label, hex);
 }
 
+/* debugging: POOL_PARTYLOG=n prints the party's name, hit points and status when read n is taken (to compare with the CoCo's records) */
+static void party_log(long at)
+{
+  static long when = -2;
+  if (when == -2) {
+    when = getenv("POOL_PARTYLOG") ? atol(getenv("POOL_PARTYLOG")) : -1;
+  }
+  if (at == when) {
+    u32 p = (u32)(*(s32 *)(pool_ds + 0x5D96));
+    int n = 0;
+    if (getenv("POOL_MAPHEX")) {
+      u8 *m = pool_arena + POOL_LINEAR(*(u32 *)(pool_ds + 0x6716));
+      int k;
+      fprintf(stderr, "maphex:");
+      for (k = 0; k < 1264; k++) fprintf(stderr, "%02x", m[k]);
+      fprintf(stderr, "\n");
+    }
+    {
+      u16 *gv2 = (u16 *)(pool_arena + POOL_LINEAR(*(u32 *)(pool_ds + 0x49D6)));
+      fprintf(stderr, "gamevars2: [880]=%04X [881]=%04X\n", gv2[880], gv2[881]);
+    }
+    while (p && n++ < 20) {
+      u8 *r = pool_arena + POOL_LINEAR(p);
+      fprintf(stderr, "party: %-16.*s hp %3d/%3d status %2d next %08X\n", r[0], (char *)r + 1, r[0x11B], r[0x32], r[0x10C], *(u32 *)(r + 0x104));
+      if (getenv("POOL_PARTYHEX")) {
+        int k;
+        fprintf(stderr, "hex:");
+        for (k = 0; k < 0x120; k++) fprintf(stderr, "%02x", r[k]);
+        fprintf(stderr, "\n");
+      }
+      p = *(u32 *)(r + 0x104);
+    }
+  }
+}
+
 static void check_cps(long at)
 {
+  party_log(at);
   if (at == g_snap && g_dump) {
     snapshot();
   }
@@ -346,6 +382,12 @@ static void check_cps(long at)
       continue;
     }
     screen_digest(scr);
+    if (getenv("POOL_SCREENLOG")) {                 /* debugging: every checkpoint's digests, the host's and the original's */
+      fprintf(stderr, "cp %s at %ld host %.16s original %.16s\n", c->label, c->at, scr, c->screen);
+    }
+    if (g_dump && getenv("POOL_DUMPALL")) {
+      dump_screen(c->label);                      /* debugging: every checkpoint's screen, not only the ones that differ */
+    }
     if (strcmp(scr, c->screen) == 0) {
       screens_ok++;
       record_screen4(c->label);
@@ -528,6 +570,15 @@ static const Run *take(int kind)
     finish("diverged");
   }
   idx++;
+  {                                                  /* POOL_READLOG=n: from read n on, print what the recording gives (debugging a divergence) */
+    static long from = -2;
+    if (from == -2) {
+      from = getenv("POOL_READLOG") ? atol(getenv("POOL_READLOG")) : -1;
+    }
+    if (from >= 0 && idx >= from) {
+      fprintf(stderr, "read %ld: asked %d, recorded kind %d a=%04X flags=%02X\n", idx, kind, r->kind, (unsigned)r->a, (unsigned)r->flags);
+    }
+  }
   if (++used_in_run >= r->count) {
     used_in_run = 0;
     cur_run++;

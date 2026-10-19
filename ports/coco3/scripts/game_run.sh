@@ -9,8 +9,10 @@ source "$ROOT/scripts/lib.sh"
 out="${1:?output prefix}"; shift || true
 vols=()
 cd "$ROOT"
-run_toolchain python3 -I tools/mkgamedisk.py build/game build/gen/vm/DGROUP.IMG build/game/pool.dsk
-run_toolchain python3 -I tools/mkimage.py /repo/poolrad build/game build/gen/vm/DGROUP.IMG build/game/pool.img
+if [ -z "${MB_NOBUILD:-}" ]; then     # MB_NOBUILD=1: the disk and the image are already made (runs in parallel must not rewrite them under each other)
+  run_toolchain python3 -I tools/mkgamedisk.py build/game build/gen/vm/DGROUP.IMG build/game/pool.dsk
+  run_toolchain python3 -I tools/mkimage.py /repo/poolrad build/game build/gen/vm/DGROUP.IMG build/game/pool.img
+fi
 mkdir -p "$(dirname "$out")"
 rm -f "$out"-s*.scr4 "$out.mbx"
 extra=(); n=2   # -flop2 is drive 1 (the volume), -flop3 and -flop4 the development bank disks (drives 2 and 3)

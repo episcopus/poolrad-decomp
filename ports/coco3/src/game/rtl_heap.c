@@ -6,9 +6,14 @@
 
 /* This code lives in the runtime bank, which holds no variables: the heap's tables are at a fixed place in native memory. */
 #define BHEAP_LIN0 0x2C7C0UL
-#define NBLKM 64
+#define NBLKM 128
 #define NBLKB 16
-typedef struct Blk { u16 off, size; u8 used; } Blk;
+/* A block is 4 bytes: its offset and its size, which is a multiple of 8, so bit 0 of the word says whether it is in use. The
+ * mapped table is 128 entries: the shop lists (ovl06) hold more than 64 blocks, fatal 0x20 of step 8.9's first baseline run. */
+typedef struct Blk { u16 off, sz; } Blk;
+#define BSIZE(b) ((u16)((b).sz & 0xFFF8u))
+#define BUSED(b) ((b).sz & 1u)
+#define SETSZ(b, n, u) ((b).sz = (u16)((n) | (u)))
 struct HeapData { Blk mblk[NBLKM]; Blk bblk[NBLKB]; u8 nm, nb, ready; };
 #define HD ((struct HeapData *)HEAPDATA)
 #define mblk (HD->mblk)
@@ -23,19 +28,19 @@ static int alloc(Blk *t, u8 *cnt, u8 cap, u16 n)
 {
     u8 i, j;
     for (i = 0; i < *cnt; i++) {
-        if (!t[i].used && t[i].size >= n) {
-            if (t[i].size > n) {                          /* split */
+        if (!BUSED(t[i]) && BSIZE(t[i]) >= n) {
+            if (BSIZE(t[i]) > n) {                        /* split */
                 if (*cnt == cap)
                     rtl_fatal_code(0x20, n);
                 for (j = *cnt; j > i + 1; j--)
                     t[j] = t[j - 1];
                 (*cnt)++;
                 t[i + 1].off = (u16)(t[i].off + n);
-                t[i + 1].size = (u16)(t[i].size - n);
-                t[i + 1].used = 0;
-                t[i].size = n;
+                SETSZ(t[i + 1], (u16)(BSIZE(t[i]) - n), 0);
+                SETSZ(t[i], n, 1);
             }
-            t[i].used = 1;
+            else
+                t[i].sz |= 1;
             return i;
         }
     }
@@ -46,16 +51,16 @@ static void release(Blk *t, u8 *cnt, u16 off)
 {
     u8 i, j;
     for (i = 0; i < *cnt; i++) {
-        if (t[i].off == off && t[i].used) {
-            t[i].used = 0;
-            if (i + 1 < *cnt && !t[i + 1].used && (u16)(t[i].off + t[i].size) == t[i + 1].off) {
-                t[i].size = (u16)(t[i].size + t[i + 1].size);
+        if (t[i].off == off && BUSED(t[i])) {
+            t[i].sz &= 0xFFF8u;
+            if (i + 1 < *cnt && !BUSED(t[i + 1]) && (u16)(t[i].off + BSIZE(t[i])) == t[i + 1].off) {
+                SETSZ(t[i], (u16)(BSIZE(t[i]) + BSIZE(t[i + 1])), 0);
                 for (j = i + 1; j + 1 < *cnt; j++)
                     t[j] = t[j + 1];
                 (*cnt)--;
             }
-            if (i > 0 && !t[i - 1].used && (u16)(t[i - 1].off + t[i - 1].size) == t[i].off) {
-                t[i - 1].size = (u16)(t[i - 1].size + t[i].size);
+            if (i > 0 && !BUSED(t[i - 1]) && (u16)(t[i - 1].off + BSIZE(t[i - 1])) == t[i].off) {
+                SETSZ(t[i - 1], (u16)(BSIZE(t[i - 1]) + BSIZE(t[i])), 0);
                 for (j = i; j + 1 < *cnt; j++)
                     t[j] = t[j + 1];
                 (*cnt)--;
@@ -71,13 +76,11 @@ static void rtl_heap_init(void)
     u8 k;
     heap_ready = 1;
     mblk[0].off = MAPPED_LO;
-    mblk[0].size = (u16)(MAPPED_HI - MAPPED_LO);
-    mblk[0].used = 0;
+    SETSZ(mblk[0], (u16)((MAPPED_HI - MAPPED_LO) & 0xFFF8u), 0);
     nm = 1;
     for (k = 0; k < 4; k++) {                           /* four pages of 7,680 usable bytes */
         bblk[k].off = (u16)(k * 0x2000u);
-        bblk[k].size = 0x1E00;
-        bblk[k].used = 0;
+        SETSZ(bblk[k], 0x1E00, 0);
     }
     nb = 4;
 }
