@@ -86,6 +86,8 @@ u8 rs_open(RsFile *f, u8 drive, const char *name8, const char *ext3)
 
 u8 rs_read(RsFile *f, u32 offset, u8 *dst, u16 n)
 {
+    if (f->drive == IMG_DRIVE)
+        return img_read(offset, dst, n);
     u16 idx = (u16)(offset >> 8);
     u16 skip = (u16)(offset & 255);
     const u8 *ft = fat[f->drive & 3];

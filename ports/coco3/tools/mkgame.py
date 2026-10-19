@@ -524,7 +524,7 @@ def main(argv):
     return 0
 
 
-ENGINE_C = ["api", "gameboot", "vol", "dax", "gfx", "rsdos", "mailbox"]
+ENGINE_C = ["api", "gameboot", "vol", "img", "dax", "gfx", "rsdos", "mailbox"]
 ENGINE_ASM = ["boot", "mmu", "disk", "irq", "kernels", "rle", "engcall", "apitab", "nobanks"]
 
 

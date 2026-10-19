@@ -167,7 +167,7 @@ build/demo/demo.dsk: build/demo/demo.bin
 
 # ---------------------------------------------------------------- engine tests (step 8.3)
 POOLRAD_DATA ?= ../../poolrad
-ENG_OBJ := build/obj/boot.o build/obj/mailbox.o build/obj/mmu.o build/obj/disk.o build/obj/irq.o build/obj/rsdos.o build/obj/rle.o build/obj/kernels.o build/obj/vol.o build/obj/dax.o build/obj/gfx.o build/obj/nobanks.o
+ENG_OBJ := build/obj/boot.o build/obj/mailbox.o build/obj/mmu.o build/obj/disk.o build/obj/irq.o build/obj/rsdos.o build/obj/rle.o build/obj/kernels.o build/obj/vol.o build/obj/img.o build/obj/dax.o build/obj/gfx.o build/obj/nobanks.o
 ENG_TESTS := $(filter-out t_vol,$(patsubst src/engtest/%.c,%,$(wildcard src/engtest/t_*.c)))
 T ?= t_disk
 ENG_LIMIT_t_skew := 400

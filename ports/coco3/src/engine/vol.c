@@ -8,6 +8,87 @@
 #define IDX_MAX 4096
 
 Vol vols[4];
+Vol img_vol;
+u32 img_save_lsn;
+u16 img_save_sectors;
+static u32 img_ents_off;                  /* the entry table of the image, from the start of the image */
+static u8 ebuf[250];                      /* 25 entries at a time */
+
+/* The image (tools/mkimage.py, "PIM2"): header { "PIM2", u16 nfiles, u16 nent, u32 files_off, u32 ents_off, u32 save_lsn, u16
+ * save_sectors }, the table of files (name8, u16 first entry, u16 count; kept in physical block 6) and the table of entries
+ * (the 10 byte entries of the volumes), which a lookup reads from the image a few at a time. */
+u8 img_mount(void)
+{
+    u8 h[24];
+    u16 n;
+    u32 files_off;
+    img_vol.mounted = 0;
+    img_vol.drive = IMG_DRIVE;
+    img_vol.f.drive = IMG_DRIVE;
+    if (img_read(0, h, 24) != 0)
+        return 1;
+    if (h[0] != 'P' || h[1] != 'I' || h[2] != 'M' || h[3] != '2')
+        return 2;
+    img_vol.nfiles = (u8)(((u16)h[4] << 8) | h[5]);
+    img_vol.nent = (u16)(((u16)h[6] << 8) | h[7]);
+    files_off = ((u32)h[8] << 24) | ((u32)h[9] << 16) | ((u32)h[10] << 8) | h[11];
+    img_ents_off = ((u32)h[12] << 24) | ((u32)h[13] << 16) | ((u32)h[14] << 8) | h[15];
+    img_save_lsn = ((u32)h[16] << 24) | ((u32)h[17] << 16) | ((u32)h[18] << 8) | h[19];
+    img_save_sectors = (u16)(((u16)h[20] << 8) | h[21]);
+    n = (u16)((u16)img_vol.nfiles * 12u);       /* (CMOC multiplies two bytes in 8 bits) */
+    if (n > 0x2000u)
+        return 3;
+    if (img_read_blocks(files_off, n, 6) != 0)
+        return 4;
+    img_vol.mounted = 1;
+    return 0;
+}
+
+/* a file of the image: its first entry and count, 0xFF when there is none */
+static u8 img_file(const char *name8, u16 *first, u16 *count)
+{
+    u8 i, j, *t;
+    win_set(0, 6);
+    for (i = 0; i < img_vol.nfiles; i++) {
+        t = (u8 *)0x8000u + (u16)i * 12;
+        for (j = 0; j < 8; j++)
+            if (t[j] != (u8)name8[j])
+                break;
+        if (j == 8) {
+            *first = (u16)(((u16)t[8] << 8) | t[9]);
+            *count = (u16)(((u16)t[10] << 8) | t[11]);
+            return i;
+        }
+    }
+    return 0xFF;
+}
+
+static u8 img_find(const char *name8, u8 id, DaxEntry *e)
+{
+    u16 first, count, done, k, n;
+    u8 *p;
+    if (img_file(name8, &first, &count) == 0xFF)
+        return 1;
+    for (done = 0; done < count; done = (u16)(done + 25)) {
+        n = (u16)(count - done) < 25 ? (u16)(count - done) : 25;
+        if (img_read(img_ents_off + (u32)(first + done) * 10, ebuf, (u16)(n * 10)) != 0)
+            return 3;
+        for (k = 0, p = ebuf; k < n; k++, p += 10)
+            if (p[1] == id) {
+                e->offset = ((u32)p[2] << 24) | ((u32)p[3] << 16) | ((u32)p[4] << 8) | p[5];
+                e->packed = (u16)(((u16)p[6] << 8) | p[7]);
+                e->raw = (u16)(((u16)p[8] << 8) | p[9]);
+                return 0;
+            }
+    }
+    return 2;
+}
+
+/* an object of the image by name and id: 0 = found, 1 = no such file, 2 = no such block */
+u8 img_entry(const char *name8, u8 id, DaxEntry *e)
+{
+    return img_find(name8, id, e);
+}
 
 static u8 *idx_ptr(u8 drive)
 {
@@ -117,6 +198,9 @@ u8 vol_entry(const Vol *v, u16 i, u8 *file, u8 *id, DaxEntry *e)
 u8 vol_has(const char *name8)
 {
     u8 d, base;
+    u16 a, b;
+    if (img_vol.mounted && img_file(name8, &a, &b) != 0xFF)
+        return 1;
     for (d = 0; d < 4; d++)
         if (vols[d].mounted && file_index(&vols[d], name8, &base) != 0xFF)
             return 1;
@@ -126,6 +210,15 @@ u8 vol_has(const char *name8)
 u8 vol_lookup(const char *name8, u8 id, Vol **vp, DaxEntry *e)
 {
     u8 d, st, seen = 0;
+    if (img_vol.mounted) {
+        st = img_find(name8, id, e);
+        if (st == 0) {
+            *vp = &img_vol;
+            return 0;
+        }
+        if (st == 2)
+            seen = 2;
+    }
     for (d = 0; d < 4; d++) {
         if (!vols[d].mounted)
             continue;

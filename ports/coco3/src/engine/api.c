@@ -15,44 +15,10 @@
 extern u8 banktab[64];
 void eng_halt(void);
 
-/* ---- files into physical blocks */
-
-static u8 sbuf[256];
-
-/* A whole file from `drive` into physical blocks first_blk, +1, ... (8,192 bytes each); returns its size or 0. */
-u32 eng_read_blocks(const char *name8, const char *ext3, u8 drive, u8 first_blk)
-{
-    RsFile f;
-    u32 size, off;
-    u16 n;
-    u8 t;
-    u8 rst = rs_open(&f, drive, name8, ext3);
-    DBG(2, ((u16)drive << 8) | rst);
-    if (rst != 0)
-        return 0;
-    size = (u32)(f.sectors - 1) * 256UL + f.last_bytes;
-    for (off = 0; off < size; off += 256) {
-        n = (u16)((size - off) < 256UL ? (size - off) : 256UL);
-        for (t = 0; t < 5; t++) {
-            rst = rs_read(&f, off, sbuf, n);
-            if (rst == 0)
-                break;
-            DBG(3, rst);
-        }
-        if (rst != 0)
-            return 0;
-        win_set(0, (u8)(first_blk + (u8)(off >> 13)));
-        k_copy(WIN0 + (u16)(off & 0x1FFFu), sbuf, 128);
-        k_copy(WIN0 + (u16)(off & 0x1FFFu) + 128, sbuf + 128, 128);
-    }
-    return size;
-}
-
 /* ---- the code banks */
 
 #define POOL_N ((BANK_POOL_END - BANK_POOL_FIRST) / 2)
 static u8 pool_bank[POOL_N];              /* the bank in pool entry k, 0 = free */
-u8 bank_drive[64];                        /* the drive a bank's file is on (BANKS.IDX, read at start-up) */
 static u8 pool_next;
 
 /* a bank is in use when it is mapped or a caller on the bank stack will come back to it (farcall.asm: 5 bytes an entry,
@@ -70,40 +36,30 @@ static u8 bank_in_use(u8 bank)
 
 u16 api_bankload(u16 bank)
 {
-    char name[9];
+    DaxEntry e;
     u8 k, t;
-    u32 size;
-    name[0] = 'B';
-    name[1] = 'A';
-    name[2] = 'N';
-    name[3] = 'K';
-    name[4] = (char)('0' + bank / 10);
-    name[5] = (char)('0' + bank % 10);
-    name[6] = ' ';
-    name[7] = ' ';
-    name[8] = 0;
     DBG(1, bank);
     for (t = 0; t < POOL_N; t++) {
         k = (u8)((pool_next + t) % POOL_N);
         if (pool_bank[k] == 0 || !bank_in_use(pool_bank[k]))
             break;
     }
-    if (t == POOL_N) {                     /* every bank is on the stack: cannot happen with 12 and a call depth of 5 */
+    if (t == POOL_N) {                     /* every bank is on the stack: cannot happen with 8 and a call depth of 5 */
+        MB_RESULT(29) = 2;
         MB_RESULT(31) = bank;
         MB_STATUS = MB_FAIL;
         eng_halt();
     }
     if (pool_bank[k])
         banktab[pool_bank[k] - 1] = 0;
-    size = eng_read_blocks(name, "BIN", bank_drive[bank], (u8)(BANK_POOL_FIRST + 2 * k));
-    if (size == 0) {
+    if (img_entry("BANK    ", (u8)bank, &e) != 0 || img_read_blocks(e.offset, e.raw, (u8)(BANK_POOL_FIRST + 2 * k)) != 0) {
         MB_RESULT(31) = bank;
-        MB_RESULT(29) = 1;                 /* the bank file is missing or unreadable */
+        MB_RESULT(29) = 1;                 /* the bank is not in the image or cannot be read */
         MB_STATUS = MB_FAIL;
         eng_halt();
     }
     MB_RESULT(7) = (u16)bank;
-    MB_RESULT(8) = (u16)size;
+    MB_RESULT(8) = e.raw;
     MB_RESULT(9) = (u16)(MB_RESULT(9) + 1);
     pool_bank[k] = (u8)bank;
     banktab[bank - 1] = (u8)(BANK_POOL_FIRST + 2 * k);
@@ -282,8 +238,6 @@ u16 api_DaxLoad(const u8 *name, u16 id)
     stage_size = 0;
     name8_of(name, n8);
     st = vol_lookup(n8, (u8)id, &v, &e);
-    if (st != 0 && vol_mount(&vols[1], 1) == 0)          /* a new disk may have been put in the second drive */
-        st = vol_lookup(n8, (u8)id, &v, &e);
     if (st != 0 || e.raw > 0x4000u)
         return 0;
     if (dax_unpack(&v->f, &e, 0, 0, STAGE_BLK, 0, 0) != 0)
@@ -313,11 +267,7 @@ u16 api_FileKnown(const u8 *name)
 {
     char n8[9];
     name8_of(name, n8);
-    if (vol_has(n8))
-        return 1;
-    if (vol_mount(&vols[1], 1) == 0 && vol_has(n8))
-        return 1;
-    return 0;
+    return vol_has(n8);
 }
 
 /* ---- video, text, fills */

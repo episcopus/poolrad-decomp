@@ -35,6 +35,19 @@ u8 rs_mount(u8 drive);                    /* read the FAT; 0 = ok */
 u8 rs_open(RsFile *f, u8 drive, const char *name8, const char *ext3);   /* 0 = ok, 1 = not found, else disk status */
 u8 rs_read(RsFile *f, u32 offset, u8 *dst, u16 n);                       /* 0 = ok */
 
+/* ---- img.c: the game's storage, one image of 256-byte sectors (porting guide D13); the volumes below read it through rs_read
+ * when a file's drive is IMG_DRIVE */
+#define SEC_READ 1
+#define SEC_WRITE 2
+#define IMG_DRIVE 0x7F
+u8 sec_io(u8 cmd, u32 lsn, u16 count, u8 blk, u16 off);   /* between the image and physical RAM; 0 = ok */
+u8 img_read(u32 offset, u8 *dst, u16 n);                  /* bytes of the image into RAM below $8000 or in slot 0 */
+u8 img_read_blocks(u32 offset, u16 nbytes, u8 first_blk); /* offset a multiple of 256, into physical blocks */
+u8 img_write_blocks(u32 offset, u16 nbytes, u8 first_blk);
+u8 img_mount(void);                                       /* read the header and the file table; 0 = ok */
+extern u32 img_save_lsn;                                  /* the saves area (sectors) */
+extern u16 img_save_sectors;
+
 /* ---- rle.asm and dax.c */
 typedef struct Rle {
     u8 *src, *srcend, *dst, *dstend;
@@ -57,9 +70,11 @@ typedef struct Vol {
     RsFile f;
 } Vol;
 extern Vol vols[4];
+extern Vol img_vol;                       /* the image (img.c) as a volume: mounted by img_mount, searched first */
 u8 vol_mount(Vol *v, u8 drive);           /* 0 = ok, 1 = no valid POOLVOL.DAT, else the disk status; reads the index into RAM */
 u8 vol_find(const Vol *v, const char *name8, u8 id, DaxEntry *e);   /* name8: 8 characters, space padded, e.g. "ECL2    "; 0 = found, 1 = file not on this volume, 2 = no such block */
 u8 vol_entry(const Vol *v, u16 i, u8 *file, u8 *id, DaxEntry *e);   /* the i-th index entry, 1 past the end */
+u8 img_entry(const char *name8, u8 id, DaxEntry *e);      /* an object of the image by name and id; 0 = found, 1 = no such file, 2 = no such id */
 u8 vol_has(const char *name8);                                  /* 1 = a mounted volume holds the file */
 u8 vol_lookup(const char *name8, u8 id, Vol **vp, DaxEntry *e);     /* over every mounted volume; 1 = on none of them, 2 = a volume has the file but not the block */
 

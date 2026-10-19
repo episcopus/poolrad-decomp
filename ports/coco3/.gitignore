@@ -4,3 +4,4 @@ build/
 roms/*
 !roms/.gitkeep
 .DS_Store
+ports/coco3/snap/

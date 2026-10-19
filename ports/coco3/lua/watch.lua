@@ -15,6 +15,44 @@ local limit = tonumber(os.getenv("MB_LIMIT") or "120")
 local ram = emu.item(m.devices[":ram"].items["0/m_pointer"])
 
 pcall(function() m.ioport.ports[":screen_config"].fields["Monitor Type"]:set_value(1) end) -- RGB
+-- the storage backend of the development build (porting guide D13): a write tap on the doorbell at $1060 serves sector reads and
+-- writes between the image file (MB_IMG) and physical RAM at once, the status goes to $1061
+local img_path = os.getenv("MB_IMG")
+local img, sec_over = nil, {}
+if img_path and not os.getenv("MB_NOTAP") then
+  local f = assert(io.open(img_path, "rb"))
+  img = f:read("a")
+  f:close()
+  -- the tap object must stay referenced: when the collector frees it MAME removes the tap (or crashes)
+  secreq_tap = mem:install_write_tap(0x1060, 0x1060, "secreq", function(offset, data, mask)
+    local cmd = data & 0xFF
+    if cmd == 0 then return end
+    local lsn = (mem:read_u8(0x1062) << 16) | (mem:read_u8(0x1063) << 8) | mem:read_u8(0x1064)
+    local count = (mem:read_u8(0x1065) << 8) | mem:read_u8(0x1066)
+    local at = mem:read_u8(0x1067) * 0x2000 + ((mem:read_u8(0x1068) << 8) | mem:read_u8(0x1069))
+    local ok = 0
+    if os.getenv("MB_SECLOG") then print(string.format("sec cmd=%d lsn=%d count=%d at=%X t=%.3f pc=%04X", cmd, lsn, count, at, m.time:as_double(), m.devices[":maincpu"].state["PC"].value)); io.stdout:flush() end
+    if (lsn + count) * 256 > #img then ok = 1 end
+    if ok == 0 and cmd == 1 then
+      for s = 0, count - 1 do
+        local sec = sec_over[lsn + s] or img:sub((lsn + s) * 256 + 1, (lsn + s) * 256 + 256)
+        for i = 1, 256 do ram:write(at + s * 256 + i - 1, sec:byte(i)) end
+      end
+    elseif ok == 0 and cmd == 2 then
+      for s = 0, count - 1 do
+        local t = {}
+        for i = 0, 255 do t[#t + 1] = string.char(ram:read(at + s * 256 + i)) end
+        sec_over[lsn + s] = table.concat(t)
+      end
+      local sf = io.open(out .. ".saves", "wb")           -- the written sectors, for the checks: lsn, 256 bytes each
+      for l, d in pairs(sec_over) do sf:write(string.pack(">I4", l), d) end
+      sf:close()
+    else
+      ok = 2
+    end
+    mem:write_u8(0x1061, ok)
+  end)
+end
 emu.wait(2)
 m.natkeyboard:post(cmd .. "\n")
 
