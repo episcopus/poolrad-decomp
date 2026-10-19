@@ -11,7 +11,7 @@ With a probe source, lines of its header comment `r<i> <text> | std=<n>` label t
 import re
 import sys
 
-MAILBOX_PHYS = 0x71000
+MAILBOX_PHYS = 0x70900
 
 
 def main():

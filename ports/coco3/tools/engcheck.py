@@ -50,7 +50,7 @@ def check_irq():
     print("  MAME ticks in 60 frames: %d" % w[16])
     try:
         r = open("build/run/t_irq-xroar.ram", "rb").read()
-        x = words("build/run/t_irq-xroar.ram", 0x71000)
+        x = words("build/run/t_irq-xroar.ram", 0x70900)
         print("  XRoar ticks in 60 frames: %d, keys: %d" % (x[16], x[2]))
     except FileNotFoundError:
         print("  XRoar skipped")
@@ -74,7 +74,7 @@ for cp, (session, label) in spec["mame"].items():
 session, label = spec["xroar"]
 try:
     r = open(f"build/run/{test}-xroar.ram", "rb").read()
-    ok = digest(r[:32000] + r[0x71050:0x71060]) == golden(session, label)
+    ok = digest(r[:32000] + r[0x70950:0x70960]) == golden(session, label)
     bad += not ok
     print(f"  XRoar final screen = {session} {label}: {'equal' if ok else 'DIFFERENT'}")
 except FileNotFoundError:

@@ -49,10 +49,14 @@ boot
         bne     @sh
         ldx     #SHARED_IMG
         ldy     #$0700
+        ldd     ,x++                    the length of the image in bytes (even), then its data
+        leau    d,y
+        pshs    u                       the end of the copy
 @cp     ldd     ,x++
         std     ,y++
-        cmpy    #$0900
+        cmpy    ,s
         bne     @cp
+        leas    2,s
         lda     #$CC
         sta     >_eng_init0             (the shadow of $FF90: after the copy, the image holds zero)
         ldx     #MB_BASE                clear the mailbox

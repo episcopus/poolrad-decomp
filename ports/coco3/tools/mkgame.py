@@ -636,27 +636,7 @@ def build_engine(out, here):
         raise SystemExit("lwasm engsyms: " + r.stderr[:400])
 
 
-def strip_low_records(path):
-    """The shared data lives at $0700..$08FF, where Disk BASIC keeps its buffers (and the file control block of POOL.BIN) until the
-    program takes over: LOADM must not write there. The records between $0600 and $1FFF are taken out of the DECB binary and
-    put, as one image of $0700..$08FF, at $7400; boot.asm copies it into place (SHARED_IMG in mailbox.inc)."""
-    d = path.read_bytes()
-    out, img, i = bytearray(), bytearray(0x200), 0
-    while i < len(d):
-        if d[i] != 0:
-            out += d[i:]
-            break
-        ln, ad = (d[i + 1] << 8) | d[i + 2], (d[i + 3] << 8) | d[i + 4]
-        if 0x0600 <= ad < 0x2000:
-            if ad < 0x0700 or ad + ln > 0x0900:
-                raise SystemExit("a record of the engine at $%04X (%d bytes) is in Disk BASIC's buffers, outside $0700..$08FF" % (ad, ln))
-            img[ad - 0x0700:ad - 0x0700 + ln] = d[i + 5:i + 5 + ln]
-        else:
-            out += d[i:i + 5 + ln]
-        i += 5 + ln
-    exec_rec = bytes(out[-5:])
-    body = bytes(out[:-5])
-    path.write_bytes(body + bytes([0, 0x02, 0x00, 0x74, 0x00]) + bytes(img) + exec_rec)
+from stripbin import strip_low_records  # noqa: E402
 
 
 def obj_dir(out):

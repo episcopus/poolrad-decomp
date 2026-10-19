@@ -301,6 +301,7 @@ static void pic_rd(const Pic *p, u16 rel, u8 *dst, u16 n)
     }
 }
 
+#ifndef ENG_TEST                           /* (what only the game uses: the engine tests of 8.3 and 8.4 are built without it, their disks are small) */
 /* n bytes from src (RAM below $8000) into the picture at `rel` */
 static void pic_wr(const Pic *p, u16 rel, const u8 *src, u16 n)
 {
@@ -345,6 +346,8 @@ void pic_combine(const Pic *s, const Pic *d, u8 op)
         }
     }
 }
+
+#endif
 
 static void pic_zero(const Pic *p, u16 total)
 {
@@ -651,6 +654,7 @@ void db_flush(void)
     db_clear_trackers();
 }
 
+#ifndef ENG_TEST
 /* a row of n bytes mirrored: the bytes in reverse order, the two pixels of each swapped */
 static void mirror_row(u8 *b, u8 n)
 {
@@ -709,3 +713,4 @@ void db_item_clip(const Pic *p, u8 item, s16 col, s16 row, u8 flags, u8 mirror)
             db_hi[uy] = x1;
     }
 }
+#endif

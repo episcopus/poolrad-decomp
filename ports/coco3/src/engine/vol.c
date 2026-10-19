@@ -8,6 +8,7 @@
 #define IDX_MAX 4096
 
 Vol vols[4];
+#ifndef ENG_TEST                            /* (the engine tests of 8.3 and 8.4 are built without the image and what only the game uses: their disks are small) */
 Vol img_vol;
 u32 img_save_lsn;
 u16 img_save_sectors;
@@ -89,6 +90,7 @@ u8 img_entry(const char *name8, u8 id, DaxEntry *e)
 {
     return img_find(name8, id, e);
 }
+#endif
 
 static u8 *idx_ptr(u8 drive)
 {
@@ -199,8 +201,10 @@ u8 vol_has(const char *name8)
 {
     u8 d, base;
     u16 a, b;
+#ifndef ENG_TEST
     if (img_vol.mounted && img_file(name8, &a, &b) != 0xFF)
         return 1;
+#endif
     for (d = 0; d < 4; d++)
         if (vols[d].mounted && file_index(&vols[d], name8, &base) != 0xFF)
             return 1;
@@ -210,6 +214,7 @@ u8 vol_has(const char *name8)
 u8 vol_lookup(const char *name8, u8 id, Vol **vp, DaxEntry *e)
 {
     u8 d, st, seen = 0;
+#ifndef ENG_TEST
     if (img_vol.mounted) {
         st = img_find(name8, id, e);
         if (st == 0) {
@@ -219,6 +224,7 @@ u8 vol_lookup(const char *name8, u8 id, Vol **vp, DaxEntry *e)
         if (st == 2)
             seen = 2;
     }
+#endif
     for (d = 0; d < 4; d++) {
         if (!vols[d].mounted)
             continue;

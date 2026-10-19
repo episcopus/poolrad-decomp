@@ -15,7 +15,7 @@ args = [a for a in args if a != "--ram"]
 path, golden, label = args
 d = open(path, "rb").read()
 if ram:
-    d = d[:32000] + d[0x71050:0x71060]
+    d = d[:32000] + d[0x70950:0x70960]
 want = None
 for line in open(golden):
     k, v = line.split()

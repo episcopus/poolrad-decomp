@@ -127,7 +127,7 @@ clean:
 build/obj/%.o: src/engine/%.asm src/engine/mailbox.inc src/engine/banks.inc
 	@mkdir -p $(@D); $(AS) -o $@ $<
 build/obj/%.o: src/engine/%.c src/engine/mailbox.h
-	@mkdir -p $(@D); $(CC) -o $@ $<
+	@mkdir -p $(@D); $(CC) -DENG_TEST -o $@ $<
 
 # Probes: one C file, the engine boot, no code banks.
 build/probe/%.o: probes/%.c src/engine/mailbox.h
@@ -135,6 +135,7 @@ build/probe/%.o: probes/%.c src/engine/mailbox.h
 build/probe/%.bin build/probe/%.map: build/probe/%.o $(ENGINE_OBJ) build/obj/nobanks.o src/engine/core.link
 	lwlink --format=decb --script=src/engine/core.link --map=build/probe/$*.map \
 	  -o build/probe/$*.bin $(ENGINE_OBJ) build/obj/nobanks.o build/probe/$*.o $(LINKLIBS)
+	python3 -I tools/stripbin.py build/probe/$*.bin
 build/probe/%.dsk: build/probe/%.bin
 	rm -f $@; decb dskini $@; decb copy -2 -b $< $@,PROBE.BIN
 
@@ -149,6 +150,7 @@ build/demo/core.bin build/demo/core.map: build/obj/boot.o build/obj/farcall.o bu
 	  -o build/demo/core.bin build/obj/boot.o build/obj/farcall.o build/demo/demoload.o build/demo/farstubs.o \
 	  build/demo/core.o build/obj/mailbox.o $(LINKLIBS)
 	python3 -I tools/maplimit.py build/demo/core.map program_end 3FFF
+	python3 -I tools/stripbin.py build/demo/core.bin
 # A bank sees the core only through the absolute symbols it references (tools/symexport.py).
 build/demo/bank%syms.asm: build/demo/core.map build/demo/bank%_entries.o build/demo/bank%.o
 	python3 -I tools/symexport.py build/demo/core.map $@ build/demo/bank$*_entries.o build/demo/bank$*.o
@@ -167,7 +169,7 @@ build/demo/demo.dsk: build/demo/demo.bin
 
 # ---------------------------------------------------------------- engine tests (step 8.3)
 POOLRAD_DATA ?= ../../poolrad
-ENG_OBJ := build/obj/boot.o build/obj/mailbox.o build/obj/mmu.o build/obj/disk.o build/obj/irq.o build/obj/rsdos.o build/obj/rle.o build/obj/kernels.o build/obj/vol.o build/obj/img.o build/obj/dax.o build/obj/gfx.o build/obj/nobanks.o
+ENG_OBJ := build/obj/boot.o build/obj/mailbox.o build/obj/mmu.o build/obj/disk.o build/obj/irq.o build/obj/rsdos.o build/obj/rle.o build/obj/kernels.o build/obj/vol.o build/obj/dax.o build/obj/gfx.o build/obj/nobanks.o
 ENG_TESTS := $(filter-out t_vol,$(patsubst src/engtest/%.c,%,$(wildcard src/engtest/t_*.c)))
 T ?= t_disk
 ENG_LIMIT_t_skew := 400
@@ -247,7 +249,8 @@ build/eng/t_vol.o: build/eng/expectvol.h
 build/eng/%.bin build/eng/%.map: build/eng/%.o $(ENG_OBJ) src/engine/core.link
 	lwlink --format=decb --script=src/engine/core.link --map=build/eng/$*.map \
 	  -o build/eng/$*.bin $(ENG_OBJ) build/eng/$*.o $(LINKLIBS)
-	python3 -I tools/maplimit.py build/eng/$*.map program_end 5FFF
+	python3 -I tools/maplimit.py build/eng/$*.map program_end 73FF
+	python3 -I tools/stripbin.py build/eng/$*.bin
 # t_vol2: the program rides on the SET 2 volume itself (drive 0), BASE is drive 1
 build/eng/t_vol2.dsk: build/eng/t_vol2.bin build/data/vol2.dsk
 	cp build/data/vol2.dsk $@; decb copy -2 -b build/eng/t_vol2.bin $@,TEST.BIN
