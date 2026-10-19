@@ -1,7 +1,7 @@
 /* engapi.c: the game's side of the engine's routines (step 8.5d). Most engine routines are called as they are (a stub in the
  * core, tools/mkgame.py: engine_stubs.asm). The ones that take a pointer into the game's memory or give one back are
  * wrapped here: the engine (MMU task 1) sees the stack but not the game's native memory, so a string is copied to this
- * frame and a result comes back as a value. A picture is a handle (1..48) in the low word of the picture variable; 0 is
+ * frame and a result comes back as a value. A picture is a handle (1..128) in the low word of the picture variable; 0 is
  * nil, as the original's pointer. Put8x8Symbol (ovl34) is game code that draws through the engine's picture calls. */
 #include "game.h"
 

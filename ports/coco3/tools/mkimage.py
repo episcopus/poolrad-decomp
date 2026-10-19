@@ -24,11 +24,35 @@ sys.path.insert(0, os.path.join(os.environ.get("REPO", str(HERE.parent.parent.pa
 import mkvolumes  # noqa: E402
 from mkgamedisk import flatten  # noqa: E402
 
-SAVE_SECTORS = 256
+SAVE_SECTORS = 512
 
 
 def name8(n):
     return n.ljust(8).encode("ascii")
+
+
+def seed_saves(data_dir):
+    """The save area (src/game/rtl_file.c's directory) holding the shipped SAVE folder: the saved game and the characters of the
+    original, as the game finds them. 256 sectors; room for the files the game writes later."""
+    area = bytearray(SAVE_SECTORS * 256)
+    d = Path(data_dir) / "SAVE"
+    nxt = 8                                              # the directory takes the first eight 256 byte units
+    ents = []
+    for f in sorted(d.iterdir()) if d.exists() else []:
+        data = f.read_bytes()
+        base, _, ext = f.name.upper().partition(".")
+        cap = min(-(-len(data) // 256) + 1, 255)
+        ents.append((base.ljust(8)[:8] + ext.ljust(3)[:3], nxt, cap, data))
+        area[nxt * 256:nxt * 256 + len(data)] = data
+        nxt += cap
+    if nxt > SAVE_SECTORS:
+        raise SystemExit("mkimage: the shipped saves need %d units, the save area has %d" % (nxt, SAVE_SECTORS))
+    if len(ents) > 127:
+        raise SystemExit("mkimage: too many saved files")
+    area[0:8] = b"PSAV" + struct.pack(">H", nxt) + bytes(2)
+    for i, (name, start, cap, data) in enumerate(ents):
+        area[16 + 16 * i:32 + 16 * i] = name.encode("ascii") + struct.pack(">HBH", start, min(cap, 255), len(data))
+    return bytes(area)
 
 
 def main(data_dir, gamedir, dgroup, out):
@@ -86,7 +110,7 @@ def main(data_dir, gamedir, dgroup, out):
     for i, (e, off) in enumerate(zip(ents, placed)):
         fi, bid, packed, raw, kind, payload = e
         img[ents_off + 10 * i:ents_off + 10 * i + 10] = struct.pack(">BBLHH", fi, bid, off, packed, raw)
-    img += body + bytes(SAVE_SECTORS * 256)
+    img += body + seed_saves(data_dir)
     Path(out).write_bytes(bytes(img))
     print("mkimage: %d files, %d entries, %d sectors (%d KB), saves at sector %d" % (len(files), nent, len(img) // 256, len(img) // 1024, save_lsn))
 

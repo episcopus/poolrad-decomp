@@ -169,6 +169,7 @@ int rtl_eoln(void *f);
 s32 rtl_filepos(void *f);
 s32 rtl_filesize(void *f);
 void rtl_blockread(void *f, void *buf, u16 count, void *result);
+void rtl_swapdesc(void *p, const u16 *d);       /* turn round the words of a buffer BlockRead/BlockWrite moved: {runs, (offset, width, count)...} */
 void rtl_blockwrite(void *f, const void *buf, u16 count, void *result);
 void rtl_file_read(void *f, void *rec);
 void rtl_file_write(void *f, const void *rec);

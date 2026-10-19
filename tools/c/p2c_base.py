@@ -63,15 +63,20 @@ def cstr_literal(s: str) -> str:
 
 def c_bytes(data: bytes) -> str:
     out = ['"']
+    after_octal = False
     for b in data:
         if b == 34:
             out.append('\\"')
+            after_octal = False
         elif b == 92:
             out.append("\\\\")
-        elif 32 <= b < 127 and b != 63:        # '?' avoided (trigraphs)
-            out.append(chr(b))
+            after_octal = False
+        elif 32 <= b < 127 and b != 63 and not (after_octal and 48 <= b <= 55):   # '?' avoided (trigraphs)
+            out.append(chr(b))                 # (a digit after an octal escape is written as one too: CMOC reads more than three digits)
+            after_octal = False
         else:
             out.append("\\%03o" % b)
+            after_octal = True
     out.append('"')
     return "".join(out)
 

@@ -266,7 +266,7 @@ u8 *TwoDigitText(u8 *Result_out, u8 Number)
   u8 ts1[256];
   rtl_str_assign(Digits, 40, ByteToText(ts1, Number));
   if (Number < 10) {
-    rtl_str_assign(Digits, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){S("\0010"), Digits}));
+    rtl_str_assign(Digits, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){S("\001\060"), Digits}));
   }
   rtl_str_assign(Result, 40, rtl_str_copy(ts1, Digits, 1, 2));
   return Result;

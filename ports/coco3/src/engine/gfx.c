@@ -347,6 +347,30 @@ void pic_combine(const Pic *s, const Pic *d, u8 op)
     }
 }
 
+/* UnpackPicturePixels for a piece: n (at most 128) bytes of a block's pixels (4 bits each, two to a byte) at byte rel of item 0.. of
+ * the picture; with a mask the pixels equal to `key` become mask nibbles and are cleared (what pic_load_e does for a loaded block) */
+void pic_put(const Pic *p, u16 rel, const u8 *src, u8 n, u8 key)
+{
+    u8 d[128], m[128], i, v;
+    if ((u16)(rel + n) > (u16)(p->bytesize * p->items))
+        return;
+    key &= 15;
+    for (i = 0; i < n; i++) {
+        v = src[i];
+        m[i] = 0;
+        if (p->moff) {
+            if ((v >> 4) == key)
+                m[i] = 0xF0;
+            if ((v & 15) == key)
+                m[i] = (u8)(m[i] + 0x0F);
+            v = (u8)(v & ~m[i]);
+        }
+        d[i] = v;
+    }
+    pic_wr(p, rel, d, n);
+    if (p->moff)
+        pic_wr(p, (u16)(p->moff + rel), m, n);
+}
 #endif
 
 static void pic_zero(const Pic *p, u16 total)
@@ -396,6 +420,7 @@ u8 pic_load_e(Pic *p, RsFile *f, const DaxEntry *e, u8 key, u8 masked)
         pic_free(p);
         return st;
     }
+    p->x = p->y = 0;
     p->height = (u8)le16(hdr);
     p->wcols = (u8)le16(hdr + 2);
     p->items = hdr[8];
@@ -446,6 +471,7 @@ u8 pic_alloc(Pic *p, u8 height, u8 wcols, u8 items, u8 masked)
     if (st != 0)
         return st;
     p->moff = masked ? size : 0;
+    p->x = p->y = 0;
     p->height = height;
     p->wcols = wcols;
     p->items = items;

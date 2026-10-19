@@ -2,8 +2,8 @@
  *
  *   saves     the files the game writes (SAVE\RAD.CHA, .ITM, .SPC, CHARLIST.TXT, saved games) live in the save area of the image
  *             (img.c: byte addressed through the engine's SaveRead and SaveWrite). The area starts with a directory: a header
- *             ("PSAV", the first free 256 byte unit) and 31 entries of 16 bytes (name as 8 + 3 characters, start unit, size in
- *             units, size in bytes). A file gets its room when it is created (4 KB, 10 KB for .DAT) and keeps it; an erased
+ *             ("PSAV", the first free 256 byte unit) and 127 entries of 16 bytes (name as 8 + 3 characters, start unit, size in
+ *             units, size in bytes). A file gets its room when it is created (4 KB, 15 KB for .DAT) and keeps it; an erased
  *             file's room is not reused (development storage: a real backend decides how, after 8.9).
  *   volumes   the read only game data (DAX files, ITEMS) the engine reads from the image (engapi.c, DaxLoad and DaxRead).
  *
@@ -12,8 +12,8 @@
 #include "pool.h"
 
 extern u16 rtl_ioresult;
-void SaveRead(u16 off, u8 *dst, u8 n);
-void SaveWrite(u16 off, const u8 *src, u8 n);
+void SaveRead(u32 off, u8 *dst, u8 n);
+void SaveWrite(u32 off, const u8 *src, u8 n);
 u16 FileKnown(const u8 *name);
 u16 DaxLoad(const u8 *name, u16 id);
 void DaxRead(u16 off, u8 *dst, u16 n);
@@ -25,9 +25,10 @@ void DaxRead(u16 off, u8 *dst, u16 n);
 #define U_IDX 7        /* the directory entry */
 #define U_KIND 8       /* 1: a volume file, 2: a save file */
 #define U_RW 9         /* 1: opened for writing */
-#define DIR_ENTRIES 31
+#define DIR_ENTRIES 127
 #define DIR_HEAD 16
 #define NAME_LEN 11
+#define SAVE_UNITS 512u       /* the save area of the image: 512 sectors */
 
 static u16 g16(const u8 *p)
 {
@@ -83,6 +84,11 @@ static void base_name(const u8 *path, u8 *out)
         out[1 + i] = path[start + 1 + i];
 }
 
+static u32 usave(u16 unit)
+{
+    return (u32)unit << 8;
+}
+
 static u16 entry_at(u8 idx)
 {
     return (u16)(DIR_HEAD + ((u16)idx << 4));
@@ -93,7 +99,7 @@ static u8 dir_find(const u8 *key, u8 *e)
 {
     u8 i;
     for (i = 0; i < DIR_ENTRIES; i++) {
-        SaveRead(entry_at(i), e, 16);
+        SaveRead((u32)entry_at(i), e, 16);
         if (e[0] != 0 && memcmp(e, key, NAME_LEN) == 0)
             return i;
     }
@@ -103,36 +109,37 @@ static u8 dir_find(const u8 *key, u8 *e)
 /* a file created: its entry (new, or the old one emptied) with room for cap units; the 16 bytes in e */
 static u8 dir_create(const u8 *key, u8 cap, u8 *e)
 {
-    u8 i, h[8], next;
-    SaveRead(0, h, 8);
+    u8 i, h[8];
+    u16 next;
+    SaveRead(0UL, h, 8);
     if (memcmp(h, "PSAV", 4) != 0) {                    /* a save area nobody has used */
         memcpy(h, "PSAV", 4);
-        h[4] = 2;                                        /* the directory takes the first two units */
-        h[5] = h[6] = h[7] = 0;
-        SaveWrite(0, h, 8);
+        h[4] = 0;                                        /* the first free unit (a word): the directory takes the first eight */
+        h[5] = 8;
+        h[6] = h[7] = 0;
+        SaveWrite(0UL, h, 8);
     }
     i = dir_find(key, e);
-    if (i != 0xFF && e[12] >= cap) {
-        p16(e + 13, 0);
-        SaveWrite(entry_at(i), e, 16);
+    if (i != 0xFF && e[13] >= cap) {
+        p16(e + 14, 0);
+        SaveWrite((u32)entry_at(i), e, 16);
         return i;
     }
     for (i = 0; i < DIR_ENTRIES; i++) {                  /* the first free entry */
-        SaveRead(entry_at(i), e, 16);
+        SaveRead((u32)entry_at(i), e, 16);
         if (e[0] == 0)
             break;
     }
-    next = h[4];
-    if (i == DIR_ENTRIES || (u16)next + cap > 256u)
+    next = g16(h + 4);
+    if (i == DIR_ENTRIES || next + cap > SAVE_UNITS)
         rtl_fatal_code(0x40, i);
     memcpy(e, key, NAME_LEN);
-    e[11] = next;
-    e[12] = cap;
-    p16(e + 13, 0);
-    e[15] = 0;
-    SaveWrite(entry_at(i), e, 16);
-    h[4] = (u8)(next + cap);
-    SaveWrite(4, h + 4, 1);
+    p16(e + 11, next);
+    e[13] = cap;
+    p16(e + 14, 0);
+    SaveWrite((u32)entry_at(i), e, 16);
+    p16(h + 4, (u16)(next + cap));
+    SaveWrite(4UL, h + 4, 2);
     return i;
 }
 
@@ -153,9 +160,9 @@ void rtl_assign(void *f, const u8 *name)
 static void open_save(FileRec *r, const u8 *e, u8 idx, u8 rw)
 {
     p16(r->UserData + U_POS, 0);
-    p16(r->UserData + U_START, (u16)((u16)e[11] << 8));
-    memcpy(r->UserData + U_SIZE, e + 13, 2);
-    r->UserData[U_CAP] = e[12];
+    p16(r->UserData + U_START, g16(e + 11));              /* in 256 byte units: the byte address is a long (usave) */
+    memcpy(r->UserData + U_SIZE, e + 14, 2);
+    r->UserData[U_CAP] = e[13];
     r->UserData[U_IDX] = idx;
     r->UserData[U_KIND] = 2;
     r->UserData[U_RW] = rw;
@@ -204,7 +211,17 @@ static void open_write(FileRec *r)
 {
     u8 key[NAME_LEN], e[16], idx, cap;
     dosname(r->Name, key);
-    cap = (key[8] == 'D' && key[9] == 'A' && key[10] == 'T') ? 40 : 16;
+    cap = 16;                                            /* the room of a new file, in 256 byte units, by what it is */
+    if (key[8] == 'D' && key[9] == 'A' && key[10] == 'T')
+        cap = 60;                                        /* a saved game: 13 KB */
+    else if (key[8] == 'T' && key[9] == 'X' && key[10] == 'T')
+        cap = 12;                                        /* the list of characters */
+    else if (key[8] == 'I' && key[9] == 'T')
+        cap = 5;                                         /* the items of a character: 63 bytes each */
+    else if (key[8] == 'S' && key[9] == 'P')
+        cap = 3;                                         /* the affects: 9 bytes each */
+    else if (key[8] == 'S' || key[8] == 'C')
+        cap = 2;                                         /* the character record: 285 bytes */
     idx = dir_create(key, cap, e);
     open_save(r, e, idx, 1);
 }
@@ -251,7 +268,7 @@ void rtl_erase(void *f)
     dosname(r->Name, key);
     idx = dir_find(key, e);
     if (idx != 0xFF)
-        SaveWrite(entry_at(idx), &z, 1);
+        SaveWrite((u32)entry_at(idx), &z, 1);
     else
         rtl_ioresult = 2;
 }
@@ -295,7 +312,7 @@ void rtl_truncate(void *f)
     FileRec *r = (FileRec *)f;
     u16 pos = g16(r->UserData + U_POS);
     p16(r->UserData + U_SIZE, pos);
-    SaveWrite((u16)(entry_at(r->UserData[U_IDX]) + 13), r->UserData + U_SIZE, 2);
+    SaveWrite((u32)entry_at(r->UserData[U_IDX]) + 14, r->UserData + U_SIZE, 2);
 }
 
 void rtl_flush(void *f)
@@ -309,13 +326,14 @@ static u16 rd(FileRec *r, u8 *buf, u16 n)
 {
     u16 pos = g16(r->UserData + U_POS), size = g16(r->UserData + U_SIZE), start = g16(r->UserData + U_START), got = 0, c;
     u8 tmp[64];
+
     if (pos >= size)
         return 0;
     if (n > (u16)(size - pos))
         n = (u16)(size - pos);
     while (got < n) {
         c = (u16)(n - got) < 64 ? (u16)(n - got) : 64;
-        SaveRead((u16)(start + pos + got), tmp, (u8)c);
+        SaveRead(usave(start) + pos + got, tmp, (u8)c);
         memcpy(buf + got, tmp, c);
         got = (u16)(got + c);
     }
@@ -338,14 +356,14 @@ static void wr(FileRec *r, const u8 *buf, u16 n)
     while (done < n) {
         c = (u16)(n - done) < 64 ? (u16)(n - done) : 64;
         memcpy(tmp, buf + done, c);
-        SaveWrite((u16)(start + pos + done), tmp, (u8)c);
+        SaveWrite(usave(start) + pos + done, tmp, (u8)c);
         done = (u16)(done + c);
     }
     pos = (u16)(pos + n);
     p16(r->UserData + U_POS, pos);
     if (pos > size) {
         p16(r->UserData + U_SIZE, pos);
-        SaveWrite((u16)(entry_at(r->UserData[U_IDX]) + 13), r->UserData + U_SIZE, 2);
+        SaveWrite((u32)entry_at(r->UserData[U_IDX]) + 14, r->UserData + U_SIZE, 2);
     }
 }
 
@@ -400,7 +418,7 @@ static int tpeek(FileRec *r)
     u8 c;
     if (r->UserData[U_KIND] != 2 || pos >= g16(r->UserData + U_SIZE))
         return -1;
-    SaveRead((u16)(g16(r->UserData + U_START) + pos), &c, 1);
+    SaveRead(usave(g16(r->UserData + U_START)) + pos, &c, 1);
     return c;
 }
 
@@ -444,9 +462,25 @@ void rtl_read_ln(void *f)
         ;
 }
 
+/* The console (the game's Output when it stops with a message): the harness reads it at $0970, 80 bytes, a line end is a bar */
+#define CON ((u8 *)0x0970)
+static void con_put(const u8 *s, u8 n)
+{
+    u8 i, k = 0;
+    while (k < 78 && CON[k])
+        k++;
+    for (i = 0; i < n && k < 78; i++)
+        CON[k++] = s[i];
+    CON[k] = 0;
+}
+
 void rtl_write_str(void *f, const u8 *s, int width)
 {
     FileRec *r = (FileRec *)f;
+    if (r->UserData[U_KIND] == 0) {
+        con_put(s + 1, s[0]);
+        return;
+    }
     static const u8 sp = ' ';
     int i;
     for (i = s[0]; i < width; i++)
@@ -467,5 +501,9 @@ void rtl_write_char(void *f, u8 c, int width)
 void rtl_write_ln(void *f)
 {
     static const u8 crlf[2] = {13, 10};
+    if (((FileRec *)f)->UserData[U_KIND] == 0) {
+        con_put((const u8 *)"|", 1);
+        return;
+    }
     wr((FileRec *)f, crlf, 2);
 }

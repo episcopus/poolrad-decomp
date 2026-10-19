@@ -127,6 +127,7 @@ typedef struct Pic {
     u16 moff;                             /* of the mask of item 0, from item 0; 0 = no mask */
     u16 bytesize;                         /* bytes of one item: height * wcols * 4 */
     u8 height, wcols, items;
+    u16 x, y;                             /* the sprite's base column and row (LoadSpriteList: the block's X and Y) */
 } Pic;
 u8 pic_load(Pic *p, RsFile *f, u8 id, u8 key, u8 masked);   /* LoadPicture + UnpackPicturePixels; 0 = ok */
 u8 pic_load_e(Pic *p, RsFile *f, const DaxEntry *e, u8 key, u8 masked);   /* the same from a DaxEntry (a volume's index) */
@@ -144,6 +145,7 @@ void gfx_item(const Pic *p, u8 item, u8 col, u8 row);       /* ShowPicture: one 
 void db_init(void);                       /* AllocatePicture + the trackers cleared */
 void db_item(const Pic *p, u8 item, u8 col, u8 row, u8 flags);               /* DrawPictureItem (flags bit 0: masked) */
 void db_item_clip(const Pic *p, u8 item, s16 col, s16 row, u8 flags, u8 mirror);       /* DrawPictureItemClipped */
+void pic_put(const Pic *p, u16 rel, const u8 *src, u8 n, u8 key);   /* n bytes of DAX pixels at rel: the pixels, and the mask of the colour key when the picture has one */
 void pic_combine(const Pic *s, const Pic *d, u8 op);   /* item 0 and its mask: op 0 copy, 1 merge (colours OR, mask AND) */
 void db_fill(s16 col, s16 row, u16 w, u16 h, u8 color);                      /* FillPictureRect (col, w in cells; row, h in pixel rows) */
 void db_flush(void);                      /* FlushPictureChanges */

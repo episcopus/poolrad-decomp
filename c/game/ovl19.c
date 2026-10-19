@@ -236,10 +236,10 @@ void ShowAbilityScore(s8 Index, u8 Highlight)
       if ((*FPD(TCharacter (*), SelectedCharacter)).StrengthPercent > 0) {
         rtl_str_assign(Percentile, 40, ByteToText(ts1, (*FPD(TCharacter (*), SelectedCharacter)).StrengthPercent));
         if ((*FPD(TCharacter (*), SelectedCharacter)).StrengthPercent < ShowAbilityScore_FirstTwoDigitValue) {
-          rtl_str_assign(Percentile, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){S("\0010"), Percentile}));
+          rtl_str_assign(Percentile, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){S("\001\060"), Percentile}));
         }
         if ((*FPD(TCharacter (*), SelectedCharacter)).StrengthPercent == ShowAbilityScore_PercentileMax) {
-          rtl_str_assign(Percentile, 40, S("\00200"));
+          rtl_str_assign(Percentile, 40, S("\002\060\060"));
         }
         DrawTextAt(ShowAbilityScore_PercentileColumn, ShowAbilityScore_ScoreRow, Color, rtl_str_cat(ts1, 3, (const u8 *const[]){S("\001("), Percentile, S("\001)")}));
       }

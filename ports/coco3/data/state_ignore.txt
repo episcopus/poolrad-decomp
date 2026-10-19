@@ -65,3 +65,12 @@ Raw6C91 the spell targets: far pointers (a combatant's address on the PC, on the
 SpellTargets the spell targets: far pointers
 EclStrings a string buffer's tail beyond its length (one byte of old data): not observable
 Raw70C7 SharedLoopIndex: a loop control variable, undefined after the loop in Pascal (12 on the PC, 0 here)
+ReselectCharacter pointer to a character
+ds471A pointers to characters (ViewedCharacter and the bytes after it)
+ViewedCharacter pointer to a character
+ds471D the affect flags of the viewed character, next to its pointer
+TimedAffectFlags the affect flags next to ViewedCharacter's pointer
+SelectedCharacter pointer to a character
+PartyListHead pointer to the first character of the party
+PictureAnimation the sprite list of the area view: picture pointers (handles) in its slots, the rest equal
+ds6ABE the sprite list and the bytes before it: picture pointers (handles)

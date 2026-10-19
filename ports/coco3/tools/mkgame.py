@@ -22,7 +22,7 @@ BANK_BYTES = 0x4000                      # slots 4 and 5
 BANK_LIMIT = BANK_BYTES - 0x180          # room for the entry table (3 bytes an entry) and a margin
 CORE_UNITS = ["pool", "res02", "res04", "res10", "res11"]   # resident
 SKIP_UNITS = {"image", "poolvars", "vmlayout"}
-RTL_BANK = ("rtl_heap", "rtl_file")                     # the runtime that has no variables lives in a bank of its own (the core is small)
+RTL_BANK = ("rtl_heap", "rtl_file", "rtl_strx")                     # the runtime that has no variables lives in a bank of its own (the core is small)
 # Replaced by the engine (step 8.5d): whole units, and routines of units that stay. The engine provides them under the same
 # names; until a routine is written a stub stops the program and says which one was asked for.
 ENGINE_UNITS = ["res07", "res08"]
@@ -32,16 +32,96 @@ ENGINE_ROUTINES = {
     "res06": ["SetEgaFillRegisters", "SetActivePage", "SetPageSegment", "FillPlaneRect", "LoadGameFont", "DrawGlyph"],   # GameClock: rtl_sys.c
     "ovl32": ["Load24x24Set", "DrawCellPicture"],
     "ovl17": ["MergePictureData"],
-    "ovl28": ["LoadSpriteList", "Show3DSprite"],          # read and write the picture record's fields (X, Y, the palette): the rest of ovl28 is game code over the handles
 }
-ENGINE_EXTRA = ["ShowPictureItem", "DaxLoad", "DaxRead", "FileKnown", "DrawIconPic", "PictureCopy", "SaveRead", "SaveWrite"]                       # engine routines the original does not have (called by src/game/engapi.c)
+ENGINE_EXTRA = ["ShowPictureItem", "DaxLoad", "DaxRead", "FileKnown", "DrawIconPic", "PictureCopy", "SaveRead", "SaveWrite", "SetPictureXY", "PictureBytes", "PicData", "DrawSpritePic"]                       # engine routines the original does not have (called by src/game/engapi.c)
 WRAPPED = {"LoadPicture", "AllocatePicture", "ReleasePicture", "RemapPictureColors"}   # engine routines with a wrapper in src/game/engapi.c: the stub is _eng_<Name>
 # Game routines that reach into a picture record (the PC's layout: Tail, Pixels, ByteSize) cannot: a picture is a handle and the
 # pixels are the engine's. These are rewritten after the translation to say the same thing through the engine (step 8.5; the
 # whitepaper's 4.2.3 and the routines' own comments name what each does). "fn" replaces a whole function, "between" the lines from
 # one marker through another (inclusive) in one function.
-PATCH_DECLS = "void DrawIconPic(u16 h, s16 col, s16 row, u8 mirror);\nvoid PictureCopy(u16 src, u16 dst);\n"
+PATCH_DECLS = ("void DrawIconPic(u16 h, s16 col, s16 row, u8 mirror);\nvoid PictureCopy(u16 src, u16 dst);\nvoid SetPictureXY(u16 h, u16 x, u16 y);\n"
+               "u16 PictureBytes(u16 h);\nvoid PicData(u16 h, u16 rel, const u8 *buf, u8 n, u8 key);\nvoid DrawSpritePic(u16 h);\nu16 DaxLoad(const u8 *name, u16 id);\nvoid DaxRead(u16 off, u8 *dst, u16 n);\n")
 PATCHES = {
+    # ovl28 LoadSpriteList and Show3DSprite: the picture record's X and Y, ByteSize and pixels are the engine's (handles), and the PIC
+    # block of the camp (7,787 bytes) does not fit a page of the banked heap: LoadSpriteList reads the block from the engine's stage
+    # (DaxLoad, DaxRead) as it goes instead of copying it first; the sprite list is worked on as a local copy.
+    "ovl28": [
+        ("fn", "LoadSpriteList", """void LoadSpriteList(const u8 *Name_in, u8 Bank, u8 Mode, PSpriteList List)
+{
+  POOL_TRACE("LoadSpriteList");
+  const u8 *Name = Name_in;
+  TSpriteList L;
+  u16 Size = 0, Offset, Height, WidthCols, Row, k, c, q, h;
+  u8 I, Loaded = 0, Count, IsPicOrFinal, PrevAllocated = 0, Digit[2], tmp[128], tmp2[128], ts1[10];
+  farptr Prev = 0;
+  memset((struct PA_u8_2 *)Digit, 0, sizeof(Digit));
+  if (((rtl_str_cmp(Name, LastSpriteFile) == 0)) && ((Bank == LastSpriteBank))) {
+    return;
+  }
+  FreeSpriteList(rtl_far(&(*FPD(TSpriteList *, List))));
+  rtl_str_assign(LastSpriteFile, 8, Name);
+  LastSpriteBank = Bank;
+  IsPicOrFinal = (((rtl_str_cmp(Name, S("\003PIC")) == 0)) || ((rtl_str_cmp(Name, S("\005FINAL")) == 0)));
+  rtl_str_int(Digit, 1, TileSet, 0);
+  Size = DaxLoad(rtl_str_cat_v(ts1, 2, Name, Digit), Bank);
+  if (Size == 0) {
+    return;
+  }
+  L = (*FPD(TSpriteList *, List));
+  DaxRead(0, tmp, 1);
+  Count = tmp[0];
+  if ((rtl_str_cmp(Name, S("\003PIC")) == 0) && Bank == 1 && Count > PicBlock1Sprites)
+    Count = PicBlock1Sprites;
+  Offset = 1;
+  L.Flag = 1;
+  for (I = 1; I <= Count; I++) {
+    DaxRead(Offset, L.Slots[I - 1].Data, 4);
+    DaxRead((u16)(Offset + 4), tmp, 4);
+    Height = (u16)((u16)tmp[0] | ((u16)tmp[1] << 8));
+    WidthCols = (u16)((u16)tmp[2] | ((u16)tmp[3] << 8));
+    Offset = (u16)(Offset + 8);
+    if ((s32)rtl_MaxAvail() >= FreeMemoryFloor) {
+      Loaded++;
+      AllocatePicture(Height, WidthCols, 1, Mode, (void *)&L.Slots[I - 1].Sprite);
+      h = (u16)L.Slots[I - 1].Sprite;
+      DaxRead(Offset, tmp, 4);
+      SetPictureXY(h, (u16)((u16)tmp[0] | ((u16)tmp[1] << 8)), (u16)((u16)tmp[2] | ((u16)tmp[3] << 8)));
+      Offset = (u16)(Offset + 13);                       /* X, Y, a skipped byte, the 8 palette bytes (not used here) */
+      Row = (u16)(PictureBytes(h) - 1);
+      if (IsPicOrFinal && I == 1) {                      /* PIC and FINAL are stored as differences from the first picture */
+        Prev = rtl_getmem((u16)(Row + 1));
+        for (k = 0; k <= Row; k = (u16)(k + c)) {
+          c = (u16)(Row + 1 - k) < 128 ? (u16)(Row + 1 - k) : 128;
+          DaxRead((u16)(Offset + k), tmp, c);
+          rtl_Move(tmp, (void *)&FPD(struct PA_u8_1 *, Prev)->a[k], c);
+        }
+        PrevAllocated = 1;
+      }
+      for (k = 0; k <= Row; k = (u16)(k + c)) {
+        c = (u16)(Row + 1 - k) < 128 ? (u16)(Row + 1 - k) : 128;
+        DaxRead((u16)(Offset + k), tmp, c);
+        if (IsPicOrFinal && I != 1) {
+          rtl_Move((void *)&FPD(struct PA_u8_1 *, Prev)->a[k], tmp2, c);
+          for (q = 0; q < c; q++)
+            tmp[q] ^= tmp2[q];
+        }
+        PicData(h, k, tmp, (u8)c, 0);
+      }
+      if (((Mode & 1) > 0) && ((s16)VideoAdapter != AdapterCga)) {
+        RemapPictureColors(rtl_far(&SpriteRemapFrom), rtl_far(&SpriteRemapTo), 0, 0, L.Slots[I - 1].Sprite);
+      }
+      Offset = (u16)(Offset + Row + 1);
+    }
+  }
+  L.Count = Loaded;
+  (*FPD(TSpriteList *, List)) = L;
+  if (IsPicOrFinal && PrevAllocated)
+    rtl_freemem(Prev, (u16)(Row + 1));
+  FlushKeyboard();
+}"""),
+        ("between", "Show3DSprite", "    {\n      TSpritePicture *w1", "    }\n  } else {\n",
+         "    DrawSpritePic((u16)List.Slots[Slot - 1].Sprite);\n  } else {\n"),
+    ],
     "ovl32": [("fn", "DrawIcon", """void DrawIcon(s8 CellCol, s8 CellRow, u8 IconSet, u8 Mirror, u8 PicIndex)
 {
   /* ovl32:04FC: the original copies the picture (mirrored above icon set 3) into a new one, blits it and frees it */
@@ -62,7 +142,14 @@ def patch_unit(u, text):
         return text
     text = text.replace('#include "game.h"\n', '#include "game.h"\n' + PATCH_DECLS, 1)
     for p in PATCHES[u]:
-        if p[0] == "fn":
+        if p[0] == "before":
+            items = parse_items(text)
+            hit = [i for i, it in enumerate(items) if it[0] == "fn" and it[1] == p[1]]
+            if len(hit) != 1:
+                raise SystemExit("patch %s: %s not found once" % (u, p[1]))
+            items.insert(hit[0], ("other", p[2]))
+            text = "\n".join(it[1] if it[0] == "other" else it[3] for it in items) + "\n"
+        elif p[0] == "fn":
             items = parse_items(text)
             hit = [i for i, it in enumerate(items) if it[0] == "fn" and it[1] == p[1]]
             if len(hit) != 1:
@@ -392,6 +479,9 @@ def main(argv):
             for n in routine_names((gen / (u + ".c")).read_text()):
                 if n not in CORE_ROUTINES.get(u, []) and n not in ENGINE_ROUTINES.get(u, []):
                     fn_unit[n] = u
+    for stem in RTL_BANK:                                   # the runtime bank is a bank too: its routines see only its constants
+        for m in re.finditer(r"^[A-Za-z_][\w ]*?[ *](rtl_\w+)\(", (here / "src/game" / (stem + ".c")).read_text(), re.M):
+            fn_unit[m.group(1)] = "rtl"
     core = []
     for u in units:
         src = gen / (u + ".c")
@@ -620,8 +710,8 @@ def build_engine(out, here):
     end = max(a + n for _, a, n in sec if a >= 0x2000)
     print("engine: %d routines of the game (%d written), ends at $%04X (%d bytes from $2000)" %
           (len(names), len(have & set(names)), end, end - 0x2000))
-    if end > 0x7400:
-        raise SystemExit("the engine ends at $%04X, past the image of the shared data at $7400" % end)
+    if end > 0x7C00:
+        raise SystemExit("the engine ends at $%04X, past the image of the shared data at $7C00" % end)
     sys.path.insert(0, str(here / "tools"))
     import symexport
     syms = symexport.read_map(str(out / "pool.map"))
@@ -699,8 +789,8 @@ def link_all(out, here, banks, ids, info, core, entries):
            re.finditer(r"^Section: (\S+) \((.*?)\) load at ([0-9A-Fa-f]+), length ([0-9A-Fa-f]+)", (out / "core.map").read_text(), re.M)]
     end = max(a + n for _, a, n in sec)
     print("core: ends at $%04X (%d bytes from $2000); %d symbols still missing" % (end, end - 0x2000, len(missing)))
-    if end > 0x5400:
-        raise SystemExit("the core ends at $%04X, past the heap tables at $5400 (src/game/coco_map.h)" % end)
+    if end > 0x4C80:
+        raise SystemExit("the core ends at $%04X, past the heap tables at $4C80 (src/game/coco_map.h)" % end)
     for m in missing:
         print("   missing", m)
     # the banks

@@ -38,7 +38,7 @@ NAT_BASE = 0x0000                                          # DS offsets of the h
 VM_BASE = 0x2000
 # --coco: the DS offsets are the CoCo's addresses (a native global at offset o is at address o, a block of the mapped heap
 # likewise) and the paged globals live at offsets from $8000 up, which no address of the map is used for.
-COCO_NAT_BASE = 0x5600
+COCO_NAT_BASE = 0x4DD0
 COCO_VM_BASE = 0x8000
 CONST_END = 0x43DC
 # System unit variables and the Input/Output records the runtime reads and writes itself: always native
@@ -57,7 +57,9 @@ def parse_plan(path):
 #   (POOLVARS, whitepaper 5.8: the Human row of the class menu is read from there; found when the class list came up empty)
 #   ExperienceTable [0,0] and [0,1] (8 bytes) are not experience values: the first real one is [0,2] = 1501 (the cleric's level 2);
 #   the bytes are the tail of ConstitutionHitPointTable (indexes 13..18, declared 19 long, stored on into the next storage)
-NOSWAP = [("StartingAgeTable", 0, 28), ("ExperienceTable", 0, 8)]
+#   SpecialBlocks entry 0 (4 bytes) is never read (OVL29 DrawAreaView tests entries 1..9); its bytes are WallViewIdTable[10..13], found
+#   when the ceiling of the 3D view came out red (index 11 read the byte of index 10)
+NOSWAP = [("StartingAgeTable", 0, 28), ("ExperienceTable", 0, 8), ("SpecialBlocks", 0, 4)]
 
 
 def write_image(out, gen, clusters, nat_end, npages):

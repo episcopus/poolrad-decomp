@@ -210,6 +210,7 @@ int rtl_eoln(void *f);
 s32 rtl_filepos(void *f);
 s32 rtl_filesize(void *f);
 void rtl_blockread(void *f, void *buf, u16 count, void *result);
+#define rtl_swapdesc(p, d) ((void)(d))          /* the CoCo turns the words of what BlockRead and BlockWrite move; the host does not (little endian) */
 void rtl_blockwrite(void *f, const void *buf, u16 count, void *result);
 void rtl_file_read(void *f, void *rec);
 void rtl_file_write(void *f, const void *rec);

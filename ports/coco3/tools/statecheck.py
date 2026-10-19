@@ -62,7 +62,7 @@ def host_state(session, outdir):
     return save, os.path.join(outdir, "x-snap.dgroup")
 
 
-SNAP = {"create-character": 616000}                # a read in the last idle stretch of the session (the main menu again)
+SNAP = {"create-character": 616000, "walk-explore": 1580000, "camp-save": 1400000, "camp-rest-combat": 0, "parley-combat": 0}                # a read in the last idle stretch of the session (the main menu again)
 
 
 def save_files(prefix):
@@ -79,40 +79,52 @@ def save_files(prefix):
                 area[(lsn - save_lsn) * 256:(lsn - save_lsn + 1) * 256] = d[i + 4:i + 260]
     files = {}
     if area[0:4] == b"PSAV":
-        for i in range(31):
+        for i in range(127):
             e = area[16 + 16 * i:32 + 16 * i]
             if e[0]:
                 name = e[:8].decode("ascii").strip() + "." + e[8:11].decode("ascii").strip()
-                start, size = e[11] * 256, struct.unpack(">H", e[13:15])[0]
+                start, size = struct.unpack(">H", e[11:13])[0] * 256, struct.unpack(">H", e[14:16])[0]
                 files[name] = bytes(area[start:start + size])
     return files
 
 
 def check_files(prefix, hostsave):
+    """The files the session wrote against the host's. The game writes them in the PC's byte order (BlockWrite turns the words round
+    before and after, tools/c p2c_builtin.py), so they are compared byte for byte except the pointers of a record (addresses of two
+    different heaps)."""
     h = open(os.path.join(ROOT, "c/game/game.h")).read()
-    char, size = struct_fields(h, "TCharacter")
+    kinds = {}
+    for ext, t in ((".SAV", "TCharacter"), (".CHA", "TCharacter"), (".ITM", "TMenuLine"), (".SPC", "TAffect")):
+        kinds[ext] = struct_fields(h, t)
     ours = save_files(prefix)
     bad = 0
     ref = {}
     for dp, _, fs in os.walk(hostsave):
         for f in fs:
             ref[f.upper()] = open(os.path.join(dp, f), "rb").read()
+    shipped = {}
+    sd = os.path.join(ROOT, "poolrad/SAVE")
+    if os.path.isdir(sd):
+        for f in os.listdir(sd):
+            shipped[f.upper()] = open(os.path.join(sd, f), "rb").read()
     for name in sorted(set(ours) | set(ref)):
         a, b = ours.get(name), ref.get(name)
+        if a is not None and a == shipped.get(name) and (b is None or b == a):
+            continue                                        # a file of the shipped game the session did not change
         if a is None or b is None:
             print("  file %-12s %s" % (name, "missing on the CoCo" if a is None else "not written by the original"))
             bad += 1
             continue
-        if name.endswith(".CHA") and len(a) == len(b) == size:
+        ext = os.path.splitext(name)[1]
+        if ext in kinds and len(a) == len(b):
+            fields, size = kinds[ext]
             diff = []
-            for off, w, isptr in char:
-                if isptr:
-                    continue
-                x = a[off:off + w][::-1]
-                if x != b[off:off + w]:
-                    diff.append(off)
+            for r in range(0, len(a) - size + 1, size):
+                for off, w, isptr in fields:
+                    if not isptr and a[r + off:r + off + w] != b[r + off:r + off + w]:
+                        diff.append(r + off)
             ok = not diff
-            print("  file %-12s %d bytes, character record: %s" % (name, len(a), "equal (words turned, pointers left out)" if ok else "differs at %s" % diff))
+            print("  file %-12s %4d bytes, %d record(s): %s" % (name, len(a), len(a) // size, "equal (pointers left out)" if ok else "differs at %s" % diff[:6]))
         else:
             ok = a == b
             print("  file %-12s %d bytes: %s" % (name, len(a), "equal" if ok else "DIFFERS (%d against %d bytes)" % (len(a), len(b))))

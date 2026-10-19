@@ -178,10 +178,14 @@ class BuiltinMixin:
 
     def bi_trunc(self, a, n):
         e = self.ex(a[0])
+        if self.coco and e.ty.kind != "real":      # the CoCo has no floating point: Trunc of an integer is the integer
+            return E("(s32)%s" % self.paren(e), P.LONGINT)
         return E("rtl_trunc(%s)" % self.real(e), P.LONGINT)
 
     def bi_round(self, a, n):
         e = self.ex(a[0])
+        if self.coco and e.ty.kind != "real":
+            return E("(s32)%s" % self.paren(e), P.LONGINT)
         return E("rtl_round(%s)" % self.real(e), P.LONGINT)
 
     def bi_ptr(self, a, n):
@@ -350,7 +354,39 @@ class BuiltinMixin:
             bp = "(void *)&%s" % self.paren(buf)
         cnt = self.ex(a[2]).code
         res = "&%s" % self.paren(self.ex(a[3])) if len(a) > 3 else "NULL"
-        return E("%s(&%s, %s, %s, %s)" % (fn, self.paren(f), bp, cnt, res), P.VOID)
+        call = "%s(&%s, %s, %s, %s)" % (fn, self.paren(f), bp, cnt, res)
+        swd = self.swap_descriptor(buf.ty) if self.coco else None
+        if swd:                                   # a big endian machine: the file's little endian words are turned round in memory
+            swap = "rtl_swapdesc(%s, %s)" % (bp, swd)
+            if fn == "rtl_blockread":
+                call = "%s, %s" % (call, swap)
+            else:
+                call = "%s, %s, %s" % (swap, call, swap)      # (in place, and back: the record stays in use)
+        return E(call, P.VOID)
+
+    def swap_descriptor(self, ty):
+        """The name of a constant table (count, then offset, width, count of each run of multi-byte scalars) of the type of a
+        buffer BlockRead or BlockWrite moves, emitted once in the unit; None when the type has none."""
+        try:
+            runs = ty.swaps()
+        except Exception:
+            return None
+        if not runs:
+            return None
+        merged = []
+        for o, w, c in runs:                      # runs that continue each other are one
+            if merged and merged[-1][1] == w and merged[-1][0] + merged[-1][1] * merged[-1][2] == o:
+                merged[-1] = (merged[-1][0], w, merged[-1][2] + c)
+            else:
+                merged.append((o, w, c))
+        key = tuple(merged)
+        tab = self.unit.__dict__.setdefault("swap_tabs", {})
+        if key not in tab:
+            name = "swd_%s_%d" % (self.unit.name.lower() if hasattr(self.unit, "name") else "u", len(tab))
+            tab[key] = name
+            vals = [len(merged)] + [x for r in merged for x in r]
+            self.unit.c.append("static const u16 %s[] = {%s};" % (name, ", ".join(str(v) for v in vals)))
+        return tab[key]
 
     # ---- text i/o -------------------------------------------------------------------------------------------
     def text_target(self, a):

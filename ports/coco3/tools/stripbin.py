@@ -7,7 +7,7 @@ from pathlib import Path
 def strip_low_records(path):
     """The shared data lives at $0700..$08FF, where Disk BASIC keeps its buffers (and the file control block of POOL.BIN) until the
     program takes over: LOADM must not write there. The records between $0600 and $1FFF are taken out of the DECB binary and
-    put, as one image of $0700..$08FF, at $7400; boot.asm copies it into place (SHARED_IMG in mailbox.inc)."""
+    put, as one image of $0700..$08FF, at $7700; boot.asm copies it into place (SHARED_IMG in mailbox.inc)."""
     d = path.read_bytes()
     out, img, i, used = bytearray(), bytearray(0x200), 0, 0
     while i < len(d):
@@ -27,7 +27,7 @@ def strip_low_records(path):
     body = bytes(out[:-5])
     n = (used + 1) & ~1                                       # the image is its length (a word) and the data up to the last record's end
     blob = bytes([n >> 8, n & 255]) + bytes(img[:n])
-    path.write_bytes(body + bytes([0, len(blob) >> 8, len(blob) & 255, 0x74, 0x00]) + blob + exec_rec)
+    path.write_bytes(body + bytes([0, len(blob) >> 8, len(blob) & 255, 0x7C, 0x00]) + blob + exec_rec)
 
 
 if __name__ == "__main__":

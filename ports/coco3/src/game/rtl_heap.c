@@ -125,3 +125,15 @@ void rtl_freemem(farptr p, u16 size)
     rel = (((u32)seg << 4) + off) - 0x2C7C0UL;
     release(bblk, &nb, (u16)rel);
 }
+
+/* MaxAvail and MemAvail: the PC's heap had hundreds of kilobytes free in every recorded session and the game only asks whether a
+ * sprite fits (ovl28 FreeMemoryFloor): the CoCo's pictures are the engine's, so the answer is "plenty" */
+s32 rtl_MaxAvail(void)
+{
+    return 200000L;
+}
+
+s32 rtl_MemAvail(void)
+{
+    return 200000L;
+}

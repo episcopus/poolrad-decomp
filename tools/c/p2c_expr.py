@@ -783,7 +783,28 @@ class ExprMixin:
         for p, a in zip(params, args):
             out.append(self.arg_pass(p, a, n))
         code = "%s(%s)" % (s.cname, ", ".join(out))
+        if self.coco and s.name.lower() == "move" and len(args) == 3:
+            code = self.move_swaps(code, out, args)
         return E(code, s.ret if s.ret is not None else P.VOID)
+
+    def move_swaps(self, code, out, args):
+        """Move(Source, Dest, 2 or 4) between a byte buffer and a word, long or pointer variable (a value as a file or a DAX block
+        has it, little endian): the CoCo's variable is big endian, so the value is turned round after (into a variable) or around
+        (out of one) the copy."""
+        cnt = self.ex(args[2]).code
+        if not cnt.isdigit() or int(cnt) not in (2, 4):
+            return code
+        try:
+            sty, dty = self.ex(args[0]).ty, self.ex(args[1]).ty
+        except TransError:
+            return code
+        scalar = lambda t: t.kind in ("int", "enum", "ptr") and t.size() == int(cnt)
+        if scalar(dty) and not scalar(sty):
+            return "%s, rtl_swapdesc(%s, %s)" % (code, out[1], self.swap_descriptor(dty))
+        if scalar(sty) and not scalar(dty):
+            d = self.swap_descriptor(sty)
+            return "rtl_swapdesc(%s, %s), %s, rtl_swapdesc(%s, %s)" % (out[0], d, code, out[0], d)
+        return code
 
     def static_link(self, s: Sym) -> str:
         """The frame pointer to pass to nested routine s: the frame of its parent."""

@@ -225,6 +225,13 @@ first-light:
 	$(MAKE) game-run S=create-character LIMIT=700
 	$(MAKE) game-state S=create-character
 
+# step 8.6: the exploration sessions on the CoCo, screens and state
+exploration:
+	$(MAKE) game-run S=walk-explore LIMIT=500
+	$(MAKE) game-state S=walk-explore
+	$(MAKE) game-run S=camp-save LIMIT=500
+	$(MAKE) game-state S=camp-save
+
 # ---------------------------------------------------------------- data pipeline (step 8.4)
 data:
 	@python3 -I tools/mkvolumes.py $(POOLRAD_DATA) build/data >/dev/null
@@ -249,7 +256,7 @@ build/eng/t_vol.o: build/eng/expectvol.h
 build/eng/%.bin build/eng/%.map: build/eng/%.o $(ENG_OBJ) src/engine/core.link
 	lwlink --format=decb --script=src/engine/core.link --map=build/eng/$*.map \
 	  -o build/eng/$*.bin $(ENG_OBJ) build/eng/$*.o $(LINKLIBS)
-	python3 -I tools/maplimit.py build/eng/$*.map program_end 73FF
+	python3 -I tools/maplimit.py build/eng/$*.map program_end 7BFF
 	python3 -I tools/stripbin.py build/eng/$*.bin
 # t_vol2: the program rides on the SET 2 volume itself (drive 0), BASE is drive 1
 build/eng/t_vol2.dsk: build/eng/t_vol2.bin build/data/vol2.dsk

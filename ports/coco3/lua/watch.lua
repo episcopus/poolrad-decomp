@@ -17,6 +17,7 @@ local ram = emu.item(m.devices[":ram"].items["0/m_pointer"])
 pcall(function() m.ioport.ports[":screen_config"].fields["Monitor Type"]:set_value(1) end) -- RGB
 -- the storage backend of the development build (porting guide D13): a write tap on the doorbell at $0960 serves sector reads and
 -- writes between the image file (MB_IMG) and physical RAM at once, the status goes to $0961
+last_io = 0                                          -- when the game last used the storage (the session driver waits it out)
 local img_path = os.getenv("MB_IMG")
 local img, sec_over = nil, {}
 if img_path and not os.getenv("MB_NOTAP") then
@@ -27,6 +28,7 @@ if img_path and not os.getenv("MB_NOTAP") then
   secreq_tap = mem:install_write_tap(0x0960, 0x0960, "secreq", function(offset, data, mask)
     local cmd = data & 0xFF
     if cmd == 0 then return end
+    last_io = m.time:as_double()
     local lsn = (mem:read_u8(0x0962) << 16) | (mem:read_u8(0x0963) << 8) | mem:read_u8(0x0964)
     local count = (mem:read_u8(0x0965) << 8) | mem:read_u8(0x0966)
     local at = mem:read_u8(0x0967) * 0x2000 + ((mem:read_u8(0x0968) << 8) | mem:read_u8(0x0969))
@@ -44,9 +46,6 @@ if img_path and not os.getenv("MB_NOTAP") then
         for i = 0, 255 do t[#t + 1] = string.char(ram:read(at + s * 256 + i)) end
         sec_over[lsn + s] = table.concat(t)
       end
-      local sf = io.open(out .. ".saves", "wb")           -- the written sectors, for the checks: lsn, 256 bytes each
-      for l, d in pairs(sec_over) do sf:write(string.pack(">I4", l), d) end
-      sf:close()
     else
       ok = 2
     end
@@ -98,7 +97,7 @@ if os.getenv("MB_SESSION") then
     local cmd, arg = line:match("^%s*(%a+)%s*(.-)%s*$")
     if cmd == "key" or cmd == "press" then
       local code = KEYCODES[arg:upper()] or (#arg == 1 and arg:byte())
-      if code then script[#script + 1] = {"keys", {code}} else print("session: unknown key " .. arg) end
+      if code then script[#script + 1] = {"keys", {code}, cmd == "press"} else print("session: unknown key " .. arg) end
     elseif cmd == "text" then
       local t = {}
       for c in arg:gmatch(".") do t[#t + 1] = c:byte() end
@@ -109,6 +108,7 @@ if os.getenv("MB_SESSION") then
   end
 end
 local si, still_since, seed_due = 1, 0, false
+local last_press = -10
 local inject, inject_at = {}, 0                      -- keys on their way into the queue, one every KEYGAP seconds
 local KEYGAP = tonumber(os.getenv("MB_KEYGAP") or "0.4")
 local function kq_push(code)
@@ -130,7 +130,9 @@ local function drive(now, changed)
     end
     return
   end
-  if si > #script or now - still_since < STILL or now - poll_at > 0.3 then return end
+  if si > #script or now - poll_at > 0.3 or m.time:as_double() - last_io < 3.0 then return end   -- (a save or a load in progress)
+  if now - still_since < STILL and not script[si][3] then return end   -- (`press`: an animated screen never stays still)
+  if script[si][3] and now - last_press < 2.0 then return end
   if seed_due then                                  -- the main menu after the wheel has settled: line the generator up
     seed_due = false
     for i = 0, 3 do ram:write(core_phys(syms.rand_seed) + i, (WHEEL_SEED >> (24 - 8 * i)) & 0xFF) end
@@ -147,6 +149,7 @@ local function drive(now, changed)
     seed_due = true
   else
     print(string.format("session: %.1f s: keys %s", now, table.concat(c[2], " ")))
+    if c[3] then last_press = now end
     for _, code in ipairs(c[2]) do inject[#inject + 1] = code end
   end
   si = si + 1
@@ -229,8 +232,8 @@ do   -- the paged globals (physical blocks $10..$13) and the native area of the 
 end
 if syms.pics then   -- the engine's picture table (task 1: slots 1..3 are the blocks $39..$3B, the engine's code and data from $2000)
   local pf = io.open(out .. ".pictab", "wb")
-  pf:write(ram:read_block(0x39 * 0x2000 + syms.pics - 0x2000, 48 * 10))
-  pf:write(ram:read_block(0x39 * 0x2000 + syms.pic_live - 0x2000, 48))
+  pf:write(ram:read_block(0x39 * 0x2000 + syms.pics - 0x2000, 128 * 14))
+  pf:write(ram:read_block(0x39 * 0x2000 + syms.pic_live - 0x2000, 128))
   pf:close()
 end
 do   -- DrawBuf (physical blocks 4 and 5)
@@ -254,6 +257,15 @@ do   -- a probe (tools/mkgame.py DEBUG_PATCH): eight words at $0F30, the count a
   local t = {}
   for i = 0, 7 do t[#t + 1] = string.format("%04X", mem:read_u16(0x0850 + 2 * i)) end
   print("probe " .. mem:read_u8(0x085F) .. ": " .. table.concat(t, " "))
+end
+do   -- what the game wrote to its console (Output) before it stopped: rtl_file.c, $0970
+  local t = {}
+  for a = 0x0970, 0x09BD do
+    local c = mem:read_u8(a)
+    if c == 0 then break end
+    t[#t + 1] = string.char(c)
+  end
+  if #t > 0 then print("console: " .. table.concat(t)) end
 end
 do   -- the engine's event log (src/engine/mailbox.h DBG)
   local n = mem:read_u8(0x08E0)
@@ -293,5 +305,10 @@ do
   for i = 0, 31 do u[#u + 1] = string.format("%02X", mem:read_u8(sp + i)) end
   print("stack " .. table.concat(u, " "))
   print(string.format("FC_TASK=%d dp8B=%02X", mem:read_u8(0x0909), mem:read_u8(0x8B)))
+end
+do   -- the written sectors, for the checks (tools/statecheck.py): lsn (4 bytes), 256 bytes each
+  local sf = io.open(out .. ".saves", "wb")
+  for l, d in pairs(sec_over) do sf:write(string.pack(">I4", l), d) end
+  sf:close()
 end
 m:exit()

@@ -2084,11 +2084,11 @@ void DrawLocationLine(void)
   }
   rtl_str_assign(Hours, 2, WordToText(ts1, (*FPD(TVmWords4900 (*), VarsAt4900))[201]));
   if (Hours[0] < 2) {
-    rtl_str_assign(Hours, 2, rtl_str_cat(ts1, 2, (const u8 *const[]){S("\0010"), Hours}));
+    rtl_str_assign(Hours, 2, rtl_str_cat(ts1, 2, (const u8 *const[]){S("\001\060"), Hours}));
   }
   rtl_str_assign(Minutes, 2, WordToText(ts1, (u16)((10 * (*FPD(TVmWords4900 (*), VarsAt4900))[200]) + (*FPD(TVmWords4900 (*), VarsAt4900))[199])));
   if (Minutes[0] < 2) {
-    rtl_str_assign(Minutes, 2, rtl_str_cat(ts1, 2, (const u8 *const[]){S("\0010"), Minutes}));
+    rtl_str_assign(Minutes, 2, rtl_str_cat(ts1, 2, (const u8 *const[]){S("\001\060"), Minutes}));
   }
   if ((*FPD(TGameVars (*), GameVars))[251] == 0) {
     rtl_str_assign(Line, 40, rtl_str_cat(ts3, 4, (const u8 *const[]){ByteToText(ts1, Col), S("\001,"), ByteToText(ts2, Row), S("\001 ")}));

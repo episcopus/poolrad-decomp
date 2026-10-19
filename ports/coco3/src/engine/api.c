@@ -78,7 +78,7 @@ void api_unimpl(void)
 
 /* ---- pictures */
 
-#define NPIC 48
+#define NPIC 128
 #define H_DRAWBUF 0x7F01u                 /* DrawBuf, the staging buffer of gfx.c: not a Pic */
 Pic pics[NPIC];
 u8 pic_live[NPIC];
@@ -219,24 +219,54 @@ void api_MergePictureData(u32 src, u32 dst)
 
 /* The save area of the image (the game's files: rtl_file.c keeps a directory in it): byte addressed, at most 128 bytes a call,
  * the buffer in the caller's frame (the shared stack). A failure stops the program with the code 0xF3. */
-void api_SaveRead(u16 off, u8 *dst, u8 n)
+void api_SaveRead(u32 off, u8 *dst, u8 n)
 {
     if ((u16)(off >> 8) >= img_save_sectors || img_read(((u32)img_save_lsn << 8) + off, dst, n) != 0) {
         MB_RESULT(30) = 0xF3;
-        MB_RESULT(29) = off;
+        MB_RESULT(29) = (u16)off;
         MB_STATUS = MB_FAIL;
         eng_halt();
     }
 }
 
-void api_SaveWrite(u16 off, const u8 *src, u8 n)
+void api_SaveWrite(u32 off, const u8 *src, u8 n)
 {
     if ((u16)(off >> 8) >= img_save_sectors || img_write(((u32)img_save_lsn << 8) + off, src, n) != 0) {
         MB_RESULT(30) = 0xF4;
-        MB_RESULT(29) = off;
+        MB_RESULT(29) = (u16)off;
         MB_STATUS = MB_FAIL;
         eng_halt();
     }
+}
+
+/* what LoadSpriteList and Show3DSprite (ovl28, game code) need of a picture record: its place on the screen, its size, its pixels */
+void api_SetPictureXY(u16 h, u16 x, u16 y)
+{
+    Pic *p = pic_of(h);
+    if (p) {
+        p->x = x;
+        p->y = y;
+    }
+}
+
+u16 api_PictureBytes(u16 h)
+{
+    Pic *p = pic_of(h);
+    return p ? p->bytesize : 0;
+}
+
+void api_PicData(u16 h, u16 rel, const u8 *buf, u8 n, u8 key)
+{
+    Pic *p = pic_of(h);
+    if (p)
+        pic_put(p, rel, buf, n, key);
+}
+
+void api_DrawSpritePic(u16 h)
+{
+    Pic *p = pic_of(h);
+    if (p)
+        db_item_clip(p, 0, (s16)(p->x + 2), (s16)(p->y + 2), 1, 0);
 }
 
 void api_FillPictureRect(s16 col, s16 row, u16 w, u16 h, u8 color, u32 palette, u32 target)
@@ -344,10 +374,9 @@ void api_SetVideoMode(u8 mode)
 
 void api_RestoreVideoMode(void)
 {
-    /* the game goes back to text mode to print an error and quit: stop here and say so (development) */
-    MB_RESULT(30) = 0xE7;
-    MB_STATUS = MB_FAIL;
-    eng_halt();
+    /* the game goes back to text mode to print an error and quit: note it for the harness; the message (rtl_file.c's console)
+     * and the exit follow */
+    MB_RESULT(27) = 0xE7;
 }
 
 void api_SetPageSegment(u8 page) { (void)page; }

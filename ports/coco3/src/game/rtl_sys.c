@@ -196,3 +196,25 @@ u16 rtl_IOResult(void)
     return r;
 }
 
+
+/* the multi-byte values of a record or an array as a file has them (little endian) and as memory has them here (big endian) */
+void rtl_swapdesc(void *p, const u16 *d)
+{
+    u8 *b = (u8 *)p;
+    u16 runs = *d++, off, cnt;
+    u8 w, i, *q, t;
+    while (runs--) {
+        off = *d++;
+        w = (u8)*d++;
+        cnt = *d++;
+        q = b + off;
+        while (cnt--) {
+            for (i = 0; i < (u8)(w >> 1); i++) {
+                t = q[i];
+                q[i] = q[w - 1 - i];
+                q[w - 1 - i] = t;
+            }
+            q += w;
+        }
+    }
+}
