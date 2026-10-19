@@ -22,7 +22,7 @@ BANK_BYTES = 0x4000                      # slots 4 and 5
 BANK_LIMIT = BANK_BYTES - 0x180          # room for the entry table (3 bytes an entry) and a margin
 CORE_UNITS = ["pool", "res02", "res04", "res10", "res11"]   # resident
 SKIP_UNITS = {"image", "poolvars", "vmlayout"}
-RTL_BANK = ("rtl_heap",)                     # the runtime that has no variables lives in a bank of its own (the core is small)
+RTL_BANK = ("rtl_heap", "rtl_file")                     # the runtime that has no variables lives in a bank of its own (the core is small)
 # Replaced by the engine (step 8.5d): whole units, and routines of units that stay. The engine provides them under the same
 # names; until a routine is written a stub stops the program and says which one was asked for.
 ENGINE_UNITS = ["res07", "res08"]
@@ -34,7 +34,7 @@ ENGINE_ROUTINES = {
     "ovl17": ["MergePictureData"],
     "ovl28": ["LoadSpriteList", "Show3DSprite"],          # read and write the picture record's fields (X, Y, the palette): the rest of ovl28 is game code over the handles
 }
-ENGINE_EXTRA = ["ShowPictureItem", "DaxLoad", "DaxRead", "FileKnown", "DrawIconPic", "PictureCopy"]                       # engine routines the original does not have (called by src/game/engapi.c)
+ENGINE_EXTRA = ["ShowPictureItem", "DaxLoad", "DaxRead", "FileKnown", "DrawIconPic", "PictureCopy", "SaveRead", "SaveWrite"]                       # engine routines the original does not have (called by src/game/engapi.c)
 WRAPPED = {"LoadPicture", "AllocatePicture", "ReleasePicture", "RemapPictureColors"}   # engine routines with a wrapper in src/game/engapi.c: the stub is _eng_<Name>
 # Game routines that reach into a picture record (the PC's layout: Tail, Pixels, ByteSize) cannot: a picture is a handle and the
 # pixels are the engine's. These are rewritten after the translation to say the same thing through the engine (step 8.5; the

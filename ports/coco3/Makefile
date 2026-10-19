@@ -208,6 +208,16 @@ game-run: game
 	MB_SESSION=/repo/tests/sessions/$(S).keys MB_LIMIT=$(or $(LIMIT),300) scripts/game_run.sh build/run/game-$(S)
 	python3 -I tools/gamecheck.py $(S) build/run/game-$(S)
 
+# the state of a session's end against the host's (the files it wrote, DGROUP): needs `make host` and `make c-golden` once
+game-state:
+	python3 -I tools/statecheck.py $(S) build/run/game-$(S)
+
+# step 8.5: both sessions on the CoCo (MAME, headless), screens and state
+first-light:
+	$(MAKE) game-run S=boot-title LIMIT=300
+	$(MAKE) game-run S=create-character LIMIT=700
+	$(MAKE) game-state S=create-character
+
 # ---------------------------------------------------------------- data pipeline (step 8.4)
 data:
 	@python3 -I tools/mkvolumes.py $(POOLRAD_DATA) build/data >/dev/null

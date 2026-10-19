@@ -24,7 +24,7 @@ void init_RES08(void)
     SetPageSegment(FillTextPage);
     SoundMode = 2;
     rtl_str_assign(GameDir, 255, S("\013C:\\POOLRAD\\"));
-    rtl_str_assign(SaveDir, 255, S("\023C:\\POOLRAD\\SAVE\\"));
+    rtl_str_assign(SaveDir, 255, S("\020C:\\POOLRAD\\SAVE\\"));
     CfgFlagF = 1;
 }
 

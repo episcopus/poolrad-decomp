@@ -180,8 +180,8 @@ void rtl_FillChar(void *dst, u16 count, u8 value)
     memset(dst, value, count);
 }
 
-/* ---- Intr, files and the console: not yet (the engine brings volumes and files, 8.5d) -------------------------- */
-static u16 ioresult;
+/* ---- Intr and IOResult (the files are in rtl_file.c) ------------------------------------------------------------- */
+u16 rtl_ioresult;                      /* IOResult: set by the file runtime (rtl_file.c, in the runtime bank) */
 
 void rtl_Intr(u8 n, Registers *regs)
 {
@@ -191,98 +191,8 @@ void rtl_Intr(u8 n, Registers *regs)
 
 u16 rtl_IOResult(void)
 {
-    u16 r = ioresult;
-    ioresult = 0;
+    u16 r = rtl_ioresult;
+    rtl_ioresult = 0;
     return r;
 }
 
-/* The game's files, the part of them that is read-only data: what the volumes hold (tools/mkvolumes.py), seen as Pascal
- * files. A file is known when a mounted volume has it (its name without directory and extension, 8 characters); ITEMS, which
- * the game reads with BlockRead, is block 0 of the volumes' pseudo file ITEMS, staged by the engine at reset. Files the game
- * writes (saves) are not here yet: Rewrite fails. */
-u16 FileKnown(const u8 *name);
-u16 DaxLoad(const u8 *name, u16 id);
-void DaxRead(u16 off, u8 *dst, u16 n);
-
-/* the Pascal name of a path as a Pascal string of at most 8 characters, without directory and extension */
-static void base_name(const u8 *path, u8 *out)
-{
-    u8 n = path[0], start = 0, end, i, len;
-    for (i = 1; i <= n; i++)
-        if (path[i] == '\\' || path[i] == ':')
-            start = i;
-    end = n;
-    for (i = (u8)(start + 1); i <= n; i++)
-        if (path[i] == '.')
-            end = (u8)(i - 1);
-    len = (u8)(end - start);
-    if (len > 8)
-        len = 8;
-    out[0] = len;
-    for (i = 0; i < len; i++)
-        out[1 + i] = path[start + 1 + i];
-}
-
-void rtl_assign(void *f, const u8 *name)
-{
-    FileRec *r = (FileRec *)f;
-    u8 n = name[0];
-    if (n > 79)
-        n = 79;
-    r->Name[0] = n;
-    memcpy(r->Name + 1, name + 1, n);
-    r->Handle = 0;
-    r->Mode = fmClosed;
-    r->UserData[0] = r->UserData[1] = 0;                 /* the position, in bytes */
-}
-
-void rtl_reset(void *f, u16 recsize)
-{
-    FileRec *r = (FileRec *)f;
-    u8 b[10];
-    base_name(r->Name, b);
-    r->RecSize = recsize;
-    if (b[0] == 0 || !FileKnown(b)) {
-        ioresult = 2;
-        return;
-    }
-    if (b[0] == 5 && memcmp(b + 1, "ITEMS", 5) == 0)
-        DaxLoad(b, 0);                                   /* the contents wait in the engine's stage */
-    r->Handle = 1;
-    r->Mode = fmInput;
-}
-void rtl_rewrite(void *f, u16 recsize) { (void)f; (void)recsize; ioresult = 5; }
-void rtl_reset_text(void *f) { (void)f; ioresult = 2; }
-void rtl_rewrite_text(void *f) { (void)f; ioresult = 5; }
-void rtl_close(void *f) { ((FileRec *)f)->Handle = 0; ((FileRec *)f)->Mode = fmClosed; }
-void rtl_erase(void *f) { (void)f; }
-void rtl_seek(void *f, s32 pos)
-{
-    FileRec *r = (FileRec *)f;
-    u16 p = (u16)(pos * r->RecSize);
-    r->UserData[0] = (u8)(p >> 8);
-    r->UserData[1] = (u8)p;
-}
-int rtl_eof(void *f) { (void)f; return 1; }
-void rtl_blockread(void *f, void *buf, u16 count, void *result)
-{
-    FileRec *r = (FileRec *)f;
-    u16 pos = (u16)(((u16)r->UserData[0] << 8) | r->UserData[1]), want = (u16)(count * r->RecSize), got = 0, c;
-    u8 tmp[128];
-    while (got < want) {
-        c = (u16)(want - got) < 128 ? (u16)(want - got) : 128;
-        DaxRead((u16)(pos + got), tmp, c);
-        memcpy((u8 *)buf + got, tmp, c);
-        got += c;
-    }
-    pos += got;
-    r->UserData[0] = (u8)(pos >> 8);
-    r->UserData[1] = (u8)pos;
-    *(u16 *)result = r->RecSize ? (u16)(got / r->RecSize) : got;
-}
-void rtl_blockwrite(void *f, const void *buf, u16 count, void *result) { (void)f; (void)buf; (void)count; *(u16 *)result = 0; }
-void rtl_MkDir(const u8 *dir) { (void)dir; ioresult = 5; }
-void rtl_read_ln(void *f) { (void)f; }
-void rtl_read_str(void *f, u8 *s, int maxlen) { (void)f; (void)maxlen; s[0] = 0; }
-void rtl_write_str(void *f, const u8 *s, int width) { (void)f; (void)s; (void)width; }
-void rtl_write_ln(void *f) { (void)f; }

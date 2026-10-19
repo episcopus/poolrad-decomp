@@ -217,6 +217,28 @@ void api_MergePictureData(u32 src, u32 dst)
         pic_combine(s, d, 1);
 }
 
+/* The save area of the image (the game's files: rtl_file.c keeps a directory in it): byte addressed, at most 128 bytes a call,
+ * the buffer in the caller's frame (the shared stack). A failure stops the program with the code 0xF3. */
+void api_SaveRead(u16 off, u8 *dst, u8 n)
+{
+    if ((u16)(off >> 8) >= img_save_sectors || img_read(((u32)img_save_lsn << 8) + off, dst, n) != 0) {
+        MB_RESULT(30) = 0xF3;
+        MB_RESULT(29) = off;
+        MB_STATUS = MB_FAIL;
+        eng_halt();
+    }
+}
+
+void api_SaveWrite(u16 off, const u8 *src, u8 n)
+{
+    if ((u16)(off >> 8) >= img_save_sectors || img_write(((u32)img_save_lsn << 8) + off, src, n) != 0) {
+        MB_RESULT(30) = 0xF4;
+        MB_RESULT(29) = off;
+        MB_STATUS = MB_FAIL;
+        eng_halt();
+    }
+}
+
 void api_FillPictureRect(s16 col, s16 row, u16 w, u16 h, u8 color, u32 palette, u32 target)
 {
     (void)palette;

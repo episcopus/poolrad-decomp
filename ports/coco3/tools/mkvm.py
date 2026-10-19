@@ -83,6 +83,7 @@ def write_image(out, gen, clusters, nat_end, npages):
             if lo <= a < hi:
                 return hi
         return None
+    storage_spans = [(lo, hi) for lo, hi in stores]
     byteviews = []
     for f in gl:
         if len(f) >= 5 and f[4] == "-" and not re.match(r"(Raw|ds)[0-9A-Fa-f]{4}$", f[2]):
@@ -91,6 +92,7 @@ def write_image(out, gen, clusters, nat_end, npages):
             if e:
                 byteviews.append((a, min(a + int(f[1]), e), f[2]))
     nskip = 0
+    swapped_items, skipped = set(), []
     for f in gl:
         if len(f) < 5 or f[4] == "-":
             continue
@@ -102,14 +104,28 @@ def write_image(out, gen, clusters, nat_end, npages):
                 pos = at - org
                 if any(lo < at + w and at < hi and n != f[2] for lo, hi, n in byteviews):
                     nskip += 1
+                    skipped.append((at, w))
+                    continue
+                if any(lo <= at < hi or lo < at + w <= hi for lo, hi in storage_spans if (lo <= at < hi) != (lo < at + w <= hi)):
+                    nskip += 1                          # an item across the border of two storage arrays: an index base's overhang
+                    skipped.append((at, w))
                     continue
                 if any(lo <= at - base < hi for n, lo, hi in NOSWAP if n == f[2]):
                     nskip += 1
+                    skipped.append((at, w))
                     continue
+                if (at, w) in swapped_items:
+                    continue                                # the same value listed by two globals
                 if 0 <= pos and pos + w <= len(img) and not any(done[pos:pos + w]):
                     img[pos:pos + w] = img[pos:pos + w][::-1]
                     done[pos:pos + w] = b"\x01" * w
                     nswap += 1
+                    swapped_items.add((at, w))
+                elif 0 <= pos and pos + w <= len(img):
+                    skipped.append((at, w))                 # overlaps a value that was turned round: left alone
+    with open(out + "/unswapped.txt", "w") as sf:         # for tools/statecheck.py: the multi-byte values left in the PC's order
+        for at, w in skipped:
+            sf.write("%04X %d\n" % (at, w))
     print("mkvm: DGROUP.IMG: %d multi-byte values put in the CoCo's byte order (%d lie in the real extent of a byte view: left alone)" % (nswap, nskip))
     img = bytes(img)
     nat = bytearray(nat_end - NAT_BASE)

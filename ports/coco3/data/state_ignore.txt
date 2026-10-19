@@ -1,0 +1,67 @@
+# statecheck.py: globals (or the storage arrays Raw<addr>/ds<addr>) of DGROUP that cannot be equal after the same session on the
+# CoCo and on the PC, with the reason. One per line: name, a space, the reason. Anything not listed here and different is a finding.
+# "OPEN:" marks a difference nobody has explained yet; it is reported like a finding and keeps the check red (none now).
+#
+# Turbo Pascal's System, Dos, Crt and Overlay variables and the files of the start-up: the CoCo has no counterpart
+OvrHeapSize System: the overlay manager's buffer (the CoCo's banks have their own manager)
+OvrHeapOrg System: the overlay manager's buffer
+OvrHeapPtr System: the overlay manager's buffer
+OvrHeapEnd System: the overlay manager's buffer
+HeapOrg System: the PC's heap (the CoCo has two heaps, rtl_heap.c)
+HeapPtr System: the PC's heap
+HeapEnd System: the PC's heap
+FreeList System: the PC's heap
+NewHeapEnd System: res08 init, the PC's heap limit
+PrefixSeg System: the PSP segment
+RandSeed System: the CoCo's generator is rand_seed (rtl_sys.c), the same sequence in another place
+FileMode System: DOS file mode
+LoaderFile File record of the PC: a TP file variable (the CoCo's files are rtl_file.c's)
+CfgChar res08 init: POOL.CFG is not read on the CoCo (platform.c gives the answers)
+CfgText res08 init: the Text variable of POOL.CFG
+CfgProbe res08 init: probe buffer of POOL.CFG
+FileProbeResult The IOResult of the last FileExists probe (the codes of DOS and of rtl_file.c differ)
+Regs Dos: the register record of the last Intr call
+LastMode Crt: the text mode
+TextAttr Crt: the text attribute
+WindMax Crt: the text window
+Input System: the Text variable of standard input
+Output System: the Text variable of standard output
+# The engine keeps what the PC's video code kept in DGROUP
+ActivePageSegment res06: the EGA page segment (the engine owns the screen)
+FillPageSegment res06: the EGA page segment
+CurrentVideoMode res07: SetVideoMode is the engine's and does not write this variable
+RowFirstChangedCol res07: the changed-rows trackers of DrawBuf (the engine has its own, gfx.c)
+IconBackgroundBuffer res07: a picture pointer (a handle on the CoCo)
+SoundMode res08 init: the CoCo starts with the sound driver off (8.9)
+SoundModeBeforePause res06: sound state (8.9)
+SoundDriverIdle res03: sound driver state (8.9)
+# Pointers: what a pointer holds is an address of the PC's heap or a segment, on the CoCo a handle of a picture, an address of
+# the mapped heap or the id of a routine
+SheetCharacter pointer to a character
+GameVars pointer into a script block
+GameVars2 pointer into a script block
+GameVars3 pointer into a script block
+EclCode pointer into a script block
+DrawBuf picture pointer (a handle)
+PackedBuf pointer to a heap block
+GameFont picture pointer (a handle)
+TileBanks picture pointers (handles)
+TileBuf picture pointer (a handle)
+SqrPaciBank1 picture pointer (a handle)
+SqrPaciBank2 picture pointer (a handle)
+Raw5E5A the picture slots: pointers (handles)
+PictureSlots picture pointers (handles)
+ds5F1A the dying picture and the table next to it: pointers (handles)
+CombatantTable pointers to combatants
+WallSets pointer to a heap block
+GeoBlock pointer to a heap block
+LoadSlots pointers to heap blocks
+HeadSpriteBank picture pointer (a handle)
+BodySpriteBank picture pointer (a handle)
+SpellHandlers the ids of routines (the CoCo's are not the PC's addresses)
+# Representation again, found by looking at the bytes
+Raw6B84 the table of spell handlers (ids of routines) and the byte after it
+Raw6C91 the spell targets: far pointers (a combatant's address on the PC, on the CoCo the mapped heap's)
+SpellTargets the spell targets: far pointers
+EclStrings a string buffer's tail beyond its length (one byte of old data): not observable
+Raw70C7 SharedLoopIndex: a loop control variable, undefined after the loop in Pascal (12 on the PC, 0 here)

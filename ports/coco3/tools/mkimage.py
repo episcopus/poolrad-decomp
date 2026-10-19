@@ -24,7 +24,7 @@ sys.path.insert(0, os.path.join(os.environ.get("REPO", str(HERE.parent.parent.pa
 import mkvolumes  # noqa: E402
 from mkgamedisk import flatten  # noqa: E402
 
-SAVE_SECTORS = 128
+SAVE_SECTORS = 256
 
 
 def name8(n):

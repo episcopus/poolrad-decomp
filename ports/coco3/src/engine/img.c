@@ -112,3 +112,33 @@ u8 img_write_blocks(u32 offset, u16 nbytes, u8 first_blk)
     cached = 0xFFFFFFFFUL;
     return 0;
 }
+
+/* n bytes (at most 128) from src (RAM below $8000 or in slot 0) into the image at byte `offset`: a sector is read first when
+ * it is only changed in part, then written back; 0 = ok */
+u8 img_write(u32 offset, const u8 *src, u16 n)
+{
+    u16 o, c;
+    u32 lsn;
+    while (n > 0) {
+        lsn = offset >> 8;
+        o = (u16)(offset & 255);
+        c = (u16)(256 - o);
+        if (c > n)
+            c = n;
+        if (c < 256 && lsn != cached) {
+            if (sec_io(SEC_READ, lsn, 1, SCRATCH_BLK, SCRATCH_OFF) != 0) {
+                cached = 0xFFFFFFFFUL;
+                return 1;
+            }
+        }
+        k_copy(SCRATCH + o, src, (u8)c);
+        cached = 0xFFFFFFFFUL;
+        if (sec_io(SEC_WRITE, lsn, 1, SCRATCH_BLK, SCRATCH_OFF) != 0)
+            return 1;
+        cached = lsn;
+        src += c;
+        offset += c;
+        n -= c;
+    }
+    return 0;
+}
