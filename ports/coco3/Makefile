@@ -202,7 +202,7 @@ game:
 # Until then: play a session headless and watch what the game showed, as an animated GIF (every screen that stayed for
 # a moment, in order) opened in the default viewer. S=<session> (boot-title, create-character), LIMIT=<emulated seconds>.
 game-view: game
-	MB_SESSION=/repo/tests/sessions/$(S).keys MB_LIMIT=$(or $(LIMIT),$(if $(filter create-character,$(S)),700,300)) scripts/game_run.sh build/run/game-$(S) > /dev/null
+	MB_SESSION=$(or $(KEYS),/repo/tests/sessions/$(S).keys) MB_LIMIT=$(or $(LIMIT),$(if $(filter create-character,$(S)),700,300)) scripts/game_run.sh build/run/game-$(S) > /dev/null
 	python3 -I tools/scr4gif.py build/run/game-$(S) build/run/game-$(S).gif
 	@if command -v open >/dev/null 2>&1; then open build/run/game-$(S).gif; else echo "open build/run/game-$(S).gif"; fi
 
@@ -212,7 +212,7 @@ run-game:
 # The game on the emulated CoCo 3 (MAME, headless): S=session; the screens it shows against goldens/4bpp (tools/gamecheck.py)
 S ?= boot-title
 game-run: game
-	MB_SESSION=/repo/tests/sessions/$(S).keys MB_LIMIT=$(or $(LIMIT),300) scripts/game_run.sh build/run/game-$(S)
+	MB_SESSION=$(or $(KEYS),/repo/tests/sessions/$(S).keys) MB_LIMIT=$(or $(LIMIT),300) scripts/game_run.sh build/run/game-$(S)
 	python3 -I tools/gamecheck.py $(S) build/run/game-$(S)
 
 # the state of a session's end against the host's (the files it wrote, DGROUP): needs `make host` and `make c-golden` once
@@ -224,6 +224,13 @@ first-light:
 	$(MAKE) game-run S=boot-title LIMIT=300
 	$(MAKE) game-run S=create-character LIMIT=700
 	$(MAKE) game-state S=create-character
+
+# step 8.7: the combat sessions on the CoCo, screens (state of camp-rest-combat too)
+combat:
+	$(MAKE) game-run S=camp-rest-combat LIMIT=800
+	$(MAKE) game-state S=camp-rest-combat
+	$(MAKE) game-run S=parley-combat LIMIT=800
+	$(MAKE) game-state S=parley-combat
 
 # step 8.6: the exploration sessions on the CoCo, screens and state
 exploration:

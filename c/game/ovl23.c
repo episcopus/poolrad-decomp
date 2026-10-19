@@ -18,7 +18,7 @@ void RecalcClassStats(PCharacter Character)
   u8 Spell = 0;
   (*FPD(TCharacter (*), Character)).Thac0 = 0;
   {
-    if (0 <= LastClass) {
+    {
       ClassNo = 0;
       for (;;) {
           ClassLevel = (*FPD(TCharacter (*), Character)).ClassLevels[ClassNo];
@@ -42,7 +42,7 @@ void RecalcClassStats(PCharacter Character)
           {
             if (ClassLevel > FirstSpellLevel) {
               {
-                if (1 <= LastSpellLevel) {
+                {
                   SpellLevel = 1;
                   for (;;) {
                       (*FPD(TCharacter (*), Character)).SpellSlots[0][SpellLevel - 1] = ClericSlotTable[ClassLevel][SpellLevel - 1];
@@ -53,7 +53,7 @@ void RecalcClassStats(PCharacter Character)
               }
               AddWisdomBonusSpells(Character);
               {
-                if (1 <= LastSpell) {
+                {
                   Spell = 1;
                   for (;;) {
                       {
@@ -74,7 +74,7 @@ void RecalcClassStats(PCharacter Character)
           {
             if (ClassLevel > FirstSpellLevel) {
               {
-                if (1 <= LastSpellLevel) {
+                {
                   SpellLevel = 1;
                   for (;;) {
                       (*FPD(TCharacter (*), Character)).SpellSlots[1][SpellLevel - 1] = MageSlotTable[ClassLevel][SpellLevel - 1];
@@ -135,12 +135,12 @@ void ComputeSavingThrows(PCharacter Character)
   s8 ClassNo = 0;
   u16 Unused = 0;
   {
-    if (0 <= LastSave) {
+    {
       Save = 0;
       for (;;) {
           (*FPD(TCharacter (*), Character)).SavingThrows[Save] = WorstSave;
           {
-            if (0 <= LastClass) {
+            {
               ClassNo = 0;
               for (;;) {
                   if ((*FPD(TCharacter (*), Character)).ClassLevels[ClassNo] > 0) {
@@ -171,7 +171,7 @@ void ComputeThiefSkills(PCharacter Character)
   {
     TCharacter *w1 = &(*FPD(TCharacter (*), Character));
       {
-        if (1 <= LastThiefSkill) {
+        {
           Skill = 1;
           for (;;) {
               if (((ThiefRaceTable[w1->Race][Skill - 1] < 0)) && ((rtl_abs(ThiefRaceTable[w1->Race][Skill - 1]) > ThiefSkillTable[w1->ClassLevels[6]][Skill - 1]))) {

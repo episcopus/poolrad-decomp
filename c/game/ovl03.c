@@ -94,7 +94,7 @@ void ArithmeticCommand(void)
   u8 Unused = 0;
   DecodeOperands(3);
   {
-    if (1 <= 2) {
+    {
       I = 1;
       for (;;) {
           Values[I - 1] = OperandValue(I);
@@ -486,7 +486,7 @@ void CompareBothPairsCommand(void)
   rtl_FillChar((void *)&CompareFlags, 6, 0);
   DecodeOperands(4);
   {
-    if (1 <= 4) {
+    {
       I = 1;
       for (;;) {
           Values[I - 1] = OperandValue(I);
@@ -600,7 +600,7 @@ void LoadAreaGraphics(void)
   DecodeOperands(3);
   AreaRedrawArmed = 1;
   {
-    if (1 <= 3) {
+    {
       I = 1;
       for (;;) {
           Blocks[I - 1] = OperandValue(I);
@@ -628,7 +628,7 @@ void LoadAreaGraphics(void)
       LoadWallSet(Blocks[2], 3);
     } else {
       {
-        if (1 <= 3) {
+        {
           I = 1;
           for (;;) {
               if (Blocks[I - 1] != 0xFF) {
@@ -960,7 +960,7 @@ void ScanPartyCommand(void)
       fr.Member = (*FPD(TCharacter (*), fr.Member)).Next;
     }
     {
-      if (1 <= 3) {
+      {
         fr.I = 1;
         for (;;) {
             fr.Stats[fr.I - 1] = 0;
@@ -1064,7 +1064,7 @@ void RollSurpriseCommand(void)
   DecodeOperands(4);
   Kind = 0;
   {
-    if (1 <= 4) {
+    {
       I = 1;
       for (;;) {
           Values[I - 1] = OperandValue(I);
@@ -1218,7 +1218,7 @@ void AddLootCommand(void)
   u8 ts1[6];
   DecodeOperands(8);
   {
-    if (0 <= 6) {
+    {
       Index = 0;
       for (;;) {
           PooledMoney[Index] = OperandValue((s16)(Index + 1));
@@ -1691,7 +1691,7 @@ void EncounterActionCommand(void)
   EncounterPicBank = OperandValue(3);
   ResultAddr = MakeWord(OperandLow[4], OperandHigh[4]);
   {
-    if (0 <= 4) {
+    {
       I = 0;
       for (;;) {
           ChoiceKinds[I] = OperandValue((s16)(I + 5));
@@ -1701,7 +1701,7 @@ void EncounterActionCommand(void)
     }
   }
   {
-    if (1 <= 3) {
+    {
       I = 1;
       for (;;) {
           rtl_str_assign(Lines[I], 255, EclStrings[I]);
@@ -1953,7 +1953,7 @@ void ChooseAttitudeCommand(void)
   DecodeOperands(6);
   BlankTitle = ' ';
   {
-    if (0 <= 4) {
+    {
       I = 0;
       for (;;) {
           Values[I] = OperandValue((s16)(I + 1));

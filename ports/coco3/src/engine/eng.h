@@ -147,6 +147,8 @@ void db_item(const Pic *p, u8 item, u8 col, u8 row, u8 flags);               /* 
 void db_item_clip(const Pic *p, u8 item, s16 col, s16 row, u8 flags, u8 mirror);       /* DrawPictureItemClipped */
 void pic_put(const Pic *p, u16 rel, const u8 *src, u8 n, u8 key);   /* n bytes of DAX pixels at rel: the pixels, and the mask of the colour key when the picture has one */
 void pic_combine(const Pic *s, const Pic *d, u8 op);   /* item 0 and its mask: op 0 copy, 1 merge (colours OR, mask AND) */
+void pic_append(const Pic *s, const Pic *d, u8 index);   /* all items of s as bytes into d at item number index of the item size of s */
+void pic_item_copy(const Pic *s, const Pic *d, u8 item, u8 mirror);   /* item 0 of s into item `item` of d (colours and mask), mirrored or not */
 void db_fill(s16 col, s16 row, u16 w, u16 h, u8 color);                      /* FillPictureRect (col, w in cells; row, h in pixel rows) */
 void db_flush(void);                      /* FlushPictureChanges */
 

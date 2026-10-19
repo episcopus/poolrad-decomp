@@ -99,7 +99,7 @@ void CureDisease(void)
   rtl_str_assign(Unused, 255, S("\000"));
   Answer = KeyYes;
   {
-    if (1 <= DiseaseCount) {
+    {
       I = 1;
       for (;;) {
           if (HasAffect(SelectedCharacter, DiseaseAffects[I], &Affect)) {
@@ -118,7 +118,7 @@ void CureDisease(void)
     if (Answer == KeyYes) {
       RemovingAffects = 1;
       {
-        if (1 <= DiseaseCount) {
+        {
           I = 1;
           for (;;) {
               RemoveAffect(SelectedCharacter, DiseaseAffects[I], 0);
@@ -223,7 +223,7 @@ void RaiseDead(void)
         Bonus = 0;
         if ((*FPD(TCharacter (*), Who)).Constitution >= BonusConstitution) {
           {
-            if (0 <= LastClass_OVL04) {
+            {
               I = 0;
               for (;;) {
                   if ((*FPD(TCharacter (*), Who)).ClassLevels[I] > 0) {

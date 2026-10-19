@@ -744,6 +744,10 @@ class ExprMixin:
                 return "(%s = %s, &%s)" % (tmp, e.code, tmp)
             addr = "&%s" % self.paren(e)
             if t.kind == "untyped":
+                if self.coco and e.code.isidentifier() and e.ty.size() < 4:
+                    # the Pascal frame lets the callee write a pointer over a byte local and the bytes next to it (ovl09 TryTurnUndead:
+                    # Done is a byte, SelectTurnUndeadTarget stores a PCharacter in it); CMOC lays locals out the other way round
+                    self.cur.padded.add(e.code)
                 return "(void *)%s" % addr
             if t.kind == "file" or e.ty.kind == "file":
                 return "(void *)%s" % addr

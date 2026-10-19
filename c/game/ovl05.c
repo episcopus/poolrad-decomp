@@ -30,7 +30,7 @@ void ComputeBattleExperience(s32 (*Xp))
       if ((((*FPD(TCharacter (*), Who)).Side == SideMonsters)) && (((*FPD(TCharacter (*), Who)).Status != StatusFled))) {
         MonstersLooted = 1;
         {
-          if (0 <= LastMoneyKind_OVL05) {
+          {
             Kind = 0;
             for (;;) {
                 PooledMoney[Kind] += (*FPD(TCharacter (*), Who)).Money[Kind];
@@ -622,7 +622,7 @@ void TakeHirelingShares(void)
   }
   if (HirelingShares > 0) {
     {
-      if (0 <= LastMoneyKind_OVL05) {
+      {
         Kind = 0;
         for (;;) {
             if (PooledMoney[Kind] > 0) {

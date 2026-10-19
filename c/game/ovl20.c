@@ -124,7 +124,7 @@ void CarryRestClock(TRestClock (*Clock))
   s8 Digit = 0;
   PCharacter Who = 0;
   {
-    if (0 <= TopClockDigit) {
+    {
       Digit = 0;
       for (;;) {
           if ((*Clock)[Digit] >= ClockRadix[Digit]) {
@@ -179,7 +179,7 @@ void AdvanceGameClock(u8 Amount, s8 Index)
   s8 Digit = 0;
   u8 Step = 0;
   {
-    if (0 <= 6) {
+    {
       Digit = 0;
       for (;;) {
           Clock[Digit] = (*FPD(TVmWords4900 (*), VarsAt4900))[(s16)(GameClockWord + Digit) - 18688];
@@ -201,7 +201,7 @@ void AdvanceGameClock(u8 Amount, s8 Index)
     }
   }
   {
-    if (0 <= 6) {
+    {
       Digit = 0;
       for (;;) {
           (*FPD(TVmWords4900 (*), VarsAt4900))[(s16)(GameClockWord + Digit) - 18688] = Clock[Digit];
@@ -286,7 +286,7 @@ void ShowRestTime(s8 Selected)
   u8 Col = 0;
   u8 ts1[256];
   {
-    if (0 <= 6) {
+    {
       Digit = 0;
       for (;;) {
           Colors[Digit] = RestTextColor;
@@ -299,7 +299,7 @@ void ShowRestTime(s8 Selected)
   DrawTextAt(RestLabelColumn, RestRow, RestTextColor, S("\012Rest Time:"));
   Col = RestFirstColumn;
   {
-    if (DaysDigit >= HoursDigit) {
+    {
       Digit = DaysDigit;
       for (;;) {
           DrawTextAt((s16)(Col + 1), RestRow, Colors[Digit], TwoDigitText(ts1, RestTime[Digit]));

@@ -17,7 +17,7 @@ void CheckCodeWheel(void)
   u8 Attempt = 0;
   u8 ts1[256];
   {
-    if (1 <= MaxAttempts) {
+    {
       Attempt = 1;
       for (;;) {
           Question = rtl_Random(WheelEntryCount);

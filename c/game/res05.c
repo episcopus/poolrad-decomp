@@ -199,7 +199,7 @@ u8 *MakeDosFileName(u8 *Result_out, const u8 *Name_in)
   u8 ts1[256];
   u8 ts2[2];
   {
-    if (1 <= 10) {
+    {
       I = 1;
       for (;;) {
           rtl_str_assign(Name, 255, DeleteAllOccurrences(ts1, Name, rtl_str_char(ts2, BadNameChars[I])));

@@ -99,7 +99,7 @@ void RunCharacterMenu(void)
       }
       Row = 0;
       {
-        if (0 <= 10) {
+        {
           I = 0;
           for (;;) {
               if (CharacterMenuSlots[I].Present != 0) {
@@ -313,7 +313,7 @@ void CreateCharacter(void)
   {
     TCharacter *w1 = &(*FPD(TCharacter (*), NewCharacter));
       {
-        if (1 <= CreateCharacter_StartFigureCount) {
+        {
           I = 1;
           for (;;) {
               w1->Figure[I] = FigureColorSlots[I] + (((s16)(FigureColorSlots[I] + 8)) * 16);
@@ -335,7 +335,7 @@ void CreateCharacter(void)
   (*FPD(TMenuLine (*), MenuList)).Flag29 = 1;
   rtl_str_assign((*FPD(TMenuLine (*), MenuList)).Text, 40, S("\011Pick Race"));
   {
-    if (1 <= RaceHuman) {
+    {
       RaceIndex = 1;
       for (;;) {
           switch (RaceIndex) {
@@ -426,7 +426,7 @@ void CreateCharacter(void)
   (*FPD(TMenuLine (*), MenuList)).Flag29 = 1;
   rtl_str_assign((*FPD(TMenuLine (*), MenuList)).Text, 40, S("\013Pick Gender"));
   {
-    if (0 <= 1) {
+    {
       GenderIndex = 0;
       for (;;) {
           PickedLine = GetMenuLine((s16)(GenderIndex + 1), MenuList);
@@ -554,7 +554,7 @@ void CreateCharacter(void)
       w3->ClassBits = 0;
       w3->Thac0 = 0;
       {
-        if (0 <= 7) {
+        {
           ClassIndex = 0;
           for (;;) {
               if (w3->ClassLevels[ClassIndex] > 0) {
@@ -657,12 +657,12 @@ void CreateCharacter(void)
   do {
     (*FPD(TCharacter (*), NewCharacter)).StrengthPercent = 0;
     {
-      if (0 <= CreateCharacter_CharismaIndex) {
+      {
         AbilityIndex = 0;
         for (;;) {
             (*FPD(TScoredCharacter (*), NewCharacter)).Scores[AbilityIndex] = 0;
             {
-              if (1 <= CreateCharacter_AbilityRollCount) {
+              {
                 RollAttempt = 1;
                 for (;;) {
                     AbilityRoll = RollDice(CreateCharacter_AbilityDiceCount, CreateCharacter_AbilityDiceSides);
@@ -899,7 +899,7 @@ void CreateCharacter(void)
         GoldDiceTotal = 0;
         ClassTotal = 0;
         {
-          if (0 <= 7) {
+          {
             ClassIndex = 0;
             for (;;) {
                 if (w7->ClassLevels[ClassIndex] > 0) {
@@ -922,7 +922,7 @@ void CreateCharacter(void)
                   {
                     AddWisdomBonusSpells(NewCharacter);
                     {
-                      if (1 <= LastSpell) {
+                      {
                         I = 1;
                         for (;;) {
                             {
@@ -1248,7 +1248,7 @@ void ModifyCharacter(void)
           case 0x00:
           {
             {
-              if (0 <= 5) {
+              {
                 fr.Stat = 0;
                 for (;;) {
                     (*FPD(TScoredCharacter (*), SelectedCharacter)).Scores[fr.Stat] = fr.SavedScores[fr.Stat];
@@ -1347,7 +1347,7 @@ void TrainCharacter(void)
     TCharacter *w1 = &(*FPD(TCharacter (*), SelectedCharacter));
       NewExperience = 0;
       {
-        if (0 <= 7) {
+        {
           I = 0;
           for (;;) {
               if (w1->ClassLevels[I] > 0) {
@@ -1442,7 +1442,7 @@ void TrainCharacter(void)
       DrawCharacterName(SelectedCharacter, TrainCharacter_NameCol, Row, 0);
       DrawTextAt((s16)(w1->Name[0] + 4), Row, TrainCharacter_BecomeTextColor, S("\015 will become:"));
       {
-        if (0 <= 7) {
+        {
           I = 0;
           for (;;) {
               if (((w1->ClassLevels[I] > 0)) && ((((ClassTrainingBits[I] & AllowedBits)) > 0))) {
@@ -1468,7 +1468,7 @@ void TrainCharacter(void)
       TrainedCount = 0;
       SavedMageLevel = w1->ClassLevels[5];
       {
-        if (0 <= 7) {
+        {
           I = 0;
           for (;;) {
               if (w1->ClassLevels[I] > 0) {
@@ -1761,7 +1761,7 @@ static void EditCharacterIcon_CopyPictureSlot(struct Frame_EditCharacterIcon *up
     {
       TCharacter *w1 = &(*FPD(TCharacter (*), SelectedCharacter));
         {
-          if (0 <= 15) {
+          {
             I = 0;
             for (;;) {
                 (*MapFrom)[I] = I;
@@ -1772,7 +1772,7 @@ static void EditCharacterIcon_CopyPictureSlot(struct Frame_EditCharacterIcon *up
           }
         }
         {
-          if (1 <= 6) {
+          {
             I = 1;
             for (;;) {
                 (*MapTo)[FigureColorSlots[I]] = (w1->Figure[I] & 0xF);
@@ -2167,7 +2167,7 @@ s8 ConstitutionHitPointAdjustment(PCharacter Who)
   {
     TCharacter *w1 = &(*FPD(TCharacter (*), Who));
       {
-        if (0 <= 7) {
+        {
           I = 0;
           for (;;) {
               if (w1->ClassLevels[I] > 0) {
@@ -2214,7 +2214,7 @@ u8 MinHitPoints(PCharacter Who)
       Count = 0;
       Total = 0;
       {
-        if (0 <= 7) {
+        {
           I = 0;
           for (;;) {
               if (w1->ClassLevels[I] > 0) {
@@ -2275,7 +2275,7 @@ u8 MaxHitPoints(PCharacter Who)
       Count = 0;
       Total = 0;
       {
-        if (0 <= 7) {
+        {
           I = 0;
           for (;;) {
               if (w1->ClassLevels[I] > 0) {
@@ -2359,7 +2359,7 @@ u8 RollHitPoints(PCharacter Who, u8 ClassBits)
   s8 I = 0;
   Sum = 0;
   {
-    if (0 <= 7) {
+    {
       I = 0;
       for (;;) {
           if ((((*FPD(TCharacter (*), Who)).ClassLevels[I] > 0)) && ((((ClassTrainingBits[I] & ClassBits)) > 0))) {

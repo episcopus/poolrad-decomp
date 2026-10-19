@@ -20,7 +20,7 @@ for line in open(f"goldens/4bpp/{session}.s4"):
     if not gold or gold[-1][1] != h:
         gold.append((label, h))
 ours = []
-for f in sorted(glob.glob(f"{prefix}-s*.scr4")):
+for f in sorted(glob.glob(f"{prefix}-s*.scr4"), key=lambda f: int(re.search(r"-s(\d+)\.scr4$", f).group(1))):
     ours.append(hashlib.sha256(open(f, "rb").read()[:32016]).hexdigest())
 i, bad, hard, hard_ok, soft, soft_ok = 0, 0, 0, 0, 0, 0
 for label, h in gold:

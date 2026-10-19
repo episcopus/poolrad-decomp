@@ -347,6 +347,20 @@ void pic_combine(const Pic *s, const Pic *d, u8 op)
     }
 }
 
+/* all the items of s as one run of bytes into d at item number `index` of s's item size (Load24x24Set's Move of the tails) */
+void pic_append(const Pic *s, const Pic *d, u8 index)
+{
+    u16 n = (u16)(s->bytesize * s->items), at = (u16)(index * s->bytesize), rel, c;
+    u8 b[128];
+    if ((u16)(at + n) > (u16)(d->bytesize * d->items))
+        return;
+    for (rel = 0; rel < n; rel = (u16)(rel + c)) {
+        c = (u16)(n - rel) < 128 ? (u16)(n - rel) : 128;
+        pic_rd(s, rel, b, c);
+        pic_wr(d, (u16)(at + rel), b, c);
+    }
+}
+
 /* UnpackPicturePixels for a piece: n (at most 128) bytes of a block's pixels (4 bits each, two to a byte) at byte rel of item 0.. of
  * the picture; with a mask the pixels equal to `key` become mask nibbles and are cleared (what pic_load_e does for a loaded block) */
 void pic_put(const Pic *p, u16 rel, const u8 *src, u8 n, u8 key)
@@ -692,6 +706,28 @@ static void mirror_row(u8 *b, u8 n)
     }
     if (i == j)
         b[i] = (u8)((b[i] << 4) | (b[i] >> 4));
+}
+
+/* CopyPictureItem (res12 00BA:1892): item 0 of s, colours and mask, into item `item` of d, every row mirrored when asked (the
+ * PC's MirrorPicture into a temporary picture and the two Moves of the tail and the pixels) */
+void pic_item_copy(const Pic *s, const Pic *d, u8 item, u8 mirror)
+{
+    u8 rb = (u8)(s->wcols * 4), r, a[16];
+    u16 at = (u16)(item * d->bytesize);
+    if (rb > 16 || (u16)(at + d->bytesize) > (u16)(d->bytesize * d->items))
+        return;
+    for (r = 0; r < s->height; r++) {
+        pic_rd(s, (u16)(r * rb), a, rb);
+        if (mirror)
+            mirror_row(a, rb);
+        pic_wr(d, (u16)(at + r * rb), a, rb);
+        if (s->moff && d->moff) {
+            pic_rd(s, (u16)(s->moff + r * rb), a, rb);
+            if (mirror)
+                mirror_row(a, rb);
+            pic_wr(d, (u16)(d->moff + at + r * rb), a, rb);
+        }
+    }
 }
 
 /* DrawPictureItemClipped (res07 0464:0D71): item `item` with its top-left cell at cell column col and pixel row row * 8, cut to

@@ -33,6 +33,7 @@ class Ctx:
         self.nwith = 0
         self.labels = {}
         self.arena = False
+        self.padded = set()       # small locals handed to an untyped var parameter: the callee may write a wider value (coco)
         self.is_main = False
 
     def exit_stmt(self):
@@ -167,7 +168,18 @@ class StmtMixin:
         else:
             first = "first"
             self.emit("%s first = %s;" % (ct, a.code))
-        self.emit("if (%s %s %s) {" % (first, op, lim))
+        # both bounds constants: the test is decided here (CMOC 0.1.100 folds `(-2) <= 2` as an unsigned compare and drops the loop)
+        const_run = None
+        if isinstance(a.val, int) and isinstance(b.val, int):
+            const_run = (a.val >= b.val) if n.down else (a.val <= b.val)
+        if const_run is False:
+            self.ind -= 1
+            self.emit("}")
+            return
+        if const_run is None:
+            self.emit("if (%s %s %s) {" % (first, op, lim))
+        else:
+            self.emit("{")
         self.emit("  %s = %s;" % (v.code, first))
         self.emit("  for (;;) {")
         self.ind += 2

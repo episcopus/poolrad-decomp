@@ -186,7 +186,7 @@ void BuildCharacterIcon(u8 Recolor)
       MergePictureData(PictureSlots[11].SecondPic, PictureSlots[w1->CombatIcon].SecondPic);
       if (Recolor) {
         {
-          if (0 <= 15) {
+          {
             I = 0;
             for (;;) {
                 (*MapFrom)[I] = I;
@@ -197,7 +197,7 @@ void BuildCharacterIcon(u8 Recolor)
           }
         }
         {
-          if (1 <= 6) {
+          {
             I = 1;
             for (;;) {
                 (*MapTo)[FigureColorSlots[I]] = (w1->Figure[I] & 0xF);
@@ -431,7 +431,7 @@ void LoadMonster(u8 Kind, farptr Who)
       }
       }
       {
-        if (1 <= 3) {
+        {
           I = 1;
           for (;;) {
               Roll = RollDice(1, 6);
@@ -443,7 +443,7 @@ void LoadMonster(u8 Kind, farptr Who)
       }
       w1->Figure[4] = 0xC4;
       {
-        if (5 <= 6) {
+        {
           I = 5;
           for (;;) {
               Roll = RollDice(1, 6);
@@ -518,7 +518,7 @@ void AddMonsterToParty(u8 Kind)
       w1->RandomTag = rtl_Random(256);
       Count = 0;
       {
-        if (0 <= AddMonsterToParty_LastClass) {
+        {
           I = 0;
           for (;;) {
               if (w1->ClassLevels[I] > 0) {
@@ -727,7 +727,7 @@ void LoadGame(void)
     LoadPictureSlot(S("\004ICON"), 0, 11);
   } else {
     {
-      if (1 <= 3) {
+      {
         I = 1;
         for (;;) {
             WallSetSlotPairs[I].A = (*FPD(TVmWords4900 (*), VarsAt4900))[(s16)(0x4AF9 + I) - 18688];
@@ -792,7 +792,7 @@ void SaveGame(void)
   ClearPromptLine();
   DrawTextAt(0, 0x18, 0xA, S("\024Saving...Please Wait"));
   {
-    if (1 <= 3) {
+    {
       Count = 1;
       for (;;) {
           (*FPD(TVmWords4900 (*), VarsAt4900))[(s16)(0x4AF9 + Count) - 18688] = WallSetSlotPairs[Count].A;

@@ -6,10 +6,12 @@ plan are in `../../docs/coco/` (start with `README.md` and `PORTING-GUIDE.md` th
 result of each step of the plan is recorded in `docs/`.
 
 Status: steps 8.0 (toolchain baseline), 8.1 (measure), 8.1c (data model study), 8.2 (translator profile,
-placement model, 4bpp goldens), 8.3 (the engine core), 8.4 (the data pipeline), 8.5 (first light) and 8.6 (exploration) are done, see `docs/PHASE-8.0.md` ... `docs/PHASE-8.6.md`.
+placement model, 4bpp goldens), 8.3 (the engine core), 8.4 (the data pipeline), 8.5 (first light), 8.6 (exploration) and 8.7 (combat) are done, see `docs/PHASE-8.0.md` ... `docs/PHASE-8.7.md`.
 Step 8.6: `walk-explore` (the 3D view and the area map) and `camp-save` (camp, saving the party and the game) play on the emulated CoCo and match
 the goldens on screen and state (`make exploration`): the saved files are the ones the original wrote, byte for byte except record pointers.
-Combat is the next step (8.7).
+Step 8.7: the two combat sessions (`camp-rest-combat`, `parley-combat`) match too (`make combat`): the monsters' AI, the movement, the attacks and the
+animations throw and use the original's dice; a party member's turn takes 5 to 8 s of the machine (the AI's scans, step 8.9 has to speed them up).
+Sound (8.8) is next.
 Step 8.5: the game itself, translated, runs on the emulated CoCo 3 (`make first-light`, headless MAME). `boot-title` shows the original's
 ssi-logo, title and credits screens bit for bit; `create-character` plays the whole session (wheel, race, sex, class, alignment, the
 rolled sheet, head and body, the icon editor, the save) and its labelled screens are equal to the goldens, the character record and
@@ -39,6 +41,7 @@ make game-run S=create-character   # 8.5: run a session in MAME, keep the screen
 make game-state S=create-character # 8.5: the files it wrote and DGROUP against the host's (needs `make host` and `make c-golden` once)
 make first-light   # 8.5: both sessions, screens and state
 make exploration   # 8.6: walk-explore and camp-save, screens and state
+make combat        # 8.7: camp-rest-combat and parley-combat, screens and state
 make game-view S=create-character  # 8.5: play a session and open what it showed as an animated GIF
 make data          # 8.4: the nine volumes (build/data/*.dsk); make data-verify checks them, make vol-tests reads every block on the CoCo
 make gfx-ref       # 8.3: rerun the Phase 7 C engine on the t_gfx script and compare with goldens/engine

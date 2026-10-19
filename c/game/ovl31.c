@@ -89,7 +89,7 @@ void DrawCursorAt(s8 CellX, s8 CellY)
   ViewCol = CellX - (*FPD(TCombatMap (*), CombatMap)).ViewX;
   ViewRow = CellY - (*FPD(TCombatMap (*), CombatMap)).ViewY;
   {
-    if (0 <= FootprintCells) {
+    {
       J = 0;
       for (;;) {
           if (FootprintCell((*FPD(TCombatMap (*), CombatMap)).CursorKind, J, &DX, &DY)) {
@@ -152,7 +152,7 @@ void RebuildOccupancy(void)
       for (;;) {
           if (CombatantTable[I].Kind > 0) {
             {
-              if (0 <= FootprintCells) {
+              {
                 J = 0;
                 for (;;) {
                     if (FootprintCell(CombatantTable[I].Kind, J, &DX, &DY)) {
@@ -213,7 +213,7 @@ void RedrawGround(s8 Col, s8 Row, u8 Occupant)
     MapRow = Row + (*FPD(TCombatMap (*), CombatMap)).ViewY;
     Kind = CombatantTable[Occupant].Kind;
     {
-      if (0 <= FootprintCells) {
+      {
         J = 0;
         for (;;) {
             if (FootprintCell(Kind, J, &DX, &DY)) {
@@ -264,7 +264,7 @@ u8 IsCombatantInView(PCharacter Who, u8 AllCells)
     return Result;
   }
   {
-    if (0 <= FootprintCells) {
+    {
       J = 0;
       for (;;) {
           if (FootprintCell(CombatantTable[Index].Kind, J, &DX, &DY)) {
@@ -346,13 +346,13 @@ u8 ScrollViewTo(s8 CellX, s8 CellY, u8 Margin)
   PicRow = 0;
   MapRow = (*FPD(TCombatMap (*), CombatMap)).ViewY;
   {
-    if (0 <= ViewLast_OVL31) {
+    {
       J = 0;
       for (;;) {
           PicCol = 0;
           MapCol = (*FPD(TCombatMap (*), CombatMap)).ViewX;
           {
-            if (0 <= ViewLast_OVL31) {
+            {
               I = 0;
               for (;;) {
                   DrawCellPicture(PicCol, PicRow, CombatTiles[(*FPD(TCombatMap (*), CombatMap)).Cells[MapRow][MapCol]].Picture, 1);
@@ -531,7 +531,7 @@ void ProbeStep(PCharacter Who, u8 Dir, u8 (*Occupant), u8 (*Tile))
   CellX = CombatantTable[Index].X;
   CellY = CombatantTable[Index].Y;
   {
-    if (0 <= FootprintCells) {
+    {
       J = 0;
       for (;;) {
           if (FootprintCell(CombatantTable[Index].Kind, J, &DX, &DY)) {
@@ -601,7 +601,7 @@ void RemoveCombatant(PCharacter Who)
     }
     RedrawGround(0, 0, Index);
     {
-      if (0 <= FootprintCells) {
+      {
         I = 0;
         for (;;) {
             if (FootprintCell(CombatantTable[Index].Kind, I, &DX, &DY)) {

@@ -22,7 +22,7 @@ u16 StudyRestMinutes(PCharacter Who)
   MemSum = 0;
   ScribeSum = 0;
   {
-    if (0 <= LastSpellSlot) {
+    {
       I = 0;
       for (;;) {
           if ((*FPD(TCharacter (*), Who)).Spells[I] > SpellMask) {
@@ -41,7 +41,7 @@ u16 StudyRestMinutes(PCharacter Who)
   while (Item != 0) {
     if (IsScroll(Item)) {
       {
-        if (1 <= ScrollSpells) {
+        {
           I = 1;
           for (;;) {
               if ((*FPD(TMenuLine (*), Item)).Affects[I - 1] > SpellMask) {
@@ -78,7 +78,7 @@ void CancelMemorizing(PCharacter Who)
   POOL_TRACE("CancelMemorizing");
   u8 I = 0;
   {
-    if (0 <= LastSpellSlot) {
+    {
       I = 0;
       for (;;) {
           if ((*FPD(TCharacter (*), Who)).Spells[I] > SpellMask) {
@@ -104,7 +104,7 @@ void CancelScribing(PCharacter Who)
   while (Item != 0) {
     if (IsScroll(Item)) {
       {
-        if (1 <= ScrollSpells) {
+        {
           I = 1;
           for (;;) {
               (*FPD(TMenuLine (*), Item)).Affects[I - 1] = ((*FPD(TMenuLine (*), Item)).Affects[I - 1] & SpellMask);
@@ -144,7 +144,7 @@ u8 SpellSlotsLeft(s8 SpellLevel, s8 SpellClass)
   u8 I = 0;
   Count = 0;
   {
-    if (0 <= LastSpellSlot) {
+    {
       I = 0;
       for (;;) {
           if (((((*FPD(TCharacter (*), SelectedCharacter)).Spells[I] > 0)) && ((SpellTable[((*FPD(TCharacter (*), SelectedCharacter)).Spells[I] & SpellMask)].Level == SpellLevel))) && ((SpellTable[((*FPD(TCharacter (*), SelectedCharacter)).Spells[I] & SpellMask)].SpellClass == SpellClass))) {
@@ -257,12 +257,12 @@ u8 ShowSpellSlotsLeft(void)
   u8 ts1[256];
   Any = 0;
   {
-    if (ClassCleric <= SpellBookMage) {
+    {
       SpellClass = ClassCleric;
       for (;;) {
           HasClass[SpellClass] = 0;
           {
-            if (1 <= SpellLevels) {
+            {
               SpellLevel = 1;
               for (;;) {
                   rtl_str_assign(Counts[SpellLevel - 1][SpellClass], 2, ByteToText(ts1, SpellSlotsLeft(SpellLevel, SpellClass)));
@@ -286,7 +286,7 @@ u8 ShowSpellSlotsLeft(void)
     ShowCharacterMessage(SelectedCharacter, S("\015can memorize:"), MessageColor, 0);
     Row = 3;
     {
-      if (ClassCleric <= SpellBookMage) {
+      {
         SpellClass = ClassCleric;
         for (;;) {
             if (HasClass[SpellClass]) {
@@ -305,7 +305,7 @@ u8 ShowSpellSlotsLeft(void)
               DrawTextAt(1, (s16)(Row + 0x11), TextColor, Line);
               Col = 0x13;
               {
-                if (1 <= SpellLevels) {
+                {
                   SpellLevel = 1;
                   for (;;) {
                       DrawTextAt((s16)(Col + 1), (s16)(Row + 0x11), TextColor, Counts[SpellLevel - 1][SpellClass]);
@@ -364,7 +364,7 @@ void SortMemorizedSpells(void)
   u8 J = 0;
   u8 Spell = 0;
   {
-    if (0 <= 19) {
+    {
       I = 0;
       for (;;) {
           {
@@ -509,7 +509,7 @@ void ScribeScrolls(void)
         while (((Item != 0)) && !Found) {
           if (IsScroll(Item)) {
             {
-              if (1 <= ScrollSpells) {
+              {
                 I = 1;
                 for (;;) {
                     if ((((*FPD(TMenuLine (*), Item)).Affects[I - 1] > SpellMask)) && (((((*FPD(TMenuLine (*), Item)).Affects[I - 1] & SpellMask)) == Spell))) {

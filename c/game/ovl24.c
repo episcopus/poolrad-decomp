@@ -560,7 +560,7 @@ void RemoveDeathAffects(PCharacter Who)
   POOL_TRACE("RemoveDeathAffects");
   u8 I = 0;
   {
-    if (1 <= DeathAffectCount) {
+    {
       I = 1;
       for (;;) {
           RemoveAffect(Who, DeathAffects[I], 0);
@@ -578,7 +578,7 @@ void RemoveExtraDeathAffects(PCharacter Who)
   POOL_TRACE("RemoveExtraDeathAffects");
   u8 I = 0;
   {
-    if (1 <= 2) {
+    {
       I = 1;
       for (;;) {
           RemoveAffect(Who, ExtraDeathAffects[I], 0);

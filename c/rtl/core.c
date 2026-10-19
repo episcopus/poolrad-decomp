@@ -236,6 +236,15 @@ u32 rtl_random_calls(void)
   return random_calls;
 }
 
+void rtl_dbg2(u16 a, u16 b)
+{
+  static int rlog = -1;
+  if (rlog < 0)
+    rlog = getenv("POOL_RLOG") != NULL;
+  if (rlog)
+    fprintf(stderr, "R 0 %u %u\n", a, b);
+}
+
 u16 rtl_Random(u16 range)
 {
   u32 *seed = (u32 *)(DGS(0x4428));
@@ -244,7 +253,15 @@ u16 rtl_Random(u16 range)
   memcpy(&s, seed, 4);
   s = s * 0x08088405u + 1u;
   memcpy(seed, &s, 4);
-  return range == 0 ? 0 : (u16)((s >> 16) % range);
+  {
+    u16 r = range == 0 ? 0 : (u16)((s >> 16) % range);
+    static int rlog = -1;
+    if (rlog < 0)
+      rlog = getenv("POOL_RLOG") != NULL;
+    if (rlog)
+      fprintf(stderr, "R %u %u %u\n", (unsigned)random_calls, range, r);       /* debugging aid: the dice, to compare with the CoCo's (tools lua/watch.lua MB_RLOG) */
+    return r;
+  }
 }
 
 void rtl_Randomize(void)

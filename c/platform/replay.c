@@ -253,6 +253,9 @@ static void calls_report(void)
 }
 void pool_trace(const char *name)
 {
+  if (getenv("POOL_RLOG")) {                        /* with the dice log (rtl_Random): which routine was entered */
+    fprintf(stderr, "T %s\n", name);
+  }
   if (getenv("POOL_CALLS")) {
     int i;
     for (i = 0; i < g_ncall_names && g_calls[i].name != name; i++) ;
@@ -301,6 +304,9 @@ static void record_screen4(const char *label)
   u8 pal[16], dg[32];
   char hex[65];
   Sha256 c;
+  if (getenv("POOL_CPLOG")) {
+    fprintf(stderr, "CP %s %ld\n", label, (long)idx);              /* where in the recording each checkpoint is (for --snap) */
+  }
   if (!g_screens4) {
     return;
   }

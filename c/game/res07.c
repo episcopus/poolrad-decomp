@@ -16,7 +16,7 @@ u8 ColorMatchMask(u8 Color, s32 Data)
   Target = Color << 4;
   Mask = 0x80;
   {
-    if (0 <= 3) {
+    {
       I = 0;
       for (;;) {
           if ((((*CellBytes)[I] & 0xF0)) == Target) {
@@ -185,11 +185,11 @@ void UnpackPicturePixels(farptr Source, u16 Offset, u8 AllocFlags, u8 Color, far
                                   Mask = ColorMatchMask(Color, Cell);
                                   Bit = 0x80;
                                   {
-                                    if (1 <= 2) {
+                                    {
                                       Pass = 1;
                                       for (;;) {
                                           {
-                                            if (4 <= 7) {
+                                            {
                                               Index = 4;
                                               for (;;) {
                                                   if (((Bit & Mask)) > 0) {
@@ -209,7 +209,7 @@ void UnpackPicturePixels(farptr Source, u16 Offset, u8 AllocFlags, u8 Color, far
                                   }
                                 }
                                 {
-                                  if (0 <= 3) {
+                                  {
                                     Index = 0;
                                     for (;;) {
                                         if (Index & 1) {
@@ -227,7 +227,7 @@ void UnpackPicturePixels(farptr Source, u16 Offset, u8 AllocFlags, u8 Color, far
                                 }
                                 OutOfs++;
                                 {
-                                  if (4 <= 7) {
+                                  {
                                     Index = 4;
                                     for (;;) {
                                         if (Index & 1) {
@@ -286,7 +286,7 @@ void UnpackPicturePixels(farptr Source, u16 Offset, u8 AllocFlags, u8 Color, far
                                 }
                                 Bit = 0x80;
                                 {
-                                  if (0 <= 7) {
+                                  {
                                     Index = 0;
                                     for (;;) {
                                         if (Index & 1) {
@@ -295,7 +295,7 @@ void UnpackPicturePixels(farptr Source, u16 Offset, u8 AllocFlags, u8 Color, far
                                           Nibble = (s16)((u16)(*CellBytes)[(s16)((u16)Index >> 1)] >> 4);
                                         }
                                         {
-                                          if (0 <= 3) {
+                                          {
                                             Plane = 0;
                                             for (;;) {
                                                 if (((EgaPlaneBitMasks[Plane] & Nibble)) > 0) {
@@ -314,7 +314,7 @@ void UnpackPicturePixels(farptr Source, u16 Offset, u8 AllocFlags, u8 Color, far
                                 }
                                 if (w1->Pixels != 0) {
                                   {
-                                    if (0 <= 3) {
+                                    {
                                       Plane = 0;
                                       for (;;) {
                                           w1->Data[(u16)(OutOfs + Plane)] = (w1->Data[(u16)(OutOfs + Plane)] & (u8)~(*FPD(TByteArray_RES07 (*), w1->Pixels))[(u16)(PixIndex - 1)]);
@@ -964,7 +964,7 @@ void MirrorPicture(farptr Source, farptr Dest)
                     Col = 1;
                     for (;;) {
                         {
-                          if (0 <= 3) {
+                          {
                             I = 0;
                             for (;;) {
                                 (*FPD(TPicture (*), Dest)).Data[(u16)(DestOfs + I)] = MirrorByte(w1->Data[(u16)(((SrcLastOfs - DestOfs) + RowOfs) + I)]);
@@ -1121,7 +1121,7 @@ void ShowPicture(s16 PicCol, s16 PicRow, farptr Buf)
                     Col = first;
                     for (;;) {
                         {
-                          if (0 <= 3) {
+                          {
                             Plane = 0;
                             for (;;) {
                                 rtl_outp(SeqData, EgaPlaneBitMasks[Plane]);
@@ -1197,7 +1197,7 @@ void FlushPictureChanges(void)
   case AdapterCga:
   {
     {
-      if (0 <= 0xA7) {
+      {
         Row = 0;
         for (;;) {
             if (RowDirtyFlags[Row] != 0) {
@@ -1214,7 +1214,7 @@ void FlushPictureChanges(void)
   {
     rtl_outp(SeqIndex, SeqMapMask);
     {
-      if (0 <= 0xA7) {
+      {
         Row = 0;
         for (;;) {
             if (RowDirtyFlags[Row] != 0) {
@@ -1262,7 +1262,7 @@ void FlushPictureChanges(void)
     rtl_outp(GcIndex, GcMode);
     rtl_outp(GcData, WriteMode1);
     {
-      if (0 <= 0xA7) {
+      {
         Row = 0;
         for (;;) {
             if (RowDirtyFlags[Row] != 0) {
@@ -1280,7 +1280,7 @@ void FlushPictureChanges(void)
   case AdapterTandy:
   {
     {
-      if (0 <= 0xA7) {
+      {
         Row = 0;
         for (;;) {
             if (RowDirtyFlags[Row] != 0) {
@@ -1355,7 +1355,7 @@ void RemapPictureColors(farptr FromMap, farptr ToMap, s16 FirstItem, u8 Flicker,
   memcpy((*FPD(TPicture (*), Scratch)).Palette, (*FPD(TPicture (*), Pic)).Palette, 8);
   rtl_Move((void *)&(*FPD(TPicture (*), Pic)).Data[PicOfs], (void *)&(*FPD(TPicture (*), Scratch)).Data[ScratchOfs], (u16)((*FPD(TPicture (*), Scratch)).ItemCount * (*FPD(TPicture (*), Scratch)).ByteSize));
   {
-    if (0 <= 15) {
+    {
       Color = 0;
       for (;;) {
           {
@@ -1393,7 +1393,7 @@ void RemapPictureColors(farptr FromMap, farptr ToMap, s16 FirstItem, u8 Flicker,
                                       ColByte = 1;
                                       for (;;) {
                                           {
-                                            if (0 <= 3) {
+                                            {
                                               Quad = 0;
                                               for (;;) {
                                                   if ((((*FPD(TPicture (*), Pic)).Data[PicOfs] & GlyphPixelMasks[(s16)(Quad + 4)])) == PixelBitsByColor[PaletteColor(FromMapCopy[Color], rtl_far(&w3->Palette))][Quad]) {
@@ -1430,7 +1430,7 @@ void RemapPictureColors(farptr FromMap, farptr ToMap, s16 FirstItem, u8 Flicker,
                 case 1:
                 {
                   {
-                    if (0 <= 3) {
+                    {
                       Plane = 0;
                       for (;;) {
                           if (((FromMapCopy[Color] & EgaPlaneBitMasks[Plane])) > 0) {
@@ -1465,7 +1465,7 @@ void RemapPictureColors(farptr FromMap, farptr ToMap, s16 FirstItem, u8 Flicker,
                                             Mask = 0xFF;
                                           }
                                           {
-                                            if (0 <= 3) {
+                                            {
                                               Plane = 0;
                                               for (;;) {
                                                   Mask = ((((*FPD(TPicture (*), Pic)).Data[(u16)(PicOfs + Plane)] ^ PlaneMask[Plane])) & Mask);
@@ -1475,7 +1475,7 @@ void RemapPictureColors(farptr FromMap, farptr ToMap, s16 FirstItem, u8 Flicker,
                                             }
                                           }
                                           {
-                                            if (0 <= 3) {
+                                            {
                                               Plane = 0;
                                               for (;;) {
                                                   if (((ToMapCopy[Color] & EgaPlaneBitMasks[Plane])) > 0) {
@@ -1747,7 +1747,7 @@ void FillPictureRect(s16 FirstCol, s16 FirstRow, u16 Width, u16 Height, u8 Color
     DestOfs = DestOfs * 4;
     rtl_FillChar((void *)&Mask, 4, 0);
     {
-      if (0 <= 3) {
+      {
         PlaneIndex = 0;
         for (;;) {
             if (((EgaPlaneBitMasks[PlaneIndex] & Color)) > 0) {

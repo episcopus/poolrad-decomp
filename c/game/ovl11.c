@@ -35,7 +35,7 @@ void StartGame(void)
   rtl_FillChar((void *)&RowFirstChangedOfs, 0x150, 0xFF);
   rtl_FillChar((void *)&RowLastChangedOfs, 0x150, 0);
   {
-    if (0 <= LastScanline) {
+    {
       LoaderLoopIndex = 0;
       for (;;) {
           if (LoaderLoopIndex & 1) {
@@ -79,7 +79,7 @@ void StartGame(void)
   rtl_FillChar((void *)&(*FPD(TEclCode (*), EclCode)), 0x1E00, 0);
   rtl_FillChar((void *)&PictureSlots, 0xD0, 0);
   {
-    if (1 <= 2) {
+    {
       LoaderLoopIndex = 1;
       for (;;) {
           LoadSlots[LoaderLoopIndex].Kind = 0xFF;
@@ -99,7 +99,7 @@ void StartGame(void)
   UnreadWord6AB2 = 0;
   UnreadWord6AB4 = 1;
   {
-    if (2 <= 3) {
+    {
       LoaderLoopIndex = 2;
       for (;;) {
           WallSetSlotPairs[LoaderLoopIndex].A = 0xFFFF;
@@ -160,7 +160,7 @@ void StartGame(void)
   LoadPicture(S("\007sqrpaci"), 1, 0, 0, (void *)&SqrPaciBank1);
   LoadPicture(S("\007sqrpaci"), 2, 0, 0, (void *)&SqrPaciBank2);
   {
-    if (0 <= 0xB) {
+    {
       LoaderLoopIndex = 0;
       for (;;) {
           LoadPictureSlot(S("\006COMSPR"), LoaderLoopIndex, (s16)(LoaderLoopIndex + 0xD));

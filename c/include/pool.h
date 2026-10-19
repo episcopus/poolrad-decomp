@@ -145,6 +145,8 @@ void rtl_stack_release(u16 mark);
 void rtl_Move(const void *src, void *dst, u16 count);
 void rtl_store(void *dst, const void *src, u32 count);   /* bytes into memory that may be video */
 void rtl_FillChar(void *dst, u16 count, u8 value);
+void rtl_dbg2(u16 a, u16 b);        /* debugging aid: a pair of numbers into the dice log (POOL_RLOG), see ports/coco3 MB_RLOG */
+#define DBG2(a, b) rtl_dbg2((u16)(a), (u16)(b))
 u16 rtl_Random(u16 range);
 void rtl_Randomize(void);
 

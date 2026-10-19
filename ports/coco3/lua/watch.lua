@@ -56,10 +56,19 @@ if os.getenv("MB_WATCH") then      -- MB_WATCH=hexfrom-hexto: log the first writ
   local lo, hi = os.getenv("MB_WATCH"):match("(%x+)-(%x+)")
   local n = 0
   watch_tap = mem:install_write_tap(tonumber(lo, 16), tonumber(hi, 16), "watch", function(offset, data, mask)
-    if n < 12 and m.time:as_double() >= tonumber(os.getenv("MB_WATCH_AFTER") or "0") then
+    if n < tonumber(os.getenv("MB_WATCH_N") or "12") and m.time:as_double() >= tonumber(os.getenv("MB_WATCH_AFTER") or "0") then
       n = n + 1
       local st = m.devices[":maincpu"].state
       print(string.format("watch write %04X=%02X pc=%04X s=%04X u=%04X x=%04X t=%.1f", offset, data & 0xFF, st["PC"].value, st["S"].value, st["U"].value, st["X"].value, m.time:as_double()))
+    end
+  end)
+end
+if os.getenv("MB_ITRACE") then      -- MB_ITRACE=t: from that emulated second, MAME's debugger writes every instruction to build/run/itrace.txt (needs MB_DEBUGGER=1)
+  local t0, itrace_on = tonumber(os.getenv("MB_ITRACE")), false
+  itrace_frame = emu.add_machine_frame_notifier(function()
+    if not itrace_on and m.time:as_double() >= t0 and m.debugger then
+      itrace_on = true
+      m.debugger:command("trace /work/build/run/itrace.txt,maincpu,noloop")
     end
   end)
 end
@@ -85,6 +94,19 @@ m.natkeyboard:post(cmd .. "\n")
 -- (WHEEL_SEED, the RandSeed of the original at the main menu: tools/c replay of create-character, read 400000).
 local syms = {}
 for k, v in string.gmatch(os.getenv("MB_SYMS") or "", "([%w_]+)=(%x+)") do syms[k] = tonumber(v, 16) end
+if os.getenv("MB_RLOG") then      -- every Random(range) -> result, from the stores rtl_Random makes to $0A00 and $0A02 (rtl_sys.c, switched on through $090E), into OUT.rlog
+  rl_file = io.open(out .. ".rlog", "w")
+  rl_on = emu.add_machine_frame_notifier(function() mem:write_u8(0x090E, 1) end)   -- (the game's flag that logs the dice)
+  rl_b, rl_n = {0, 0, 0, 0}, 0
+  rl_tap = mem:install_write_tap(0x0A00, 0x0A03, "rlog", function(offset, data, mask)
+    rl_b[offset - 0x0A00 + 1] = data & 0xFF
+    if offset == 0x0A03 then
+      rl_n = rl_n + 1
+      rl_file:write(string.format("R %d %d %d\n", rl_n, rl_b[1] * 256 + rl_b[2], rl_b[3] * 256 + rl_b[4]))
+    end
+    return data
+  end)
+end
 local WHEEL_WORDS = {"BEWARE", "ZOMBIE", "NOTNOW", "COPPER", "DRAGON", "EFREET", "FRIEND", "JUNGLE", "KNIGHT", "SAVIOR", "TEMPLE", "VULCAN", "WYVERN"}
 local WHEEL_SEED = 0x074494E8
 local KEYCODES = {ENTER = 13, ESC = 27, SPACE = 32, TAB = 9, BACKSPACE = 8, UP = 0x81, DOWN = 0x82, LEFT = 0x83, RIGHT = 0x84,
@@ -215,6 +237,22 @@ while m.time:as_double() - t0 < limit do
     if mem:read_u8(0x0905) ~= 0 then break end
   end
 end
+if os.getenv("MB_DUMPRAM") then                    -- all of the 512 KB, to look for what the screen shows
+  local rf = io.open(out .. ".ram", "wb")
+  rf:write(ram:read_block(0, 0x80000))
+  rf:close()
+end
+if magic() then                                     -- the screen the run ends with, if it was never still long enough to be kept
+  local scr = ram:read_block(0, 32000)
+  if scr ~= last then
+    nsaved = nsaved + 1
+    local f = io.open(string.format("%s-s%02d.scr4", out, nsaved), "wb")
+    f:write(scr)
+    for i = 0, 15 do f:write(string.char(mem:read_u8(0x0950 + i))) end
+    f:close()
+    log:write(string.format("%d %.2f (the end)\n", nsaved, m.time:as_double() - t0))
+  end
+end
 log:close()
 local f = io.open(out .. ".mbx", "wb")
 for i = 0, 0x4F do f:write(string.char(mem:read_u8(0x0900 + i))) end
@@ -226,6 +264,9 @@ do   -- the paged globals (physical blocks $10..$13) and the native area of the 
   local pf = io.open(out .. ".pages", "wb")
   pf:write(ram:read_block(0x10 * 0x2000, 0x8000))
   pf:close()
+  local lf = io.open(out .. ".low", "wb")                -- slot 0: the shared page (stack, mailbox, bank stack)
+  lf:write(ram:read_block(0x38 * 0x2000, 0x2000))
+  lf:close()
   local nf = io.open(out .. ".core", "wb")
   nf:write(ram:read_block(0x30 * 0x2000, 0x6000))
   nf:close()

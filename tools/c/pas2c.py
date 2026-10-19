@@ -696,6 +696,8 @@ class Gen(DeclMixin, ExprMixin, BuiltinMixin, StmtMixin):
                     text.append("  %s = (%s)rtl_stack_alloc(%d);" % (decl(vs.type, "(*%s)" % vs.cname), ptr_ctype(vs.type), vs.type.size()))
                 else:
                     text.append("  %s%s;" % (decl(vs.type, vs.cname), zero_init(vs.type, vs.cname)))
+                    if vs.cname in ctx.padded:
+                        text.append("  u8 %s_pad[3];     /* room for a wider value written through an untyped var parameter */" % vs.cname)
         if ctx.has_frame:
             # locals live in the frame (declared in the struct)
             pass

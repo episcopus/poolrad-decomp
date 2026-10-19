@@ -30,17 +30,16 @@ CORE_ROUTINES = {"res06": ["GameClock"], "ovl34": ["Put8x8Symbol"],
                  "res05": ["LoadDaxBlock", "OpenDaxFile", "CloseDaxFile", "UnpackRle"]}   # cut out of the unit, written in src/game (the core, engapi.c)
 ENGINE_ROUTINES = {
     "res06": ["SetEgaFillRegisters", "SetActivePage", "SetPageSegment", "FillPlaneRect", "LoadGameFont", "DrawGlyph"],   # GameClock: rtl_sys.c
-    "ovl32": ["Load24x24Set", "DrawCellPicture"],
     "ovl17": ["MergePictureData"],
 }
-ENGINE_EXTRA = ["ShowPictureItem", "DaxLoad", "DaxRead", "FileKnown", "DrawIconPic", "PictureCopy", "SaveRead", "SaveWrite", "SetPictureXY", "PictureBytes", "PicData", "DrawSpritePic"]                       # engine routines the original does not have (called by src/game/engapi.c)
+ENGINE_EXTRA = ["ShowPictureItem", "DaxLoad", "DaxRead", "FileKnown", "DrawIconPic", "PictureCopy", "SaveRead", "SaveWrite", "SetPictureXY", "PictureBytes", "PicData", "DrawSpritePic", "PictureAppend", "PictureItemCopy"]                       # engine routines the original does not have (called by src/game/engapi.c)
 WRAPPED = {"LoadPicture", "AllocatePicture", "ReleasePicture", "RemapPictureColors"}   # engine routines with a wrapper in src/game/engapi.c: the stub is _eng_<Name>
 # Game routines that reach into a picture record (the PC's layout: Tail, Pixels, ByteSize) cannot: a picture is a handle and the
 # pixels are the engine's. These are rewritten after the translation to say the same thing through the engine (step 8.5; the
 # whitepaper's 4.2.3 and the routines' own comments name what each does). "fn" replaces a whole function, "between" the lines from
 # one marker through another (inclusive) in one function.
 PATCH_DECLS = ("void DrawIconPic(u16 h, s16 col, s16 row, u8 mirror);\nvoid PictureCopy(u16 src, u16 dst);\nvoid SetPictureXY(u16 h, u16 x, u16 y);\n"
-               "u16 PictureBytes(u16 h);\nvoid PicData(u16 h, u16 rel, const u8 *buf, u8 n, u8 key);\nvoid DrawSpritePic(u16 h);\nu16 DaxLoad(const u8 *name, u16 id);\nvoid DaxRead(u16 off, u8 *dst, u16 n);\n")
+               "u16 PictureBytes(u16 h);\nvoid PicData(u16 h, u16 rel, const u8 *buf, u8 n, u8 key);\nvoid DrawSpritePic(u16 h);\nvoid PictureAppend(u16 src, u16 dst, u8 index);\nvoid PictureItemCopy(u16 src, u16 dst, u8 item, u8 mirror);\nu16 DaxLoad(const u8 *name, u16 id);\nvoid DaxRead(u16 off, u8 *dst, u16 n);\n")
 PATCHES = {
     # ovl28 LoadSpriteList and Show3DSprite: the picture record's X and Y, ByteSize and pixels are the engine's (handles), and the PIC
     # block of the camp (7,787 bytes) does not fit a page of the banked heap: LoadSpriteList reads the block from the engine's stage
@@ -122,7 +121,26 @@ PATCHES = {
         ("between", "Show3DSprite", "    {\n      TSpritePicture *w1", "    }\n  } else {\n",
          "    DrawSpritePic((u16)List.Slots[Slot - 1].Sprite);\n  } else {\n"),
     ],
-    "ovl32": [("fn", "DrawIcon", """void DrawIcon(s8 CellCol, s8 CellRow, u8 IconSet, u8 Mirror, u8 PicIndex)
+    # res12 CopyPictureItem (the combat icons: an item of a slot picture, mirrored or not, into the combat picture) and ovl13
+    # ShowAttackAnimation (a byte size it works out and never reads): the picture records are the engine's
+    "res12": [("fn", "CopyPictureItem", """void CopyPictureItem(u8 PicIndex, u8 Half, u8 ItemIndex, u8 Mirror)
+{
+  POOL_TRACE("CopyPictureItem");
+  PictureItemCopy((u16)PictureSlots[PicIndex].u.a1.Pics[Half], (u16)CombatAnimationPicture, ItemIndex, Mirror);
+}""")],
+    "ovl13": [("between", "ShowAttackAnimation", "  PixelBytes = (*FPB(TPictureHeader *, CombatAnimationPicture)).ByteSize;\n",
+               "    PixelBytes = ((u16)PixelBytes / 4);\n  }\n", "")],
+    # ovl17 LoadMonster: the monster, affect and item records come out of a DAX block as bytes (Pointer arguments, so the translation does not
+    # know their type): the words in them turn from the file's order into the CoCo's, as BlockRead does for the records of a character file
+    "ovl17": [("all", "  rtl_Move((void *)&(*FPD(u8 *, Block)), (void *)&(*FPD(u8 *, Who)), 285);\n",
+               "  rtl_Move((void *)&(*FPD(u8 *, Block)), (void *)&(*FPD(u8 *, Who)), 285);\n  rtl_swapdesc((void *)&(*FPM(TCharacter *, Who)), swd_ovl17_0);\n"),
+              ("all", "      rtl_Move((void *)&FPD(struct PA_u8_1 *, Block)->a[Offset], (void *)&(*FPM(TAffect *, Affect)), 9);\n",
+               "      rtl_Move((void *)&FPD(struct PA_u8_1 *, Block)->a[Offset], (void *)&(*FPM(TAffect *, Affect)), 9);\n      rtl_swapdesc((void *)&(*FPM(TAffect *, Affect)), swd_ovl17_2);\n"),
+              ("all", "      rtl_Move((void *)&FPD(struct PA_u8_1 *, Block)->a[Offset], (void *)&(*FPM(TMenuLine *, Item)), 63);\n",
+               "      rtl_Move((void *)&FPD(struct PA_u8_1 *, Block)->a[Offset], (void *)&(*FPM(TMenuLine *, Item)), 63);\n      rtl_swapdesc((void *)&(*FPM(TMenuLine *, Item)), swd_ovl17_1);\n")],
+    "ovl32": [("between", "Load24x24Set", "  CopyBytes = (u16)(*FPB(TMemPic *, Loaded))", "Tail[DestOfs], CopyBytes);\n  }\n",
+               "  if (SqrPaciBank1 != 0) {\n    PictureAppend((u16)Loaded, (u16)SqrPaciBank1, Index);\n  }\n"),
+              ("fn", "DrawIcon", """void DrawIcon(s8 CellCol, s8 CellRow, u8 IconSet, u8 Mirror, u8 PicIndex)
 {
   /* ovl32:04FC: the original copies the picture (mirrored above icon set 3) into a new one, blits it and frees it */
   farptr Pic = PictureSlots[PicIndex].u.a1.Pics[Mirror];
@@ -149,6 +167,10 @@ def patch_unit(u, text):
                 raise SystemExit("patch %s: %s not found once" % (u, p[1]))
             items.insert(hit[0], ("other", p[2]))
             text = "\n".join(it[1] if it[0] == "other" else it[3] for it in items) + "\n"
+        elif p[0] == "all":                                  # every occurrence of a text in the unit
+            if p[1] not in text:
+                raise SystemExit("patch %s: %r not found" % (u, p[1]))
+            text = text.replace(p[1], p[2])
         elif p[0] == "fn":
             items = parse_items(text)
             hit = [i for i, it in enumerate(items) if it[0] == "fn" and it[1] == p[1]]
@@ -172,7 +194,9 @@ def patch_unit(u, text):
     return text
 
 
-DEBUG_PATCH = {}
+DEBUG_PATCH = json.loads(Path("build/run/debug_patch.json").read_text()) if Path("build/run/debug_patch.json").exists() else {}   # {unit: [[old, new], ...]}: a temporary probe (delete the file when done)
+if DEBUG_PATCH:
+    print("mkgame: DEBUG PATCH applied to", ", ".join(DEBUG_PATCH))
 CMOC = ["cmoc", "-c", "--void-target", "--no-relocate", "-O2", "-fomit-frame-pointer", "-w"]
 
 
@@ -324,7 +348,10 @@ def c_string_len(body):
     return n
 
 
-def copy_cross_literals(text, unit, fn_unit):
+STRDEFS = {}                      # Pascal string constants of game.h written as #define NAME S("...") -> the literal's text
+
+
+def copy_cross_literals(text, unit, fn_unit, same_unit=False):
     """A bank sees only its own rodata: a pointer to a string literal that reaches a routine of another bank would read the
     wrong bytes there. Every literal S("...") that is an argument of a call to a routine of another (non-core) unit becomes
     (memcpy(litK, "...", n), litK), a copy in a buffer of the caller's frame (K counts the literals of the statement)."""
@@ -369,7 +396,7 @@ def copy_cross_literals(text, unit, fn_unit):
                     while body[j] != '"':
                         j += 2 if body[j] == "\\" else 1
                     callee = stack[-1] if stack else None
-                    if body[j + 1] == ")" and callee and callee in fn_unit and fn_unit[callee] != unit:
+                    if body[j + 1] == ")" and callee and callee in fn_unit and (same_unit or fn_unit[callee] != unit):
                         hits.append((k + 1, j + 2, body[i + 2:j], stmt))
                         stmt += 1
                     i = j + 2
@@ -380,6 +407,21 @@ def copy_cross_literals(text, unit, fn_unit):
                 if stack:
                     stack.pop()
                 i += 1
+            elif (c.isalpha() or c == "_") and not (body[i - 1].isalnum() or body[i - 1] == "_"):
+                j = i
+                while j < L and (body[j].isalnum() or body[j] == "_"):
+                    j += 1
+                tok = body[i:j]
+                p, q = i - 1, j
+                while body[p] == " ":
+                    p -= 1
+                while body[q] == " ":
+                    q += 1
+                callee = stack[-1] if stack else None
+                if tok in STRDEFS and body[p] in "(," and body[q] in ",)" and callee and callee in fn_unit and (same_unit or fn_unit[callee] != unit):
+                    hits.append((i, j, STRDEFS[tok], stmt))               # a string constant handed over: copied like a literal
+                    stmt += 1
+                i = j
             else:
                 i += 1
         if not hits:
@@ -482,6 +524,8 @@ def main(argv):
     for stem in RTL_BANK:                                   # the runtime bank is a bank too: its routines see only its constants
         for m in re.finditer(r"^[A-Za-z_][\w ]*?[ *](rtl_\w+)\(", (here / "src/game" / (stem + ".c")).read_text(), re.M):
             fn_unit[m.group(1)] = "rtl"
+    for m in re.finditer(r'^#define (\w+) S\("(.*)"\)$', (gen / "game.h").read_text(), re.M):
+        STRDEFS[m.group(1)] = m.group(2)
     core = []
     for u in units:
         src = gen / (u + ".c")
@@ -516,8 +560,10 @@ def main(argv):
             info[u] = inf
             continue
         n = -(-size // BANK_LIMIT)
+        # a unit in several banks: its routines are in different banks, so a literal handed to one of them is copied as well
+        split_text = copy_cross_literals(t, u, fn_unit, True)
         while True:
-            texts = split_unit(u, src.read_text(), inf["funcs"], n)
+            texts = split_unit(u, split_text, inf["funcs"], n)
             names = ["%s_%d" % (u, k + 1) for k in range(len(texts))]
             objs, infs = [], []
             for nm, t in zip(names, texts):

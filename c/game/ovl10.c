@@ -11,11 +11,11 @@ void ScatterRareTiles(void)
   u8 Roll = 0;
   s32 t1;
   {
-    if (0 <= MapLastCol_OVL10) {
+    {
       Col = 0;
       for (;;) {
           {
-            if (0 <= MapLastRow_OVL10) {
+            {
               Row = 0;
               for (;;) {
                   if (CombatTiles[(*FPD(TCombatMap (*), CombatMap)).Cells[Row][Col]].Picture == GroundPicture) {
@@ -152,11 +152,11 @@ static void BuildDungeonMap_DrawFloorAndWest(struct Frame_BuildDungeonMap *up)
   u8 SubCol = 0;
   u8 SubRow = 0;
   {
-    if (2 <= 4) {
+    {
       SubRow = 2;
       for (;;) {
           {
-            if (0 <= 5) {
+            {
               SubCol = 0;
               for (;;) {
                   BuildDungeonMap_SetDungeonCell(up, SubCol, SubRow, GroundPicture);
@@ -172,7 +172,7 @@ static void BuildDungeonMap_DrawFloorAndWest(struct Frame_BuildDungeonMap *up)
   }
   if (up->West == SideWall) {
     {
-      if (2 <= 4) {
+      {
         SubRow = 2;
         for (;;) {
             BuildDungeonMap_SetDungeonCell(up, (s16)(SubRow - 1), SubRow, 4);
@@ -231,7 +231,7 @@ static void BuildDungeonMap_DrawNorthWestCorner(struct Frame_BuildDungeonMap *up
     OpenCorner = 0;
   }
   {
-    if (1 <= 4) {
+    {
       K = 1;
       for (;;) {
           switch (K) {
@@ -421,7 +421,7 @@ static void BuildDungeonMap_DrawNorthEastCorner(struct Frame_BuildDungeonMap *up
     OpenCorner = 0;
   }
   {
-    if (1 <= 4) {
+    {
       K = 1;
       for (;;) {
           switch (K) {
@@ -555,11 +555,11 @@ void BuildDungeonMap(void)
   Frame_BuildDungeonMap fr;
   memset(&fr, 0, sizeof fr);
   {
-    if ((-2) <= 2) {
+    {
       fr.CellRow = (-2);
       for (;;) {
           {
-            if ((-6) <= 6) {
+            {
               fr.CellCol = (-6);
               for (;;) {
                   fr.MapX = PartyMapColumn + fr.CellCol;
@@ -992,7 +992,7 @@ void PlaceRiver(void)
     }
     fr.StartCol = fr.Col;
     {
-      if (0 <= MapLastRow_OVL10) {
+      {
         fr.Row = 0;
         for (;;) {
             if (fr.Col <= MapLastCol_OVL10) {
@@ -1048,11 +1048,11 @@ void PlaceTallFeatures(void)
     Chance = 0;
   }
   {
-    if (0 <= MapLastCol_OVL10) {
+    {
       Col = 0;
       for (;;) {
           {
-            if (1 <= MapLastRow_OVL10) {
+            {
               Row = 1;
               for (;;) {
                   if ((((CombatTiles[(*FPD(TCombatMap (*), CombatMap)).Cells[Row][Col]].Picture == GroundPicture)) && ((CombatTiles[(*FPD(TCombatMap (*), CombatMap)).Cells[(s16)(Row - 1)][Col]].Picture == GroundPicture))) && ((RollDice(1, 100) <= Chance))) {
@@ -1121,11 +1121,11 @@ void ScatterTerrainFeatures(void)
     Chance2A = 0xA;
   }
   {
-    if (0 <= MapLastCol_OVL10) {
+    {
       Col = 0;
       for (;;) {
           {
-            if (0 <= MapLastRow_OVL10) {
+            {
               Row = 0;
               for (;;) {
                   if (CombatTiles[(*FPD(TCombatMap (*), CombatMap)).Cells[Row][Col]].Picture == GroundPicture) {
@@ -1390,7 +1390,7 @@ u8 FindStartCell(u8 Index)
           MapY = SideOriginRow[PlacingSide] + PartyMapRow;
           OpenSide = 0;
           {
-            if (1 <= 3) {
+            {
               I = 1;
               for (;;) {
                   Dir = FacingWallDirs[SideFacing[PlacingSide]][I];
@@ -1468,7 +1468,7 @@ void PlaceAllCombatants(void)
   DroppedCount = 0;
   PlacedCount = 0;
   {
-    if (1 <= CombatantClearLoopLast) {
+    {
       Index = 1;
       for (;;) {
           CombatantTable[Index].Kind = 0;
@@ -1485,7 +1485,7 @@ void PlaceAllCombatants(void)
   SideOriginRow[1] = SideOriginRow[0] + (DirStepY[PartyFacing] * (*FPD(TGameVars (*), GameVars2))[705]);
   SideFacing[1] = (s16)((u16)((((s16)(PartyFacing + 4)) % 8)) >> 1);
   {
-    if (SideParty <= SideMonsters) {
+    {
       PlacingSide = SideParty;
       for (;;) {
           FirstRingCells[PlacingSide] = (s16)((u16)((s16)(SideCounts[PlacingSide] + 1)) >> 1);
@@ -1495,11 +1495,11 @@ void PlaceAllCombatants(void)
     }
   }
   {
-    if (SideParty <= SideMonsters) {
+    {
       PlacingSide = SideParty;
       for (;;) {
           {
-            if (0 <= 3) {
+            {
               Group = 0;
               for (;;) {
                   if (Group == 1) {
@@ -1508,11 +1508,11 @@ void PlaceAllCombatants(void)
                     Shape = SideFacing[PlacingSide];
                   }
                   {
-                    if (0 <= GridLastRow) {
+                    {
                       Row = 0;
                       for (;;) {
                           {
-                            if (0 <= GridLastCol) {
+                            {
                               Col = 0;
                               for (;;) {
                                   if (((PlacementShapes[Shape][Row].Lo_ > Col)) || ((PlacementShapes[Shape][Row].Hi_ < Col))) {

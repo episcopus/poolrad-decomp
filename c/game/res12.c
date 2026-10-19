@@ -207,7 +207,7 @@ void FormatItemLine(s32 Value, PItem Item, u8 Col, u8 Row, u8 ShowReadied, u8 Sh
   }
   Mask = 0;
   {
-    if (1 <= 3) {
+    {
       I = 1;
       for (;;) {
           if ((((*FPD(TMenuLine (*), Item)).NameNum[I - 1] != 0)) && ((((((s16)((u16)(*FPD(TMenuLine (*), Item)).HiddenNames >> ((s16)(3 - I)))) & 1)) == 0))) {
@@ -220,7 +220,7 @@ void FormatItemLine(s32 Value, PItem Item, u8 Col, u8 Row, u8 ShowReadied, u8 Sh
   }
   Plural = 0;
   {
-    if (3 >= 1) {
+    {
       I = 3;
       for (;;) {
           if (((((s16)((u16)Mask >> ((s16)(I - 1)))) & 1)) > 0) {
@@ -477,7 +477,7 @@ u8 IsHelpless(farptr Who)
   farptr Affect = 0;
   Result = 0;
   {
-    if (1 <= 4) {
+    {
       I = 1;
       for (;;) {
           if (HasAffect(Who, HelplessAffects[I], &Affect)) {
@@ -535,7 +535,7 @@ void RecalcCombatValues(PCharacter Who)
   u16 Weight = 0;
   s8 ItemKind = 0;
   {
-    if (0 <= 12) {
+    {
       SlotIndex = 0;
       for (;;) {
           (*FPD(TCharacter (*), Who)).SlotItems[SlotIndex] = 0;
@@ -602,7 +602,7 @@ void RecalcCombatValues(PCharacter Who)
     Item = (*FPD(TMenuLine (*), Item)).Next;
   }
   {
-    if (0 <= 6) {
+    {
       MoneyKind = 0;
       for (;;) {
           (*FPD(TCharacter (*), Who)).CarriedWeight = (*FPD(TCharacter (*), Who)).CarriedWeight + (*FPD(TCharacter (*), Who)).Money[MoneyKind];
@@ -612,7 +612,7 @@ void RecalcCombatValues(PCharacter Who)
     }
   }
   {
-    if (1 <= 2) {
+    {
       TripleIndex = 1;
       for (;;) {
           (*FPD(TCharacter (*), Who)).WeaponAttacks[TripleIndex - 1] = (*FPD(TCharacter (*), Who)).BaseAttacks[TripleIndex - 1];
@@ -624,7 +624,7 @@ void RecalcCombatValues(PCharacter Who)
     }
   }
   {
-    if (0 <= 4) {
+    {
       BonusIndex = 0;
       for (;;) {
           Bonus.Values[BonusIndex] = 0;
@@ -671,7 +671,7 @@ void RecalcCombatValues(PCharacter Who)
   }
   (*FPD(TCharacter (*), Who)).ArmourClassValue = 0;
   {
-    if (0 <= 4) {
+    {
       BonusIndex = 0;
       for (;;) {
           (*FPD(TCharacter (*), Who)).ArmourClassValue = (*FPD(TCharacter (*), Who)).ArmourClassValue + Bonus.Values[BonusIndex];
@@ -1667,7 +1667,7 @@ void ShowHitMessage(farptr Who, u8 AffectMessage, const u8 *Text_in)
         Pass = 0;
         for (;;) {
             {
-              if (0 <= 3) {
+              {
                 Frame = 0;
                 for (;;) {
                     DrawPictureItemClipped(Col, Row, Frame, (PictureMasked | PictureSaveBackground), CombatAnimationPicture, DrawBuf);

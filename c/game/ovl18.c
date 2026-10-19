@@ -110,11 +110,11 @@ void AnimateAreaDoors(u8 Flag)
     DrawAreaView(0x11, 0xF);
     FlushPictureChanges();
     {
-      if (0 <= 8) {
+      {
         DoorRow = 0;
         for (;;) {
             {
-              if (0 <= 0xA) {
+              {
                 DoorCol = 0;
                 for (;;) {
                     if (DoorBlockCodesFirst[DoorCol] > 0x7F) {
@@ -128,7 +128,7 @@ void AnimateAreaDoors(u8 Flag)
               }
             }
             {
-              if (0 <= 0x11) {
+              {
                 DoorCol = 0;
                 for (;;) {
                     if (DoorBlockCodesSecond[DoorCol] > 0x7F) {
@@ -150,7 +150,7 @@ void AnimateAreaDoors(u8 Flag)
     }
   }
   {
-    if (0 <= 0xA) {
+    {
       DoorCol = 0;
       for (;;) {
           if (DoorBlockCodesFirst[DoorCol] > 0x7F) {
@@ -164,7 +164,7 @@ void AnimateAreaDoors(u8 Flag)
     }
   }
   {
-    if (0 <= 0x11) {
+    {
       DoorCol = 0;
       for (;;) {
           if (DoorBlockCodesSecond[DoorCol] > 0x7F) {

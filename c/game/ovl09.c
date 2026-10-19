@@ -296,7 +296,7 @@ u8 CastMemorizedSpell(PCharacter Who)
   Count = 0;
   if ((*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).CanCast != 0) {
     {
-      if (0 <= 0x14) {
+      {
         I = 0;
         for (;;) {
             if ((*FPD(TCharacter (*), Who)).Spells[I] > 0) {

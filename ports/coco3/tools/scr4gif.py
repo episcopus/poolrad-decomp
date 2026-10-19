@@ -2,6 +2,7 @@
 """scr4gif.py PREFIX OUT.gif: the screens the harness kept (PREFIX-sNN.scr4, lua/watch.lua) as an animated GIF, in the order the game
 showed them, twice the size, with the labels of the golden's screens when PREFIX names a session (make game-view). Needs Pillow."""
 import glob
+import re
 import sys
 
 sys.path.insert(0, __file__.rsplit("/ports/", 1)[0] + "/tools")
@@ -20,7 +21,7 @@ def frame(path):
 
 def main():
     prefix, out = sys.argv[1], sys.argv[2]
-    files = sorted(glob.glob(prefix + "-s*.scr4"))
+    files = sorted(glob.glob(prefix + "-s*.scr4"), key=lambda f: int(re.search(r"-s(\d+)\.scr4$", f).group(1)))
     if not files:
         raise SystemExit("scr4gif: no screens under " + prefix)
     frames = [frame(f) for f in files]

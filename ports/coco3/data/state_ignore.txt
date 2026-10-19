@@ -74,3 +74,14 @@ SelectedCharacter pointer to a character
 PartyListHead pointer to the first character of the party
 PictureAnimation the sprite list of the area view: picture pointers (handles) in its slots, the rest equal
 ds6ABE the sprite list and the bytes before it: picture pointers (handles)
+CombatMap pointer to the combat map block (an address of the CoCo's mapped heap)
+ds6716 the low word of CombatMap (a pointer)
+Raw6718 the low word of CombatMap seen as the bytes after the pointer's first word, and the table behind it (SortEntries)
+CombatantRecord the table of pointers to the combatants (addresses of two different heaps)
+SortEntries the first bytes are the low word of CombatMap (the pointer overlaps the sort table's first record, as on the PC where its segment does), see CombatMap
+Raw6E36 CombatAnimationPicture: a picture handle here, a pointer there
+BodyTable the first four bytes of an entry are a pointer to the character that died (the rest is equal)
+AttackTarget a pointer to a character
+Raw6826 the low word of AttackTarget (a pointer)
+ds6828 the low word of AttackTarget (the pointer's second word overlaps the table that follows, as on the PC)
+AffectHandlers its first word is the low word of AttackTarget's pointer (the same overlap)

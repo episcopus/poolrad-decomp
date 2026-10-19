@@ -104,6 +104,7 @@ void rtl_stack_release(u16 mark);
 void rtl_Move(const void *src, void *dst, u16 count);
 void rtl_store(void *dst, const void *src, u32 count);   /* bytes into memory that may be video */
 void rtl_FillChar(void *dst, u16 count, u8 value);
+#define DBG2(a, b) (*(volatile u16 *)0x0A00 = (u16)(a), *(volatile u16 *)0x0A02 = (u16)(b))      /* debugging aid: lua/watch.lua MB_RLOG logs the pair like a die */
 u16 rtl_Random(u16 range);
 void rtl_Randomize(void);
 

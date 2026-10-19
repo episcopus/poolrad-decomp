@@ -27,19 +27,19 @@ void DrawAreaView(s16 LeftCol, s16 TopRow)
   u8 GridRow = 0;
   BaseRow = 0;
   {
-    if (0 <= 4) {
+    {
       GridRow = 0;
       for (;;) {
           BaseCol = 0;
           {
-            if (0 <= 4) {
+            {
               GridCol = 0;
               for (;;) {
                   TileCol = GridCol + LeftCol;
                   TileRow = GridRow + TopRow;
                   Count = AreaMap[TileRow][TileCol] - 1;
                   {
-                    if (1 <= SpecialCount) {
+                    {
                       Special = 1;
                       for (;;) {
                           if (((TileCol == SpecialBlocks[Special].Col)) && ((TileRow == SpecialBlocks[Special].Row))) {

@@ -111,6 +111,10 @@ u16 rtl_Random(u16 range)
     r = range == 0 ? 0 : (u16)((u16)(rand_seed >> 16) % range);
     if (range == 13)
         wheel_pick = (u8)(r | 0x80);
+    if (*(u8 *)0x090E) {                               /* the harness asks for the dice (lua/watch.lua MB_RLOG): range and result, to two taps */
+        *(u16 *)0x0A00 = range;
+        *(u16 *)0x0A02 = r;
+    }
     return r;
 }
 

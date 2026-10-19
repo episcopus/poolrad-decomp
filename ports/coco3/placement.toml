@@ -13,13 +13,14 @@
 [mapped]
 types = [
   "TCharacter", "TAffect", "TMenuLine", "TCombatant", "TCombatNode", "TLineState", "TReturnEntry",
-  "TCombatMap", "TMapRows", "TWallTiles", "TWallSets", "TGeoCellBlock", "TBlock400", "TScoredCharacter",
+  "TCombatMap", "TMapRows", "TGeoCellBlock", "TBlock400", "TScoredCharacter",
   "TVmWords9700", "TSheetFields", "TAbilityBlock", "TDamageDice", "TResistView",
 ]
 
 [banked]
 types = [
   "TGameVars", "TEclCode", "TVmWords4900", "TVmWords6B00", "TMemPic", "TPictureHeader",
+  "TWallTiles", "TWallSets",         # 8.7: 2.3 KB the mapped heap needs for a fight; one block, two typed views (WallSets is absolute WallTiles), so both banked
 ]
 
 # A field declared as an untyped Pointer that the game uses as a typed list: what it holds, for the allocation

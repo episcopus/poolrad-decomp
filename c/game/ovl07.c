@@ -136,7 +136,7 @@ void InitScript(void)
   (*FPD(TGameVars (*), GameVars))[230] = 1;
   if (SkipAreaScriptLoad == 0) {
     {
-      if (1 <= 0x20) {
+      {
         I = 1;
         for (;;) {
             (*FPD(TVmWords4900 (*), VarsAt4900))[(u16)(I + 0x49FF) - 18688] = 0;
@@ -146,7 +146,7 @@ void InitScript(void)
       }
     }
     {
-      if (0 <= 9) {
+      {
         I = 0;
         for (;;) {
             (*FPD(TVmWords6B00 (*), VarsAt6B00))[(u16)(I + 0x6E79) - 27392] = 0;

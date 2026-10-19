@@ -153,13 +153,13 @@ void DrawGlyph(u8 Col, u8 Row, u8 Color, u8 Count, u8 Glyph, u8 TextSet)
             DestOff = Row * 4;
             FontRow = 0;
             {
-              if (0 <= 3) {
+              {
                 Line = 0;
                 for (;;) {
                     Acc = 0;
                     Mask = DrawGlyph_TopBit;
                     {
-                      if (0 <= 7) {
+                      {
                         Bit = 0;
                         for (;;) {
                             if (((*FPD(TFont (*), GameFont))[Index][FontRow] & Mask) > 0) {
@@ -176,7 +176,7 @@ void DrawGlyph(u8 Col, u8 Row, u8 Color, u8 Count, u8 Glyph, u8 TextSet)
                     Acc = 0;
                     Mask = DrawGlyph_TopBit;
                     {
-                      if (0 <= 7) {
+                      {
                         Bit = 0;
                         for (;;) {
                             if (((*FPD(TFont (*), GameFont))[Index][FontRow] & Mask) > 0) {
@@ -203,11 +203,11 @@ void DrawGlyph(u8 Col, u8 Row, u8 Color, u8 Count, u8 Glyph, u8 TextSet)
             DestOff = ((Row * 8) * DrawGlyph_GraphStride) + Col;
             rtl_outp(SeqIndex, SeqMapMask);
             {
-              if (0 <= 7) {
+              {
                 Line = 0;
                 for (;;) {
                     {
-                      if (0 <= 3) {
+                      {
                         Bit = 0;
                         for (;;) {
                             rtl_outp(SeqData, EgaPlaneMasks[(s16)(3 - Bit)]);
@@ -241,16 +241,16 @@ void DrawGlyph(u8 Col, u8 Row, u8 Color, u8 Count, u8 Glyph, u8 TextSet)
             FontRow = Row * 2;
             ColBase = Col * 4;
             {
-              if (0 <= 1) {
+              {
                 Line = 0;
                 for (;;) {
                     {
-                      if (0 <= 3) {
+                      {
                         Bank = 0;
                         for (;;) {
                             Mask = DrawGlyph_TopBit;
                             {
-                              if (0 <= 3) {
+                              {
                                 Bit = 0;
                                 for (;;) {
                                     if (((*FPD(TFont (*), GameFont))[Index][DestOff] & Mask) > 0) {

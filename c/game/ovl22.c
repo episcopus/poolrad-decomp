@@ -180,7 +180,7 @@ void AddItemSpells(u8 Pending_)
   }
   if ((*FPD(TMenuLine (*), CurrentItem)).HiddenNames == 0) {
     {
-      if (1 <= 3) {
+      {
         I = 1;
         for (;;) {
             if (((((Pending_ != 0)) && (((*FPD(TMenuLine (*), CurrentItem)).Affects[I - 1] > AddItemSpells_PendingSpell)))) || ((((Pending_ == 0)) && (((*FPD(TMenuLine (*), CurrentItem)).Affects[I - 1] > 0))))) {
@@ -206,7 +206,7 @@ void AddScrollSpells(u8 Pending_)
   POOL_TRACE("AddScrollSpells");
   u8 I = 0;
   {
-    if (0 <= 0x30) {
+    {
       I = 0;
       for (;;) {
           SpellMenuItems[I] = 0;
@@ -240,7 +240,7 @@ u8 BuildSpellList(u8 Kind)
   Result = 0;
   SpellMenuList = 0;
   {
-    if (0 <= 0x14) {
+    {
       I = 0;
       for (;;) {
           SpellMenuSpells[I] = 0;
@@ -253,7 +253,7 @@ u8 BuildSpellList(u8 Kind)
   case 0:
   {
     {
-      if (0 <= 0x14) {
+      {
         I = 0;
         for (;;) {
             if ((((*FPD(TCharacter (*), SelectedCharacter)).Spells[I] > 0)) && (((*FPD(TCharacter (*), SelectedCharacter)).Spells[I] < BuildSpellList_PendingSpell))) {
@@ -269,7 +269,7 @@ u8 BuildSpellList(u8 Kind)
   case 5:
   {
     {
-      if (0 <= 0x14) {
+      {
         I = 0;
         for (;;) {
             if ((*FPD(TCharacter (*), SelectedCharacter)).Spells[I] > SpellMask) {
@@ -285,7 +285,7 @@ u8 BuildSpellList(u8 Kind)
   case 1:
   {
     {
-      if (1 <= 0x37) {
+      {
         I = 1;
         for (;;) {
             if ((*FPD(TCharacter (*), SelectedCharacter)).KnownSpells[I - 1] != 0) {
@@ -316,7 +316,7 @@ u8 BuildSpellList(u8 Kind)
   case 4:
   {
     {
-      if (1 <= 0x38) {
+      {
         I = 1;
         for (;;) {
             if ((((*FPD(TCharacter (*), SelectedCharacter)).SpellSlots[SpellTable[I].SpellClass][SpellTable[I].Level - 1] > 0)) && (((*FPD(TCharacter (*), SelectedCharacter)).KnownSpells[I - 1] == 0))) {
@@ -1215,7 +1215,7 @@ void CastStinkingCloud(void)
   (*FPD(TCombatNode (*), Node)).X = SpellAimX;
   (*FPD(TCombatNode (*), Node)).Y = SpellAimY;
   {
-    if (1 <= 4) {
+    {
       I = 1;
       for (;;) {
           Dir = SpellNamesPrefix.AimDirs[I - 1];
@@ -1230,7 +1230,7 @@ void CastStinkingCloud(void)
             while (Cloud != 0) {
               if (Cloud != Node) {
                 {
-                  if (1 <= 4) {
+                  {
                     J = 1;
                     for (;;) {
                         if ((*FPD(TCombatNode (*), Cloud)).Arms[J - 1] != 0) {
@@ -1275,7 +1275,7 @@ void CastStinkingCloud(void)
   DelayByGameSpeed();
   ClearCharacterMessage();
   {
-    if (1 <= 4) {
+    {
       I = 1;
       for (;;) {
           if (Occupant[I - 1] > 0) {
@@ -1369,7 +1369,7 @@ void CastAnimateDead(void)
           (*FPD(TCharacter (*), Current)).SweepAttacks = 0;
           (*FPD(TCharacter (*), Current)).BaseMovement = 6;
           {
-            if (0 <= CastAnimateDead_MaxSpellSlot) {
+            {
               I = 0;
               for (;;) {
                   (*FPD(TCharacter (*), Current)).Spells[I] = 0;
@@ -1889,7 +1889,7 @@ void CastRestoration(void)
   /* QUIRK ovl22:2CAE: BestClass is never initialized, only set by an accepted class; a character with
      no class that can advance would advance whatever class the stale local names. */
   {
-    if (0 <= CastRestoration_LastClass) {
+    {
       Class = 0;
       for (;;) {
           Level = (*FPD(TCharacter (*), Target)).ClassLevels[Class];
@@ -2124,7 +2124,7 @@ void ConsumeScrollSpell(PCharacter Who, PItem Item, u8 Spell)
   SpellNumber = (Spell & SpellMask);
   Slot = 0;
   {
-    if (1 <= 3) {
+    {
       I = 1;
       for (;;) {
           if ((((*FPD(TMenuLine (*), Item)).Affects[I - 1] & SpellMask)) == SpellNumber) {

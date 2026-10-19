@@ -56,13 +56,13 @@ def host_state(session, outdir):
     shutil.rmtree(outdir, ignore_errors=True)
     os.makedirs(outdir)
     p = subprocess.run([exe, "--data", os.path.join(ROOT, "poolrad"), "--save", save, "--dump", os.path.join(outdir, "x"),
-                        "--snap", str(SNAP.get(session, 0)), rpl], capture_output=True, text=True)
+                        "--snap", os.environ.get("STATE_SNAP") or str(SNAP.get(session, 0)), rpl], capture_output=True, text=True)
     if "ok:" not in p.stdout + p.stderr:
         raise SystemExit("statecheck: the host replay failed:\n" + p.stdout + p.stderr)
     return save, os.path.join(outdir, "x-snap.dgroup")
 
 
-SNAP = {"create-character": 616000, "walk-explore": 1580000, "camp-save": 1400000, "camp-rest-combat": 0, "parley-combat": 0}                # a read in the last idle stretch of the session (the main menu again)
+SNAP = {"create-character": 616000, "walk-explore": 1580000, "camp-save": 1400000, "camp-rest-combat": 3865800, "parley-combat": 7394000}                # a read in the last idle stretch of the session (the main menu again)
 
 
 def save_files(prefix):
@@ -212,7 +212,11 @@ def check_dgroup(prefix, dump):
             open_ += 1
             diffs.append((off, size, name + "  (" + ign[name] + ")"))
         else:
-            diffs.append((off, size, name))
+            where = [i for i in range(size) if b[i] != pc[off + i]]
+            if os.environ.get("STATE_SHOW"):                        # debugging: the bytes on both sides
+                print("    %s host %s" % (name, pc[off:off + 64].hex()))
+                print("    %s coco %s" % (name, bytes(b[:64]).hex()))
+            diffs.append((off, size, "%s  (differs at +%s%s)" % (name, ",".join("%X" % i for i in where[:12]), "..." if len(where) > 12 else "")))
     print("  dgroup: %d places equal, %d differ for a reason in data/state_ignore.txt (representation, platform), %d differ and are open or unexplained, %d not on the CoCo (the engine's)" % (
         equal, ignored, len(diffs), unplaced))
     for off, size, name in diffs:

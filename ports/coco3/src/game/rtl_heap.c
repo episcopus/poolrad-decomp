@@ -6,9 +6,10 @@
 
 /* This code lives in the runtime bank, which holds no variables: the heap's tables are at a fixed place in native memory. */
 #define BHEAP_LIN0 0x2C7C0UL
-#define NBLK 32
+#define NBLKM 64
+#define NBLKB 16
 typedef struct Blk { u16 off, size; u8 used; } Blk;
-struct HeapData { Blk mblk[NBLK]; Blk bblk[NBLK]; u8 nm, nb, ready; };
+struct HeapData { Blk mblk[NBLKM]; Blk bblk[NBLKB]; u8 nm, nb, ready; };
 #define HD ((struct HeapData *)HEAPDATA)
 #define mblk (HD->mblk)
 #define bblk (HD->bblk)
@@ -18,13 +19,13 @@ struct HeapData { Blk mblk[NBLK]; Blk bblk[NBLK]; u8 nm, nb, ready; };
 
 static void rtl_heap_init(void);
 
-static int alloc(Blk *t, u8 *cnt, u16 n)
+static int alloc(Blk *t, u8 *cnt, u8 cap, u16 n)
 {
     u8 i, j;
     for (i = 0; i < *cnt; i++) {
         if (!t[i].used && t[i].size >= n) {
             if (t[i].size > n) {                          /* split */
-                if (*cnt == NBLK)
+                if (*cnt == cap)
                     rtl_fatal_code(0x20, n);
                 for (j = *cnt; j > i + 1; j--)
                     t[j] = t[j - 1];
@@ -88,7 +89,7 @@ farptr rtl_getmem_m(u16 size)
         return 0;
     if (!heap_ready)
         rtl_heap_init();
-    i = alloc(mblk, &nm, (u16)((size + 7u) & 0xFFF8u));
+    i = alloc(mblk, &nm, NBLKM, (u16)((size + 7u) & 0xFFF8u));
     if (i < 0)
         rtl_fatal_code(0x22, size);
     return POOL_FARPTR(POOL_DS_SEG, mblk[i].off);
@@ -104,7 +105,7 @@ farptr rtl_getmem(u16 size)
         rtl_heap_init();
     if (size > 0x1E00u)
         rtl_fatal_code(0x23, size);
-    i = alloc(bblk, &nb, (u16)((size + 7u) & 0xFFF8u));
+    i = alloc(bblk, &nb, NBLKB, (u16)((size + 7u) & 0xFFF8u));
     if (i < 0)
         rtl_fatal_code(0x24, size);
     lin = 0x2C7C0UL + ((u32)(bblk[i].off >> 13) << 13) + (bblk[i].off & 0x1FFFu);

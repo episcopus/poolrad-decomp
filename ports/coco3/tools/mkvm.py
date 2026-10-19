@@ -38,7 +38,7 @@ NAT_BASE = 0x0000                                          # DS offsets of the h
 VM_BASE = 0x2000
 # --coco: the DS offsets are the CoCo's addresses (a native global at offset o is at address o, a block of the mapped heap
 # likewise) and the paged globals live at offsets from $8000 up, which no address of the map is used for.
-COCO_NAT_BASE = 0x4DD0
+COCO_NAT_BASE = 0x4E20
 COCO_VM_BASE = 0x8000
 CONST_END = 0x43DC
 # System unit variables and the Input/Output records the runtime reads and writes itself: always native

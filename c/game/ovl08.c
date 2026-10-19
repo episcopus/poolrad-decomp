@@ -285,7 +285,7 @@ void CombatMenu(PCharacter Who, u8 (*Cmd))
   }
   Flag = 0;
   {
-    if (0 <= 20) {
+    {
       I = 0;
       for (;;) {
           if ((*FPD(TCharacter (*), Who)).Spells[I] > 0) {

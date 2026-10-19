@@ -182,7 +182,7 @@ void TrainConstitution(PCharacter Who, PAffect Affect, u8 Mode)
     return;
   }
   {
-    if (0 <= LastClass_OVL12) {
+    {
       I = 0;
       for (;;) {
           if ((*FPD(TCharacter (*), Who)).ClassLevels[I] > 0) {
@@ -394,7 +394,7 @@ void BoostAttackVsKoboldGoblin(PCharacter Who, PAffect Affect, u8 Mode)
   AttackTarget = (*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).Target;
   if ((((*FPD(TCharacter (*), AttackTarget)).CreatureType == CreatureHumanoid)) && (((*FPD(TCharacter (*), AttackTarget)).CombatSize == SmallFootprintKind))) {
     {
-      if (1 <= KoboldGoblinNameCount) {
+      {
         I = 1;
         for (;;) {
             if (rtl_str_cmp((*FPD(TCharacter (*), AttackTarget)).Name, KoboldGoblinNames[I]) == 0) {
@@ -528,7 +528,7 @@ void BoostAttackVsOrcGoblinHobgoblin(PCharacter Who, PAffect Affect, u8 Mode)
   AttackTarget = (*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).Target;
   if ((((*FPD(TCharacter (*), AttackTarget)).CreatureType == CreatureHumanoid)) && (((*FPD(TCharacter (*), AttackTarget)).CombatSize == SmallFootprintKind))) {
     {
-      if (1 <= OrcGoblinHobgoblinNameCount) {
+      {
         I = 1;
         for (;;) {
             if (rtl_str_cmp((*FPD(TCharacter (*), AttackTarget)).Name, OrcGoblinHobgoblinNames[I - 1]) == 0) {
@@ -733,7 +733,7 @@ void ClearCloud(PCharacter Who, PAffect Affect, u8 Mode)
   }
   ShowFlashMessage(S("\032The air clears a little..."));
   {
-    if (1 <= 4) {
+    {
       Arm = 1;
       for (;;) {
           if ((*FPD(TCombatNode (*), Cloud)).Arms[Arm - 1] != 0) {
@@ -777,7 +777,7 @@ void ClearCloud(PCharacter Who, PAffect Affect, u8 Mode)
   Node = CloudList;
   while (Node != 0) {
     {
-      if (1 <= 4) {
+      {
         Arm = 1;
         for (;;) {
             if ((*FPD(TCombatNode (*), Node)).Arms[Arm - 1] != 0) {
@@ -915,7 +915,7 @@ void LowerAttackVsOgreTrollGiant(PCharacter Who, PAffect Affect, u8 Mode)
   AttackTarget = (*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).Target;
   if ((((*FPD(TCharacter (*), SelectedCharacter)).CreatureType == CreatureHumanoid)) && (((((*FPD(TCharacter (*), SelectedCharacter)).CombatSize & CombatKindMask)) == LargeFootprintKind_OVL12))) {
     {
-      if (1 <= OgreTrollGiantNameCount) {
+      {
         I = 1;
         for (;;) {
             if (rtl_str_cmp((*FPD(TCharacter (*), AttackTarget)).Name, OgreTrollGiantNames[I - 1]) == 0) {
@@ -1526,7 +1526,7 @@ static s8 DrainLevels_HighestLevelClass(struct Frame_DrainLevels *up)
   up->BestXp = 0;
   BestLevel = 0;
   {
-    if (0 <= LastClass_OVL12) {
+    {
       J = 0;
       for (;;) {
           Level = (*FPD(TCharacter (*), up->Who)).ClassLevels[J];
@@ -1595,7 +1595,7 @@ void DrainLevels(PCharacter Who, u8 Count)
             (*FPD(TCharacter (*), fr.Who)).Pad74[0]++;
             fr.Total = 0;
             {
-              if (0 <= LastClass_OVL12) {
+              {
                 fr.ClassIndex = 0;
                 for (;;) {
                     fr.Total += (*FPD(TCharacter (*), fr.Who)).ClassLevels[fr.ClassIndex];
@@ -2362,7 +2362,7 @@ void VetoTargetWithMirrorOrWoodenHolySymbol(PCharacter Who, PAffect Affect, u8 M
   while (((Item != 0)) && ((HookVetoFlag == 0))) {
     if ((*FPD(TMenuLine (*), Item)).Readied) {
       {
-        if (1 <= 3) {
+        {
           NameIndex = 1;
           for (;;) {
               if ((((((*FPD(TMenuLine (*), Item)).NameNum[NameIndex - 1] == HolySymbolNameNum)) && (((*FPD(TMenuLine (*), Item)).NameNum[2] == WoodenNameNum)))) || (((*FPD(TMenuLine (*), Item)).NameNum[NameIndex - 1] == MirrorNameNum))) {

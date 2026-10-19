@@ -298,7 +298,7 @@ void ScanTargets(s8 FromX, s8 FromY, u16 MaxSteps, u8 Dir, u8 Base, farptr Map)
   u16 StepCount = 0;
   u16 Best = 0;
   {
-    if (0 <= 3) {
+    {
       J = 0;
       for (;;) {
           if (FootprintCell(Base, J, &LocX, &LocY)) {
@@ -322,7 +322,7 @@ void ScanTargets(s8 FromX, s8 FromY, u16 MaxSteps, u8 Dir, u8 Base, farptr Map)
             Found = 0;
             Best = 0xFF;
             {
-              if (0 <= 3) {
+              {
                 K = 0;
                 for (;;) {
                     if (FootprintCell(CombatantTable[I].Kind, K, &LocX, &LocY)) {
@@ -337,12 +337,12 @@ void ScanTargets(s8 FromX, s8 FromY, u16 MaxSteps, u8 Dir, u8 Base, farptr Map)
               }
             }
             {
-              if (0 <= 3) {
+              {
                 K = 0;
                 for (;;) {
                     if (TargX[K] >= 0) {
                       {
-                        if (0 <= 3) {
+                        {
                           J = 0;
                           for (;;) {
                               if (CandX[J] >= 0) {

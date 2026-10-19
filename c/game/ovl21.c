@@ -54,7 +54,7 @@ s32 MoneyValueInGold(TPartyMoney (*Money_in))
   s8 Kind = 0;
   Total = 0;
   {
-    if (CopperCoin <= PlatinumCoin) {
+    {
       Kind = CopperCoin;
       for (;;) {
           Total += CoinCopperValues[Kind] * Money[Kind];
@@ -75,7 +75,7 @@ void SetCharacterGold(u16 Amount)
   POOL_TRACE("SetCharacterGold");
   s8 Kind = 0;
   {
-    if (CopperCoin <= PlatinumCoin) {
+    {
       Kind = CopperCoin;
       for (;;) {
           (*FPD(TCharacter (*), SelectedCharacter)).Money[Kind] = 0;
@@ -95,7 +95,7 @@ void SetPooledGold(u16 Amount)
   POOL_TRACE("SetPooledGold");
   s8 Kind = 0;
   {
-    if (CopperCoin <= PlatinumCoin) {
+    {
       Kind = CopperCoin;
       for (;;) {
           PooledMoney[Kind] = 0;
@@ -227,7 +227,7 @@ void PoolMoney(void)
   while (Who != 0) {
     if ((((*FPD(TCharacter (*), Who)).B84 == 0)) || (((*FPD(TCharacter (*), Who)).B84 == SharerB84))) {
       {
-        if (0 <= LastMoneyKind) {
+        {
           Kind = 0;
           for (;;) {
               Slot = Kind;
@@ -286,7 +286,7 @@ void ShareMoney(void)
   rtl_FillChar((void *)&Share, 14, 0);
   rtl_FillChar((void *)&Remainder, 14, 0);
   {
-    if (0 <= LastMoneyKind) {
+    {
       Kind = 0;
       for (;;) {
           if (PooledMoney[Kind] > 0) {
@@ -304,7 +304,7 @@ void ShareMoney(void)
   while (Who != 0) {
     if ((*FPD(TCharacter (*), Who)).B84 < ComputerRun) {
       {
-        if (LastMoneyKind >= 0) {
+        {
           Kind = LastMoneyKind;
           for (;;) {
               if (!WouldOverload(Who, Share[Kind], &Room)) {
@@ -331,7 +331,7 @@ void ShareMoney(void)
     Who = (*FPD(TCharacter (*), Who)).Next;
   }
   {
-    if (LastMoneyKind >= 0) {
+    {
       Kind = LastMoneyKind;
       for (;;) {
           if (Remainder[Kind] > 0) {
@@ -359,7 +359,7 @@ void ShareMoney(void)
   }
   MoneyInPool = 0;
   {
-    if (0 <= LastMoneyKind) {
+    {
       Kind = 0;
       for (;;) {
           PooledMoney[Kind] = Remainder[Kind];
@@ -494,7 +494,7 @@ void TakeMoney(void)
     List = 0;
     Chosen = 0;
     {
-      if (LastMoneyKind >= 0) {
+      {
         Kind = LastMoneyKind;
         for (;;) {
             if (PooledMoney[Kind] > 0) {
@@ -531,7 +531,7 @@ void TakeMoney(void)
       MoneyInPool = 0;
       Done = 1;
       {
-        if (0 <= LastMoneyKind) {
+        {
           Kind = 0;
           for (;;) {
               if (PooledMoney[Kind] > 0) {
@@ -557,7 +557,7 @@ void TreasureLeft(u8 (*MoneyLeft), u8 (*ItemsLeft))
   (*MoneyLeft) = 0;
   (*ItemsLeft) = 0;
   {
-    if (0 <= LastMoneyKind) {
+    {
       Kind = 0;
       for (;;) {
           if (PooledMoney[Kind] != 0) {
@@ -1203,7 +1203,7 @@ void BuildTreasureItem(u8 Kind, TMenuLine (*Item))
       }
       if (Row != 0) {
         {
-          if (0 <= 2) {
+          {
             I = 0;
             for (;;) {
                 w1->NameNum[(s16)(I + 1) - 1] = TreasureItemRows[(s16)(Row + I)];
@@ -1222,7 +1222,7 @@ void BuildTreasureItem(u8 Kind, TMenuLine (*Item))
         w1->Count = 0;
         w1->Value = TreasureItemRows[(s16)(Row + 4)];
         {
-          if (1 <= 3) {
+          {
             I = 1;
             for (;;) {
                 w1->Affects[I - 1] = TreasureItemRows[(s16)((Row + 4) + I)];

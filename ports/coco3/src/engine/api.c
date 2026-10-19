@@ -210,6 +210,22 @@ void api_PictureCopy(u16 src, u16 dst)
         pic_combine(s, d, 0);
 }
 
+/* Load24x24Set (ovl32 0022): all the items of the loaded set, as a block of bytes, into the tile bank at item number `index` of the
+ * set's own item size (the PC copies the tails of the two picture records with Move) */
+void api_PictureAppend(u16 src, u16 dst, u8 index)
+{
+    Pic *s = pic_of(src), *d = pic_of(dst);
+    if (s && d)
+        pic_append(s, d, index);
+}
+
+void api_PictureItemCopy(u16 src, u16 dst, u8 item, u8 mirror)
+{
+    Pic *s = pic_of(src), *d = pic_of(dst);
+    if (s && d)
+        pic_item_copy(s, d, item, mirror);
+}
+
 void api_MergePictureData(u32 src, u32 dst)
 {
     Pic *s = pic_of(src), *d = pic_of(dst);

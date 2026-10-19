@@ -43,7 +43,7 @@ void ShowCharacterSheet(void)
   rtl_str_assign(Text, 255, ClassNames[(*FPD(TCharacter (*), SheetCharacter)).ClassCombo]);
   DrawTextAt(1, ShowCharacterSheet_ClassRow, ShowCharacterSheet_TextColor, Text);
   {
-    if (0 <= 5) {
+    {
       Stat = 0;
       for (;;) {
           switch (Stat) {
@@ -90,7 +90,7 @@ void ShowCharacterSheet(void)
   NeedSlash = 0;
   rtl_str_assign(Text, 255, S("\000"));
   {
-    if (0 <= 7) {
+    {
       ClassSlot = 0;
       for (;;) {
           if ((*FPD(TCharacter (*), SheetCharacter)).ClassLevels[ClassSlot] > 0) {
@@ -142,7 +142,7 @@ void ShowCharacterMoney(void)
   ClearWindow(ShowCharacterMoney_MoneyWindowLeft, ShowCharacterMoney_MoneyWindowTop, ShowCharacterMoney_MoneyWindowRight, ShowCharacterMoney_MoneyWindowBottom);
   Row = ShowCharacterMoney_MoneyWindowTop;
   {
-    if (ShowCharacterMoney_LastMoneyKind >= 0) {
+    {
       Kind = ShowCharacterMoney_LastMoneyKind;
       for (;;) {
           if ((*FPD(TCharacter (*), SelectedCharacter)).Money[Kind] > 0) {
@@ -280,7 +280,7 @@ void ViewSelectedCharacter(u8 (*Done))
     HasSpells = 0;
     HasMoney = 0;
     {
-      if (0 <= 20) {
+      {
         Spell = 0;
         for (;;) {
             if ((*FPD(TCharacter (*), SheetCharacter)).Spells[Spell] > 0) {
@@ -292,7 +292,7 @@ void ViewSelectedCharacter(u8 (*Done))
       }
     }
     {
-      if (0 <= 6) {
+      {
         Kind = 0;
         for (;;) {
             if ((*FPD(TCharacter (*), SheetCharacter)).Money[Kind] > 0) {
@@ -975,7 +975,7 @@ void TradeMoney(void)
         Head = 0;
         Kinds = 0;
         {
-          if (0 <= TradeMoney_LastMoneyKind) {
+          {
             Kind = 0;
             for (;;) {
                 if ((*FPD(TCharacter (*), SelectedCharacter)).Money[Kind] != 0) {
@@ -1026,7 +1026,7 @@ void TradeMoney(void)
           Done = 1;
           Finished = 1;
           {
-            if (0 <= TradeMoney_LastMoneyKind) {
+            {
               Kind = 0;
               for (;;) {
                   if ((*FPD(TCharacter (*), SelectedCharacter)).Money[Kind] > 0) {
@@ -1082,7 +1082,7 @@ void ChooseAndDropMoney(void)
     Head = 0;
     Kinds = 0;
     {
-      if (0 <= ChooseAndDropMoney_LastMoneyKind) {
+      {
         Kind = 0;
         for (;;) {
             if ((*FPD(TCharacter (*), SelectedCharacter)).Money[Kind] != 0) {
@@ -1132,7 +1132,7 @@ void ChooseAndDropMoney(void)
       DropMoney(SelectedCharacter, Amount, CoinKind);
       Done = 1;
       {
-        if (0 <= ChooseAndDropMoney_LastMoneyKind) {
+        {
           Kind = 0;
           for (;;) {
               if ((*FPD(TCharacter (*), SelectedCharacter)).Money[Kind] > 0) {
@@ -1226,7 +1226,7 @@ s32 CharacterMoneyValueInGold(PCharacter Who)
   u8 UnusedFrameByte = 0;
   TotalCopper = 0;
   {
-    if (0 <= CharacterMoneyValueInGold_LastCoinIndex) {
+    {
       CoinIndex = 0;
       for (;;) {
           TotalCopper += CoinCopperValues[CoinIndex] * (*FPD(TCharacter (*), Who)).Money[CoinIndex];

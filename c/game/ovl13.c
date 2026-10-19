@@ -388,7 +388,7 @@ void PartingShots(PCharacter Who, u8 Dir)
                                     Slot = 2;
                                   }
                                   {
-                                    if (1 <= 2) {
+                                    {
                                       SlotIndex = 1;
                                       for (;;) {
                                           if ((*FPD(TCharacter (*), Enemy)).AttackSlots[SlotIndex - 1] > 0) {
@@ -837,7 +837,7 @@ void ResolveCombatantAttacks(PCharacter Attacker, PCharacter Target, u8 AttackKi
     ShowAttackResult(Attacker, Target, 3, (s16)((*FPD(TCharacter (*), Target)).HpCurrent + 5), 1, 1);
     ClearAttackerAffect(Attacker);
     {
-      if (1 <= 2) {
+      {
         SlotIndex = 1;
         for (;;) {
             (*FPD(TCharacter (*), Attacker)).AttackSlots[SlotIndex - 1] = 0;
@@ -916,7 +916,7 @@ void ResolveCombatantAttacks(PCharacter Attacker, PCharacter Target, u8 AttackKi
     }
     (*Done) = 1;
     {
-      if (1 <= 2) {
+      {
         SlotIndex = 1;
         for (;;) {
             if ((*FPD(TCharacter (*), Attacker)).AttackSlots[SlotIndex - 1] > 0) {
@@ -1087,7 +1087,7 @@ u8 FindNearbyTarget(PCharacter Who, void *Selected)
   FoundIndex = 0;
   BestHp = 0xFF;
   {
-    if (0 <= 8) {
+    {
       Dir = 0;
       for (;;) {
           CellX = CombatantX(Who) + DirStepX[Dir];
@@ -1195,7 +1195,7 @@ u8 FindSpellTarget(u8 Spell, u8 Automatic, u8 AimFlag, TSpellTarget (*Target))
           }
           if (IsHelpless(SavedTarget)) {
             {
-              if (1 <= 4) {
+              {
                 I = 1;
                 for (;;) {
                     if (SpellTable[Spell].AffectId == HelplessAffects[I]) {

@@ -38,12 +38,12 @@ void DrawWallMap(s8 Col, s8 Row, u8 Dir)
   }
   PartyRow = Row - TopRow;
   {
-    if (0 <= ViewLast) {
+    {
       ViewRow = 0;
       for (;;) {
           MapRow = ViewRow + TopRow;
           {
-            if (0 <= ViewLast) {
+            {
               ViewCol = 0;
               for (;;) {
                   MapCol = ViewCol + LeftCol;
@@ -602,11 +602,11 @@ void LoadWallSet(u8 BlockId, u8 First)
             WallSetSlotPairs[(u16)((First + WallSet) - 1)].A = 0xFFFF;
             WallSetSlotPairs[(u16)((First + WallSet) - 1)].B = 0xFFFF;
             {
-              if (1 <= WallsPerSet) {
+              {
                 Wall = 1;
                 for (;;) {
                     {
-                      if (0 <= LastWallTile) {
+                      {
                         Tile = 0;
                         for (;;) {
                             if ((*FPD(TWallSets (*), WallSets))[(u16)((First + WallSet) - 1) - 1][Wall - 1][Tile] >= WallSymbolFloor) {
