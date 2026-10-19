@@ -1,6 +1,6 @@
 /* coco_map.h: where the game's memory is in the 64 KB map of the CoCo 3 (task 0) and in physical memory. Step 8.5c.
  *
- *   $0E00..$1FFF  stack, direct page variables, the mailbox (shared by both tasks)
+ *   $0900..$1FFF  mailbox, stack, direct page variables, the mailbox (shared by both tasks)
  *   $2000..$51FF the game core: code and read only data, then bss (build/game/core.map says where it ends)
  *   HEAPDATA      the tables of the runtime bank's heap ($5400..$5543)
  *   VM_NAT_BASE   $5600: the globals the layout keeps native, then the mapped heap up to $7FFF

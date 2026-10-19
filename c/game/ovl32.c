@@ -70,36 +70,29 @@ void LoadPictureSlot(const u8 *SetName_in, u8 Block, u8 Slot)
   rtl_str_assign(SetName, 255, SetName_in);
   u8 Suffix[2] = {0};
   u8 UnusedByte = 0;
-  u8 t1[256];
-  u8 t2[256];
-  u8 t3[256];
-  u8 t4[256];
-  u8 t5[256];
-  u8 t6[256];
-  u8 t7[256];
-  u8 t8[256];
-  u8 t9[256];
-  if (((rtl_str_cmp(rtl_str_copy(t1, SetName, 1, 5), S("\005CHEAD")) == 0)) || ((rtl_str_cmp(rtl_str_copy(t2, SetName, 1, 5), S("\005CBODY")) == 0))) {
+  u8 ts1[256];
+  u8 ts2[256];
+  if (((rtl_str_cmp(rtl_str_copy(ts1, SetName, 1, 5), S("\005CHEAD")) == 0)) || ((rtl_str_cmp(rtl_str_copy(ts2, SetName, 1, 5), S("\005CBODY")) == 0))) {
     if (rtl_upcase(SetName[SetName[0]]) == 'T') {
       Block += AltPictures;
     }
-    rtl_str_assign(SetName, 255, rtl_str_copy(t3, SetName, 1, (s16)(SetName[0] - 1)));
+    rtl_str_assign(SetName, 255, rtl_str_copy(ts1, SetName, 1, (s16)(SetName[0] - 1)));
     rtl_str_assign(Suffix, 1, S("\000"));
-    LoadPicture(rtl_str_cat(t4, 2, (const u8 *const[]){SetName, Suffix}), Block, 1, 0, (void *)&PictureSlots[Slot].FirstPic);
-    LoadPicture(rtl_str_cat(t5, 2, (const u8 *const[]){SetName, Suffix}), (s16)(Block + MirrorPictures), 1, 0, (void *)&PictureSlots[Slot].SecondPic);
+    LoadPicture(rtl_str_cat(ts1, 2, (const u8 *const[]){SetName, Suffix}), Block, 1, 0, (void *)&PictureSlots[Slot].FirstPic);
+    LoadPicture(rtl_str_cat(ts1, 2, (const u8 *const[]){SetName, Suffix}), (s16)(Block + MirrorPictures), 1, 0, (void *)&PictureSlots[Slot].SecondPic);
   } else if (((rtl_str_cmp(SetName, S("\006COMSPR")) == 0)) || ((rtl_str_cmp(SetName, S("\004ICON")) == 0))) {
     rtl_str_assign(Suffix, 1, S("\000"));
-    LoadPicture(rtl_str_cat(t6, 2, (const u8 *const[]){SetName, Suffix}), Block, 1, 0, (void *)&PictureSlots[Slot].FirstPic);
-    LoadPicture(rtl_str_cat(t7, 2, (const u8 *const[]){SetName, Suffix}), (s16)(Block + MirrorPictures), 1, 0, (void *)&PictureSlots[Slot].SecondPic);
+    LoadPicture(rtl_str_cat(ts1, 2, (const u8 *const[]){SetName, Suffix}), Block, 1, 0, (void *)&PictureSlots[Slot].FirstPic);
+    LoadPicture(rtl_str_cat(ts1, 2, (const u8 *const[]){SetName, Suffix}), (s16)(Block + MirrorPictures), 1, 0, (void *)&PictureSlots[Slot].SecondPic);
     if (rtl_str_cmp(SetName, S("\004ICON")) == 0) {
       RemapPictureColors(rtl_far(&PictureRemapFrom), rtl_far(&PictureRemap13To0), 0, 0, PictureSlots[Slot].FirstPic);
       RemapPictureColors(rtl_far(&PictureRemapFrom), rtl_far(&PictureRemap13To0), 0, 0, PictureSlots[Slot].SecondPic);
     }
   } else {
     rtl_str_int(Suffix, 1, TileSet, 0);
-    LoadPicture(rtl_str_cat(t8, 2, (const u8 *const[]){SetName, Suffix}), Block, 1, 0, (void *)&PictureSlots[Slot].FirstPic);
+    LoadPicture(rtl_str_cat(ts1, 2, (const u8 *const[]){SetName, Suffix}), Block, 1, 0, (void *)&PictureSlots[Slot].FirstPic);
     RemapPictureColors(rtl_far(&PictureRemapFrom), rtl_far(&PictureRemap13To8), 0, 0, PictureSlots[Slot].FirstPic);
-    LoadPicture(rtl_str_cat(t9, 2, (const u8 *const[]){SetName, Suffix}), (s16)(Block + MirrorPictures), 1, 0, (void *)&PictureSlots[Slot].SecondPic);
+    LoadPicture(rtl_str_cat(ts1, 2, (const u8 *const[]){SetName, Suffix}), (s16)(Block + MirrorPictures), 1, 0, (void *)&PictureSlots[Slot].SecondPic);
     RemapPictureColors(rtl_far(&PictureRemapFrom), rtl_far(&PictureRemap13To8), 0, 0, PictureSlots[Slot].SecondPic);
   }
   FlushKeyboard();

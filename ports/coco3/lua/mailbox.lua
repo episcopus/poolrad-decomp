@@ -1,5 +1,5 @@
 -- mailbox.lua: MAME autoboot script. Types a command at the BASIC prompt, waits for the
--- test program to finish (mailbox at logical $1000, see src/engine/mailbox.inc), dumps the
+-- test program to finish (mailbox at logical $0900, see src/engine/mailbox.inc), dumps the
 -- mailbox and a screenshot, then exits. Parameters come from the environment:
 --   MB_OUT   output prefix, writes <prefix>.mbx (the 80 mailbox bytes) and <prefix>.png
 --   MB_CMD   text typed at BASIC (default LOADM"DEMO":EXEC)
@@ -19,8 +19,8 @@ emu.wait(2)
 m.natkeyboard:post(cmd .. "\n")
 
 local function magic()
-  return mem:read_u8(0x1000) == 0x50 and mem:read_u8(0x1001) == 0x52
-     and mem:read_u8(0x1002) == 0x41 and mem:read_u8(0x1003) == 0x44
+  return mem:read_u8(0x0900) == 0x50 and mem:read_u8(0x0901) == 0x52
+     and mem:read_u8(0x0902) == 0x41 and mem:read_u8(0x0903) == 0x44
 end
 
 -- Timestamp every change of the checkpoint counter (emulated seconds since the script
@@ -30,7 +30,7 @@ local cps, last = {}, 0
 while m.time:as_double() - t0 < limit do
   emu.wait(0.0002)
   if magic() then
-    local c = mem:read_u8(0x1004)
+    local c = mem:read_u8(0x0904)
     if c ~= last then
       last = c
       cps[#cps + 1] = string.format("%d %.6f", c, m.time:as_double() - t0)
@@ -42,21 +42,21 @@ while m.time:as_double() - t0 < limit do
         -- register values from the mailbox, the format of poolrad_replay --dump (PREFIX-LABEL.scr4)
         local sf = io.open(string.format("%s-cp%d.scr4", out, c), "wb")
         sf:write(mem:read_range(0x4000, 0x4000 + 31999, 8))
-        for i = 0, 15 do sf:write(string.char(mem:read_u8(0x1050 + i))) end
+        for i = 0, 15 do sf:write(string.char(mem:read_u8(0x0950 + i))) end
         sf:close()
-        mem:write_u8(0x1008, 1)
+        mem:write_u8(0x0908, 1)
       end
     end
-    if mem:read_u8(0x1005) ~= 0 then break end
+    if mem:read_u8(0x0905) ~= 0 then break end
   end
 end
 local cf = io.open(out .. ".cp", "wb")
 for _, l in ipairs(cps) do cf:write(l, "\n") end
 cf:close()
 
-local ok = magic() and mem:read_u8(0x1005) ~= 0
+local ok = magic() and mem:read_u8(0x0905) ~= 0
 local f = io.open(out .. ".mbx", "wb")
-for i = 0, 0x4F do f:write(string.char(mem:read_u8(0x1000 + i))) end
+for i = 0, 0x4F do f:write(string.char(mem:read_u8(0x0900 + i))) end
 f:close()
 pcall(function() m.screens[":screen"]:snapshot(out .. ".png") end)
 if not ok then   -- a hang: say where the CPU is

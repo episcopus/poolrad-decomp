@@ -114,13 +114,9 @@ void ShowAttackResult(PCharacter Attacker, PCharacter Target, u8 Kind, u8 Damage
   POOL_TRACE("ShowAttackResult");
   u8 Row = 0;
   u8 Text[81] = {0};
-  u8 t1[256];
-  u8 t2[256];
-  u8 t3[88];
-  u8 t4[89];
-  u8 t5[90];
-  u8 t6[91];
-  s32 t7;
+  s32 t1;
+  u8 ts1[256];
+  u8 ts2[256];
   switch (Kind) {
   case 2:
   {
@@ -150,17 +146,17 @@ void ShowAttackResult(PCharacter Attacker, PCharacter Target, u8 Kind, u8 Damage
     if (Kind == 3) {
       rtl_str_assign(Text, 80, S("\023with one cruel blow"));
     } else {
-      rtl_str_assign(Text, 80, rtl_str_cat(t2, 3, (const u8 *const[]){Text, S("\014Hitting for "), ByteToText(t1, Damage)}));
+      rtl_str_assign(Text, 80, rtl_str_cat(ts2, 3, (const u8 *const[]){Text, S("\014Hitting for "), ByteToText(ts1, Damage)}));
       if (Damage == 1) {
-        rtl_str_assign(Text, 80, rtl_str_cat(t3, 2, (const u8 *const[]){Text, S("\007 point ")}));
+        rtl_str_assign(Text, 80, rtl_str_cat(ts1, 2, (const u8 *const[]){Text, S("\007 point ")}));
       } else {
-        rtl_str_assign(Text, 80, rtl_str_cat(t4, 2, (const u8 *const[]){Text, S("\010 points ")}));
+        rtl_str_assign(Text, 80, rtl_str_cat(ts1, 2, (const u8 *const[]){Text, S("\010 points ")}));
       }
-      rtl_str_assign(Text, 80, rtl_str_cat(t5, 2, (const u8 *const[]){Text, S("\011of damage")}));
+      rtl_str_assign(Text, 80, rtl_str_cat(ts1, 2, (const u8 *const[]){Text, S("\011of damage")}));
     }
     ApplyDamage(Target, DamageDealt);
   } else {
-    rtl_str_assign(Text, 80, rtl_str_cat(t6, 2, (const u8 *const[]){Text, S("\012and Misses")}));
+    rtl_str_assign(Text, 80, rtl_str_cat(ts1, 2, (const u8 *const[]){Text, S("\012and Misses")}));
   }
   ShowPagedText(23, Row, 38, (s16)(Row + 3), 10, 1, Text);
   Row = GlyphRow + 1;
@@ -183,7 +179,7 @@ void ShowAttackResult(PCharacter Attacker, PCharacter Target, u8 Kind, u8 Damage
     if ((*FPD(TCharacter (*), Target)).Status == StatusDying) {
       DrawTextAt(23, Row, 10, S("\014and is Dying"));
     }
-    if (t7 = (*FPD(TCharacter (*), Target)).Status, (t7 >= 6 && t7 <= 8)) {
+    if (t1 = (*FPD(TCharacter (*), Target)).Status, (t1 >= 6 && t1 <= 8)) {
       ShowCharacterMessage(Target, S("\011is killed"), Row, 0);
     }
     Row += 2;
@@ -1686,14 +1682,13 @@ u8 ShowAimPrompt(PCharacter Who, PCharacter Target, u8 Range, u8 ShowRange, u8 U
   farptr AimItem = 0;
   u8 Distance = 0;
   u8 Bearing = 0;
-  u8 t1[256];
-  u8 t2[256];
-  u8 t3[69];
+  u8 ts1[256];
+  u8 ts2[256];
   rtl_str_assign(Aim, 40, S("\000"));
   Distance = DistanceToTarget(Who, Target);
   Bearing = BearingTo(Who, Target);
   if (ShowRange != 0) {
-    DrawTextAt(0, 0x17, 0xA, rtl_str_cat(t2, 3, (const u8 *const[]){S("\010Range = "), ByteToText(t1, Distance), S("\002  ")}));
+    DrawTextAt(0, 0x17, 0xA, rtl_str_cat(ts2, 3, (const u8 *const[]){S("\010Range = "), ByteToText(ts1, Distance), S("\002  ")}));
   }
   if (Distance <= Range) {
     if (ShowRange == 0) {
@@ -1708,7 +1703,7 @@ u8 ShowAimPrompt(PCharacter Who, PCharacter Target, u8 Range, u8 ShowRange, u8 U
       }
     }
   }
-  rtl_str_assign(Aim, 40, rtl_str_cat(t3, 3, (const u8 *const[]){S("\021Next Prev Manual "), Aim, S("\013Center Exit")}));
+  rtl_str_assign(Aim, 40, rtl_str_cat(ts1, 3, (const u8 *const[]){S("\021Next Prev Manual "), Aim, S("\013Center Exit")}));
   ShowCursorOn(Target, 3, 1);
   DrawCharacterPanel(Target);
   Result = ReadPromptChoice(S("\004Aim:"), Aim, 0xD, 0xA, 0xF, 0, 0, &ExtKey);
@@ -1799,9 +1794,8 @@ void RunAimCursor(PCharacter Who, PCharacter Target, u8 Range, u8 Automatic, u8 
   u8 Tile = 0;
   u16 Distance = 0;
   u8 Valid = 0;
-  u8 t1[256];
-  u8 t2[256];
-  u8 t3[48];
+  u8 ts1[256];
+  u8 ts2[256];
   rtl_FillChar((void *)&(*Aim), 7, 0);
   CurX = CombatantX(Target);
   CurY = CombatantY(Target);
@@ -1835,7 +1829,7 @@ void RunAimCursor(PCharacter Who, PCharacter Target, u8 Range, u8 Automatic, u8 
     if (WalkLine(CombatantX(Who), CombatantY(Who), &WalkX, &WalkY, &Distance, CombatMap)) {
       Valid = 1;
       if (Automatic != 0) {
-        DrawTextAt(0, 0x17, 0xA, rtl_str_cat(t2, 3, (const u8 *const[]){S("\010Range = "), WordToText(t1, (u16)((u16)Distance >> 1)), S("\002  ")}));
+        DrawTextAt(0, 0x17, 0xA, rtl_str_cat(ts2, 3, (const u8 *const[]){S("\010Range = "), WordToText(ts1, (u16)((u16)Distance >> 1)), S("\002  ")}));
       }
     } else if (Automatic != 0) {
       ClearWindow(0, 0x17, 0x27, 0x17);
@@ -1887,7 +1881,7 @@ void RunAimCursor(PCharacter Who, PCharacter Target, u8 Range, u8 Automatic, u8 
     }
     rtl_str_assign(AimText, 40, S("\013Center Exit"));
     if (Valid) {
-      rtl_str_assign(AimText, 40, rtl_str_cat(t3, 2, (const u8 *const[]){S("\007Target "), AimText}));
+      rtl_str_assign(AimText, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){S("\007Target "), AimText}));
     }
     Key = ReadPromptChoice(S("\022(Use Cursor keys) "), AimText, 0xD, 0xA, 0xF, 1, 0, &CombatScratchFlag);
     switch ((u8)Key) {
@@ -2307,9 +2301,9 @@ u8 GodsIntervene(void)
   u8 Result = 0;
   u8 Done = 0;
   PCharacter Who = 0;
-  u8 t1[256];
+  u8 ts1[256];
   Result = 0;
-  if (rtl_str_cmp(rtl_paramstr(t1, 1), S("\005STING")) != 0) {
+  if (rtl_str_cmp(rtl_paramstr(ts1, 1), S("\005STING")) != 0) {
     return Result;
   }
   Result = 1;

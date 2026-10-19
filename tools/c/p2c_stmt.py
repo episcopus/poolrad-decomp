@@ -24,6 +24,8 @@ class Ctx:
         self.withs = []
         self.temps = []
         self.ntemp = 0
+        self.stemps = []          # sizes of the string temporaries ts1, ts2, ... (p2c_expr.str_temp)
+        self.sidx = 0
         self.has_frame = False
         self.level = 0 if parent is None else parent.level + 1
         self.fn = None            # function result type
@@ -74,6 +76,7 @@ class StmtMixin:
         if k == "empty":
             return
         self.comment_lines(n.lead)
+        self.cur.sidx = 0                   # a new statement: its string temporaries start again at ts1
         getattr(self, "st_" + k)(n)
 
     def body_of(self, n: N):

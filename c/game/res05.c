@@ -167,7 +167,7 @@ u8 *DeleteAllOccurrences(u8 *Result_out, const u8 *Text_in, const u8 *Pattern_in
   u8 LastStart = 0;
   u8 PatternLen = 0;
   u8 I = 0;
-  u8 t1[256];
+  u8 ts1[256];
   PatternLen = Pattern[0];
   LastStart = (Text[0] - PatternLen) + 1;
   {
@@ -175,7 +175,7 @@ u8 *DeleteAllOccurrences(u8 *Result_out, const u8 *Text_in, const u8 *Pattern_in
     if (1 <= limit) {
       I = 1;
       for (;;) {
-          if (rtl_str_cmp(rtl_str_copy(t1, Text, I, PatternLen), Pattern) == 0) {
+          if (rtl_str_cmp(rtl_str_copy(ts1, Text, I, PatternLen), Pattern) == 0) {
             rtl_str_delete(Text, I, PatternLen);
           }
         if (I == limit) break;
@@ -196,20 +196,19 @@ u8 *MakeDosFileName(u8 *Result_out, const u8 *Name_in)
   rtl_str_assign(Name, 255, Name_in);
   u8 *Result = Result_out;
   u8 I = 0;
-  u8 t1[256];
-  u8 t2[2];
-  u8 t3[256];
+  u8 ts1[256];
+  u8 ts2[2];
   {
     if (1 <= 10) {
       I = 1;
       for (;;) {
-          rtl_str_assign(Name, 255, DeleteAllOccurrences(t1, Name, rtl_str_char(t2, BadNameChars[I])));
+          rtl_str_assign(Name, 255, DeleteAllOccurrences(ts1, Name, rtl_str_char(ts2, BadNameChars[I])));
         if (I == 10) break;
         I++;
       }
     }
   }
-  rtl_str_assign(Name, 255, rtl_str_copy(t3, Name, 1, 8));
+  rtl_str_assign(Name, 255, rtl_str_copy(ts1, Name, 1, 8));
   {
     u8 limit = Name[0];
     if (1 <= limit) {
@@ -266,12 +265,11 @@ u8 OpenDaxFile(const u8 *Name_in, const u8 *Ext_in, u16 (*HeaderSize), FileRec (
   const u8 *Ext = Ext_in;
   u8 Result = 0;
   u16 Got = 0;
-  u8 t1[81];
-  u8 t2[2];
-  u8 t3[32];
-  u8 t4[81];
-  if (OpenGameFile(rtl_str_cat(t1, 2, (const u8 *const[]){Name, Ext}), rtl_str_cat(t3, 3, (const u8 *const[]){InsertDiskPrompts[TileSet], rtl_str_char(t2, (u8)DiskDriveLetter), S("\001:")}), OpenNoPrompt, (void *)&(*DataFile)) != 0) {
-    rtl_assign(&(*IndexFile), rtl_str_cat(t4, 2, (const u8 *const[]){Name, Ext}));
+  u8 ts1[81];
+  u8 ts2[2];
+  u8 ts3[32];
+  if (OpenGameFile(rtl_str_cat(ts1, 2, (const u8 *const[]){Name, Ext}), rtl_str_cat(ts3, 3, (const u8 *const[]){InsertDiskPrompts[TileSet], rtl_str_char(ts2, (u8)DiskDriveLetter), S("\001:")}), OpenNoPrompt, (void *)&(*DataFile)) != 0) {
+    rtl_assign(&(*IndexFile), rtl_str_cat(ts1, 2, (const u8 *const[]){Name, Ext}));
     rtl_reset(&(*IndexFile), 1);
     rtl_blockread(&(*IndexFile), (void *)&(*HeaderSize), 2, &Got);
     (*HeaderSize) += 2;
@@ -312,9 +310,8 @@ void LoadDaxBlock(const u8 *Name_in, const u8 *Ext_in, u8 BlockId, u16 (*Size), 
   u16 HeaderSize = 0;
   u8 UnusedByte = 0;
   u8 SizeText[7] = {0};
-  u8 t1[256];
-  u8 t2[16];
-  if (!OpenDaxFile(rtl_str_cat(t1, 2, (const u8 *const[]){GameDir, Name}), Ext, &HeaderSize, (void *)&DataFile, (void *)&IndexFile)) {
+  u8 ts1[256];
+  if (!OpenDaxFile(rtl_str_cat(ts1, 2, (const u8 *const[]){GameDir, Name}), Ext, &HeaderSize, (void *)&DataFile, (void *)&IndexFile)) {
     (*Size) = 0;
     (*Block) = 0;
     return;
@@ -326,7 +323,7 @@ void LoadDaxBlock(const u8 *Name_in, const u8 *Ext_in, u8 BlockId, u16 (*Size), 
     rtl_blockread(&IndexFile, (void *)&PackedSize, 2, &Got);
     if (PackedSize > MaxPackedSize) {
       rtl_str_int(SizeText, 6, PackedSize, 0);
-      ShowBottomMessage(Yellow, rtl_str_cat(t2, 2, (const u8 *const[]){S("\011tempsize "), SizeText}));
+      ShowBottomMessage(Yellow, rtl_str_cat(ts1, 2, (const u8 *const[]){S("\011tempsize "), SizeText}));
       QuitGame();
     }
   } while (!(((Id == BlockId)) || ((HeaderSize <= rtl_filepos(&IndexFile)))));

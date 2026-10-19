@@ -13,15 +13,14 @@ void Load8x8Bank(u8 BlockId, u8 Bank)
   u8 NumBlock[4] = {0};
   u8 Unused = 0;
   u8 Key = 0;
-  u8 t1[6];
-  u8 t2[25];
+  u8 ts1[25];
   if ((Bank >= FirstBank && Bank <= LastBank)) {
     rtl_str_int(NumSet, 1, TileSet, 0);
     rtl_str_int(NumBlock, 3, BlockId, 0);
-    LoadPicture(rtl_str_cat(t1, 2, (const u8 *const[]){S("\0048x8d"), NumSet}), BlockId, TileLoadB, TileLoadC, (void *)&TileBanks[Bank]);
+    LoadPicture(rtl_str_cat(ts1, 2, (const u8 *const[]){S("\0048x8d"), NumSet}), BlockId, TileLoadB, TileLoadC, (void *)&TileBanks[Bank]);
     if (TileBanks[Bank] == 0) {
       RestoreVideoMode();
-      rtl_write_str(&Output, rtl_str_cat(t2, 4, (const u8 *const[]){S("\023Unable to load 8x8D"), NumSet, S("\001-"), NumBlock}), 0), rtl_write_ln(&Output);
+      rtl_write_str(&Output, rtl_str_cat(ts1, 4, (const u8 *const[]){S("\023Unable to load 8x8D"), NumSet, S("\001-"), NumBlock}), 0), rtl_write_ln(&Output);
       Key = ReadGameKey();
       RestoreVideoMode();
       QuitGame();

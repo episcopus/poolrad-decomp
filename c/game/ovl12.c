@@ -1573,15 +1573,14 @@ void DrainLevels(PCharacter Who, u8 Count)
   memset(&fr, 0, sizeof fr);
   fr.Who = Who;
   fr.Count = Count;
-  u8 t1[256];
-  u8 t2[256];
-  u8 t3[52];
+  u8 ts1[256];
+  u8 ts2[256];
   if (fr.Count > 1) {
-    rtl_str_assign(fr.Msg, 40, rtl_str_cat(t2, 2, (const u8 *const[]){ByteToText(t1, fr.Count), S("\007 levels")}));
+    rtl_str_assign(fr.Msg, 40, rtl_str_cat(ts2, 2, (const u8 *const[]){ByteToText(ts1, fr.Count), S("\007 levels")}));
   } else {
     rtl_str_assign(fr.Msg, 40, S("\007a level"));
   }
-  ShowCharacterMessage(fr.Who, rtl_str_cat(t3, 2, (const u8 *const[]){S("\013is drained "), fr.Msg}), CombatMessageRow, 1);
+  ShowCharacterMessage(fr.Who, rtl_str_cat(ts1, 2, (const u8 *const[]){S("\013is drained "), fr.Msg}), CombatMessageRow, 1);
   if ((*FPD(TCharacter (*), fr.Who)).Status == StatusAnimated) {
     DropFromFight(fr.Who, StatusGone, S("\017is dead forever"));
     (*FPD(TCharacter (*), fr.Who)).HpMax = 0;

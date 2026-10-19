@@ -67,11 +67,15 @@ void rtl_Delay(u16 ms)
 }
 
 /* ---- the keyboard ------------------------------------------------------------------------------------------- */
-u8 kbd_get(void);
-static u8 pending;
+u16 kbd_get(void);
+static u16 pending;                    /* a key of kbd_get: the character, or 0 and the PC scan code in the high byte */
+static u8 pending_scan;                /* ReadKey returns an extended key as 0 and then its scan code */
 
 int rtl_KeyPressed(void)
 {
+    MB_POLLS++;
+    if (pending_scan)
+        return 1;
     if (!pending)
         pending = kbd_get();
     return pending != 0;
@@ -80,22 +84,34 @@ int rtl_KeyPressed(void)
 u8 rtl_ReadKey(void)
 {
     u8 k;
+    if (pending_scan) {
+        k = pending_scan;
+        pending_scan = 0;
+        return k;
+    }
     while (!rtl_KeyPressed())
         ;
-    k = pending;
+    k = (u8)pending;
+    if (!k)
+        pending_scan = (u8)(pending >> 8);
     pending = 0;
     return k;
 }
 
 /* ---- random numbers: RandSeed := RandSeed * 08088405h + 1; Random(n) = hi16(RandSeed) mod n (TP 6.0) ---------- */
-static u32 rand_seed;
+u32 rand_seed;                         /* the harness sets it (lua/watch.lua) to line the sequences up with the recorded ones */
 static u32 random_calls;
+u8 wheel_pick;                         /* the last Random(13) with bit 7 set: the code wheel's question (CheckCodeWheel); the harness reads it */
 
 u16 rtl_Random(u16 range)
 {
+    u16 r;
     random_calls++;
     rand_seed = rand_seed * 0x08088405UL + 1UL;
-    return range == 0 ? 0 : (u16)((u16)(rand_seed >> 16) % range);
+    r = range == 0 ? 0 : (u16)((u16)(rand_seed >> 16) % range);
+    if (range == 13)
+        wheel_pick = (u8)(r | 0x80);
+    return r;
 }
 
 void rtl_Randomize(void)

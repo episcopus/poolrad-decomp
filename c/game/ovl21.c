@@ -143,9 +143,8 @@ u16 ReadAmount(u16 Max, const u8 *Prompt_in, u8 Color)
   s32 Typed = 0;
   s16 Code = 0;
   u16 Amount = 0;
-  u8 t1[2];
-  u8 t2[8];
-  u8 t3[7];
+  u8 ts1[7];
+  u8 ts2[8];
   ClearTextCells(0, BottomRow, 0, ScreenCols);
   DrawTextAt(0, BottomRow, Color, Prompt);
   Start = Prompt[0];
@@ -166,7 +165,7 @@ u16 ReadAmount(u16 Max, const u8 *Prompt_in, u8 Color)
     case '8':
     case '9':
     {
-      rtl_str_assign(Digits, 6, rtl_str_cat(t2, 2, (const u8 *const[]){Digits, rtl_str_char(t1, Key)}));
+      rtl_str_assign(Digits, 6, rtl_str_cat(ts2, 2, (const u8 *const[]){Digits, rtl_str_char(ts1, Key)}));
       rtl_str_val(Digits, &Typed, 4, 1, &Code);
       if (Max >= Typed) {
         Col++;
@@ -180,7 +179,7 @@ u16 ReadAmount(u16 Max, const u8 *Prompt_in, u8 Color)
     case 0x08:
     {
       if (Digits[0] > 0) {
-        rtl_str_assign(Digits, 6, rtl_str_copy(t3, Digits, 1, (s16)(Digits[0] - 1)));
+        rtl_str_assign(Digits, 6, rtl_str_copy(ts1, Digits, 1, (s16)(Digits[0] - 1)));
         ClearTextCells(Col, BottomRow, 0, 1);
         Col--;
       }
@@ -487,8 +486,7 @@ void TakeMoney(void)
   u8 Done = 0;
   u8 Redraw = 0;
   u8 Key = 0;
-  u8 t1[256];
-  u8 t2[256];
+  u8 ts1[256];
   DrawWindow(1, 1, 0x26, 0x16, 0, 0xA, S("\000"));
   Choice = 0;
   do {
@@ -510,7 +508,7 @@ void TakeMoney(void)
                 (*FPD(TMenuLine (*), List)).Next = Chosen;
               }
               rtl_str_int(Text, 255, PooledMoney[Kind], 0);
-              rtl_str_assign((*FPD(TMenuLine (*), List)).Text, 40, rtl_str_cat(t1, 3, (const u8 *const[]){MoneyKindNames[Kind], S("\001 "), Text}));
+              rtl_str_assign((*FPD(TMenuLine (*), List)).Text, 40, rtl_str_cat(ts1, 3, (const u8 *const[]){MoneyKindNames[Kind], S("\001 "), Text}));
               (*FPD(TMenuLine (*), List)).Flag29 = 0;
             }
           if (Kind == 0) break;
@@ -526,7 +524,7 @@ void TakeMoney(void)
     } else {
       Done = 0;
       CoinKind = MoneyKindOfLine((*FPD(TMenuLine (*), Chosen)).Text, &Text);
-      rtl_str_assign(Text, 255, rtl_str_cat(t2, 3, (const u8 *const[]){S("\011How much "), Text, S("\017will you take\077 ")}));
+      rtl_str_assign(Text, 255, rtl_str_cat(ts1, 3, (const u8 *const[]){S("\011How much "), Text, S("\017will you take\077 ")}));
       Amount = ReadAmount(PooledMoney[CoinKind], Text, 0xA);
       TakeFromPool(SelectedCharacter, Amount, CoinKind);
       FreeMenuList(&Head);
@@ -1262,14 +1260,7 @@ void AppraiseGems(u8 (*Redraw))
   u8 Done = 0;
   u8 ExtKey = 0;
   u8 MustSell = 0;
-  u8 t1[45];
-  u8 t2[46];
-  u8 t3[58];
-  u8 t4[59];
-  u8 t5[50];
-  u8 t6[46];
-  u8 t7[66];
-  u8 t8[68];
+  u8 ts1[68];
   (*Redraw) = 1;
   if ((((*FPD(TCharacter (*), SelectedCharacter)).Money[5] == 0)) && (((*FPD(TCharacter (*), SelectedCharacter)).Money[6] == 0))) {
     ShowFlashMessage(S("\022No Gems or Jewelry"));
@@ -1291,12 +1282,12 @@ void AppraiseGems(u8 (*Redraw))
       }
       case 1:
       {
-        rtl_str_assign(GemsText, 40, rtl_str_cat(t1, 2, (const u8 *const[]){GemsText, S("\004 Gem")}));
+        rtl_str_assign(GemsText, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){GemsText, S("\004 Gem")}));
         break;
       }
       default:
       {
-        rtl_str_assign(GemsText, 40, rtl_str_cat(t2, 2, (const u8 *const[]){GemsText, S("\005 Gems")}));
+        rtl_str_assign(GemsText, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){GemsText, S("\005 Gems")}));
       }
       }
       switch ((*FPD(TCharacter (*), SelectedCharacter)).Money[6]) {
@@ -1307,12 +1298,12 @@ void AppraiseGems(u8 (*Redraw))
       }
       case 1:
       {
-        rtl_str_assign(JewelryText, 40, rtl_str_cat(t3, 2, (const u8 *const[]){JewelryText, S("\021 piece of Jewelry")}));
+        rtl_str_assign(JewelryText, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){JewelryText, S("\021 piece of Jewelry")}));
         break;
       }
       default:
       {
-        rtl_str_assign(JewelryText, 40, rtl_str_cat(t4, 2, (const u8 *const[]){JewelryText, S("\022 pieces of Jewelry")}));
+        rtl_str_assign(JewelryText, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){JewelryText, S("\022 pieces of Jewelry")}));
       }
       }
       ClearRect(1, 1, 0x26, 0x16);
@@ -1325,9 +1316,9 @@ void AppraiseGems(u8 (*Redraw))
         rtl_str_assign(Menu, 40, S("\006  Gems"));
       }
       if ((*FPD(TCharacter (*), SelectedCharacter)).Money[6] != 0) {
-        rtl_str_assign(Menu, 40, rtl_str_cat(t5, 2, (const u8 *const[]){Menu, S("\011  Jewelry")}));
+        rtl_str_assign(Menu, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Menu, S("\011  Jewelry")}));
       }
-      rtl_str_assign(Menu, 40, rtl_str_cat(t6, 2, (const u8 *const[]){Menu, S("\005 Exit")}));
+      rtl_str_assign(Menu, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Menu, S("\005 Exit")}));
       Key = ReadPromptChoice(S("\013Appraise : "), Menu, 0xD, 0xA, White_OVL21, 1, 0, &ExtKey);
       switch ((u8)Key) {
       case 'G':
@@ -1462,7 +1453,7 @@ void AppraiseGems(u8 (*Redraw))
           }
           }
           rtl_str_int(GemsText, 40, Value, 0);
-          rtl_str_assign(GemsText, 40, rtl_str_cat(t7, 3, (const u8 *const[]){S("\025The Gem is Valued at "), GemsText, S("\004 gp.")}));
+          rtl_str_assign(GemsText, 40, rtl_str_cat(ts1, 3, (const u8 *const[]){S("\025The Gem is Valued at "), GemsText, S("\004 gp.")}));
           DrawTextAt(1, 0xC, White_OVL21, GemsText);
           if (WouldOverload(SelectedCharacter, 1, &Room) || (((*FPD(TCharacter (*), SelectedCharacter)).ItemCountC7 >= MaxItems))) {
             rtl_str_assign(SellMenu, 40, S("\004Sell"));
@@ -1636,7 +1627,7 @@ void AppraiseGems(u8 (*Redraw))
           }
           }
           rtl_str_int(JewelryText, 40, Value, 0);
-          rtl_str_assign(GemsText, 40, rtl_str_cat(t8, 3, (const u8 *const[]){S("\027The Jewel is Valued at "), JewelryText, S("\004 gp.")}));
+          rtl_str_assign(GemsText, 40, rtl_str_cat(ts1, 3, (const u8 *const[]){S("\027The Jewel is Valued at "), JewelryText, S("\004 gp.")}));
           DrawTextAt(1, 0xC, White_OVL21, GemsText);
           if (WouldOverload(SelectedCharacter, 1, &Room) || (((*FPD(TCharacter (*), SelectedCharacter)).ItemCountC7 >= MaxItems))) {
             rtl_str_assign(SellMenu, 40, S("\004Sell"));

@@ -15,8 +15,7 @@ void CheckCodeWheel(void)
   u8 Answer[41] = {0};
   u8 Question = 0;
   u8 Attempt = 0;
-  u8 t1[13];
-  u8 t2[256];
+  u8 ts1[256];
   {
     if (1 <= MaxAttempts) {
       Attempt = 1;
@@ -34,10 +33,10 @@ void CheckCodeWheel(void)
             DrawGlyph(9, 9, 0xC, 1, (s16)(CodeWheelRecords[Question].FourthRune + RuneCharBase), 0);
           }
           DrawTextAt(1, 0xB, LightGreen_OVL02, S("&AND READ THE CODE WORD UNDER THE PATH:"));
-          DrawTextAt(1, 0xD, LightRed_OVL02, rtl_str_cat(t1, 2, (const u8 *const[]){S("\005     "), CodeWheelRecords[Question].Path}));
+          DrawTextAt(1, 0xD, LightRed_OVL02, rtl_str_cat(ts1, 2, (const u8 *const[]){S("\005     "), CodeWheelRecords[Question].Path}));
           DrawTextAt(1, 0xE, LightGreen_OVL02, S("$READ FROM THE INSIDE TO THE OUTSIDE."));
           FlushKeyboard();
-          rtl_str_assign(Answer, 40, ReadInputLine(t2, S("\025INPUT THE CODE WORD: "), 13, 6));
+          rtl_str_assign(Answer, 40, ReadInputLine(ts1, S("\025INPUT THE CODE WORD: "), 13, 6));
           if (rtl_str_cmp(Answer, CodeWheelRecords[Question].CodeWord) == 0) {
             return;
           }

@@ -3,7 +3,7 @@
  *
  *     sec_io(cmd, lsn, count, block, offset)   read (1) or write (2) `count` sectors between the image and physical RAM
  *
- * The development backend (below) is a doorbell at $1060 in slot 0 (the bottom of the stack area; BASIC's buffers do not reach it): the engine fills a request block and writes the command byte last; the
+ * The development backend (below) is a doorbell at $0960 in slot 0 (the mailbox' neighbour, below the stack area): the engine fills a request block and writes the command byte last; the
  * test harness (lua/watch.lua, a write tap on the doorbell) does the transfer at once and leaves the status in the block. The
  * real backends (DriveWire, SDC command mode, floppy through DSKCON with swap prompts) will implement sec_io; nothing above it
  * changes. The image is laid out by tools/mkimage.py ("PIM2"): a header, a table of files, a table of entries (file, id, byte
@@ -11,7 +11,7 @@
  * the start of the image, so dax_unpack and the picture loader read from it through rs_read exactly as from a floppy file. */
 #include "eng.h"
 
-#define REQ ((u8 *)0x1060)                 /* the request block: [0] doorbell/command, [1] status, [2..4] lsn, [5..6] count, [7] block, [8..9] offset */
+#define REQ ((u8 *)0x0960)                 /* the request block: [0] doorbell/command, [1] status, [2..4] lsn, [5..6] count, [7] block, [8..9] offset */
 #define SCRATCH ((u8 *)0x0600)             /* one sector in slot 0 (both tasks see it; BASIC no longer needs it once the engine runs) */
 #define SCRATCH_BLK 0x38
 #define SCRATCH_OFF 0x0600

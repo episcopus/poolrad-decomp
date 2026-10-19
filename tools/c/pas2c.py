@@ -703,6 +703,8 @@ class Gen(DeclMixin, ExprMixin, BuiltinMixin, StmtMixin):
             pass
         for tdecl in ctx.temps:
             text.append("  %s;" % tdecl)
+        for i, size in enumerate(ctx.stemps):
+            text.append("  u8 ts%d[%d];" % (i + 1, size))
         text.extend(zero_stmts)
         text.extend(body_lines)
         if ctx.arena:

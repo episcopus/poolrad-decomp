@@ -18,8 +18,8 @@
 void StartGame(void)
 {
   POOL_TRACE("StartGame");
-  u8 t1[2];
-  u8 t2[32];
+  u8 ts1[2];
+  u8 ts2[32];
   GameVars = rtl_getmem(2048);
   GameVars2 = rtl_getmem(2048);
   GameVars3 = rtl_getmem(1024);
@@ -170,7 +170,7 @@ void StartGame(void)
     }
   }
   LoadPictureSlot(S("\006COMSPR"), 0x19, 0x19);
-  LoaderOpenResult = OpenGameFile(S("\005ITEMS"), rtl_str_cat(t2, 3, (const u8 *const[]){InsertDiskPrompts[TileSet], rtl_str_char(t1, (u8)DiskDriveLetter), S("\001:")}), 0, (void *)&LoaderFile);
+  LoaderOpenResult = OpenGameFile(S("\005ITEMS"), rtl_str_cat(ts2, 3, (const u8 *const[]){InsertDiskPrompts[TileSet], rtl_str_char(ts1, (u8)DiskDriveLetter), S("\001:")}), 0, (void *)&LoaderFile);
   rtl_reset(&LoaderFile, 1);
   rtl_seek(&LoaderFile, 2);
   rtl_blockread(&LoaderFile, (void *)&ItemTable, LoadBlockSize, &LoaderReadCount);

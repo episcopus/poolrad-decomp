@@ -21,13 +21,13 @@ void ShowDebugTrace(const u8 *Message_in, u8 Max, u8 Current, u8 Lost)
   u8 MaxText[256] = {0};
   u8 CurrentText[256] = {0};
   u8 LostText[256] = {0};
-  u8 t1[256];
+  u8 ts1[256];
   if (DebugMode) {
     rtl_str_int(MaxText, 255, Max, 0);
     rtl_str_int(CurrentText, 255, Current, 0);
     rtl_str_int(LostText, 255, Lost, 0);
     ClearRect(TraceLeft, TraceTop, TraceRight, TraceBottom);
-    DrawTextAt(TraceLeft, TraceTop, Yellow_OVL33, rtl_str_cat(t1, 5, (const u8 *const[]){MaxText, S("\003 , "), CurrentText, S("\003 , "), LostText}));
+    DrawTextAt(TraceLeft, TraceTop, Yellow_OVL33, rtl_str_cat(ts1, 5, (const u8 *const[]){MaxText, S("\003 , "), CurrentText, S("\003 , "), LostText}));
     ShowMessageLine(Yellow_OVL33, Message);
     ClearRect(TraceLeft, TraceTop, TraceRight, TraceBottom);
   }

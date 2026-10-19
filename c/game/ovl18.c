@@ -48,11 +48,7 @@ L_exit:
 void ShowEndingNarrative(void)
 {
   POOL_TRACE("ShowEndingNarrative");
-  u8 t1[7];
-  u8 t2[7];
-  u8 t3[7];
-  u8 t4[7];
-  u8 t5[7];
+  u8 ts1[7];
   rtl_str_int(FinalPictureNumber, 1, TileSet, 0);
   SavedViewMode = ViewMode;
   ViewMode = 7;
@@ -62,21 +58,21 @@ void ShowEndingNarrative(void)
   DrawTextAt(1, 0x12, 0xA, S("$The spirit of Tyranthraxus flares up"));
   DrawTextAt(1, 0x13, 0xA, S("\027from the dragon's body."));
   RedrawView();
-  LoadPicture(rtl_str_cat(t1, 2, (const u8 *const[]){S("\005FINAL"), FinalPictureNumber}), 1, 0, 0, (void *)&FinalPictureBank);
+  LoadPicture(rtl_str_cat(ts1, 2, (const u8 *const[]){S("\005FINAL"), FinalPictureNumber}), 1, 0, 0, (void *)&FinalPictureBank);
   DrawPictureItemClipped(0, 0, 0, 0, FinalPictureBank, DrawBuf);
   AnimateFinalPicture(3, 5, 2, ((s16)(((s16)(10 - GameSpeed)) * 5) / 2));
-  LoadPicture(rtl_str_cat(t2, 2, (const u8 *const[]){S("\005FINAL"), FinalPictureNumber}), 3, 0, 0, (void *)&FinalPictureBank);
+  LoadPicture(rtl_str_cat(ts1, 2, (const u8 *const[]){S("\005FINAL"), FinalPictureNumber}), 3, 0, 0, (void *)&FinalPictureBank);
   DrawPictureItemClipped(0, 0, 0, 0, FinalPictureBank, DrawBuf);
   if ((*FPD(TGameVars (*), GameVars2))[830] > 1) {
-    LoadPicture(rtl_str_cat(t3, 2, (const u8 *const[]){S("\005FINAL"), FinalPictureNumber}), 4, 0, 0, (void *)&FinalPictureBank);
+    LoadPicture(rtl_str_cat(ts1, 2, (const u8 *const[]){S("\005FINAL"), FinalPictureNumber}), 4, 0, 0, (void *)&FinalPictureBank);
     DrawPictureItemClipped(0, 0xB, 0, 0, FinalPictureBank, DrawBuf);
   }
   if ((*FPD(TGameVars (*), GameVars2))[830] > 2) {
-    LoadPicture(rtl_str_cat(t4, 2, (const u8 *const[]){S("\005FINAL"), FinalPictureNumber}), 5, 0, 0, (void *)&FinalPictureBank);
+    LoadPicture(rtl_str_cat(ts1, 2, (const u8 *const[]){S("\005FINAL"), FinalPictureNumber}), 5, 0, 0, (void *)&FinalPictureBank);
     DrawPictureItemClipped(0xD, 9, 0, 0, FinalPictureBank, DrawBuf);
   }
   if ((*FPD(TGameVars (*), GameVars2))[830] > 3) {
-    LoadPicture(rtl_str_cat(t5, 2, (const u8 *const[]){S("\005FINAL"), FinalPictureNumber}), 6, 0, 0, (void *)&FinalPictureBank);
+    LoadPicture(rtl_str_cat(ts1, 2, (const u8 *const[]){S("\005FINAL"), FinalPictureNumber}), 6, 0, 0, (void *)&FinalPictureBank);
     DrawPictureItemClipped(0, 9, 0, 0, FinalPictureBank, DrawBuf);
   }
   ClearRect(1, 0x11, 0x26, 0x16);

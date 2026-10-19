@@ -179,13 +179,8 @@ void FormatItemLine(s32 Value, PItem Item, u8 Col, u8 Row, u8 ShowReadied, u8 Sh
   u8 Found = 0;
   u8 Plural = 0;
   PCharacter Member = 0;
-  u8 t1[43];
-  u8 t2[256];
-  u8 t3[256];
-  u8 t4[61];
-  u8 t5[42];
-  u8 t6[43];
-  u8 t7[42];
+  u8 ts1[256];
+  u8 ts2[256];
   rtl_str_assign((*FPD(TMenuLine (*), Item)).Text, 40, S("\000"));
   if (ShowReadied) {
     if ((*FPD(TMenuLine (*), Item)).Readied) {
@@ -204,11 +199,11 @@ void FormatItemLine(s32 Value, PItem Item, u8 Col, u8 Row, u8 ShowReadied, u8 Sh
   }
   if (Found) {
     if (((((*FPD(TMenuLine (*), Item)).Plus > 0)) || (((*FPD(TMenuLine (*), Item)).PlusSave > 0))) || (*FPD(TMenuLine (*), Item)).Cursed) {
-      rtl_str_assign((*FPD(TMenuLine (*), Item)).Text, 40, rtl_str_cat(t1, 3, (const u8 *const[]){(*FPD(TMenuLine (*), Item)).Text, S("\001*"), S("\001 ")}));
+      rtl_str_assign((*FPD(TMenuLine (*), Item)).Text, 40, rtl_str_cat(ts1, 3, (const u8 *const[]){(*FPD(TMenuLine (*), Item)).Text, S("\001*"), S("\001 ")}));
     }
   }
   if ((*FPD(TMenuLine (*), Item)).Count > 0) {
-    rtl_str_assign((*FPD(TMenuLine (*), Item)).Text, 40, rtl_str_cat(t3, 3, (const u8 *const[]){(*FPD(TMenuLine (*), Item)).Text, ByteToText(t2, (*FPD(TMenuLine (*), Item)).Count), S("\001 ")}));
+    rtl_str_assign((*FPD(TMenuLine (*), Item)).Text, 40, rtl_str_cat(ts2, 3, (const u8 *const[]){(*FPD(TMenuLine (*), Item)).Text, ByteToText(ts1, (*FPD(TMenuLine (*), Item)).Count), S("\001 ")}));
   }
   Mask = 0;
   {
@@ -229,14 +224,14 @@ void FormatItemLine(s32 Value, PItem Item, u8 Col, u8 Row, u8 ShowReadied, u8 Sh
       I = 3;
       for (;;) {
           if (((((s16)((u16)Mask >> ((s16)(I - 1)))) & 1)) > 0) {
-            rtl_str_assign((*FPD(TMenuLine (*), Item)).Text, 40, rtl_str_cat(t4, 2, (const u8 *const[]){(*FPD(TMenuLine (*), Item)).Text, ItemNameParts[(*FPD(TMenuLine (*), Item)).NameNum[I - 1]]}));
+            rtl_str_assign((*FPD(TMenuLine (*), Item)).Text, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){(*FPD(TMenuLine (*), Item)).Text, ItemNameParts[(*FPD(TMenuLine (*), Item)).NameNum[I - 1]]}));
             if ((((*FPD(TMenuLine (*), Item)).Count < 2)) || Plural) {
-              rtl_str_assign((*FPD(TMenuLine (*), Item)).Text, 40, rtl_str_cat(t5, 2, (const u8 *const[]){(*FPD(TMenuLine (*), Item)).Text, S("\001 ")}));
+              rtl_str_assign((*FPD(TMenuLine (*), Item)).Text, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){(*FPD(TMenuLine (*), Item)).Text, S("\001 ")}));
             } else if ((((((((s16)(1 << ((s16)(I - 1)))) == Mask)) || (((((I == 1)) && ((Mask > ThirdNameBit))) && (((*FPD(TMenuLine (*), Item)).ItemType != PluralOnThirdPartType))))) || ((((I == 2)) && !(Mask & 1)))) || ((((I == 3)) && (((*FPD(TMenuLine (*), Item)).ItemType == PluralOnThirdPartType))))) || (((((((*FPD(TMenuLine (*), Item)).ItemType == Slot11ItemType)) || (((*FPD(TMenuLine (*), Item)).ItemType == Slot12ItemType)))) && (((*FPD(TMenuLine (*), Item)).NameNum[2] != SilverNameNum))))) {
-              rtl_str_assign((*FPD(TMenuLine (*), Item)).Text, 40, rtl_str_cat(t6, 2, (const u8 *const[]){(*FPD(TMenuLine (*), Item)).Text, S("\002s ")}));
+              rtl_str_assign((*FPD(TMenuLine (*), Item)).Text, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){(*FPD(TMenuLine (*), Item)).Text, S("\002s ")}));
               Plural = 1;
             } else {
-              rtl_str_assign((*FPD(TMenuLine (*), Item)).Text, 40, rtl_str_cat(t7, 2, (const u8 *const[]){(*FPD(TMenuLine (*), Item)).Text, S("\001 ")}));
+              rtl_str_assign((*FPD(TMenuLine (*), Item)).Text, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){(*FPD(TMenuLine (*), Item)).Text, S("\001 ")}));
             }
           }
         if (I == 1) break;
@@ -397,11 +392,10 @@ void DrawArmourClass(PCharacter Who, u8 Col, u8 Row)
   POOL_TRACE("DrawArmourClass");
   u8 ValueText[256] = {0};
   u8 Unused = 0;
-  u8 t1[256];
-  u8 t2[256];
-  rtl_str_assign(ValueText, 255, ByteToText(t1, rtl_abs((s16)((*FPD(TCharacter (*), Who)).ArmourClassValue - ArmourClassBase))));
+  u8 ts1[256];
+  rtl_str_assign(ValueText, 255, ByteToText(ts1, rtl_abs((s16)((*FPD(TCharacter (*), Who)).ArmourClassValue - ArmourClassBase))));
   if ((*FPD(TCharacter (*), Who)).ArmourClassValue > ArmourClassBase) {
-    rtl_str_assign(ValueText, 255, rtl_str_cat(t2, 2, (const u8 *const[]){S("\001-"), ValueText}));
+    rtl_str_assign(ValueText, 255, rtl_str_cat(ts1, 2, (const u8 *const[]){S("\001-"), ValueText}));
   }
   DrawTextAt(Col, Row, LightGreen, ValueText);
 }
@@ -415,7 +409,7 @@ void DrawHitPoints(PCharacter Who, u8 Col, u8 Row, u8 Highlight)
   POOL_TRACE("DrawHitPoints");
   u8 ValueColor = 0;
   u8 Unused = 0;
-  u8 t1[256];
+  u8 ts1[256];
   if ((*FPD(TCharacter (*), Who)).HpCurrent < (*FPD(TCharacter (*), Who)).HpMax) {
     ValueColor = Yellow_RES12;
   } else {
@@ -424,7 +418,7 @@ void DrawHitPoints(PCharacter Who, u8 Col, u8 Row, u8 Highlight)
   if (Highlight) {
     ValueColor = LightMagenta;
   }
-  DrawTextAt(Col, Row, ValueColor, ByteToText(t1, (*FPD(TCharacter (*), Who)).HpCurrent));
+  DrawTextAt(Col, Row, ValueColor, ByteToText(ts1, (*FPD(TCharacter (*), Who)).HpCurrent));
 }
 
 /* 00BA:09E3. Draws the character panel the combat and inventory screens show (whitepaper 5.24): it
@@ -2072,17 +2066,9 @@ void DrawLocationLine(void)
   u8 Hours[3] = {0};
   u8 Minutes[3] = {0};
   u8 Line[41] = {0};
-  u8 t1[256];
-  u8 t2[4];
-  u8 t3[256];
-  u8 t4[4];
-  u8 t5[256];
-  u8 t6[256];
-  u8 t7[256];
-  u8 t8[44];
-  u8 t9[46];
-  u8 t10[49];
-  u8 t11[48];
+  u8 ts1[256];
+  u8 ts2[256];
+  u8 ts3[256];
   rtl_str_assign(Line, 40, S("\000"));
   Col = PartyMapColumn;
   Row = PartyMapRow;
@@ -2096,23 +2082,23 @@ void DrawLocationLine(void)
       Col += 26;
     }
   }
-  rtl_str_assign(Hours, 2, WordToText(t1, (*FPD(TVmWords4900 (*), VarsAt4900))[201]));
+  rtl_str_assign(Hours, 2, WordToText(ts1, (*FPD(TVmWords4900 (*), VarsAt4900))[201]));
   if (Hours[0] < 2) {
-    rtl_str_assign(Hours, 2, rtl_str_cat(t2, 2, (const u8 *const[]){S("\0010"), Hours}));
+    rtl_str_assign(Hours, 2, rtl_str_cat(ts1, 2, (const u8 *const[]){S("\0010"), Hours}));
   }
-  rtl_str_assign(Minutes, 2, WordToText(t3, (u16)((10 * (*FPD(TVmWords4900 (*), VarsAt4900))[200]) + (*FPD(TVmWords4900 (*), VarsAt4900))[199])));
+  rtl_str_assign(Minutes, 2, WordToText(ts1, (u16)((10 * (*FPD(TVmWords4900 (*), VarsAt4900))[200]) + (*FPD(TVmWords4900 (*), VarsAt4900))[199])));
   if (Minutes[0] < 2) {
-    rtl_str_assign(Minutes, 2, rtl_str_cat(t4, 2, (const u8 *const[]){S("\0010"), Minutes}));
+    rtl_str_assign(Minutes, 2, rtl_str_cat(ts1, 2, (const u8 *const[]){S("\0010"), Minutes}));
   }
   if ((*FPD(TGameVars (*), GameVars))[251] == 0) {
-    rtl_str_assign(Line, 40, rtl_str_cat(t7, 4, (const u8 *const[]){ByteToText(t5, Col), S("\001,"), ByteToText(t6, Row), S("\001 ")}));
+    rtl_str_assign(Line, 40, rtl_str_cat(ts3, 4, (const u8 *const[]){ByteToText(ts1, Col), S("\001,"), ByteToText(ts2, Row), S("\001 ")}));
   }
-  rtl_str_assign(Line, 40, rtl_str_cat(t8, 3, (const u8 *const[]){Line, FacingNames[PartyFacing], S("\001 ")}));
-  rtl_str_assign(Line, 40, rtl_str_cat(t9, 4, (const u8 *const[]){Line, Hours, S("\001:"), Minutes}));
+  rtl_str_assign(Line, 40, rtl_str_cat(ts1, 3, (const u8 *const[]){Line, FacingNames[PartyFacing], S("\001 ")}));
+  rtl_str_assign(Line, 40, rtl_str_cat(ts1, 4, (const u8 *const[]){Line, Hours, S("\001:"), Minutes}));
   if (ViewMode == ViewModeCamp) {
-    rtl_str_assign(Line, 40, rtl_str_cat(t10, 2, (const u8 *const[]){Line, S("\010 camping")}));
+    rtl_str_assign(Line, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Line, S("\010 camping")}));
   } else if ((((*FPD(TGameVars (*), GameVars2))[714] & 1)) > 0) {
-    rtl_str_assign(Line, 40, rtl_str_cat(t11, 2, (const u8 *const[]){Line, S("\007 search")}));
+    rtl_str_assign(Line, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Line, S("\007 search")}));
   }
   ClearWindow(0x11, 0xF, 0x26, 0xF);
   DrawTextAt(0x11, 0xF, LightGreen, Line);
@@ -2169,8 +2155,8 @@ void SelectPartyMember(const u8 *Title_in, u8 WithExit, PCharacter (*Selected))
   u8 Animate = 0;
   PCharacter PartyMember = 0;
   u8 Extra[41] = {0};
-  u8 t1[42];
-  u8 t2[47];
+  u8 ts1[42];
+  u8 ts2[47];
   Key = ' ';
   rtl_str_assign(Extra, 40, S("\000"));
   if (WithExit) {
@@ -2183,7 +2169,7 @@ void SelectPartyMember(const u8 *Title_in, u8 WithExit, PCharacter (*Selected))
     } else {
       Animate = 0;
     }
-    Key = ReadPromptChoice(rtl_str_cat(t1, 2, (const u8 *const[]){Title, S("\001 ")}), rtl_str_cat(t2, 2, (const u8 *const[]){S("\006Select"), Extra}), PromptTitleColor, PromptWordColor, PromptHotColor, AcceptExtendedKeys, Animate, &ExtKey);
+    Key = ReadPromptChoice(rtl_str_cat(ts1, 2, (const u8 *const[]){Title, S("\001 ")}), rtl_str_cat(ts2, 2, (const u8 *const[]){S("\006Select"), Extra}), PromptTitleColor, PromptWordColor, PromptHotColor, AcceptExtendedKeys, Animate, &ExtKey);
     PartyMember = (*Selected);
     if (ExtKey != 0) {
       switch ((u8)Key) {

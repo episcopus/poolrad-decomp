@@ -21,13 +21,8 @@ void ShowCharacterSheet(void)
   s8 ClassSlot = 0;
   u8 Text[256] = {0};
   u8 NeedSlash = 0;
-  u8 t1[256];
-  u8 t2[256];
-  u8 t3[256];
-  u8 t4[256];
-  u8 t5[256];
-  u8 t6[256];
-  u8 t7[256];
+  u8 ts1[256];
+  u8 ts2[256];
   SheetCharacter = SelectedCharacter;
   ClearFullScreen();
   DrawWindowFrame(1, 1, ShowCharacterSheet_SheetRight, ShowCharacterSheet_SheetBottom, 0);
@@ -42,7 +37,7 @@ void ShowCharacterSheet(void)
   rtl_str_assign(Text, 255, RaceNames[(*FPD(TCharacter (*), SheetCharacter)).Race]);
   DrawTextAt(Col, ShowCharacterSheet_NameRow, ShowCharacterSheet_TextColor, Text);
   Col = (Col + Text[0]) + 1;
-  DrawTextAt(Col, ShowCharacterSheet_NameRow, ShowCharacterSheet_TextColor, rtl_str_cat(t2, 2, (const u8 *const[]){S("\004Age "), WordToText(t1, (*FPD(TCharacter (*), SheetCharacter)).Age)}));
+  DrawTextAt(Col, ShowCharacterSheet_NameRow, ShowCharacterSheet_TextColor, rtl_str_cat(ts2, 2, (const u8 *const[]){S("\004Age "), WordToText(ts1, (*FPD(TCharacter (*), SheetCharacter)).Age)}));
   rtl_str_assign(Text, 255, AlignmentNames[(*FPD(TSheetFields (*), SheetCharacter)).Alignment]);
   DrawTextAt(1, ShowCharacterSheet_AlignmentRow, ShowCharacterSheet_TextColor, Text);
   rtl_str_assign(Text, 255, ClassNames[(*FPD(TCharacter (*), SheetCharacter)).ClassCombo]);
@@ -100,9 +95,9 @@ void ShowCharacterSheet(void)
       for (;;) {
           if ((*FPD(TCharacter (*), SheetCharacter)).ClassLevels[ClassSlot] > 0) {
             if (NeedSlash) {
-              rtl_str_assign(Text, 255, rtl_str_cat(t3, 2, (const u8 *const[]){Text, S("\001/")}));
+              rtl_str_assign(Text, 255, rtl_str_cat(ts1, 2, (const u8 *const[]){Text, S("\001/")}));
             }
-            rtl_str_assign(Text, 255, rtl_str_cat(t5, 2, (const u8 *const[]){Text, ByteToText(t4, (*FPD(TCharacter (*), SheetCharacter)).ClassLevels[ClassSlot])}));
+            rtl_str_assign(Text, 255, rtl_str_cat(ts2, 2, (const u8 *const[]){Text, ByteToText(ts1, (*FPD(TCharacter (*), SheetCharacter)).ClassLevels[ClassSlot])}));
             NeedSlash = 1;
           }
         if (ClassSlot == 7) break;
@@ -111,7 +106,7 @@ void ShowCharacterSheet(void)
     }
   }
   DrawTextAt(7, ShowCharacterSheet_LevelRow, ShowCharacterSheet_TextColor, Text);
-  DrawTextAt(17, ShowCharacterSheet_LevelRow, ShowCharacterSheet_TextColor, rtl_str_cat(t7, 2, (const u8 *const[]){S("\004Exp "), LongIntToText(t6, (*FPD(TCharacter (*), SheetCharacter)).Experience)}));
+  DrawTextAt(17, ShowCharacterSheet_LevelRow, ShowCharacterSheet_TextColor, rtl_str_cat(ts2, 2, (const u8 *const[]){S("\004Exp "), LongIntToText(ts1, (*FPD(TCharacter (*), SheetCharacter)).Experience)}));
   ShowCombatStats();
   Row = ShowCharacterSheet_WeaponRow;
   if ((*FPD(TCharacter (*), SheetCharacter)).SlotItems[0] != 0) {
@@ -143,7 +138,7 @@ void ShowCharacterMoney(void)
   u8 Row = 0;
   s8 Kind = 0;
   String40_RES06 Name = {0};
-  u8 t1[256];
+  u8 ts1[256];
   ClearWindow(ShowCharacterMoney_MoneyWindowLeft, ShowCharacterMoney_MoneyWindowTop, ShowCharacterMoney_MoneyWindowRight, ShowCharacterMoney_MoneyWindowBottom);
   Row = ShowCharacterMoney_MoneyWindowTop;
   {
@@ -153,7 +148,7 @@ void ShowCharacterMoney(void)
           if ((*FPD(TCharacter (*), SelectedCharacter)).Money[Kind] > 0) {
             rtl_str_assign(Name, 40, MoneyKindNames[Kind]);
             DrawTextAt((s16)(ShowCharacterMoney_MoneyNameRight - Name[0]), Row, ShowCharacterMoney_MoneyColor, Name);
-            DrawTextAt(ShowCharacterMoney_MoneyAmountColumn, Row, ShowCharacterMoney_MoneyColor, WordToText(t1, (*FPD(TCharacter (*), SelectedCharacter)).Money[Kind]));
+            DrawTextAt(ShowCharacterMoney_MoneyAmountColumn, Row, ShowCharacterMoney_MoneyColor, WordToText(ts1, (*FPD(TCharacter (*), SelectedCharacter)).Money[Kind]));
             Row++;
           }
         if (Kind == 0) break;
@@ -178,16 +173,9 @@ void ShowCombatStats(void)
   u8 Move_ = 0;
   String40_RES06 Damage = {0};
   farptr Affect = 0;
-  u8 t1[256];
-  u8 t2[256];
-  u8 t3[256];
-  u8 t4[256];
-  u8 t5[256];
-  u8 t6[256];
-  u8 t7[256];
-  u8 t8[256];
-  u8 t9[256];
-  u8 t10[256];
+  u8 ts1[256];
+  u8 ts2[256];
+  u8 ts3[256];
   Character = SelectedCharacter;
   RecalcCombatValues(Character);
   Row = ShowCombatStats_CombatRow;
@@ -197,19 +185,19 @@ void ShowCombatStats(void)
   DrawHitPoints(Character, ShowCombatStats_ArmorValueColumn, (s16)(Row + 1), 0);
   Col = 8;
   DrawTextAt((s16)(Col + 1), Row, ShowCombatStats_LabelColor, S("\010THAC0   "));
-  DrawTextAt((s16)(Col + 7), Row, ShowCombatStats_ValueColor, ByteToText(t1, (s16)(ShowCombatStats_ThacBase - (*FPD(TCharacter (*), Character)).HitAdjust)));
-  rtl_str_assign(Damage, 40, rtl_str_cat(t4, 3, (const u8 *const[]){ByteToText(t2, (*FPD(TDamageDice (*), Character)).Count), S("\001d"), ByteToText(t3, (*FPD(TDamageDice (*), Character)).Sides)}));
+  DrawTextAt((s16)(Col + 7), Row, ShowCombatStats_ValueColor, ByteToText(ts1, (s16)(ShowCombatStats_ThacBase - (*FPD(TCharacter (*), Character)).HitAdjust)));
+  rtl_str_assign(Damage, 40, rtl_str_cat(ts3, 3, (const u8 *const[]){ByteToText(ts1, (*FPD(TDamageDice (*), Character)).Count), S("\001d"), ByteToText(ts2, (*FPD(TDamageDice (*), Character)).Sides)}));
   if ((*FPD(TDamageDice (*), Character)).Bonus > 0) {
-    rtl_str_assign(Damage, 40, rtl_str_cat(t6, 3, (const u8 *const[]){Damage, S("\001+"), ByteToText(t5, (*FPD(TDamageDice (*), Character)).Bonus)}));
+    rtl_str_assign(Damage, 40, rtl_str_cat(ts2, 3, (const u8 *const[]){Damage, S("\001+"), ByteToText(ts1, (*FPD(TDamageDice (*), Character)).Bonus)}));
   }
   if ((*FPD(TDamageDice (*), Character)).Bonus < 0) {
-    rtl_str_assign(Damage, 40, rtl_str_cat(t8, 3, (const u8 *const[]){Damage, S("\001-"), ByteToText(t7, rtl_abs((*FPD(TDamageDice (*), Character)).Bonus))}));
+    rtl_str_assign(Damage, 40, rtl_str_cat(ts2, 3, (const u8 *const[]){Damage, S("\001-"), ByteToText(ts1, rtl_abs((*FPD(TDamageDice (*), Character)).Bonus))}));
   }
   DrawTextAt(Col, (s16)(Row + 1), ShowCombatStats_LabelColor, S("\016Damage        "));
   DrawTextAt((s16)(Col + 7), (s16)(Row + 1), ShowCombatStats_ValueColor, Damage);
   Col = 22;
   DrawTextAt(Col, Row, ShowCombatStats_LabelColor, S("\021Encumbrance      "));
-  DrawTextAt((s16)(Col + 12), Row, ShowCombatStats_ValueColor, WordToText(t9, (*FPD(TCharacter (*), Character)).CarriedWeight));
+  DrawTextAt((s16)(Col + 12), Row, ShowCombatStats_ValueColor, WordToText(ts1, (*FPD(TCharacter (*), Character)).CarriedWeight));
   Move_ = (*FPD(TCharacter (*), Character)).Movement;
   if (HasAffect(Character, ShowCombatStats_DoublingAffect, &Affect)) {
     Move_ = Move_ * 2;
@@ -218,7 +206,7 @@ void ShowCombatStats(void)
     Move_ = (Move_ / 2);
   }
   DrawTextAt((s16)(Col + 3), (s16)(Row + 1), ShowCombatStats_LabelColor, S("\013Movement   "));
-  DrawTextAt((s16)(Col + 12), (s16)(Row + 1), ShowCombatStats_ValueColor, ByteToText(t10, Move_));
+  DrawTextAt((s16)(Col + 12), (s16)(Row + 1), ShowCombatStats_ValueColor, ByteToText(ts1, Move_));
 }
 
 /* ovl19:0901. Draws ability score Index of SelectedCharacter (0 Strength .. 5 Charisma) on row 7 + Index,
@@ -231,10 +219,7 @@ void ShowAbilityScore(s8 Index, u8 Highlight)
   String40_RES06 Percentile = {0};
   u8 Col = 0;
   u8 Color = 0;
-  u8 t1[256];
-  u8 t2[256];
-  u8 t3[42];
-  u8 t4[43];
+  u8 ts1[256];
   if (Highlight) {
     Color = ShowAbilityScore_HighlightColor;
   } else {
@@ -245,18 +230,18 @@ void ShowAbilityScore(s8 Index, u8 Highlight)
   if ((*FPD(TAbilityBlock (*), SelectedCharacter)).Scores[Index] < ShowAbilityScore_FirstTwoDigitValue) {
     Col++;
   }
-  DrawTextAt(Col, (s16)(Index + ShowAbilityScore_ScoreRow), Color, ByteToText(t1, (*FPD(TAbilityBlock (*), SelectedCharacter)).Scores[Index]));
+  DrawTextAt(Col, (s16)(Index + ShowAbilityScore_ScoreRow), Color, ByteToText(ts1, (*FPD(TAbilityBlock (*), SelectedCharacter)).Scores[Index]));
   if (Index == 0) {
     if ((*FPD(TCharacter (*), SelectedCharacter)).Strength == ExceptionalStrength) {
       if ((*FPD(TCharacter (*), SelectedCharacter)).StrengthPercent > 0) {
-        rtl_str_assign(Percentile, 40, ByteToText(t2, (*FPD(TCharacter (*), SelectedCharacter)).StrengthPercent));
+        rtl_str_assign(Percentile, 40, ByteToText(ts1, (*FPD(TCharacter (*), SelectedCharacter)).StrengthPercent));
         if ((*FPD(TCharacter (*), SelectedCharacter)).StrengthPercent < ShowAbilityScore_FirstTwoDigitValue) {
-          rtl_str_assign(Percentile, 40, rtl_str_cat(t3, 2, (const u8 *const[]){S("\0010"), Percentile}));
+          rtl_str_assign(Percentile, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){S("\0010"), Percentile}));
         }
         if ((*FPD(TCharacter (*), SelectedCharacter)).StrengthPercent == ShowAbilityScore_PercentileMax) {
           rtl_str_assign(Percentile, 40, S("\00200"));
         }
-        DrawTextAt(ShowAbilityScore_PercentileColumn, ShowAbilityScore_ScoreRow, Color, rtl_str_cat(t4, 3, (const u8 *const[]){S("\001("), Percentile, S("\001)")}));
+        DrawTextAt(ShowAbilityScore_PercentileColumn, ShowAbilityScore_ScoreRow, Color, rtl_str_cat(ts1, 3, (const u8 *const[]){S("\001("), Percentile, S("\001)")}));
       }
     }
   }
@@ -282,11 +267,7 @@ void ViewSelectedCharacter(u8 (*Done))
   u8 Spell = 0;
   s8 Kind = 0;
   u16 Choice = 0;
-  u8 t1[47];
-  u8 t2[48];
-  u8 t3[47];
-  u8 t4[46];
-  u8 t5[45];
+  u8 ts1[48];
   if (ViewMode == ViewModeCombat) {
     RestorePaletteColors0And8();
   }
@@ -323,20 +304,20 @@ void ViewSelectedCharacter(u8 (*Done))
       }
     }
     if ((*FPD(TCharacter (*), SheetCharacter)).Items != 0) {
-      rtl_str_assign(Menu, 40, rtl_str_cat(t1, 2, (const u8 *const[]){Menu, S("\006Items ")}));
+      rtl_str_assign(Menu, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Menu, S("\006Items ")}));
     }
     if (HasSpells != 0) {
-      rtl_str_assign(Menu, 40, rtl_str_cat(t2, 2, (const u8 *const[]){Menu, S("\007Spells ")}));
+      rtl_str_assign(Menu, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Menu, S("\007Spells ")}));
     }
     if (((((*FPD(TCharacter (*), SheetCharacter)).B84 < ComputerRun)) || (((*FPD(TCharacter (*), SheetCharacter)).Flag10D == 0))) || (((*FPD(TCharacter (*), SheetCharacter)).Status == 1))) {
       if (HasMoney && ((ViewMode != ViewModeCombat))) {
-        rtl_str_assign(Menu, 40, rtl_str_cat(t3, 2, (const u8 *const[]){Menu, S("\006Trade ")}));
+        rtl_str_assign(Menu, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Menu, S("\006Trade ")}));
       }
     }
     if (HasMoney) {
-      rtl_str_assign(Menu, 40, rtl_str_cat(t4, 2, (const u8 *const[]){Menu, S("\005Drop ")}));
+      rtl_str_assign(Menu, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Menu, S("\005Drop ")}));
     }
-    rtl_str_assign(Menu, 40, rtl_str_cat(t5, 2, (const u8 *const[]){Menu, S("\004Exit")}));
+    rtl_str_assign(Menu, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Menu, S("\004Exit")}));
     Key = ReadPromptChoice(S("\005View:"), Menu, 13, 10, 15, 0, 0, &ExtKey);
     Choice = 0xFFFF;
     switch ((u8)Key) {
@@ -432,14 +413,7 @@ void RunItemMenu(u8 (*Done))
   PCharacter Character = 0;
   u8 OldCount = 0;
   u8 Spare3 = 0;
-  u8 t1[45];
-  u8 t2[47];
-  u8 t3[46];
-  u8 t4[47];
-  u8 t5[46];
-  u8 t6[46];
-  u8 t7[44];
-  u8 t8[66];
+  u8 ts1[66];
   Character = SelectedCharacter;
   Key = ' ';
   Selected = (*FPD(TCharacter (*), Character)).Items;
@@ -456,23 +430,23 @@ void RunItemMenu(u8 (*Done))
       if ((*FPD(TCharacter (*), Character)).Flag10D != 0) {
         if ((*FPD(TGameVars (*), GameVars))[229] == 0) {
           if (((((ViewMode == ViewModeCamp)) || ((ViewMode == ViewModeMap))) || ((ViewMode == ViewModeWall))) || ((((ViewMode == ViewModeCombat)) && (((*FPD(TCombatant (*), (*FPD(TCharacter (*), Character)).Combat)).CanUseMagicItem != 0))))) {
-            rtl_str_assign(Menu, 40, rtl_str_cat(t1, 2, (const u8 *const[]){Menu, S("\004 Use")}));
+            rtl_str_assign(Menu, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Menu, S("\004 Use")}));
           }
         }
       }
       if (((((((*FPD(TCharacter (*), Character)).B84 < ComputerRun)) || (((*FPD(TCharacter (*), Character)).Flag10D == 0))) || (((*FPD(TCharacter (*), Character)).Status == 1)))) && ((ViewMode != ViewModeCombat))) {
-        rtl_str_assign(Menu, 40, rtl_str_cat(t2, 2, (const u8 *const[]){Menu, S("\006 Trade")}));
+        rtl_str_assign(Menu, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Menu, S("\006 Trade")}));
       }
-      rtl_str_assign(Menu, 40, rtl_str_cat(t3, 2, (const u8 *const[]){Menu, S("\005 Drop")}));
+      rtl_str_assign(Menu, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Menu, S("\005 Drop")}));
       if ((*FPD(TCharacter (*), Character)).ItemCountC7 < 16) {
-        rtl_str_assign(Menu, 40, rtl_str_cat(t4, 2, (const u8 *const[]){Menu, S("\006 Halve")}));
+        rtl_str_assign(Menu, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Menu, S("\006 Halve")}));
       }
-      rtl_str_assign(Menu, 40, rtl_str_cat(t5, 2, (const u8 *const[]){Menu, S("\005 Join")}));
+      rtl_str_assign(Menu, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Menu, S("\005 Join")}));
       if (((((((*FPD(TCharacter (*), Character)).B84 < ComputerRun)) || (((*FPD(TCharacter (*), Character)).Flag10D == 0))) || (((*FPD(TCharacter (*), Character)).Status == 1)))) && ((ViewMode == ViewModeShop))) {
-        rtl_str_assign(Menu, 40, rtl_str_cat(t6, 2, (const u8 *const[]){Menu, S("\005 Sell")}));
+        rtl_str_assign(Menu, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Menu, S("\005 Sell")}));
       }
       if (ViewMode == ViewModeShop) {
-        rtl_str_assign(Menu, 40, rtl_str_cat(t7, 2, (const u8 *const[]){Menu, S("\003 Id")}));
+        rtl_str_assign(Menu, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Menu, S("\003 Id")}));
       }
       Cursor = (*FPD(TCharacter (*), Character)).Items;
       while (Cursor != 0) {
@@ -528,7 +502,7 @@ void RunItemMenu(u8 (*Done))
         {
           if (CanGiveUpItem(Selected)) {
             FormatItemLine((s32)Character, Selected, 0, 0, 0, 0);
-            ShowPagedText(1, 21, 38, 22, 14, 1, rtl_str_cat(t8, 3, (const u8 *const[]){S("\005Your "), (*FPD(TMenuLine (*), Selected)).Text, S("\024will be gone forever")}));
+            ShowPagedText(1, 21, 38, 22, 14, 1, rtl_str_cat(ts1, 3, (const u8 *const[]){S("\005Your "), (*FPD(TMenuLine (*), Selected)).Text, S("\024will be gone forever")}));
             if (AskYesNo(S("\011Drop It\077 "), 13, 10, 15) == 'Y') {
               RemoveInventoryItem(SelectedCharacter, Selected);
               Redraw = 1;
@@ -594,7 +568,7 @@ void ReadyItem(PMenuLine Item)
   u8 Reason = 0;
   u8 Slot = 0;
   PCharacter Character = 0;
-  u8 t1[55];
+  u8 ts1[55];
   AffectOn = ((*FPD(TMenuLine (*), Item)).Affects[2] > AffectThreshold);
   Character = SelectedCharacter;
   if ((*FPD(TMenuLine (*), Item)).Readied) {
@@ -668,7 +642,7 @@ void ReadyItem(PMenuLine Item)
     case ReadyItem_ReadySlotUsed:
     {
       FormatItemLine((s32)Character, (*FPD(TCharacter (*), Character)).SlotItems[Slot], 0, 0, 0, 0);
-      ShowFlashMessage(rtl_str_cat(t1, 2, (const u8 *const[]){S("\016already using "), (*FPD(TMenuLine (*), (*FPD(TCharacter (*), Character)).SlotItems[Slot])).Text}));
+      ShowFlashMessage(rtl_str_cat(ts1, 2, (const u8 *const[]){S("\016already using "), (*FPD(TMenuLine (*), (*FPD(TCharacter (*), Character)).SlotItems[Slot])).Text}));
       break;
     }
     case ReadyItem_ReadyHandsFull:
@@ -863,8 +837,8 @@ void SellItem(PMenuLine Item)
   u16 Platinum = 0;
   u16 Gold = 0;
   u16 Room = 0;
-  u8 t1[256];
-  u8 t2[256];
+  u8 ts1[256];
+  u8 ts2[256];
   Offer = 0;
   if ((*FPD(TMenuLine (*), Item)).Value > 0) {
     Offer = ((*FPD(TMenuLine (*), Item)).Value / 2);
@@ -877,7 +851,7 @@ void SellItem(PMenuLine Item)
     }
   }
   FormatItemLine((s32)SheetCharacter, Item, 0, 0, 0, 0);
-  ShowPagedText(SellItem_MessageLeft, SellItem_MessageTop, SellItem_MessageRight, SellItem_MessageBottom, SellItem_MessageColor, 1, rtl_str_cat(t2, 4, (const u8 *const[]){S("\016I'll give you "), WordToText(t1, Offer), S("\026 gold pieces for your "), (*FPD(TMenuLine (*), Item)).Text}));
+  ShowPagedText(SellItem_MessageLeft, SellItem_MessageTop, SellItem_MessageRight, SellItem_MessageBottom, SellItem_MessageColor, 1, rtl_str_cat(ts2, 4, (const u8 *const[]){S("\016I'll give you "), WordToText(ts1, Offer), S("\026 gold pieces for your "), (*FPD(TMenuLine (*), Item)).Text}));
   if (AskYesNo(S("\016Is It a Deal\077 "), 13, 10, 15) == 'Y') {
     ShowFlashMessage(S("\005Sold!"));
     RemoveInventoryItem(SelectedCharacter, Item);
@@ -914,12 +888,10 @@ void IdentifyItem(PMenuLine Item, u8 (*Redraw))
   s32 CharacterGold = 0;
   s32 PooledGold = 0;
   u8 Paid = 0;
-  u8 t1[80];
-  u8 t2[78];
-  u8 t3[68];
+  u8 ts1[80];
   Paid = 0;
   FormatItemLine((s32)SheetCharacter, Item, 0, 0, 0, 0);
-  ShowPagedText(IdentifyItem_MessageLeft, IdentifyItem_MessageTop, IdentifyItem_MessageRight, IdentifyItem_MessageBottom, IdentifyItem_MessageColor, ClearTextBeforeMessage, rtl_str_cat(t1, 2, (const u8 *const[]){S("'For 200 gold pieces I'll identify your "), (*FPD(TMenuLine (*), Item)).Text}));
+  ShowPagedText(IdentifyItem_MessageLeft, IdentifyItem_MessageTop, IdentifyItem_MessageRight, IdentifyItem_MessageBottom, IdentifyItem_MessageColor, ClearTextBeforeMessage, rtl_str_cat(ts1, 2, (const u8 *const[]){S("'For 200 gold pieces I'll identify your "), (*FPD(TMenuLine (*), Item)).Text}));
   if (AskYesNo(S("\016Is It a Deal\077 "), IdentifyItem_PromptTitleColor, IdentifyItem_PromptWordColor, IdentifyItem_PromptHotColor) == 'Y') {
     CharacterGold = CharacterMoneyValueInGold(SelectedCharacter);
     if (CharacterGold >= IdentifyItem_IdentifyPrice) {
@@ -939,11 +911,11 @@ void IdentifyItem(PMenuLine Item, u8 (*Redraw))
   }
   if (Paid) {
     if ((*FPD(TMenuLine (*), Item)).HiddenNames == 0) {
-      ShowPagedText(IdentifyItem_MessageLeft, IdentifyItem_MessageTop, IdentifyItem_MessageRight, IdentifyItem_MessageBottom, IdentifyItem_MessageColor, ClearTextBeforeMessage, rtl_str_cat(t2, 2, (const u8 *const[]){S("%I can't tell anything new about your "), (*FPD(TMenuLine (*), Item)).Text}));
+      ShowPagedText(IdentifyItem_MessageLeft, IdentifyItem_MessageTop, IdentifyItem_MessageRight, IdentifyItem_MessageBottom, IdentifyItem_MessageColor, ClearTextBeforeMessage, rtl_str_cat(ts1, 2, (const u8 *const[]){S("%I can't tell anything new about your "), (*FPD(TMenuLine (*), Item)).Text}));
     } else {
       (*FPD(TMenuLine (*), Item)).HiddenNames = 0;
       FormatItemLine((s32)SheetCharacter, Item, 0, 0, 0, 0);
-      ShowPagedText(IdentifyItem_MessageLeft, IdentifyItem_MessageTop, IdentifyItem_MessageRight, IdentifyItem_MessageBottom, IdentifyItem_MessageColor, ClearTextBeforeMessage, rtl_str_cat(t3, 2, (const u8 *const[]){S("\033It looks like some sort of "), (*FPD(TMenuLine (*), Item)).Text}));
+      ShowPagedText(IdentifyItem_MessageLeft, IdentifyItem_MessageTop, IdentifyItem_MessageRight, IdentifyItem_MessageBottom, IdentifyItem_MessageColor, ClearTextBeforeMessage, rtl_str_cat(ts1, 2, (const u8 *const[]){S("\033It looks like some sort of "), (*FPD(TMenuLine (*), Item)).Text}));
       (*Redraw) = 1;
     }
   }
@@ -986,8 +958,7 @@ void TradeMoney(void)
   u8 Finished = 0;
   u8 Done = 0;
   u8 Redraw = 0;
-  u8 t1[31];
-  u8 t2[256];
+  u8 ts1[256];
   do {
     Recipient = ViewedCharacter;
     RedrawView();
@@ -1032,7 +1003,7 @@ void TradeMoney(void)
                       }
                     }
                   }
-                  rtl_str_assign((*FPD(TMenuLine (*), List)).Text, 40, rtl_str_cat(t1, 4, (const u8 *const[]){Spaces, MoneyKindNames[Kind], S("\001 "), Num}));
+                  rtl_str_assign((*FPD(TMenuLine (*), List)).Text, 40, rtl_str_cat(ts1, 4, (const u8 *const[]){Spaces, MoneyKindNames[Kind], S("\001 "), Num}));
                   (*FPD(TMenuLine (*), List)).Flag29 = 0;
                 }
               if (Kind == TradeMoney_LastMoneyKind) break;
@@ -1049,7 +1020,7 @@ void TradeMoney(void)
         } else {
           rtl_str_assign(Text, 255, S("\000"));
           CoinKind = MoneyKindOfLine((*FPD(TMenuLine (*), Chosen)).Text, &Text);
-          rtl_str_assign(Text, 255, rtl_str_cat(t2, 3, (const u8 *const[]){S("\011How much "), Text, S("\020will you trade\077 ")}));
+          rtl_str_assign(Text, 255, rtl_str_cat(ts1, 3, (const u8 *const[]){S("\011How much "), Text, S("\020will you trade\077 ")}));
           Amount = ReadAmount((*FPD(TCharacter (*), SelectedCharacter)).Money[CoinKind], Text, TradeMoney_AmountColor);
           TransferMoney(&SelectedCharacter, &Recipient, Amount, CoinKind);
           Done = 1;
@@ -1103,8 +1074,7 @@ void ChooseAndDropMoney(void)
   u8 Text[256] = {0};
   u8 Key = 0;
   u16 Amount = 0;
-  u8 t1[31];
-  u8 t2[256];
+  u8 ts1[256];
   do {
     ShowCharacterMoney();
     List = 0;
@@ -1140,7 +1110,7 @@ void ChooseAndDropMoney(void)
                   }
                 }
               }
-              rtl_str_assign((*FPD(TMenuLine (*), List)).Text, 40, rtl_str_cat(t1, 4, (const u8 *const[]){Spaces, MoneyKindNames[Kind], S("\001 "), Num}));
+              rtl_str_assign((*FPD(TMenuLine (*), List)).Text, 40, rtl_str_cat(ts1, 4, (const u8 *const[]){Spaces, MoneyKindNames[Kind], S("\001 "), Num}));
               (*FPD(TMenuLine (*), List)).Flag29 = 0;
             }
           if (Kind == ChooseAndDropMoney_LastMoneyKind) break;
@@ -1157,7 +1127,7 @@ void ChooseAndDropMoney(void)
     } else {
       rtl_str_assign(Text, 255, S("\000"));
       CoinKind = MoneyKindOfLine((*FPD(TMenuLine (*), Chosen)).Text, &Text);
-      rtl_str_assign(Text, 255, rtl_str_cat(t2, 3, (const u8 *const[]){S("\011How much "), Text, S("\017will you drop\077 ")}));
+      rtl_str_assign(Text, 255, rtl_str_cat(ts1, 3, (const u8 *const[]){S("\011How much "), Text, S("\017will you drop\077 ")}));
       Amount = ReadAmount((*FPD(TCharacter (*), SelectedCharacter)).Money[CoinKind], Text, ChooseAndDropMoney_AmountColor);
       DropMoney(SelectedCharacter, Amount, CoinKind);
       Done = 1;
@@ -1276,7 +1246,7 @@ u8 ChooseSpellFromList(u8 SpellListKind, u8 DisplayMode, u16 (*Choice), u8 (*Lis
   POOL_TRACE("ChooseSpellFromList");
   u8 Result = 0;
   String40_RES06 ModeDescription = {0};
-  u8 t1[48];
+  u8 ts1[48];
   switch (SpellListKind) {
   case ChooseSpellFromList_SpellListInMemory:
   {
@@ -1323,7 +1293,7 @@ u8 ChooseSpellFromList(u8 SpellListKind, u8 DisplayMode, u16 (*Choice), u8 (*Lis
     if ((*Choice) < 0) {
       DrawWindow(1, 1, 0x26, 1, 0, 0, S("\000"));
       DrawCharacterName(SelectedCharacter, 1, 1, 1);
-      DrawTextAt((s16)((*FPD(TCharacter (*), SelectedCharacter)).Name[0] + 4), ChooseSpellFromList_TitleRow, ChooseSpellFromList_TitleColor, rtl_str_cat(t1, 2, (const u8 *const[]){S("\007Spells "), ModeDescription}));
+      DrawTextAt((s16)((*FPD(TCharacter (*), SelectedCharacter)).Name[0] + 4), ChooseSpellFromList_TitleRow, ChooseSpellFromList_TitleColor, rtl_str_cat(ts1, 2, (const u8 *const[]){S("\007Spells "), ModeDescription}));
     }
     Result = PickSpellFromMenu(DisplayMode, &(*Choice));
   } else {

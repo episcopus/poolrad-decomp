@@ -46,7 +46,7 @@ int main(void)
     }
     for (b = 0; b < 3; b++)                                             /* task 0's slots 1..3: the core */
         *(u8 *)(0xFFA1 + b) = (u8)(GAME_BLK + b);
-    k_fill((u8 *)0x1070, 0xAA, 0x0D90);                                 /* DEBUG: paint the stack area ($1070..$1DFF) */
+    k_fill((u8 *)0x0A00, 0xAA, 0x13FF);                                 /* DEBUG: paint the stack area ($0A00..$1DFF) */
     MB_RESULT(4) = 0xC0DE;
     game_launch();
     return 0;

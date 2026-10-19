@@ -416,11 +416,11 @@ static void ChooseFromList_HighlightListLine(struct Frame_ChooseFromList *up, s1
   PMenuLine Line = 0;
   u8 First = 0;
   u8 Len = 0;
-  u8 t1[41];
+  u8 ts1[41];
   Line = GetMenuLine(LineNo, up->List);
   First = ChooseFromList_FirstNonBlank(up, (*FPD(TMenuLine (*), Line)).Text);
   Len = (ChooseFromList_LastNonBlank(up, (*FPD(TMenuLine (*), Line)).Text) - First) + 1;
-  DrawTextAt((s16)((up->Left + First) - 1), (s16)(up->Top + ((s16)(LineNo - ListMenuTop))), up->HighlightColor, rtl_str_copy(t1, (*FPD(TMenuLine (*), Line)).Text, First, Len));
+  DrawTextAt((s16)((up->Left + First) - 1), (s16)(up->Top + ((s16)(LineNo - ListMenuTop))), up->HighlightColor, rtl_str_copy(ts1, (*FPD(TMenuLine (*), Line)).Text, First, Len));
 }
 
 /* ovl25:0A08 (nested). Redraws the trimmed text of line LineNo in its own colour (HeadingColor for
@@ -430,15 +430,14 @@ static void ChooseFromList_UnhighlightListLine(struct Frame_ChooseFromList *up, 
   PMenuLine Line = 0;
   u8 First = 0;
   u8 Len = 0;
-  u8 t1[41];
-  u8 t2[41];
+  u8 ts1[41];
   Line = GetMenuLine(LineNo, up->List);
   First = ChooseFromList_FirstNonBlank(up, (*FPD(TMenuLine (*), Line)).Text);
   Len = (ChooseFromList_LastNonBlank(up, (*FPD(TMenuLine (*), Line)).Text) - First) + 1;
   if ((*FPD(TMenuLine (*), Line)).Flag29 != 0) {
-    DrawTextAt((s16)((up->Left + First) - 1), (s16)(up->Top + ((s16)(LineNo - ListMenuTop))), up->HeadingColor, rtl_str_copy(t1, (*FPD(TMenuLine (*), Line)).Text, First, Len));
+    DrawTextAt((s16)((up->Left + First) - 1), (s16)(up->Top + ((s16)(LineNo - ListMenuTop))), up->HeadingColor, rtl_str_copy(ts1, (*FPD(TMenuLine (*), Line)).Text, First, Len));
   } else {
-    DrawTextAt((s16)((up->Left + First) - 1), (s16)(up->Top + ((s16)(LineNo - ListMenuTop))), up->LineColor, rtl_str_copy(t2, (*FPD(TMenuLine (*), Line)).Text, First, Len));
+    DrawTextAt((s16)((up->Left + First) - 1), (s16)(up->Top + ((s16)(LineNo - ListMenuTop))), up->LineColor, rtl_str_copy(ts1, (*FPD(TMenuLine (*), Line)).Text, First, Len));
   }
 }
 
@@ -552,9 +551,7 @@ u8 ChooseFromList(const u8 *Title_in, const u8 *Prompt_in, u8 HeadingColor, u8 L
   fr.Redraw = Redraw;
   fr.Choice = Choice;
   fr.Selected = Selected;
-  u8 t1[46];
-  u8 t2[46];
-  u8 t3[46];
+  u8 ts1[46];
   if (fr.List == 0) {
     (*fr.Choice) = 0;
     (*fr.Selected) = 0;
@@ -597,15 +594,15 @@ u8 ChooseFromList(const u8 *Title_in, const u8 *Prompt_in, u8 HeadingColor, u8 L
     fr.HasNext = 0;
     fr.HasPrev = 0;
     if ((s16)(fr.LineCount - fr.Height) > ListMenuTop) {
-      rtl_str_assign(fr.Words, 40, rtl_str_cat(t1, 2, (const u8 *const[]){fr.Words, S("\005 Next")}));
+      rtl_str_assign(fr.Words, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){fr.Words, S("\005 Next")}));
       fr.HasNext = 1;
     }
     if (ListMenuTop > fr.HeadingCount) {
-      rtl_str_assign(fr.Words, 40, rtl_str_cat(t2, 2, (const u8 *const[]){fr.Words, S("\005 Prev")}));
+      rtl_str_assign(fr.Words, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){fr.Words, S("\005 Prev")}));
       fr.HasPrev = 1;
     }
     if (fr.WithExit != 0) {
-      rtl_str_assign(fr.Words, 40, rtl_str_cat(t3, 2, (const u8 *const[]){fr.Words, S("\005 Exit")}));
+      rtl_str_assign(fr.Words, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){fr.Words, S("\005 Exit")}));
     }
     fr.Key = ReadPromptChoice(fr.Title, fr.Words, fr.HeadingColor, fr.LineColor, fr.HighlightColor, 1, 0, &fr.ExtKey);
     ChooseFromList_UnhighlightListLine(&fr, (*fr.Choice));

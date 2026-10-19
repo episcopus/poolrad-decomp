@@ -93,7 +93,7 @@ u16 frame_count(void);                    /* frames since irq_start, wraps */
 void tick_start(u16 reload);              /* FIRQ every reload * 63.695 us (1..4095) */
 void tick_stop(void);
 u16 tick_count(void);
-u8 kbd_get(void);                         /* next key code, 0 = none: ASCII, ENTER 13, BREAK 27, arrows $81..$84 (up, down, left, right), CLEAR $8C, F1 $91, F2 $92 */
+u16 kbd_get(void);                       /* next key code, 0 = none: ASCII, ENTER 13, BREAK 27, arrows $81..$84 (up, down, left, right), CLEAR $8C, F1 $91, F2 $92 */
 u8 kbd_mods(void);                        /* bit 0 shift, bit 1 control, bit 2 alt */
 
 /* ---- gfx.c: the 320x200x16 screen (physical blocks 0..3), the palette, pictures */
@@ -142,6 +142,8 @@ void gfx_item(const Pic *p, u8 item, u8 col, u8 row);       /* ShowPicture: one 
 #define DB_COLS 21
 void db_init(void);                       /* AllocatePicture + the trackers cleared */
 void db_item(const Pic *p, u8 item, u8 col, u8 row, u8 flags);               /* DrawPictureItem (flags bit 0: masked) */
+void db_item_clip(const Pic *p, u8 item, s16 col, s16 row, u8 flags, u8 mirror);       /* DrawPictureItemClipped */
+void pic_combine(const Pic *s, const Pic *d, u8 op);   /* item 0 and its mask: op 0 copy, 1 merge (colours OR, mask AND) */
 void db_fill(s16 col, s16 row, u16 w, u16 h, u8 color);                      /* FillPictureRect (col, w in cells; row, h in pixel rows) */
 void db_flush(void);                      /* FlushPictureChanges */
 

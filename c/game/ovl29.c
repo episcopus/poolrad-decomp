@@ -570,12 +570,12 @@ void LoadWallSet(u8 BlockId, u8 First)
   u8 Count = 0;
   u8 Num[2] = {0};
   u8 Key = 0;
-  u8 t1[9];
+  u8 ts1[9];
   if (((First < 1)) || ((First > LastWallSlot))) {
     return;
   }
   rtl_str_int(Num, 1, TileSet, 0);
-  LoadDaxBlock(rtl_str_cat(t1, 2, (const u8 *const[]){S("\007WALLDEF"), Num}), S("\004.dax"), BlockId, &Size, &Block);
+  LoadDaxBlock(rtl_str_cat(ts1, 2, (const u8 *const[]){S("\007WALLDEF"), Num}), S("\004.dax"), BlockId, &Size, &Block);
   if (((Size == 0)) || (((u16)((Size / WallSetSize) + First) > 4))) {
     RestoreVideoMode();
     rtl_write_str(&Output, S("&Unable to load wallset in LoadWallSet."), 0), rtl_write_ln(&Output);
@@ -655,9 +655,9 @@ void Load3DMap(u8 BlockId)
   u16 Offset = 0;
   u8 Num[2] = {0};
   u8 Key = 0;
-  u8 t1[5];
+  u8 ts1[5];
   rtl_str_int(Num, 1, TileSet, 0);
-  LoadDaxBlock(rtl_str_cat(t1, 2, (const u8 *const[]){S("\003GEO"), Num}), S("\004.dax"), BlockId, &Size, &Block);
+  LoadDaxBlock(rtl_str_cat(ts1, 2, (const u8 *const[]){S("\003GEO"), Num}), S("\004.dax"), BlockId, &Size, &Block);
   if (((Size == 0)) || ((Size != GeoBlockSize))) {
     RestoreVideoMode();
     rtl_write_str(&Output, S(" Unable to load geo in Load3DMap."), 0), rtl_write_ln(&Output);

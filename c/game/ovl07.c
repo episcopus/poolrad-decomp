@@ -171,14 +171,14 @@ void LoadEcl(u8 BlockId)
   u8 Num[2] = {0};
   u16 Size = 0;
   farptr Block = 0;
-  u8 t1[5];
+  u8 ts1[5];
   rtl_FillChar((void *)&(*FPD(TEclCode (*), EclCode)), 0x1E00, 0);
   OpenNoPrompt = 0;
   do {
     ClearPromptLine();
     DrawTextAt(0, 0x18, 0xF, S("\025Loading...Please Wait"));
     rtl_str_int(Num, 1, TileSet, 0);
-    LoadDaxBlock(rtl_str_cat(t1, 2, (const u8 *const[]){S("\003ECL"), Num}), S("\004.dax"), BlockId, &Size, &Block);
+    LoadDaxBlock(rtl_str_cat(ts1, 2, (const u8 *const[]){S("\003ECL"), Num}), S("\004.dax"), BlockId, &Size, &Block);
   } while (!(Size >= 2));
   rtl_Move((void *)&(*FPD(TByteArray (*), Block))[2], (void *)&(*FPD(TEclCode (*), EclCode)), (u16)(Size - 2));
   rtl_freemem(Block, Size);
@@ -1042,10 +1042,8 @@ void DecodeString(u8 Len, u8 Index)
   u8 Code = 0;
   u8 Phase = 0;
   u8 Ch = 0;
-  u8 t1[2];
-  u8 t2[256];
-  u8 t3[2];
-  u8 t4[256];
+  u8 ts1[2];
+  u8 ts2[256];
   rtl_str_assign(EclStrings[Index], 255, S("\000"));
   Count = 0;
   Phase = 1;
@@ -1087,14 +1085,14 @@ void DecodeString(u8 Len, u8 Index)
     }
     if (Code != 0) {
       Ch = SixBitChar(Code);
-      rtl_str_assign(EclStrings[Index], 255, rtl_str_cat(t2, 2, (const u8 *const[]){EclStrings[Index], rtl_str_char(t1, Ch)}));
+      rtl_str_assign(EclStrings[Index], 255, rtl_str_cat(ts2, 2, (const u8 *const[]){EclStrings[Index], rtl_str_char(ts1, Ch)}));
     }
   }
   if (Phase == 4) {
     Code = (Cur & 0x3F);
     if (Code != 0) {
       Ch = SixBitChar(Code);
-      rtl_str_assign(EclStrings[Index], 255, rtl_str_cat(t4, 2, (const u8 *const[]){EclStrings[Index], rtl_str_char(t3, Ch)}));
+      rtl_str_assign(EclStrings[Index], 255, rtl_str_cat(ts2, 2, (const u8 *const[]){EclStrings[Index], rtl_str_char(ts1, Ch)}));
     }
   }
 }
@@ -1107,14 +1105,8 @@ void ReadVmString(u8 Index, u16 Addr)
   POOL_TRACE("ReadVmString");
   u8 Region = 0;
   u8 I = 0;
-  u8 t1[2];
-  u8 t2[256];
-  u8 t3[2];
-  u8 t4[256];
-  u8 t5[2];
-  u8 t6[256];
-  u8 t7[2];
-  u8 t8[256];
+  u8 ts1[2];
+  u8 ts2[256];
   Region = MemRegion(Addr);
   rtl_str_assign(EclStrings[Index], 255, S("\000"));
   I = 0;
@@ -1122,7 +1114,7 @@ void ReadVmString(u8 Index, u16 Addr)
   case RegionGameVars:
   {
     while ((*FPD(TVmWords4900 (*), VarsAt4900))[(u16)(I + Addr) - 18688] != 0) {
-      rtl_str_assign(EclStrings[Index], 255, rtl_str_cat(t2, 2, (const u8 *const[]){EclStrings[Index], rtl_str_char(t1, (u8)(*FPD(TVmWords4900 (*), VarsAt4900))[(u16)(I + Addr) - 18688])}));
+      rtl_str_assign(EclStrings[Index], 255, rtl_str_cat(ts2, 2, (const u8 *const[]){EclStrings[Index], rtl_str_char(ts1, (u8)(*FPD(TVmWords4900 (*), VarsAt4900))[(u16)(I + Addr) - 18688])}));
       I++;
     }
     break;
@@ -1133,7 +1125,7 @@ void ReadVmString(u8 Index, u16 Addr)
       rtl_str_assign(EclStrings[Index], 255, (*FPD(TCharacter (*), SelectedCharacter)).Name);
     } else {
       while ((*FPD(TVmWords6B00 (*), VarsAt6B00))[(u16)(I + Addr) - 27392] != 0) {
-        rtl_str_assign(EclStrings[Index], 255, rtl_str_cat(t4, 2, (const u8 *const[]){EclStrings[Index], rtl_str_char(t3, (u8)(*FPD(TVmWords6B00 (*), VarsAt6B00))[(u16)(I + Addr) - 27392])}));
+        rtl_str_assign(EclStrings[Index], 255, rtl_str_cat(ts2, 2, (const u8 *const[]){EclStrings[Index], rtl_str_char(ts1, (u8)(*FPD(TVmWords6B00 (*), VarsAt6B00))[(u16)(I + Addr) - 27392])}));
         I++;
       }
     }
@@ -1142,7 +1134,7 @@ void ReadVmString(u8 Index, u16 Addr)
   case RegionWords9700:
   {
     while ((*FPD(TVmWords9700 (*), VarsAt9700))[(u16)(I + Addr) - 38656] != 0) {
-      rtl_str_assign(EclStrings[Index], 255, rtl_str_cat(t6, 2, (const u8 *const[]){EclStrings[Index], rtl_str_char(t5, (u8)(*FPD(TVmWords9700 (*), VarsAt9700))[(u16)(I + Addr) - 38656])}));
+      rtl_str_assign(EclStrings[Index], 255, rtl_str_cat(ts2, 2, (const u8 *const[]){EclStrings[Index], rtl_str_char(ts1, (u8)(*FPD(TVmWords9700 (*), VarsAt9700))[(u16)(I + Addr) - 38656])}));
       I++;
     }
     break;
@@ -1150,7 +1142,7 @@ void ReadVmString(u8 Index, u16 Addr)
   case RegionCode:
   {
     while ((*FPD(TEclCode (*), EclCode))[(u16)(I + Addr) - 39168] != 0) {
-      rtl_str_assign(EclStrings[Index], 255, rtl_str_cat(t8, 2, (const u8 *const[]){EclStrings[Index], rtl_str_char(t7, (u8)(*FPD(TEclCode (*), EclCode))[(u16)(I + Addr) - 39168])}));
+      rtl_str_assign(EclStrings[Index], 255, rtl_str_cat(ts2, 2, (const u8 *const[]){EclStrings[Index], rtl_str_char(ts1, (u8)(*FPD(TEclCode (*), EclCode))[(u16)(I + Addr) - 39168])}));
       I++;
     }
     break;
@@ -1167,8 +1159,8 @@ void ParseHotkeys(u8 (*Text)[256], String40_RES06 (*Keys))
   POOL_TRACE("ParseHotkeys");
   u8 I = 0;
   s32 t1;
-  u8 t2[2];
-  u8 t3[42];
+  u8 ts1[2];
+  u8 ts2[42];
   rtl_str_assign((*Keys), 40, S("\000"));
   {
     u8 limit = (*Text)[0];
@@ -1181,7 +1173,7 @@ void ParseHotkeys(u8 (*Text)[256], String40_RES06 (*Keys))
           if ((*Text)[I] == HotkeyMark) {
             rtl_str_delete((*Text), I, 1);
             (*Text)[I] = rtl_upcase((*Text)[I]);
-            rtl_str_assign((*Keys), 40, rtl_str_cat(t3, 2, (const u8 *const[]){(*Keys), rtl_str_char(t2, (*Text)[I])}));
+            rtl_str_assign((*Keys), 40, rtl_str_cat(ts2, 2, (const u8 *const[]){(*Keys), rtl_str_char(ts1, (*Text)[I])}));
           }
         if (I == limit) break;
         I++;
@@ -1609,17 +1601,16 @@ void DamageWithMessage(u16 Damage, PCharacter Who)
   u8 Text[256] = {0};
   u8 Num[4] = {0};
   u8 ClearFirst = 0;
-  u8 t1[25];
-  u8 t2[51];
+  u8 ts1[51];
   if ((*FPD(TCharacter (*), Who)).Status == StatusDead) {
     return;
   }
   ClearFirst = 0;
   rtl_str_int(Num, 3, Damage, 0);
   if ((s16)((*FPD(TCharacter (*), Who)).HpCurrent + 10) < Damage) {
-    rtl_str_assign(Text, 255, rtl_str_cat(t1, 3, (const u8 *const[]){S("\002  "), (*FPD(TCharacter (*), Who)).Name, S("\007 dies. ")}));
+    rtl_str_assign(Text, 255, rtl_str_cat(ts1, 3, (const u8 *const[]){S("\002  "), (*FPD(TCharacter (*), Who)).Name, S("\007 dies. ")}));
   } else {
-    rtl_str_assign(Text, 255, rtl_str_cat(t2, 5, (const u8 *const[]){S("\002  "), (*FPD(TCharacter (*), Who)).Name, S("\014 is hit FOR "), Num, S("\022 points of Damage.")}));
+    rtl_str_assign(Text, 255, rtl_str_cat(ts1, 5, (const u8 *const[]){S("\002  "), (*FPD(TCharacter (*), Who)).Name, S("\014 is hit FOR "), Num, S("\022 points of Damage.")}));
   }
   if (GlyphRow > 0x16) {
     GlyphRow = 0x11;

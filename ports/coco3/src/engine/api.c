@@ -80,8 +80,8 @@ void api_unimpl(void)
 
 #define NPIC 48
 #define H_DRAWBUF 0x7F01u                 /* DrawBuf, the staging buffer of gfx.c: not a Pic */
-static Pic pics[NPIC];
-static u8 pic_live[NPIC];
+Pic pics[NPIC];
+u8 pic_live[NPIC];
 
 static u16 pic_new(void)
 {
@@ -182,6 +182,39 @@ void api_DrawPictureItem(s16 col, s16 row, u8 item, u8 flags, u32 src, u32 dst)
     (void)dst;                             /* always DrawBuf */
     if (p && item < p->items)
         db_item(p, item, (u8)col, (u8)row, flags);
+}
+
+void api_DrawPictureItemClipped(s16 col, s16 row, u8 item, u8 flags, u32 src, u32 dst)
+{
+    Pic *p = pic_of(src);
+    (void)dst;                             /* always DrawBuf */
+    if (p && item < p->items)
+        db_item_clip(p, item, col, row, flags, 0);
+}
+
+/* DrawIcon's blit (ovl32 04FC): the original copies the picture (mirrored for icon sets above 3) into a new one, draws that
+ * and frees it; the copy is not observable, so the picture is drawn as it is. The game side (the patched DrawIcon) looks the
+ * handle up in PictureSlots. */
+void api_DrawIconPic(u16 h, s16 col, s16 row, u8 mirror)
+{
+    Pic *p = pic_of(h);
+    if (p)
+        db_item_clip(p, 0, col, row, 1, mirror);
+}
+
+/* CopyPictureSlot's copies of the editor (ovl16 nested) and MergePictureData (ovl17 032F) on the pictures of the icon */
+void api_PictureCopy(u16 src, u16 dst)
+{
+    Pic *s = pic_of(src), *d = pic_of(dst);
+    if (s && d)
+        pic_combine(s, d, 0);
+}
+
+void api_MergePictureData(u32 src, u32 dst)
+{
+    Pic *s = pic_of(src), *d = pic_of(dst);
+    if (s && d)
+        pic_combine(s, d, 1);
 }
 
 void api_FillPictureRect(s16 col, s16 row, u16 w, u16 h, u8 color, u32 palette, u32 target)

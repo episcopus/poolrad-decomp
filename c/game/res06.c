@@ -497,10 +497,8 @@ u8 *ReadInputLine(u8 *Result_out, const u8 *Prompt_in, u8 Color, u8 MaxLen)
   u8 Line[256] = {0};
   u8 Key = 0;
   s32 t1;
-  u8 t2[2];
-  u8 t3[256];
-  u8 t4[2];
-  u8 t5[256];
+  u8 ts1[256];
+  u8 ts2[256];
   ClearTextCells(0, BottomRow, 0, ScreenCols);
   DrawTextAt(0, BottomRow, Color, Prompt);
   Col = Prompt[0];
@@ -510,13 +508,13 @@ u8 *ReadInputLine(u8 *Result_out, const u8 *Prompt_in, u8 Color, u8 MaxLen)
     t1 = (u8)Key;
     if ((t1 >= 32 && t1 <= 122)) {
       if (Line[0] < MaxLen) {
-        rtl_str_assign(Line, 255, rtl_str_cat(t3, 2, (const u8 *const[]){Line, rtl_str_char(t2, Key)}));
+        rtl_str_assign(Line, 255, rtl_str_cat(ts2, 2, (const u8 *const[]){Line, rtl_str_char(ts1, Key)}));
         Col++;
-        DrawTextAt(Col, BottomRow, ReadInputLine_EchoColor, rtl_str_char(t4, Key));
+        DrawTextAt(Col, BottomRow, ReadInputLine_EchoColor, rtl_str_char(ts1, Key));
       }
     } else if (t1 == 8) {
       if (Line[0] > 0) {
-        rtl_str_assign(Line, 255, rtl_str_copy(t5, Line, 1, (s16)(Line[0] - 1)));
+        rtl_str_assign(Line, 255, rtl_str_copy(ts1, Line, 1, (s16)(Line[0] - 1)));
         ClearTextCells(Col, BottomRow, 0, 1);
         Col--;
       }
@@ -550,9 +548,9 @@ u16 ReadNumber(const u8 *Prompt_in, u8 Color)
   s32 Value = 0;
   String40_RES06 Answer = {0};
   s16 Code = 0;
-  u8 t1[256];
+  u8 ts1[256];
   do {
-    rtl_str_assign(Answer, 40, ReadInputLine(t1, Prompt, Color, ReadNumber_MaxDigits));
+    rtl_str_assign(Answer, 40, ReadInputLine(ts1, Prompt, Color, ReadNumber_MaxDigits));
     rtl_str_val(Answer, &Value, 4, 1, &Code);
     if (((Code == 0)) && ((((Value > 65536)) || ((Value < 0))))) {
       Code = 1;

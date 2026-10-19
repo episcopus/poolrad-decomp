@@ -420,9 +420,9 @@ void MoveStep(PCharacter Who)
   u8 Step = 0;
   u8 OffMap = 0;
   u8 Done = 0;
-  u8 t1[256];
-  u8 t2[256];
-  DrawTextAt(0, 24, 10, rtl_str_cat(t2, 3, (const u8 *const[]){S("\031Move/Attack, Move Left = "), ByteToText(t1, (s16)((u16)(*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).Moves >> 1)), S("\001 ")}));
+  u8 ts1[256];
+  u8 ts2[256];
+  DrawTextAt(0, 24, 10, rtl_str_cat(ts2, 3, (const u8 *const[]){S("\031Move/Attack, Move Left = "), ByteToText(ts1, (s16)((u16)(*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).Moves >> 1)), S("\001 ")}));
   if (HandleCombatKey(Who)) {
     return;
   }

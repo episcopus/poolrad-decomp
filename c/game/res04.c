@@ -31,7 +31,7 @@ u8 ReadGameKey(void)
   POOL_TRACE("ReadGameKey");
   u8 Result = 0;
   u8 Key = 0;
-  u8 t1[256];
+  u8 ts1[256];
   Key = rtl_ReadKey();
   if (Key == KeyCtrlS) {
     if (SoundMode != SoundPaused) {
@@ -43,7 +43,7 @@ u8 ReadGameKey(void)
       SilenceSound();
     }
   }
-  if (rtl_str_cmp(rtl_paramstr(t1, 1), S("\005STING")) == 0) {
+  if (rtl_str_cmp(rtl_paramstr(ts1, 1), S("\005STING")) == 0) {
     if (Key == KeyCtrlD) {
       DebugMode = !DebugMode;
     }

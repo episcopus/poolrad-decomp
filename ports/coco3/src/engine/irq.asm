@@ -11,7 +11,7 @@
 * through a disk read (t_irq: 330 frames counted over 5.5 s of reading).
 * Keyboard: PIA0 ($FF00 rows in, $FF02 columns out) scanned once a frame; a key counts when two consecutive scans agree
 * (debounce), its code goes to a 16-entry queue (kbd_get).
-* All of it, code, tables and variables, is in the section `shared` (the code at $0400, where the text screen was, the data at $0E00: both tasks see slot 0 and the game's stack gets the room above the mailbox): the
+* All of it, code, tables and variables, is in the section `shared` (the code at $0400, where the text screen was, the data at $0700: both tasks see slot 0 and the game's stack gets the room above the mailbox): the
 * frame interrupt can arrive in either MMU task, and both see slot 0 the same.
         INCLUDE mailbox.inc
 
@@ -24,6 +24,9 @@
         EXPORT  _tick_count
         EXPORT  _kbd_get
         EXPORT  _kbd_mods
+        EXPORT  _kq
+        EXPORT  _kq_head
+        EXPORT  _kq_tail
         EXPORT  _game_launch
         IMPORT  _eng_init0
         EXPORT  _eng_halt
@@ -94,18 +97,29 @@ _tick_count
         ldd     >ticks
         rts
 
-* u8 kbd_get(void): the next key code from the queue, 0 when there is none
+* u16 kbd_get(void): the next key from the queue, 0 when there is none: the character in B, or B = 0 and the PC scan code in A
+* (arrows, F1, F2 as on the PC; Home, End, PgUp, PgDn are SHIFT with the arrows, the PC's diagonals: decision D8)
 _kbd_get
-        ldb     >kq_head
-        cmpb    >kq_tail
+        ldb     >_kq_head
+        cmpb    >_kq_tail
         beq     @none
-        ldx     #kq
+        ldx     #_kq
         abx
         lda     ,x
         incb
         andb    #15
-        stb     >kq_head
-        tfr     a,b
+        stb     >_kq_head
+        cmpa    #$80
+        blo     @plain
+        ldx     #kext                   a key that is no character: 0 in B and the PC's scan code in A (ReadKey's extended keys)
+@s      tst     ,x
+        beq     @plain
+        cmpa    ,x++
+        bne     @s
+        lda     -1,x
+        clrb
+        rts
+@plain  tfr     a,b
         clra
         rts
 @none   clra
@@ -140,7 +154,7 @@ _game_launch
         jmp     $2000
 
 irq_isr
-        cmps    #$1100                  a guard: the stack must not reach the mailbox ($1000..$105F) and the shared data
+        cmps    #$0A40                  a guard: the stack must not reach the mailbox ($0900..$096F) and the shared data
         bhs     @sok                    below it; if it has, say so and stop (result words 28 = $E5E5, 29 = S, status 2)
         lds     #$1F00
         ldd     #$E5E5
@@ -221,15 +235,15 @@ kbd_tick
 @un     abx
         lda     ,x
         beq     @no
-        ldx     #kq
-        ldb     >kq_tail
+        ldx     #_kq
+        ldb     >_kq_tail
         abx
         sta     ,x
         incb
         andb    #15
-        cmpb    >kq_head
+        cmpb    >_kq_head
         beq     @no                     queue full: the key is lost
-        stb     >kq_tail
+        stb     >_kq_tail
 @no     puls    a,x,y
 @nr     leay    1,y
         tsta
@@ -253,9 +267,9 @@ kheld           RMB     8
 knew            RMB     8
 kstab           RMB     1
 kcol            RMB     1
-kq_head         RMB     1
-kq_tail         RMB     1
-kq              RMB     16
+_kq_head       RMB     1
+_kq_tail       RMB     1
+_kq            RMB     16
         ENDSECTION
 
         SECTION shared2
@@ -267,10 +281,11 @@ ktab    FCC     "@ABCDEFG"
         FCC     "01234567"
         FCC     "89:;,-./"
         FCB     13,$8C,27,0,0,$91,$92,0
+kext    FCB     $81,72,$82,80,$83,75,$84,77,$91,59,$92,60,$A0,71,$A1,79,$A2,73,$A3,81,0
 ktabs   FCB     64,97,98,99,100,101,102,103
         FCC     "hijklmno"
         FCC     "pqrstuvw"
-        FCB     120,121,122,$81,$82,$83,$84,$20
+        FCB     120,121,122,$A2,$A3,$A0,$A1,$20
         FCB     0,33,34,35,36,37,38,39
         FCB     40,41,42,43,60,61,62,63
         FCB     13,$8C,27,0,0,$91,$92,0

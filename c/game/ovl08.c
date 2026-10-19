@@ -271,22 +271,17 @@ void CombatMenu(PCharacter Who, u8 (*Cmd))
   u8 Menu[41] = {0};
   u8 I = 0;
   u8 Flag = 0;
-  u8 t1[46];
-  u8 t2[50];
-  u8 t3[45];
-  u8 t4[46];
-  u8 t5[46];
-  u8 t6[51];
-  s32 t7;
-  s32 t8;
+  s32 t1;
+  s32 t2;
+  u8 ts1[51];
   RunAffectHooks(0xF, Who);
   rtl_str_assign(Menu, 40, S("\000"));
   if ((*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).Moves > 0) {
-    rtl_str_assign(Menu, 40, rtl_str_cat(t1, 2, (const u8 *const[]){Menu, S("\005Move ")}));
+    rtl_str_assign(Menu, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Menu, S("\005Move ")}));
   }
-  rtl_str_assign(Menu, 40, rtl_str_cat(t2, 2, (const u8 *const[]){Menu, S("\011View Aim ")}));
+  rtl_str_assign(Menu, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Menu, S("\011View Aim ")}));
   if ((*FPD(TCharacter (*), Who)).ItemCountC7 > 0) {
-    rtl_str_assign(Menu, 40, rtl_str_cat(t3, 2, (const u8 *const[]){Menu, S("\004Use ")}));
+    rtl_str_assign(Menu, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Menu, S("\004Use ")}));
   }
   Flag = 0;
   {
@@ -302,18 +297,18 @@ void CombatMenu(PCharacter Who, u8 (*Cmd))
     }
   }
   if ((((Flag != 0)) && (((*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).CanCast != 0))) && (((*FPD(TGameVars (*), GameVars))[229] == 0))) {
-    rtl_str_assign(Menu, 40, rtl_str_cat(t4, 2, (const u8 *const[]){Menu, S("\005Cast ")}));
+    rtl_str_assign(Menu, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Menu, S("\005Cast ")}));
   }
   if ((((*FPD(TCharacter (*), Who)).ClassLevels[0] > 0)) && (((*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).Turned == 0))) {
-    rtl_str_assign(Menu, 40, rtl_str_cat(t5, 2, (const u8 *const[]){Menu, S("\005Turn ")}));
+    rtl_str_assign(Menu, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Menu, S("\005Turn ")}));
   }
-  rtl_str_assign(Menu, 40, rtl_str_cat(t6, 2, (const u8 *const[]){Menu, S("\012Quick Done")}));
+  rtl_str_assign(Menu, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Menu, S("\012Quick Done")}));
   do {
     (*Cmd) = ReadPromptChoice(S("\000"), Menu, 0xD, 0xA, MenuColors, 1, 0, &Flag);
-    if (((Flag != 0)) && !(((t7 = (*Cmd)), (t7 == KeyQuickAll || t7 == KeyAltR || t7 == KeyAltX_OVL08 || t7 == KeyAltM_OVL08)))) {
+    if (((Flag != 0)) && !(((t1 = (*Cmd)), (t1 == KeyQuickAll || t1 == KeyAltR || t1 == KeyAltX_OVL08 || t1 == KeyAltM_OVL08)))) {
       (*Cmd) = 0x00;
     }
-  } while (!((t8 = (*Cmd)), (t8 == KeyQuickAll || t8 == KeyAltR || t8 == ' ' || t8 == KeyAltX_OVL08 || t8 == KeyAltM_OVL08 || t8 == 'A' || t8 == 'C' || t8 == 'D' || t8 == 'M' || t8 == 'Q' || t8 == 'T' || t8 == 'U' || t8 == 'V')));
+  } while (!((t2 = (*Cmd)), (t2 == KeyQuickAll || t2 == KeyAltR || t2 == ' ' || t2 == KeyAltX_OVL08 || t2 == KeyAltM_OVL08 || t2 == 'A' || t2 == 'C' || t2 == 'D' || t2 == 'M' || t2 == 'Q' || t2 == 'T' || t2 == 'U' || t2 == 'V')));
 }
 
 /* ovl08:0880. The end of a combat round: AdvanceGameClock(1, 1), the round counter CombatRound, UpdateMonsterMorale,
@@ -381,8 +376,8 @@ void MoveCharacter(PCharacter Who, u8 (*Done))
   u8 Other = 0;
   u8 Ground = 0;
   u8 Key = 0;
-  u8 t1[256];
-  u8 t2[256];
+  u8 ts1[256];
+  u8 ts2[256];
   SavedMoves = (*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).Moves;
   SavedIconSet = (*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).IconSet;
   Col = CombatantX(Who);
@@ -392,7 +387,7 @@ void MoveCharacter(PCharacter Who, u8 (*Done))
   Dir = NoDirection;
   while (((((*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).Moves > 1)) && ((Key != 0x00))) && ((Key != 0x0D))) {
     ClearWindow(0x18, 0x18, 0x27, 0x18);
-    Key = ReadPromptChoice(rtl_str_cat(t2, 3, (const u8 *const[]){S("\031Move/Attack, Move Left = "), ByteToText(t1, (s16)((u16)(*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).Moves >> 1)), S("\001 ")}), S("\000"), 0xA, 0xA, MenuColors, 1, 0, &CombatScratchFlag);
+    Key = ReadPromptChoice(rtl_str_cat(ts2, 3, (const u8 *const[]){S("\031Move/Attack, Move Left = "), ByteToText(ts1, (s16)((u16)(*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).Moves >> 1)), S("\001 ")}), S("\000"), 0xA, 0xA, MenuColors, 1, 0, &CombatScratchFlag);
     switch ((u8)Key) {
     case 0x00:
     {
@@ -520,20 +515,17 @@ void EndTurnMenu(PCharacter Who, u8 (*Done))
   POOL_TRACE("EndTurnMenu");
   u8 Menu[41] = {0};
   u8 Key = 0;
-  u8 t1[47];
-  u8 t2[52];
-  u8 t3[49];
-  u8 t4[51];
+  u8 ts1[52];
   (*Done) = 0;
   rtl_str_assign(Menu, 40, S("\000"));
   if (!IsRangedWeapon(Who) || RangedWeaponCanMelee(Who)) {
-    rtl_str_assign(Menu, 40, rtl_str_cat(t1, 2, (const u8 *const[]){Menu, S("\006Guard ")}));
+    rtl_str_assign(Menu, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Menu, S("\006Guard ")}));
   }
-  rtl_str_assign(Menu, 40, rtl_str_cat(t2, 2, (const u8 *const[]){Menu, S("\013Delay Quit ")}));
+  rtl_str_assign(Menu, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Menu, S("\013Delay Quit ")}));
   if (BandageDying(0) != 0) {
-    rtl_str_assign(Menu, 40, rtl_str_cat(t3, 2, (const u8 *const[]){Menu, S("\010Bandage ")}));
+    rtl_str_assign(Menu, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Menu, S("\010Bandage ")}));
   }
-  rtl_str_assign(Menu, 40, rtl_str_cat(t4, 2, (const u8 *const[]){Menu, S("\012Speed Exit")}));
+  rtl_str_assign(Menu, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Menu, S("\012Speed Exit")}));
   Key = ' ';
   while (!((Key == 0x00 || Key == 'E')) && (((*Done) == 0))) {
     Key = ReadPromptChoice(S("\000"), Menu, 0xD, 0xA, MenuColors, 0, 0, &CombatScratchFlag);
@@ -604,22 +596,19 @@ void GameSpeedMenu(void)
   u8 Menu[41] = {0};
   u8 Title[41] = {0};
   u8 Key = 0;
-  u8 t1[256];
-  u8 t2[256];
-  u8 t3[48];
-  u8 t4[48];
-  u8 t5[45];
+  u8 ts1[256];
+  u8 ts2[256];
   Key = ' ';
   while (!((Key == 0x00 || Key == 'E'))) {
-    rtl_str_assign(Title, 40, rtl_str_cat(t2, 3, (const u8 *const[]){S("\013GameSpeed ("), ByteToText(t1, GameSpeed), S("\003) :")}));
+    rtl_str_assign(Title, 40, rtl_str_cat(ts2, 3, (const u8 *const[]){S("\013GameSpeed ("), ByteToText(ts1, GameSpeed), S("\003) :")}));
     rtl_str_assign(Menu, 40, S("\001 "));
     if (GameSpeed < MaxGameSpeed) {
-      rtl_str_assign(Menu, 40, rtl_str_cat(t3, 2, (const u8 *const[]){Menu, S("\007Slower ")}));
+      rtl_str_assign(Menu, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Menu, S("\007Slower ")}));
     }
     if (GameSpeed > 0) {
-      rtl_str_assign(Menu, 40, rtl_str_cat(t4, 2, (const u8 *const[]){Menu, S("\007Faster ")}));
+      rtl_str_assign(Menu, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Menu, S("\007Faster ")}));
     }
-    rtl_str_assign(Menu, 40, rtl_str_cat(t5, 2, (const u8 *const[]){Menu, S("\004Exit")}));
+    rtl_str_assign(Menu, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Menu, S("\004Exit")}));
     Key = ReadPromptChoice(Title, Menu, 0xD, 0xA, MenuColors, 0, 0, &CombatScratchFlag);
     switch ((u8)Key) {
     case 'S':

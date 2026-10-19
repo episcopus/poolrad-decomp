@@ -25,15 +25,66 @@ SKIP_UNITS = {"image", "poolvars", "vmlayout"}
 RTL_BANK = ("rtl_heap",)                     # the runtime that has no variables lives in a bank of its own (the core is small)
 # Replaced by the engine (step 8.5d): whole units, and routines of units that stay. The engine provides them under the same
 # names; until a routine is written a stub stops the program and says which one was asked for.
-ENGINE_UNITS = ["res07", "ovl28", "res08"]
+ENGINE_UNITS = ["res07", "res08"]
 CORE_ROUTINES = {"res06": ["GameClock"], "ovl34": ["Put8x8Symbol"],
                  "res05": ["LoadDaxBlock", "OpenDaxFile", "CloseDaxFile", "UnpackRle"]}   # cut out of the unit, written in src/game (the core, engapi.c)
 ENGINE_ROUTINES = {
     "res06": ["SetEgaFillRegisters", "SetActivePage", "SetPageSegment", "FillPlaneRect", "LoadGameFont", "DrawGlyph"],   # GameClock: rtl_sys.c
-    "ovl32": ["Load24x24Set", "DrawCellPicture", "DrawIcon"],
+    "ovl32": ["Load24x24Set", "DrawCellPicture"],
+    "ovl17": ["MergePictureData"],
+    "ovl28": ["LoadSpriteList", "Show3DSprite"],          # read and write the picture record's fields (X, Y, the palette): the rest of ovl28 is game code over the handles
 }
-ENGINE_EXTRA = ["ShowPictureItem", "DaxLoad", "DaxRead", "FileKnown"]                       # engine routines the original does not have (called by src/game/engapi.c)
+ENGINE_EXTRA = ["ShowPictureItem", "DaxLoad", "DaxRead", "FileKnown", "DrawIconPic", "PictureCopy"]                       # engine routines the original does not have (called by src/game/engapi.c)
 WRAPPED = {"LoadPicture", "AllocatePicture", "ReleasePicture", "RemapPictureColors"}   # engine routines with a wrapper in src/game/engapi.c: the stub is _eng_<Name>
+# Game routines that reach into a picture record (the PC's layout: Tail, Pixels, ByteSize) cannot: a picture is a handle and the
+# pixels are the engine's. These are rewritten after the translation to say the same thing through the engine (step 8.5; the
+# whitepaper's 4.2.3 and the routines' own comments name what each does). "fn" replaces a whole function, "between" the lines from
+# one marker through another (inclusive) in one function.
+PATCH_DECLS = "void DrawIconPic(u16 h, s16 col, s16 row, u8 mirror);\nvoid PictureCopy(u16 src, u16 dst);\n"
+PATCHES = {
+    "ovl32": [("fn", "DrawIcon", """void DrawIcon(s8 CellCol, s8 CellRow, u8 IconSet, u8 Mirror, u8 PicIndex)
+{
+  /* ovl32:04FC: the original copies the picture (mirrored above icon set 3) into a new one, blits it and frees it */
+  farptr Pic = PictureSlots[PicIndex].u.a1.Pics[Mirror];
+  if (Pic != 0)
+    DrawIconPic((u16)Pic, (s16)((s16)CellCol * CellStep), (s16)((s16)CellRow * CellStep), (u8)((s16)IconSet > IconSetCopyLimit));
+}""")],
+    "ovl16": [("between", "EditCharacterIcon_CopyPictureSlot", "  PixelBytes = (*FPB(TMemPic_OVL16 *, PictureSlots[Dest]",
+               "(*FPB(TMemPic_OVL16 *, PictureSlots[Dest].u.a0.SecondPic)).Pixels)), PixelBytes);\n",
+               """  PictureCopy((u16)PictureSlots[Source].u.a0.FirstPic, (u16)PictureSlots[Dest].u.a0.FirstPic);
+  PictureCopy((u16)PictureSlots[Source].u.a0.SecondPic, (u16)PictureSlots[Dest].u.a0.SecondPic);
+""")],
+}
+
+
+def patch_unit(u, text):
+    if u not in PATCHES:
+        return text
+    text = text.replace('#include "game.h"\n', '#include "game.h"\n' + PATCH_DECLS, 1)
+    for p in PATCHES[u]:
+        if p[0] == "fn":
+            items = parse_items(text)
+            hit = [i for i, it in enumerate(items) if it[0] == "fn" and it[1] == p[1]]
+            if len(hit) != 1:
+                raise SystemExit("patch %s: %s not found once" % (u, p[1]))
+            items[hit[0]] = ("other", p[2])
+            text = "\n".join(it[1] if it[0] == "other" else it[3] for it in items) + "\n"
+        else:
+            items = parse_items(text)
+            hit = [i for i, it in enumerate(items) if it[0] == "fn" and it[1] == p[1]]
+            if len(hit) != 1:
+                raise SystemExit("patch %s: %s not found once" % (u, p[1]))
+            body = items[hit[0]][3]
+            a = body.find(p[2])
+            b = body.find(p[3], a)
+            if a < 0 or b < 0:
+                raise SystemExit("patch %s: markers not found in %s" % (u, p[1]))
+            body = body[:a] + p[4] + body[b + len(p[3]):]
+            items[hit[0]] = ("fn", p[1], items[hit[0]][2], body)
+            text = "\n".join(it[1] if it[0] == "other" else it[3] for it in items) + "\n"
+    return text
+
+
 DEBUG_PATCH = {}
 CMOC = ["cmoc", "-c", "--void-target", "--no-relocate", "-O2", "-fomit-frame-pointer", "-w"]
 
@@ -349,6 +400,7 @@ def main(argv):
             t = (gen / (u + ".c")).read_text()
             if u in ENGINE_ROUTINES or u in CORE_ROUTINES:
                 t = strip_routines(t, set(ENGINE_ROUTINES.get(u, [])) | set(CORE_ROUTINES.get(u, [])))
+            t = patch_unit(u, t)
             for a, b in DEBUG_PATCH.get(u, []):                 # a temporary probe in a unit, from the environment (see the file)
                 t = t.replace(a, b)
             src.write_text(copy_cross_literals(t, u, fn_unit))
@@ -358,9 +410,9 @@ def main(argv):
             for n in sorted(trivial):
                 t = re.sub(r"^  %s\(\);\n" % n, "", t, flags=re.M)
             src.write_text(t)
-        if u in ENGINE_ROUTINES or u in CORE_ROUTINES:      # the routines the engine or the core take over are cut out of the unit
+        if u in CORE_UNITS and (u in ENGINE_ROUTINES or u in CORE_ROUTINES):      # the routines the engine or the core take over are cut out of the unit
             src = out / "src" / (u + ".c")
-            src.write_text(strip_routines((gen / (u + ".c")).read_text(), set(ENGINE_ROUTINES.get(u, [])) | set(CORE_ROUTINES.get(u, []))))
+            src.write_text(patch_unit(u, strip_routines((gen / (u + ".c")).read_text(), set(ENGINE_ROUTINES.get(u, [])) | set(CORE_ROUTINES.get(u, [])))))
         o = obj / (u + ".o")
         compile_c(str(src), str(o), incs)
         inf = objinfo(str(o))
@@ -561,26 +613,50 @@ def build_engine(out, here):
              "-o", str(out / "POOL.BIN")] + objs + libs)
     if r.returncode:
         raise SystemExit("lwlink engine: " + (r.stderr + r.stdout)[:800])
+    strip_low_records(out / "POOL.BIN")
     text = (out / "pool.map").read_text()
     sec = [(m.group(1), int(m.group(3), 16), int(m.group(4), 16)) for m in
            re.finditer(r"^Section: (\S+) \((.*?)\) load at ([0-9A-Fa-f]+), length ([0-9A-Fa-f]+)", text, re.M)]
     end = max(a + n for _, a, n in sec if a >= 0x2000)
     print("engine: %d routines of the game (%d written), ends at $%04X (%d bytes from $2000)" %
           (len(names), len(have & set(names)), end, end - 0x2000))
-    if end > 0x8000:
-        raise SystemExit("the engine ends at $%04X, past the windows at $8000" % end)
+    if end > 0x7400:
+        raise SystemExit("the engine ends at $%04X, past the image of the shared data at $7400" % end)
     sys.path.insert(0, str(here / "tools"))
     import symexport
     syms = symexport.read_map(str(out / "pool.map"))
     with open(obj_dir(out) / "engsyms.asm", "w") as f:
         f.write("* generated by tools/mkgame.py from pool.map: the engine's shared symbols (slot 0, both tasks see them)\n        SECTION _constants,constant\n")
         for n in sorted(syms):
-            if n.startswith("_") and 0x0400 <= syms[n] < 0x1000:
+            if n.startswith("_") and 0x0400 <= syms[n] < 0x0A00:
                 f.write("%s\tEQU\t$%04X\n\tEXPORT\t%s\n" % (n, syms[n], n))
         f.write("        ENDSECTION\n")
     r = run(["lwasm", "--6809", "-fobj", "-o", str(obj_dir(out) / "engsyms.o"), str(obj_dir(out) / "engsyms.asm")])
     if r.returncode:
         raise SystemExit("lwasm engsyms: " + r.stderr[:400])
+
+
+def strip_low_records(path):
+    """The shared data lives at $0700..$08FF, where Disk BASIC keeps its buffers (and the file control block of POOL.BIN) until the
+    program takes over: LOADM must not write there. The records between $0600 and $1FFF are taken out of the DECB binary and
+    put, as one image of $0700..$08FF, at $7400; boot.asm copies it into place (SHARED_IMG in mailbox.inc)."""
+    d = path.read_bytes()
+    out, img, i = bytearray(), bytearray(0x200), 0
+    while i < len(d):
+        if d[i] != 0:
+            out += d[i:]
+            break
+        ln, ad = (d[i + 1] << 8) | d[i + 2], (d[i + 3] << 8) | d[i + 4]
+        if 0x0600 <= ad < 0x2000:
+            if ad < 0x0700 or ad + ln > 0x0900:
+                raise SystemExit("a record of the engine at $%04X (%d bytes) is in Disk BASIC's buffers, outside $0700..$08FF" % (ad, ln))
+            img[ad - 0x0700:ad - 0x0700 + ln] = d[i + 5:i + 5 + ln]
+        else:
+            out += d[i:i + 5 + ln]
+        i += 5 + ln
+    exec_rec = bytes(out[-5:])
+    body = bytes(out[:-5])
+    path.write_bytes(body + bytes([0, 0x02, 0x00, 0x74, 0x00]) + bytes(img) + exec_rec)
 
 
 def obj_dir(out):

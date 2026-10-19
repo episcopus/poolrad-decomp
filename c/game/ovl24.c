@@ -686,15 +686,9 @@ void DealDamage(PCharacter Who, u8 Damage, u8 SaveEffect, u8 Saved)
 {
   POOL_TRACE("DealDamage");
   u8 Msg[256] = {0};
-  u8 t1[256];
-  u8 t2[256];
-  u8 t3[256];
-  u8 t4[256];
-  u8 t5[256];
-  u8 t6[256];
-  u8 t7[256];
-  u8 t8[256];
-  s32 t9;
+  s32 t1;
+  u8 ts1[256];
+  u8 ts2[256];
   DamageAmount = Damage;
   RunAffectHooks(HookDamage, Who);
   if (Saved) {
@@ -713,34 +707,34 @@ void DealDamage(PCharacter Who, u8 Damage, u8 SaveEffect, u8 Saved)
   }
   if (DamageAmount > 0) {
     if (DamageAmount != 1) {
-      rtl_str_assign(Msg, 255, rtl_str_cat(t2, 3, (const u8 *const[]){S("\006takes "), ByteToText(t1, DamageAmount), S("\022 points of damage ")}));
+      rtl_str_assign(Msg, 255, rtl_str_cat(ts2, 3, (const u8 *const[]){S("\006takes "), ByteToText(ts1, DamageAmount), S("\022 points of damage ")}));
     } else {
       rtl_str_assign(Msg, 255, S("\030takes 1 point of damage "));
     }
     switch ((DamageKind & 0xF7)) {
     case 1:
     {
-      rtl_str_assign(Msg, 255, rtl_str_cat(t3, 2, (const u8 *const[]){Msg, S("\011from Fire")}));
+      rtl_str_assign(Msg, 255, rtl_str_cat(ts1, 2, (const u8 *const[]){Msg, S("\011from Fire")}));
       break;
     }
     case 2:
     {
-      rtl_str_assign(Msg, 255, rtl_str_cat(t4, 2, (const u8 *const[]){Msg, S("\011from Cold")}));
+      rtl_str_assign(Msg, 255, rtl_str_cat(ts1, 2, (const u8 *const[]){Msg, S("\011from Cold")}));
       break;
     }
     case 4:
     {
-      rtl_str_assign(Msg, 255, rtl_str_cat(t5, 2, (const u8 *const[]){Msg, S("\020from Electricity")}));
+      rtl_str_assign(Msg, 255, rtl_str_cat(ts1, 2, (const u8 *const[]){Msg, S("\020from Electricity")}));
       break;
     }
     case 0x10:
     {
-      rtl_str_assign(Msg, 255, rtl_str_cat(t6, 2, (const u8 *const[]){Msg, S("\011from Acid")}));
+      rtl_str_assign(Msg, 255, rtl_str_cat(ts1, 2, (const u8 *const[]){Msg, S("\011from Acid")}));
       break;
     }
     }
     if ((DamageKind & 8) == DamageKind) {
-      rtl_str_assign(Msg, 255, rtl_str_cat(t7, 2, (const u8 *const[]){Msg, S("\012from Magic")}));
+      rtl_str_assign(Msg, 255, rtl_str_cat(ts1, 2, (const u8 *const[]){Msg, S("\012from Magic")}));
     }
     ShowHitMessage(Who, 0, Msg);
     ApplyDamage(Who, DamageAmount);
@@ -755,9 +749,9 @@ void DealDamage(PCharacter Who, u8 Damage, u8 SaveEffect, u8 Saved)
     if ((*FPD(TCharacter (*), Who)).Flag10D == 0) {
       rtl_str_assign(Msg, 255, S("\011Goes Down"));
       if ((*FPD(TCharacter (*), Who)).Status == StatusDying) {
-        rtl_str_assign(Msg, 255, rtl_str_cat(t8, 2, (const u8 *const[]){Msg, S("\016, and is Dying")}));
+        rtl_str_assign(Msg, 255, rtl_str_cat(ts1, 2, (const u8 *const[]){Msg, S("\016, and is Dying")}));
       }
-      if ((t9 = (*FPD(TCharacter (*), Who)).Status), (t9 == 6 || t9 == 7 || t9 == 8)) {
+      if ((t1 = (*FPD(TCharacter (*), Who)).Status), (t1 == 6 || t1 == 7 || t1 == 8)) {
         rtl_str_assign(Msg, 255, S("\011is killed"));
       }
       ShowCharacterMessage(Who, Msg, (s16)(GlyphRow + 1), 0);

@@ -417,11 +417,11 @@ void ReadStringCommand(void)
   u8 Prompt[2] = {0};
   u16 Target = 0;
   u8 Answer[256] = {0};
-  u8 t1[256];
+  u8 ts1[256];
   DecodeOperands(2);
   rtl_str_assign(Prompt, 1, S("\000"));
   Target = MakeWord(OperandLow[2], OperandHigh[2]);
-  rtl_str_assign(Answer, 255, ReadInputLine(t1, Prompt, EclTextColor, EclInputMaxLength));
+  rtl_str_assign(Answer, 255, ReadInputLine(ts1, Prompt, EclTextColor, EclInputMaxLength));
   if (Answer[0] == 0) {
     rtl_str_assign(Answer, 255, S("\001 "));
   }
@@ -438,12 +438,12 @@ void ReadStringCommand(void)
 void ShowTextCommand(void)
 {
   POOL_TRACE("ShowTextCommand");
-  u8 t1[256];
+  u8 ts1[256];
   DecodeOperands(1);
   EclWindowCleared = 0;
   DelayPerGlyph = 1;
   if (OperandType[1] < FirstStringOperandType) {
-    rtl_str_assign(EclStrings[1], 255, WordToText(t1, OperandValue(1)));
+    rtl_str_assign(EclStrings[1], 255, WordToText(ts1, OperandValue(1)));
   }
   if (CurrentOpcode == OpContinueText) {
     ShowPagedText(EclTextLeft, EclTextTop, EclTextRight, EclTextBottom, EclTextColor, 0, EclStrings[1]);
@@ -567,13 +567,13 @@ void StartEclBlock(void)
   POOL_TRACE("StartEclBlock");
   u8 Block = 0;
   u8 TileSetText[2] = {0};
-  u8 t1[256];
+  u8 ts1[256];
   DecodeOperands(1);
   (*FPD(TGameVars (*), GameVars))[242] = WallViewMode;
   Block = OperandValue(1);
   WallViewMode = Block;
   rtl_str_int(TileSetText, 1, TileSet, 0);
-  SaveAndExit(rtl_str_cat(t1, 4, (const u8 *const[]){GameDir, S("\003ECL"), TileSetText, S("\004.dax")}));
+  SaveAndExit(rtl_str_cat(ts1, 4, (const u8 *const[]){GameDir, S("\003ECL"), TileSetText, S("\004.dax")}));
   LoadEcl(Block);
   InitScript();
   ScriptRunEnded = 1;
@@ -789,8 +789,7 @@ void AskMenuCommand(void)
   u8 Animate = 0;
   u8 HotColor_ = 0;
   u8 WordColor_ = 0;
-  u8 t1[256];
-  u8 t2[256];
+  u8 ts1[256];
   rtl_str_assign(Title, 1, S("\000"));
   rtl_str_assign(Options, 50, S("\000"));
   DecodeOperands(2);
@@ -817,13 +816,13 @@ void AskMenuCommand(void)
     if (1 <= limit) {
       I = 1;
       for (;;) {
-          rtl_str_assign(Options, 50, rtl_str_cat(t1, 4, (const u8 *const[]){Options, S("\001~"), EclStrings[I], S("\001 ")}));
+          rtl_str_assign(Options, 50, rtl_str_cat(ts1, 4, (const u8 *const[]){Options, S("\001~"), EclStrings[I], S("\001 ")}));
         if (I == limit) break;
         I++;
       }
     }
   }
-  rtl_str_assign(Options, 50, rtl_str_cat(t2, 3, (const u8 *const[]){Options, S("\001~"), EclStrings[Count]}));
+  rtl_str_assign(Options, 50, rtl_str_cat(ts1, 3, (const u8 *const[]){Options, S("\001~"), EclStrings[Count]}));
   Choice = AskMenu(Title, Options, MenuTitleColor, WordColor_, HotColor_, AcceptEnter, Animate);
   WriteVmWord(Target, Choice);
   ClearRect(PromptLeftCol_OVL03, BottomRow, PromptLastCol, BottomRow);
@@ -1216,7 +1215,7 @@ void AddLootCommand(void)
   u16 Size = 0;
   u8 TileSetText[2] = {0};
   farptr Block = 0;
-  u8 t1[6];
+  u8 ts1[6];
   DecodeOperands(8);
   {
     if (0 <= 6) {
@@ -1231,7 +1230,7 @@ void AddLootCommand(void)
   Kind = OperandValue(8);
   if (Kind < TreasureTableBase) {
     rtl_str_int(TileSetText, 1, TileSet, 0);
-    LoadDaxBlock(rtl_str_cat(t1, 2, (const u8 *const[]){S("\004ITEM"), TileSetText}), S("\004.dax"), Kind, &Size, &Block);
+    LoadDaxBlock(rtl_str_cat(ts1, 2, (const u8 *const[]){S("\004ITEM"), TileSetText}), S("\004.dax"), Kind, &Size, &Block);
     if (Size == 0) {
       ShowMessageLine(ItemErrorColor, S("\030Unable to find item file"));
       QuitGame();
@@ -1950,7 +1949,7 @@ void ChooseAttitudeCommand(void)
   u8 Values[5] = {0};
   u16 Target = 0;
   u8 BlankTitle = 0;
-  u8 t1[2];
+  u8 ts1[2];
   DecodeOperands(6);
   BlankTitle = ' ';
   {
@@ -1963,7 +1962,7 @@ void ChooseAttitudeCommand(void)
       }
     }
   }
-  Choice = AskMenu(rtl_str_char(t1, BlankTitle), AttitudeMenu, MenuTitleColor, MenuTextColor, MenuHotColor, 0, 0);
+  Choice = AskMenu(rtl_str_char(ts1, BlankTitle), AttitudeMenu, MenuTitleColor, MenuTextColor, MenuHotColor, 0, 0);
   Target = MakeWord(OperandLow[6], OperandHigh[6]);
   Value = Values[Choice];
   WriteVmWord(Target, Value);

@@ -41,9 +41,20 @@ boot
         lda     #$CC                    GIME: CoCo-compatible video (BASIC's text screen stays
 *                                       valid for the demo), MMU on, $FE00 constant page
         sta     $FF90
-        sta     >_eng_init0
         clr     $FF91                   MMU task 0
         lds     #SYSSTK_TOP
+        ldx     #$0700                  clear the shared data ($0700..$08FF: not in POOL.BIN, where Disk BASIC's own buffers are
+@sh     clr     ,x+                     until LOADM is done), then copy their image from SHARED_IMG
+        cmpx    #$0900
+        bne     @sh
+        ldx     #SHARED_IMG
+        ldy     #$0700
+@cp     ldd     ,x++
+        std     ,y++
+        cmpy    #$0900
+        bne     @cp
+        lda     #$CC
+        sta     >_eng_init0             (the shadow of $FF90: after the copy, the image holds zero)
         ldx     #MB_BASE                clear the mailbox
         ldb     #MB_SIZE
 @clr    clr     ,x+

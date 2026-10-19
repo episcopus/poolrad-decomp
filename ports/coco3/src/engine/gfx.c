@@ -301,6 +301,51 @@ static void pic_rd(const Pic *p, u16 rel, u8 *dst, u16 n)
     }
 }
 
+/* n bytes from src (RAM below $8000) into the picture at `rel` */
+static void pic_wr(const Pic *p, u16 rel, const u8 *src, u16 n)
+{
+    u16 room, c;
+    u8 *d;
+    while (n > 0) {
+        d = pic_ptr(p, rel, &room);
+        c = n < room ? n : room;
+        if (c > 255)
+            c = 255;
+        k_copy(d, src, (u8)c);
+        src += c;
+        rel += c;
+        n -= c;
+    }
+}
+
+/* Item 0 of a picture and its mask run through 128 byte pieces: what the editor's copy and merge of the icon pictures do
+ * (CopyPictureSlot copies the tail and the pixels, MergePictureData ORs the tail and ANDs the pixels: here the colours and
+ * the mask, the other way round from the PC's two buffers). op 0: copy, 1: merge (colours OR, mask AND). */
+void pic_combine(const Pic *s, const Pic *d, u8 op)
+{
+    u16 n = s->bytesize < d->bytesize ? s->bytesize : d->bytesize, rel, c, i;
+    u8 a[128], b[128];
+    for (rel = 0; rel < n; rel = (u16)(rel + c)) {
+        c = (u16)(n - rel) < 128 ? (u16)(n - rel) : 128;
+        pic_rd(s, rel, a, c);
+        if (op) {
+            pic_rd(d, rel, b, c);
+            for (i = 0; i < c; i++)
+                a[i] |= b[i];
+        }
+        pic_wr(d, rel, a, c);
+        if (s->moff && d->moff) {
+            pic_rd(s, (u16)(s->moff + rel), a, c);
+            if (op) {
+                pic_rd(d, (u16)(d->moff + rel), b, c);
+                for (i = 0; i < c; i++)
+                    a[i] &= b[i];
+            }
+            pic_wr(d, (u16)(d->moff + rel), a, c);
+        }
+    }
+}
+
 static void pic_zero(const Pic *p, u16 total)
 {
     u16 rel = 0, room, c;
@@ -604,4 +649,63 @@ void db_flush(void)
             scr_putn(a, gbuf, n);
     }
     db_clear_trackers();
+}
+
+/* a row of n bytes mirrored: the bytes in reverse order, the two pixels of each swapped */
+static void mirror_row(u8 *b, u8 n)
+{
+    u8 i, j, t;
+    for (i = 0, j = (u8)(n - 1); i < j; i++, j--) {
+        t = b[i];
+        b[i] = (u8)((b[j] << 4) | (b[j] >> 4));
+        b[j] = (u8)((t << 4) | (t >> 4));
+    }
+    if (i == j)
+        b[i] = (u8)((b[i] << 4) | (b[i] >> 4));
+}
+
+/* DrawPictureItemClipped (res07 0464:0D71): item `item` with its top-left cell at cell column col and pixel row row * 8, cut to
+ * DrawBuf on all four sides. flags bit 0: masked; mirror: the picture drawn left for right (DrawIcon with MirrorPicture's copy).
+ * (Bit 2, the saving of the background under the picture, is not here.) */
+void db_item_clip(const Pic *p, u8 item, s16 col, s16 row, u8 flags, u8 mirror)
+{
+    s16 x0 = (s16)(col * 4), y0 = (s16)(row * 8), sl, nb, y, r;
+    u8 n = (u8)(p->wcols * 4), x1, ux0, uy;
+    u8 masked = (flags & 1) && p->moff != 0;
+    u16 so = (u16)((u16)item * p->bytesize);
+    u16 mo = (u16)(p->moff + so);
+    u8 *d;
+    sl = x0 < 0 ? (s16)-x0 : 0;
+    nb = (s16)(n - sl);
+    if (x0 + n > DB_ROWBYTES)
+        nb = (s16)(nb - (x0 + n - DB_ROWBYTES));
+    if (nb <= 0)
+        return;
+    x0 = (s16)(x0 + sl);
+    x1 = (u8)(x0 + nb - 1);
+    ux0 = (u8)x0;                          /* (CMOC: compare bytes with bytes) */
+    for (r = 0; r < p->height; r++) {
+        y = (s16)(y0 + r);
+        if (y < 0 || y >= DB_ROWS)
+            continue;
+        pic_rd(p, (u16)(so + (u16)r * n), gbuf, n);
+        if (mirror)
+            mirror_row(gbuf, n);
+        if (masked) {
+            pic_rd(p, (u16)(mo + (u16)r * n), mbuf, n);
+            if (mirror)
+                mirror_row(mbuf, n);
+        }
+        uy = (u8)y;
+        d = db_ptr(uy) + ux0;                 /* (after the reads: they move window 0 to the picture's block) */
+        if (masked)
+            k_mcopy(d, mbuf + sl, gbuf + sl, (u8)nb);
+        else
+            k_copy(d, gbuf + sl, (u8)nb);
+        db_dirty[uy] = 1;
+        if (ux0 < db_lo[uy])
+            db_lo[uy] = ux0;
+        if (x1 > db_hi[uy])
+            db_hi[uy] = x1;
+    }
 }

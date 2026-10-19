@@ -123,7 +123,7 @@ void AddSpellMenuLine(u8 Spell)
   PMenuLine Line = 0;
   s8 Count = 0;
   s8 PrevLevel = 0;
-  u8 t1[81];
+  u8 ts1[81];
   Line = SpellMenuList;
   if (SpellMenuList == 0) {
     Line = rtl_getmem(MenuLineBytes);
@@ -155,7 +155,7 @@ void AddSpellMenuLine(u8 Spell)
   } else {
     rtl_str_assign((*FPD(TMenuLine (*), Line)).Text, 40, S("\002  "));
   }
-  rtl_str_assign((*FPD(TMenuLine (*), Line)).Text, 40, rtl_str_cat(t1, 2, (const u8 *const[]){(*FPD(TMenuLine (*), Line)).Text, SpellNames[(Spell & SpellMask)]}));
+  rtl_str_assign((*FPD(TMenuLine (*), Line)).Text, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){(*FPD(TMenuLine (*), Line)).Text, SpellNames[(Spell & SpellMask)]}));
   (*FPD(TMenuLine (*), Line)).Flag29 = 0;
   SpellMenuSpells[Count] = (Spell & SpellMask);
 }
@@ -2157,11 +2157,11 @@ void ShowSpellMessage(PCharacter Who, const u8 *Message_in, u8 Spell)
 {
   POOL_TRACE("ShowSpellMessage");
   const u8 *Message = Message_in;
-  u8 t1[47];
+  u8 ts1[47];
   if (ViewMode == ViewModeCombat) {
     ShowCharacterMessage(Who, S("\015Casts a Spell"), ShowSpellMessage_MessageColor, TimedMessage);
     ClearWindow(0, 0x17, 0x27, 0x17);
-    DrawTextAt(0, 0x17, ShowSpellMessage_MessageColor, rtl_str_cat(t1, 2, (const u8 *const[]){S("\006Spell:"), SpellNames[Spell]}));
+    DrawTextAt(0, 0x17, ShowSpellMessage_MessageColor, rtl_str_cat(ts1, 2, (const u8 *const[]){S("\006Spell:"), SpellNames[Spell]}));
   } else {
     ClearWindow(ShowSpellMessage_TextColumn, 0x12, 0x26, 0x16);
     DrawCharacterName(Who, ShowSpellMessage_TextColumn, ShowSpellMessage_MessageRow, 0);

@@ -42,7 +42,7 @@ int main(void)
     unsigned int i, sum = 0;
 
     *(unsigned char *)0xFF91 = 0;                  /* the game's task: the banks are mapped in task 0 (boot starts in the engine's) */
-    *(unsigned char *)0x1009 = 0;
+    *(unsigned char *)0x0909 = 0;
     scr_clear();
     scr_puts(0, 0, "POOL OF RADIANCE COCO3");
     scr_puts(1, 0, "8.0 BANKED HELLO WORLD");

@@ -52,6 +52,14 @@ def parse_plan(path):
     return {int(m.group(1), 16) for m in re.finditer(r"^\s*\[(0x[0-9A-Fa-f]+),", text, re.M)}
 
 
+# Bytes of a typed global that the game also reads as bytes through another global: they stay in the PC's order.
+#   StartingAgeTable row 0 (28 bytes) is the index base of the table and lies over the Half-Orc and Human rows of RaceClassChoices
+#   (POOLVARS, whitepaper 5.8: the Human row of the class menu is read from there; found when the class list came up empty)
+#   ExperienceTable [0,0] and [0,1] (8 bytes) are not experience values: the first real one is [0,2] = 1501 (the cleric's level 2);
+#   the bytes are the tail of ConstitutionHitPointTable (indexes 13..18, declared 19 long, stored on into the next storage)
+NOSWAP = [("StartingAgeTable", 0, 28), ("ExperienceTable", 0, 8)]
+
+
 def write_image(out, gen, clusters, nat_end, npages):
     """DGROUP.IMG, what the CoCo's loader (src/engine/gameboot.c) reads: "DGI2", the native base and size (big endian words), the
     number of pages, then two run length coded blocks (packed size, raw size, packed bytes): the paged globals (`npages` pages
@@ -64,20 +72,45 @@ def write_image(out, gen, clusters, nat_end, npages):
     # lists them as offset:width:count); bytes, strings and sets stay
     done = bytearray(len(img))
     nswap = 0
-    for line in open(gen + "/globals.txt"):
-        f = line.split()
+    gl = [l.split() for l in open(gen + "/globals.txt")]
+    # The storage of a global is the Raw<addr> / ds<addr> array its declaration lies over (POOLVARS "DS:aaaa..bbbb: storage of X").
+    # A typed view may be declared longer than its storage (an index base, a table that reads on into the next one), and a byte
+    # view's values must not be reversed by a word view that overlaps them: a value is not swapped when it lies in the real extent
+    # (declaration cut to storage) of another global that is read as bytes.
+    stores = sorted((int(f[0], 16), int(f[0], 16) + int(f[1])) for f in gl if len(f) >= 3 and re.match(r"(Raw|ds)[0-9A-Fa-f]{4}$", f[2]))
+    def storage_end(a):
+        for lo, hi in stores:
+            if lo <= a < hi:
+                return hi
+        return None
+    byteviews = []
+    for f in gl:
+        if len(f) >= 5 and f[4] == "-" and not re.match(r"(Raw|ds)[0-9A-Fa-f]{4}$", f[2]):
+            a = int(f[0], 16)
+            e = storage_end(a)
+            if e:
+                byteviews.append((a, min(a + int(f[1]), e), f[2]))
+    nskip = 0
+    for f in gl:
         if len(f) < 5 or f[4] == "-":
             continue
         base = int(f[0], 16)
         for item in f[4].split(","):
             o, w, c = (int(x) for x in item.split(":"))
             for i in range(c):
-                pos = base + o + i * w - org
+                at = base + o + i * w
+                pos = at - org
+                if any(lo < at + w and at < hi and n != f[2] for lo, hi, n in byteviews):
+                    nskip += 1
+                    continue
+                if any(lo <= at - base < hi for n, lo, hi in NOSWAP if n == f[2]):
+                    nskip += 1
+                    continue
                 if 0 <= pos and pos + w <= len(img) and not any(done[pos:pos + w]):
                     img[pos:pos + w] = img[pos:pos + w][::-1]
                     done[pos:pos + w] = b"\x01" * w
                     nswap += 1
-    print("mkvm: DGROUP.IMG: %d multi-byte values put in the CoCo's byte order" % nswap)
+    print("mkvm: DGROUP.IMG: %d multi-byte values put in the CoCo's byte order (%d lie in the real extent of a byte view: left alone)" % (nswap, nskip))
     img = bytes(img)
     nat = bytearray(nat_end - NAT_BASE)
     pages = [bytearray(PAGE) for _ in range(npages)]

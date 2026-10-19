@@ -64,8 +64,19 @@ class ExprMixin:
         return nm
 
     def str_temp(self, maxlen: int = 255) -> str:
-        """A buffer for a string value of at most maxlen characters (the length byte included in the size)."""
-        return self.temp("u8 @[%d]" % (min(maxlen, 255) + 1))
+        """A buffer for a string value of at most maxlen characters (the length byte included in the size). A string temporary
+        lives inside one statement (the expression that makes it consumes it), so every statement starts again at ts1 and the
+        routine declares each ts<n> once, at the largest size any statement gave it: a frame with seven 256 byte temporaries
+        (DrawLocationLine) needs only as many as its busiest statement."""
+        c = self.cur
+        size = min(maxlen, 255) + 1
+        i = c.sidx
+        c.sidx += 1
+        if i < len(c.stemps):
+            c.stemps[i] = max(c.stemps[i], size)
+        else:
+            c.stemps.append(size)
+        return "ts%d" % (i + 1)
 
     def lit(self, v, t: Ty) -> str:
         if isinstance(v, str):

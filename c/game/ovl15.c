@@ -169,9 +169,7 @@ u8 MayUseMagic(u8 Action)
   POOL_TRACE("MayUseMagic");
   u8 Result = 0;
   String40_RES06 Reason = {0};
-  u8 t1[56];
-  u8 t2[56];
-  u8 t3[59];
+  u8 ts1[59];
   rtl_str_assign(Reason, 40, S("\000"));
   if (((Action == ActionCast)) && (((*FPD(TGameVars (*), GameVars))[229] > 0))) {
     rtl_str_assign(Reason, 40, S("\037cannot cast spells in this area"));
@@ -180,17 +178,17 @@ u8 MayUseMagic(u8 Action)
     switch (Action) {
     case ActionCast:
     {
-      rtl_str_assign(Reason, 40, rtl_str_cat(t1, 2, (const u8 *const[]){Reason, S("\017cast any spells")}));
+      rtl_str_assign(Reason, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Reason, S("\017cast any spells")}));
       break;
     }
     case ActionMemorize:
     {
-      rtl_str_assign(Reason, 40, rtl_str_cat(t2, 2, (const u8 *const[]){Reason, S("\017memorize spells")}));
+      rtl_str_assign(Reason, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Reason, S("\017memorize spells")}));
       break;
     }
     case ActionScribe:
     {
-      rtl_str_assign(Reason, 40, rtl_str_cat(t3, 2, (const u8 *const[]){Reason, S("\022scribe any scrolls")}));
+      rtl_str_assign(Reason, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Reason, S("\022scribe any scrolls")}));
       break;
     }
     }
@@ -256,7 +254,7 @@ u8 ShowSpellSlotsLeft(void)
   u8 Col = 0;
   u8 Row = 0;
   u8 Any = 0;
-  u8 t1[256];
+  u8 ts1[256];
   Any = 0;
   {
     if (ClassCleric <= SpellBookMage) {
@@ -267,7 +265,7 @@ u8 ShowSpellSlotsLeft(void)
             if (1 <= SpellLevels) {
               SpellLevel = 1;
               for (;;) {
-                  rtl_str_assign(Counts[SpellLevel - 1][SpellClass], 2, ByteToText(t1, SpellSlotsLeft(SpellLevel, SpellClass)));
+                  rtl_str_assign(Counts[SpellLevel - 1][SpellClass], 2, ByteToText(ts1, SpellSlotsLeft(SpellLevel, SpellClass)));
                   if ((*FPD(TCharacter (*), SelectedCharacter)).SpellSlots[SpellClass][SpellLevel - 1] == 0) {
                     rtl_str_assign(Counts[SpellLevel - 1][SpellClass], 2, S("\001 "));
                   } else {
@@ -609,9 +607,8 @@ void DisplaySpellEffects(void)
   POOL_TRACE("DisplaySpellEffects");
   Frame_DisplaySpellEffects fr;
   memset(&fr, 0, sizeof fr);
-  u8 t1[256];
-  u8 t2[256];
-  u8 t3[42];
+  u8 ts1[256];
+  u8 ts2[256];
   fr.List = rtl_getmem(MenuLineBytes);
   fr.Last = fr.List;
   (*FPD(TMenuLine (*), fr.Last)).Flag29 = PlainLine;
@@ -674,7 +671,7 @@ void DisplaySpellEffects(void)
           }
         }
         if (fr.Found == 0) {
-          rtl_str_assign(fr.Name, 40, rtl_str_cat(t2, 2, (const u8 *const[]){S("\007Funky--"), ByteToText(t1, fr.AffectId)}));
+          rtl_str_assign(fr.Name, 40, rtl_str_cat(ts2, 2, (const u8 *const[]){S("\007Funky--"), ByteToText(ts1, fr.AffectId)}));
         }
         break;
       }
@@ -755,7 +752,7 @@ void DisplaySpellEffects(void)
       }
       if (fr.Known != 0) {
         fr.Count++;
-        DisplaySpellEffects_AddDisplayLine(&fr, PlainLine, rtl_str_cat(t3, 2, (const u8 *const[]){S("\001 "), fr.Name}));
+        DisplaySpellEffects_AddDisplayLine(&fr, PlainLine, rtl_str_cat(ts1, 2, (const u8 *const[]){S("\001 "), fr.Name}));
       }
       fr.Affect = (*FPD(TAffect (*), fr.Affect)).Next;
     }
@@ -975,21 +972,18 @@ void CampSpeedMenu(void)
   u8 Key = 0;
   u8 ExtKey = 0;
   String40_RES06 Prompt = {0};
-  u8 t1[256];
-  u8 t2[256];
-  u8 t3[48];
-  u8 t4[48];
-  u8 t5[46];
+  u8 ts1[256];
+  u8 ts2[256];
   do {
-    DrawTextAt(1, 0x12, TextColor, rtl_str_cat(t2, 3, (const u8 *const[]){S("\015Game Speed = "), ByteToText(t1, GameSpeed), S("\026 (0=fastest 9=slowest)")}));
+    DrawTextAt(1, 0x12, TextColor, rtl_str_cat(ts2, 3, (const u8 *const[]){S("\015Game Speed = "), ByteToText(ts1, GameSpeed), S("\026 (0=fastest 9=slowest)")}));
     rtl_str_assign(Prompt, 40, S("\000"));
     if (GameSpeed > 0) {
-      rtl_str_assign(Prompt, 40, rtl_str_cat(t3, 2, (const u8 *const[]){Prompt, S("\007 Faster")}));
+      rtl_str_assign(Prompt, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Prompt, S("\007 Faster")}));
     }
     if (GameSpeed < MaxGameSpeed) {
-      rtl_str_assign(Prompt, 40, rtl_str_cat(t4, 2, (const u8 *const[]){Prompt, S("\007 Slower")}));
+      rtl_str_assign(Prompt, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Prompt, S("\007 Slower")}));
     }
-    rtl_str_assign(Prompt, 40, rtl_str_cat(t5, 2, (const u8 *const[]){Prompt, S("\005 Exit")}));
+    rtl_str_assign(Prompt, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Prompt, S("\005 Exit")}));
     Key = ReadPromptChoice(S("\013Game Speed:"), Prompt, TitleColor, WordColor, HotColor, 1, 1, &ExtKey);
     if (ExtKey != 0) {
       switch ((u8)Key) {
@@ -1036,9 +1030,7 @@ void AlterMenu(void)
   u8 Choice = 0;
   u8 ExtKey = 0;
   String40_RES06 Prompt = {0};
-  u8 t1[55];
-  u8 t2[56];
-  u8 t3[45];
+  u8 ts1[56];
   Key = ' ';
   while (!((Key == KeyNone_OVL15 || Key == 'E'))) {
     Key = ReadPromptChoice(S("\007Alter: "), AlterMenuText, TitleColor, WordColor, HotColor, 1, 1, &ExtKey);
@@ -1077,11 +1069,11 @@ void AlterMenu(void)
             rtl_str_assign(Prompt, 40, S("\016Monsters off  "));
           }
           if (ShowPortraits != 0) {
-            rtl_str_assign(Prompt, 40, rtl_str_cat(t1, 2, (const u8 *const[]){Prompt, S("\016Portraits on  ")}));
+            rtl_str_assign(Prompt, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Prompt, S("\016Portraits on  ")}));
           } else {
-            rtl_str_assign(Prompt, 40, rtl_str_cat(t2, 2, (const u8 *const[]){Prompt, S("\017Portraits off  ")}));
+            rtl_str_assign(Prompt, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Prompt, S("\017Portraits off  ")}));
           }
-          rtl_str_assign(Prompt, 40, rtl_str_cat(t3, 2, (const u8 *const[]){Prompt, S("\004Exit")}));
+          rtl_str_assign(Prompt, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Prompt, S("\004Exit")}));
           Choice = ReadPromptChoice(S("\000"), Prompt, TitleColor, WordColor, HotColor, 0, 1, &ExtKey);
           switch ((u8)Choice) {
           case 'M':

@@ -78,7 +78,7 @@ void LoadSpriteList(const u8 *Name_in, u8 Bank, u8 Mode, PSpriteList List)
   u8 IsPicOrFinal = 0;
   u8 PrevAllocated = 0;
   u8 Loaded = 0;
-  u8 t1[10];
+  u8 ts1[10];
   if (((rtl_str_cmp(Name, LastSpriteFile) == 0)) && ((Bank == LastSpriteBank))) {
     return;
   }
@@ -87,7 +87,7 @@ void LoadSpriteList(const u8 *Name_in, u8 Bank, u8 Mode, PSpriteList List)
   LastSpriteBank = Bank;
   IsPicOrFinal = (((rtl_str_cmp(Name, S("\003PIC")) == 0)) || ((rtl_str_cmp(Name, S("\005FINAL")) == 0)));
   rtl_str_int(Digit, 1, TileSet, 0);
-  LoadDaxBlock(rtl_str_cat(t1, 2, (const u8 *const[]){Name, Digit}), S("\004.dax"), Bank, &Size, &Block);
+  LoadDaxBlock(rtl_str_cat(ts1, 2, (const u8 *const[]){Name, Digit}), S("\004.dax"), Bank, &Size, &Block);
   if (Size == 0) {
     return;
   }
@@ -228,18 +228,17 @@ void LoadHeadBodySprites(u8 HeadBank, u8 BodyBank)
 {
   POOL_TRACE("LoadHeadBodySprites");
   u8 Num[2] = {0};
-  u8 t1[6];
-  u8 t2[6];
+  u8 ts1[6];
   rtl_str_int(Num, 1, TileSet, 0);
   if (HeadBank != NoBank) {
     if (((HeadBankIndex == NoBank)) || ((HeadBankIndex != HeadBank))) {
-      LoadPicture(rtl_str_cat(t1, 2, (const u8 *const[]){S("\004HEAD"), Num}), HeadBank, 0, 0, (void *)&HeadSpriteBank);
+      LoadPicture(rtl_str_cat(ts1, 2, (const u8 *const[]){S("\004HEAD"), Num}), HeadBank, 0, 0, (void *)&HeadSpriteBank);
       HeadBankIndex = HeadBank;
     }
   }
   if (BodyBank != NoBank) {
     if (((BodyBankIndex == NoBank)) || ((BodyBankIndex != BodyBank))) {
-      LoadPicture(rtl_str_cat(t2, 2, (const u8 *const[]){S("\004BODY"), Num}), BodyBank, 0, 0, (void *)&BodySpriteBank);
+      LoadPicture(rtl_str_cat(ts1, 2, (const u8 *const[]){S("\004BODY"), Num}), BodyBank, 0, 0, (void *)&BodySpriteBank);
       BodyBankIndex = BodyBank;
     }
   }

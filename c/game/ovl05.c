@@ -285,8 +285,7 @@ void ShowBattleResult(s32 Xp)
   u8 Key = 0;
   u8 Title[2] = {0};
   u8 ExtKey = 0;
-  u8 t1[32];
-  u8 t2[35];
+  u8 ts1[35];
   rtl_str_assign(Title, 1, S("\000"));
   DrawWindow(1, 1, 0x26, 0x16, 0, 0xF, S("\000"));
   if (((MonstersLooted != 0)) || ((DuelMode != 0))) {
@@ -306,9 +305,9 @@ void ShowBattleResult(s32 Xp)
   }
   rtl_str_int(XpText, 10, Xp, 0);
   if (DuelMode != 0) {
-    rtl_str_assign(Line, 255, rtl_str_cat(t1, 2, (const u8 *const[]){S("\025The duelist receives "), XpText}));
+    rtl_str_assign(Line, 255, rtl_str_cat(ts1, 2, (const u8 *const[]){S("\025The duelist receives "), XpText}));
   } else {
-    rtl_str_assign(Line, 255, rtl_str_cat(t2, 2, (const u8 *const[]){S("\030Each character receives "), XpText}));
+    rtl_str_assign(Line, 255, rtl_str_cat(ts1, 2, (const u8 *const[]){S("\030Each character receives "), XpText}));
   }
   DrawTextAt(1, 5, 0xA, Line);
   DrawTextAt(1, 7, 0xA, S("\022experience points."));
@@ -466,8 +465,7 @@ void TreasureMenu(void)
   u8 DetectSpell = 0;
   u8 HasDetect = 0;
   u8 ExitText[14] = {0};
-  u8 t1[34];
-  u8 t2[28];
+  u8 ts1[34];
   rtl_str_assign(Title, 1, S("\000"));
   Done = 0;
   RedrawView();
@@ -491,9 +489,9 @@ void TreasureMenu(void)
       rtl_str_assign(ExitText, 13, S("\014 Detect Exit"));
     }
     if (MoneyLeft != 0) {
-      rtl_str_assign(Menu, 255, rtl_str_cat(t1, 2, (const u8 *const[]){S("\024View Take Pool Share"), ExitText}));
+      rtl_str_assign(Menu, 255, rtl_str_cat(ts1, 2, (const u8 *const[]){S("\024View Take Pool Share"), ExitText}));
     } else if (ItemsLeft != 0) {
-      rtl_str_assign(Menu, 255, rtl_str_cat(t2, 2, (const u8 *const[]){S("\016View Take Pool"), ExitText}));
+      rtl_str_assign(Menu, 255, rtl_str_cat(ts1, 2, (const u8 *const[]){S("\016View Take Pool"), ExitText}));
     }
     Key = ReadPromptChoice(Title, Menu, 13, 10, 15, 1, 1, &ExtKey);
     switch ((u8)Key) {
@@ -608,7 +606,7 @@ void TakeHirelingShares(void)
   u8 Taken = 0;
   u8 ExtKey = 0;
   u8 Key = 0;
-  u8 t1[43];
+  u8 ts1[43];
   Taken = 0;
   Who = PartyListHead;
   HirelingShares = 0;
@@ -644,7 +642,7 @@ void TakeHirelingShares(void)
     Row = 0;
     while (Who != 0) {
       if (((((*FPD(TCharacter (*), Who)).B84 > 127)) && (((*FPD(TCharacter (*), Who)).Status == StatusOkay))) && (((*FPD(TCharacter (*), Who)).HirelingShare > 0))) {
-        ShowPagedText(5, (s16)(Row + 5), 0x22, 0x16, 0xA, 1, rtl_str_cat(t1, 2, (const u8 *const[]){(*FPD(TCharacter (*), Who)).Name, S("\033 takes and hides his share.")}));
+        ShowPagedText(5, (s16)(Row + 5), 0x22, 0x16, 0xA, 1, rtl_str_cat(ts1, 2, (const u8 *const[]){(*FPD(TCharacter (*), Who)).Name, S("\033 takes and hides his share.")}));
         Row += 2;
       }
       Who = (*FPD(TCharacter (*), Who)).Next;

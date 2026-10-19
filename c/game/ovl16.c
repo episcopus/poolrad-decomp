@@ -66,9 +66,7 @@ void RunCharacterMenu(void)
   s8 Row = 0;
   u8 Show = 0;
   u8 Mode = 0;
-  u8 t1[2];
-  u8 t2[41];
-  u8 t3[256];
+  u8 ts1[256];
   TileSet = 3;
   Mode = 4;
   Show = 1;
@@ -105,8 +103,8 @@ void RunCharacterMenu(void)
           I = 0;
           for (;;) {
               if (CharacterMenuSlots[I].Present != 0) {
-                DrawTextAt(2, (s16)(Row + MenuFirstRow), HotKeyColor, rtl_str_char(t1, CharacterMenuSlots[I].Name[1]));
-                DrawTextAt(3, (s16)(Row + MenuFirstRow), NameColor, rtl_str_copy(t2, CharacterMenuSlots[I].Name, 2, (s16)(CharacterMenuSlots[I].Name[0] - 1)));
+                DrawTextAt(2, (s16)(Row + MenuFirstRow), HotKeyColor, rtl_str_char(ts1, CharacterMenuSlots[I].Name[1]));
+                DrawTextAt(3, (s16)(Row + MenuFirstRow), NameColor, rtl_str_copy(ts1, CharacterMenuSlots[I].Name, 2, (s16)(CharacterMenuSlots[I].Name[0] - 1)));
                 Row++;
               }
             if (I == 10) break;
@@ -226,7 +224,7 @@ void RunCharacterMenu(void)
       }
       case 'J':
       {
-        if (rtl_str_cmp(rtl_paramstr(t3, 1), S("\005STING")) == 0) {
+        if (rtl_str_cmp(rtl_paramstr(ts1, 1), S("\005STING")) == 0) {
           StingCheat = 1;
           ShowFlashMessage(S("\027I Understand, master..."));
         }
@@ -309,12 +307,7 @@ void CreateCharacter(void)
   u8 GoldDiceTotal = 0;
   u8 WithExit = 0;
   u8 Redraw = 0;
-  u8 t1[12];
-  u8 t2[12];
-  u8 t3[9];
-  u8 t4[29];
-  u8 t5[19];
-  u8 t6[256];
+  u8 ts1[256];
   NewCharacter = rtl_getmem(CharacterSize);
   rtl_FillChar((void *)&(*FPD(TCharacter (*), NewCharacter)), CharacterSize, 0);
   {
@@ -353,13 +346,13 @@ void CreateCharacter(void)
           case 5:
           {
             PickedLine = GetMenuLine(RaceIndex, MenuList);
-            rtl_str_assign((*FPD(TMenuLine (*), PickedLine)).Text, 40, rtl_str_cat(t1, 2, (const u8 *const[]){S("\002  "), RaceNames[RaceIndex]}));
+            rtl_str_assign((*FPD(TMenuLine (*), PickedLine)).Text, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){S("\002  "), RaceNames[RaceIndex]}));
             break;
           }
           case RaceHuman:
           {
             PickedLine = GetMenuLine((s16)(RaceIndex - 1), MenuList);
-            rtl_str_assign((*FPD(TMenuLine (*), PickedLine)).Text, 40, rtl_str_cat(t2, 2, (const u8 *const[]){S("\002  "), RaceNames[RaceIndex]}));
+            rtl_str_assign((*FPD(TMenuLine (*), PickedLine)).Text, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){S("\002  "), RaceNames[RaceIndex]}));
             break;
           }
           }
@@ -437,7 +430,7 @@ void CreateCharacter(void)
       GenderIndex = 0;
       for (;;) {
           PickedLine = GetMenuLine((s16)(GenderIndex + 1), MenuList);
-          rtl_str_assign((*FPD(TMenuLine (*), PickedLine)).Text, 40, rtl_str_cat(t3, 2, (const u8 *const[]){S("\002  "), SexNames[GenderIndex]}));
+          rtl_str_assign((*FPD(TMenuLine (*), PickedLine)).Text, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){S("\002  "), SexNames[GenderIndex]}));
         if (GenderIndex == 1) break;
         GenderIndex++;
       }
@@ -465,7 +458,7 @@ void CreateCharacter(void)
       I = 1;
       for (;;) {
           PickedLine = GetMenuLine(I, MenuList);
-          rtl_str_assign((*FPD(TMenuLine (*), PickedLine)).Text, 40, rtl_str_cat(t4, 2, (const u8 *const[]){S("\002  "), ClassNames[RaceClassChoices[(*FPD(TCharacter (*), NewCharacter)).Race][I]]}));
+          rtl_str_assign((*FPD(TMenuLine (*), PickedLine)).Text, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){S("\002  "), ClassNames[RaceClassChoices[(*FPD(TCharacter (*), NewCharacter)).Race][I]]}));
         if (I == limit) break;
         I++;
       }
@@ -588,7 +581,7 @@ void CreateCharacter(void)
       I = 1;
       for (;;) {
           PickedLine = GetMenuLine(I, MenuList);
-          rtl_str_assign((*FPD(TMenuLine (*), PickedLine)).Text, 40, rtl_str_cat(t5, 2, (const u8 *const[]){S("\002  "), AlignmentNames[ClassAlignmentChoices[(*FPD(TCharacter (*), NewCharacter)).ClassCombo][I]]}));
+          rtl_str_assign((*FPD(TMenuLine (*), PickedLine)).Text, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){S("\002  "), AlignmentNames[ClassAlignmentChoices[(*FPD(TCharacter (*), NewCharacter)).ClassCombo][I]]}));
         if (I == limit) break;
         I++;
       }
@@ -983,7 +976,7 @@ void CreateCharacter(void)
   ShowCharacterSheet();
   SelectedCharacter = SavedSelection;
   do {
-    rtl_str_assign((*FPD(TCharacter (*), NewCharacter)).Name, 15, ReadInputLine(t6, S("\020Character name: "), CreateCharacter_NamePromptColor, CreateCharacter_NameMaxLength));
+    rtl_str_assign((*FPD(TCharacter (*), NewCharacter)).Name, 15, ReadInputLine(ts1, S("\020Character name: "), CreateCharacter_NamePromptColor, CreateCharacter_NameMaxLength));
   } while (!((*FPD(TCharacter (*), NewCharacter)).Name[0] != 0));
   SavedSelection = SelectedCharacter;
   SelectedCharacter = NewCharacter;
@@ -1006,24 +999,21 @@ void DropCharacter(void)
 {
   POOL_TRACE("DropCharacter");
   u8 Unused = 0;
-  u8 t1[31];
-  u8 t2[35];
-  u8 t3[35];
-  u8 t4[43];
+  u8 ts1[43];
   if (SelectedCharacter == 0) {
     return;
   }
   {
     TCharacter *w1 = &(*FPD(TCharacter (*), SelectedCharacter));
-      if (((AskYesNo(rtl_str_cat(t1, 3, (const u8 *const[]){S("\005Drop "), w1->Name, S("\012 forever\077 ")}), 0xE, 0xA, 0xF) == 'Y')) && ((AskYesNo(S("\016Are you sure\077 "), 0xE, 0xA, 0xF) == 'Y'))) {
+      if (((AskYesNo(rtl_str_cat(ts1, 3, (const u8 *const[]){S("\005Drop "), w1->Name, S("\012 forever\077 ")}), 0xE, 0xA, 0xF) == 'Y')) && ((AskYesNo(S("\016Are you sure\077 "), 0xE, 0xA, 0xF) == 'Y'))) {
         if (w1->Flag10D == 0) {
-          ShowFlashMessage(rtl_str_cat(t2, 3, (const u8 *const[]){S("\011You dump "), w1->Name, S("\012 out back.")}));
+          ShowFlashMessage(rtl_str_cat(ts1, 3, (const u8 *const[]){S("\011You dump "), w1->Name, S("\012 out back.")}));
         } else {
-          ShowFlashMessage(rtl_str_cat(t3, 2, (const u8 *const[]){w1->Name, S("\023 bids you farewell.")}));
+          ShowFlashMessage(rtl_str_cat(ts1, 2, (const u8 *const[]){w1->Name, S("\023 bids you farewell.")}));
         }
         RemoveSelectedCharacter(0, 1);
       } else {
-        ShowFlashMessage(rtl_str_cat(t4, 2, (const u8 *const[]){w1->Name, S("\033 breathes a sigh of relief.")}));
+        ShowFlashMessage(rtl_str_cat(ts1, 2, (const u8 *const[]){w1->Name, S("\033 breathes a sigh of relief.")}));
       }
   }
 }
@@ -1070,9 +1060,9 @@ void ModifyCharacter(void)
   POOL_TRACE("ModifyCharacter");
   Frame_ModifyCharacter fr;
   memset(&fr, 0, sizeof fr);
-  u8 t1[35];
+  u8 ts1[35];
   if ((*FPD(TCharacter (*), SelectedCharacter)).Experience > 0) {
-    FlashMessageLine(rtl_str_cat(t1, 2, (const u8 *const[]){(*FPD(TCharacter (*), SelectedCharacter)).Name, S("\023 can't be modified.")}), ModifyCharacter_MessageColor);
+    FlashMessageLine(rtl_str_cat(ts1, 2, (const u8 *const[]){(*FPD(TCharacter (*), SelectedCharacter)).Name, S("\023 can't be modified.")}), ModifyCharacter_MessageColor);
     return;
   }
   ShowCharacterSheet();
@@ -1341,10 +1331,8 @@ void TrainCharacter(void)
   u16 Choice = 0;
   u8 Listed = 0;
   u8 Spare = 0;
-  u8 t1[256];
-  u8 t2[256];
-  u8 t3[256];
-  u8 t4[256];
+  u8 ts1[256];
+  u8 ts2[256];
   if ((((*FPD(TCharacter (*), SelectedCharacter)).Status != 0)) && ((StingCheat == 0))) {
     FlashMessageLine(S("\036we only train conscious people"), TrainCharacter_MessageColor);
     return;
@@ -1460,9 +1448,9 @@ void TrainCharacter(void)
               if (((w1->ClassLevels[I] > 0)) && ((((ClassTrainingBits[I] & AllowedBits)) > 0))) {
                 Row++;
                 if (Row == TrainCharacter_FirstBecomeRow) {
-                  DrawTextAt(TrainCharacter_BecomeTextCol, Row, TrainCharacter_BecomeTextColor, rtl_str_cat(t2, 4, (const u8 *const[]){S("\014    a level "), ByteToText(t1, (s16)(w1->ClassLevels[I] + 1)), S("\001 "), ClassNames[I]}));
+                  DrawTextAt(TrainCharacter_BecomeTextCol, Row, TrainCharacter_BecomeTextColor, rtl_str_cat(ts2, 4, (const u8 *const[]){S("\014    a level "), ByteToText(ts1, (s16)(w1->ClassLevels[I] + 1)), S("\001 "), ClassNames[I]}));
                 } else {
-                  DrawTextAt(TrainCharacter_BecomeTextCol, Row, TrainCharacter_BecomeTextColor, rtl_str_cat(t4, 4, (const u8 *const[]){S("\014and a level "), ByteToText(t3, (s16)(w1->ClassLevels[I] + 1)), S("\001 "), ClassNames[I]}));
+                  DrawTextAt(TrainCharacter_BecomeTextCol, Row, TrainCharacter_BecomeTextColor, rtl_str_cat(ts2, 4, (const u8 *const[]){S("\014and a level "), ByteToText(ts1, (s16)(w1->ClassLevels[I] + 1)), S("\001 "), ClassNames[I]}));
                 }
               }
             if (I == 7) break;
@@ -1555,7 +1543,7 @@ void AddSavedCharacters(void)
   u8 WithExit = 0;
   u8 Redraw = 0;
   u8 Count = 0;
-  u8 t1[43];
+  u8 ts1[43];
   ClearWindow(1, 1, 0x26, 0x16);
   ReadSavedCharacterList(&List);
   if (List == 0) {
@@ -1570,7 +1558,7 @@ void AddSavedCharacters(void)
       if ((*FPD(TMenuLine (*), Selected)).Text[1] != '*') {
         NewChar = rtl_getmem(CharacterSize);
         LoadCharacterFile((*FPD(TMenuLine (*), Selected)).Text, NewChar, 0, 1);
-        rtl_str_assign((*FPD(TMenuLine (*), Selected)).Text, 40, rtl_str_cat(t1, 2, (const u8 *const[]){S("\002* "), (*FPD(TMenuLine (*), Selected)).Text}));
+        rtl_str_assign((*FPD(TMenuLine (*), Selected)).Text, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){S("\002* "), (*FPD(TMenuLine (*), Selected)).Text}));
         Count = 0;
         if (PartyListHead == 0) {
           (*FPD(TGameVars (*), GameVars2))[830] = 0;
@@ -1835,7 +1823,7 @@ void EditCharacterIcon(void)
   POOL_TRACE("EditCharacterIcon");
   Frame_EditCharacterIcon fr;
   memset(&fr, 0, sizeof fr);
-  u8 t1[46];
+  u8 ts1[46];
   DrawWindow(EditCharacterIcon_WindowLeft, EditCharacterIcon_WindowTop, EditCharacterIcon_WindowRight, EditCharacterIcon_WindowBottom, 0, 0, S("\000"));
   SwapPaletteColors0And8();
   do {
@@ -1867,7 +1855,7 @@ void EditCharacterIcon(void)
               rtl_str_assign(fr.SizeName, 5, S("\005Large"));
             }
           }
-          fr.Key = ReadPromptChoice(S("\000"), rtl_str_cat(t1, 2, (const u8 *const[]){fr.SizeName, IconEditorPrompts[fr.State - 1]}), EditCharacterIcon_PromptTitleColor, EditCharacterIcon_PromptWordColor, EditCharacterIcon_PromptHotColor, 0, 0, &fr.ExtKey);
+          fr.Key = ReadPromptChoice(S("\000"), rtl_str_cat(ts1, 2, (const u8 *const[]){fr.SizeName, IconEditorPrompts[fr.State - 1]}), EditCharacterIcon_PromptTitleColor, EditCharacterIcon_PromptWordColor, EditCharacterIcon_PromptHotColor, 0, 0, &fr.ExtKey);
           if (fr.ExtKey == 0) {
             switch (fr.State) {
             case EditCharacterIcon_StateMain:

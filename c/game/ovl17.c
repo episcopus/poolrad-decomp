@@ -14,15 +14,13 @@ void ReadSavedCharacterList(PMenuLine (*List))
   PMenuLine Last = 0;
   PCharacter Who = 0;
   TextRec Names = {0};
-  u8 t1[256];
-  u8 t2[256];
-  u8 t3[43];
+  u8 ts1[256];
   (*List) = 0;
   CreateSaveDir();
-  if (!FileExists(rtl_str_cat(t1, 2, (const u8 *const[]){SaveDir, S("\014charlist.txt")}))) {
+  if (!FileExists(rtl_str_cat(ts1, 2, (const u8 *const[]){SaveDir, S("\014charlist.txt")}))) {
     return;
   }
-  rtl_assign(&Names, rtl_str_cat(t2, 2, (const u8 *const[]){SaveDir, S("\014charlist.txt")}));
+  rtl_assign(&Names, rtl_str_cat(ts1, 2, (const u8 *const[]){SaveDir, S("\014charlist.txt")}));
   rtl_reset_text(&Names);
   while (!rtl_eof(&Names)) {
     SavedLine = rtl_getmem(MenuLineBytes);
@@ -40,7 +38,7 @@ void ReadSavedCharacterList(PMenuLine (*List))
       Who = (*FPD(TCharacter (*), Who)).Next;
     }
     if (Who != 0) {
-      rtl_str_assign((*FPD(TMenuLine (*), Last)).Text, 40, rtl_str_cat(t3, 2, (const u8 *const[]){S("\002* "), (*FPD(TMenuLine (*), Last)).Text}));
+      rtl_str_assign((*FPD(TMenuLine (*), Last)).Text, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){S("\002* "), (*FPD(TMenuLine (*), Last)).Text}));
     }
   }
   rtl_close(&Names);
@@ -59,16 +57,15 @@ void RewriteSavedCharacterList(PMenuLine List)
   PMenuLine Line = 0;
   TextRec Names = {0};
   u16 ErrCode = 0;
-  u8 t1[256];
-  u8 t2[2];
-  u8 t3[20];
+  u8 ts1[256];
+  u8 ts2[20];
   CreateSaveDir();
   do {
-    rtl_assign(&Names, rtl_str_cat(t1, 2, (const u8 *const[]){SaveDir, S("\014charlist.txt")}));
+    rtl_assign(&Names, rtl_str_cat(ts1, 2, (const u8 *const[]){SaveDir, S("\014charlist.txt")}));
     rtl_rewrite_text(&Names);
     ErrCode = rtl_IOResult();
     if (ErrCode != 0) {
-      ShowMessageLine(Yellow_OVL17, rtl_str_cat(t3, 3, (const u8 *const[]){S("\021Put save disk in "), rtl_str_char(t2, SaveDir[1]), S("\001:")}));
+      ShowMessageLine(Yellow_OVL17, rtl_str_cat(ts2, 3, (const u8 *const[]){S("\021Put save disk in "), rtl_str_char(ts1, SaveDir[1]), S("\001:")}));
     }
   } while (!(ErrCode == 0));
   Line = List;
@@ -90,14 +87,13 @@ void CreateSaveDir(void)
 {
   POOL_TRACE("CreateSaveDir");
   u16 ErrCode = 0;
-  u8 t1[256];
-  u8 t2[2];
-  u8 t3[20];
+  u8 ts1[256];
+  u8 ts2[20];
   do {
-    rtl_MkDir(rtl_str_copy(t1, SaveDir, 1, (s16)(SaveDir[0] - 1)));
+    rtl_MkDir(rtl_str_copy(ts1, SaveDir, 1, (s16)(SaveDir[0] - 1)));
     ErrCode = rtl_IOResult();
     if (((ErrCode != IoSuccess)) && ((ErrCode != IoDirExists))) {
-      ShowMessageLine(Yellow_OVL17, rtl_str_cat(t3, 3, (const u8 *const[]){S("\021Put save disk in "), rtl_str_char(t2, SaveDir[1]), S("\001:")}));
+      ShowMessageLine(Yellow_OVL17, rtl_str_cat(ts2, 3, (const u8 *const[]){S("\021Put save disk in "), rtl_str_char(ts1, SaveDir[1]), S("\001:")}));
     }
   } while (!(((ErrCode == IoSuccess)) || ((ErrCode == IoDirExists))));
 }
@@ -179,15 +175,13 @@ void BuildCharacterIcon(u8 Recolor)
   u8 (*MapTo)[16] = (u8 (*)[16])rtl_stack_alloc(16);
   u8 I = 0;
   u8 UnusedByte = 0;
-  u8 t1[2];
-  u8 t2[7];
-  u8 t3[2];
-  u8 t4[7];
+  u8 ts1[2];
+  u8 ts2[7];
   SelectTileSet(3);
   {
     TCharacter *w1 = &(*FPD(TCharacter (*), SelectedCharacter));
-      LoadPictureSlot(rtl_str_cat(t2, 2, (const u8 *const[]){S("\005CHEAD"), rtl_str_char(t1, FigureBankTable[w1->Figure[0]])}), w1->CHeadBlock, 11);
-      LoadPictureSlot(rtl_str_cat(t4, 2, (const u8 *const[]){S("\005CBODY"), rtl_str_char(t3, FigureBankTable[w1->Figure[0]])}), w1->CBodyBlock, w1->CombatIcon);
+      LoadPictureSlot(rtl_str_cat(ts2, 2, (const u8 *const[]){S("\005CHEAD"), rtl_str_char(ts1, FigureBankTable[w1->Figure[0]])}), w1->CHeadBlock, 11);
+      LoadPictureSlot(rtl_str_cat(ts2, 2, (const u8 *const[]){S("\005CBODY"), rtl_str_char(ts1, FigureBankTable[w1->Figure[0]])}), w1->CBodyBlock, w1->CombatIcon);
       MergePictureData(PictureSlots[11].FirstPic, PictureSlots[w1->CombatIcon].FirstPic);
       MergePictureData(PictureSlots[11].SecondPic, PictureSlots[w1->CombatIcon].SecondPic);
       if (Recolor) {
@@ -245,19 +239,9 @@ void SaveCharacter(PCharacter Who, const u8 *Name_in)
   PMenuLine Walk = 0;
   PMenuLine Last = 0;
   u16 ErrCode = 0;
-  u8 t1[256];
-  u8 t2[256];
-  u8 t3[256];
-  u8 t4[256];
-  u8 t5[45];
-  u8 t6[2];
-  u8 t7[20];
-  u8 t8[45];
-  u8 t9[45];
-  u8 t10[45];
-  u8 t11[45];
-  u8 t12[45];
-  u8 t13[45];
+  u8 ts1[256];
+  u8 ts2[256];
+  u8 ts3[256];
   if (rtl_str_cmp(Name, S("\000")) == 0) {
     ReadSavedCharacterList(&List);
     Walk = List;
@@ -277,28 +261,28 @@ void SaveCharacter(PCharacter Who, const u8 *Name_in)
     RewriteSavedCharacterList(List);
     FreeMenuList(&List);
     rtl_str_assign(Suffix, 4, S("\004.cha"));
-    rtl_str_assign(FileName, 40, rtl_str_cat(t3, 2, (const u8 *const[]){SaveDir, MakeDosFileName(t1, DeleteAllOccurrences(t2, (*FPD(TCharacter (*), Who)).Name, S("\001.")))}));
+    rtl_str_assign(FileName, 40, rtl_str_cat(ts3, 2, (const u8 *const[]){SaveDir, MakeDosFileName(ts1, DeleteAllOccurrences(ts2, (*FPD(TCharacter (*), Who)).Name, S("\001.")))}));
   } else {
     CreateSaveDir();
     rtl_str_assign(Suffix, 4, S("\004.sav"));
-    rtl_str_assign(FileName, 40, rtl_str_cat(t4, 2, (const u8 *const[]){SaveDir, Name}));
+    rtl_str_assign(FileName, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){SaveDir, Name}));
   }
   do {
-    rtl_assign(&SaveFile, rtl_str_cat(t5, 2, (const u8 *const[]){FileName, Suffix}));
+    rtl_assign(&SaveFile, rtl_str_cat(ts1, 2, (const u8 *const[]){FileName, Suffix}));
     rtl_rewrite(&SaveFile, 1);
     ErrCode = rtl_IOResult();
     if (ErrCode != 0) {
-      ShowMessageLine(Yellow_OVL17, rtl_str_cat(t7, 3, (const u8 *const[]){S("\021Put save disk in "), rtl_str_char(t6, SaveDir[1]), S("\001:")}));
+      ShowMessageLine(Yellow_OVL17, rtl_str_cat(ts2, 3, (const u8 *const[]){S("\021Put save disk in "), rtl_str_char(ts1, SaveDir[1]), S("\001:")}));
     }
   } while (!(ErrCode == 0));
   rtl_blockwrite(&SaveFile, (void *)&(*FPD(TCharacter (*), Who)), 285, NULL);
   rtl_close(&SaveFile);
-  if (FileExists(rtl_str_cat(t8, 2, (const u8 *const[]){FileName, S("\004.itm")}))) {
-    rtl_assign(&SaveFile, rtl_str_cat(t9, 2, (const u8 *const[]){FileName, S("\004.itm")}));
+  if (FileExists(rtl_str_cat(ts1, 2, (const u8 *const[]){FileName, S("\004.itm")}))) {
+    rtl_assign(&SaveFile, rtl_str_cat(ts1, 2, (const u8 *const[]){FileName, S("\004.itm")}));
     rtl_erase(&SaveFile);
   }
   if ((*FPD(TCharacter (*), Who)).Items != 0) {
-    rtl_assign(&SaveFile, rtl_str_cat(t10, 2, (const u8 *const[]){FileName, S("\004.itm")}));
+    rtl_assign(&SaveFile, rtl_str_cat(ts1, 2, (const u8 *const[]){FileName, S("\004.itm")}));
     rtl_rewrite(&SaveFile, 1);
     Item = (*FPD(TCharacter (*), Who)).Items;
     while (Item != 0) {
@@ -307,12 +291,12 @@ void SaveCharacter(PCharacter Who, const u8 *Name_in)
     }
     rtl_close(&SaveFile);
   }
-  if (FileExists(rtl_str_cat(t11, 2, (const u8 *const[]){FileName, S("\004.spc")}))) {
-    rtl_assign(&SaveFile, rtl_str_cat(t12, 2, (const u8 *const[]){FileName, S("\004.spc")}));
+  if (FileExists(rtl_str_cat(ts1, 2, (const u8 *const[]){FileName, S("\004.spc")}))) {
+    rtl_assign(&SaveFile, rtl_str_cat(ts1, 2, (const u8 *const[]){FileName, S("\004.spc")}));
     rtl_erase(&SaveFile);
   }
   if ((*FPD(TCharacter (*), Who)).Affects != 0) {
-    rtl_assign(&SaveFile, rtl_str_cat(t13, 2, (const u8 *const[]){FileName, S("\004.spc")}));
+    rtl_assign(&SaveFile, rtl_str_cat(ts1, 2, (const u8 *const[]){FileName, S("\004.spc")}));
     rtl_rewrite(&SaveFile, 1);
     Affect = (*FPD(TCharacter (*), Who)).Affects;
     while (Affect != 0) {
@@ -344,39 +328,30 @@ void LoadCharacterFile(const u8 *FileName_in, PCharacter Who, u8 SavedGame, u8 U
   PAffect Affect = 0;
   u8 DiskPrompt[41] = {0};
   u8 Status = 0;
-  u8 t1[256];
-  u8 t2[256];
-  u8 t3[2];
-  u8 t4[20];
-  u8 t5[2];
-  u8 t6[32];
-  u8 t7[256];
-  u8 t8[256];
-  u8 t9[256];
-  u8 t10[256];
-  u8 t11[256];
+  u8 ts1[256];
+  u8 ts2[256];
   if (UseSaveDir != 0) {
-    rtl_str_assign(FileName, 255, rtl_str_cat(t2, 2, (const u8 *const[]){SaveDir, MakeDosFileName(t1, FileName)}));
-    rtl_str_assign(DiskPrompt, 40, rtl_str_cat(t4, 3, (const u8 *const[]){S("\021Put save disk in "), rtl_str_char(t3, SaveDir[1]), S("\001:")}));
+    rtl_str_assign(FileName, 255, rtl_str_cat(ts2, 2, (const u8 *const[]){SaveDir, MakeDosFileName(ts1, FileName)}));
+    rtl_str_assign(DiskPrompt, 40, rtl_str_cat(ts2, 3, (const u8 *const[]){S("\021Put save disk in "), rtl_str_char(ts1, SaveDir[1]), S("\001:")}));
   } else {
-    rtl_str_assign(DiskPrompt, 40, rtl_str_cat(t6, 3, (const u8 *const[]){InsertDiskPrompts[TileSet], rtl_str_char(t5, GameDir[1]), S("\001:")}));
+    rtl_str_assign(DiskPrompt, 40, rtl_str_cat(ts2, 3, (const u8 *const[]){InsertDiskPrompts[TileSet], rtl_str_char(ts1, GameDir[1]), S("\001:")}));
   }
   if (SavedGame != 0) {
     rtl_str_assign(Suffix, 4, S("\004.sav"));
   } else {
     rtl_str_assign(Suffix, 4, S("\004.cha"));
   }
-  Status = OpenGameFile(rtl_str_cat(t7, 2, (const u8 *const[]){FileName, Suffix}), DiskPrompt, 0, (void *)&SaveFile);
+  Status = OpenGameFile(rtl_str_cat(ts1, 2, (const u8 *const[]){FileName, Suffix}), DiskPrompt, 0, (void *)&SaveFile);
   rtl_blockread(&SaveFile, (void *)&(*FPD(TCharacter (*), Who)), 285, &ReadCount);
   rtl_close(&SaveFile);
   (*FPD(TCharacter (*), Who)).Next = 0;
   (*FPD(TCharacter (*), Who)).Items = 0;
   (*FPD(TCharacter (*), Who)).Affects = 0;
   (*FPD(TCharacter (*), Who)).Combat = 0;
-  if (FileExists(rtl_str_cat(t8, 2, (const u8 *const[]){FileName, S("\004.itm")}))) {
+  if (FileExists(rtl_str_cat(ts1, 2, (const u8 *const[]){FileName, S("\004.itm")}))) {
     (*FPD(TCharacter (*), Who)).Items = rtl_getmem(63);
     Item = (*FPD(TCharacter (*), Who)).Items;
-    Status = OpenGameFile(rtl_str_cat(t9, 2, (const u8 *const[]){FileName, S("\004.itm")}), DiskPrompt, 0, (void *)&SaveFile);
+    Status = OpenGameFile(rtl_str_cat(ts1, 2, (const u8 *const[]){FileName, S("\004.itm")}), DiskPrompt, 0, (void *)&SaveFile);
     do {
       rtl_blockread(&SaveFile, (void *)&(*FPD(TMenuLine (*), Item)), 63, &ReadCount);
       (*FPD(TMenuLine (*), Item)).Next = 0;
@@ -387,10 +362,10 @@ void LoadCharacterFile(const u8 *FileName_in, PCharacter Who, u8 SavedGame, u8 U
     } while (!(rtl_eof(&SaveFile)));
     rtl_close(&SaveFile);
   }
-  if (FileExists(rtl_str_cat(t10, 2, (const u8 *const[]){FileName, S("\004.spc")}))) {
+  if (FileExists(rtl_str_cat(ts1, 2, (const u8 *const[]){FileName, S("\004.spc")}))) {
     (*FPD(TCharacter (*), Who)).Affects = rtl_getmem(9);
     Affect = (*FPD(TCharacter (*), Who)).Affects;
-    Status = OpenGameFile(rtl_str_cat(t11, 2, (const u8 *const[]){FileName, S("\004.spc")}), DiskPrompt, 0, (void *)&SaveFile);
+    Status = OpenGameFile(rtl_str_cat(ts1, 2, (const u8 *const[]){FileName, S("\004.spc")}), DiskPrompt, 0, (void *)&SaveFile);
     do {
       rtl_blockread(&SaveFile, (void *)&(*FPD(TAffect (*), Affect)), 9, &ReadCount);
       (*FPD(TAffect (*), Affect)).Next = 0;
@@ -424,11 +399,9 @@ void LoadMonster(u8 Kind, farptr Who)
   u8 CharSet[2] = {0};
   u8 I = 0;
   u8 Roll = 0;
-  u8 t1[8];
-  u8 t2[8];
-  u8 t3[8];
+  u8 ts1[8];
   rtl_str_int(CharSet, 1, TileSet, 0);
-  LoadDaxBlock(rtl_str_cat(t1, 3, (const u8 *const[]){S("\003MON"), CharSet, S("\003CHA")}), S("\004.dax"), Kind, &Size, &Block);
+  LoadDaxBlock(rtl_str_cat(ts1, 3, (const u8 *const[]){S("\003MON"), CharSet, S("\003CHA")}), S("\004.dax"), Kind, &Size, &Block);
   if (Size == 0) {
     ShowMessageLine(15, S("\026Unable to load monster"));
     QuitGame();
@@ -483,7 +456,7 @@ void LoadMonster(u8 Kind, farptr Who)
   }
   rtl_freemem(Block, Size);
   OpenNoPrompt = 1;
-  LoadDaxBlock(rtl_str_cat(t2, 3, (const u8 *const[]){S("\003MON"), CharSet, S("\003SPC")}), S("\004.dax"), Kind, &Size, &Block);
+  LoadDaxBlock(rtl_str_cat(ts1, 3, (const u8 *const[]){S("\003MON"), CharSet, S("\003SPC")}), S("\004.dax"), Kind, &Size, &Block);
   if (Size != 0) {
     Offset = 0;
     (*FPD(TCharacter (*), Who)).Affects = rtl_getmem(9);
@@ -499,7 +472,7 @@ void LoadMonster(u8 Kind, farptr Who)
     } while (!(Offset >= Size));
     rtl_freemem(Block, Size);
   }
-  LoadDaxBlock(rtl_str_cat(t3, 3, (const u8 *const[]){S("\003MON"), CharSet, S("\003ITM")}), S("\004.dax"), Kind, &Size, &Block);
+  LoadDaxBlock(rtl_str_cat(ts1, 3, (const u8 *const[]){S("\003MON"), CharSet, S("\003ITM")}), S("\004.dax"), Kind, &Size, &Block);
   if (Size != 0) {
     Offset = 0;
     (*FPD(TCharacter (*), Who)).Items = rtl_getmem(63);
@@ -662,35 +635,17 @@ void LoadGame(void)
   u8 Slot = 0;
   u8 ExtKey = 0;
   u8 GameList[21] = {0};
-  u8 t1[2];
-  u8 t2[256];
-  u8 t3[2];
-  u8 t4[23];
-  u8 t5[2];
-  u8 t6[256];
-  u8 t7[2];
-  u8 t8[256];
-  u8 t9[256];
-  u8 t10[256];
-  u8 t11[256];
-  u8 t12[256];
-  u8 t13[256];
-  u8 t14[256];
-  u8 t15[256];
-  u8 t16[45];
-  u8 t17[45];
-  u8 t18[45];
-  u8 t19[45];
-  u8 t20[45];
-  u8 t21[45];
+  u8 ts1[256];
+  u8 ts2[256];
+  u8 ts3[256];
   CreateSaveDir();
   rtl_str_assign(GameList, 20, S("\000"));
   {
     if ('A' <= 'J') {
       Slot = 'A';
       for (;;) {
-          if (FileExists(rtl_str_cat(t2, 4, (const u8 *const[]){SaveDir, S("\006savgam"), rtl_str_char(t1, Slot), S("\004.dat")}))) {
-            rtl_str_assign(GameList, 20, rtl_str_cat(t4, 3, (const u8 *const[]){GameList, rtl_str_char(t3, Slot), S("\001 ")}));
+          if (FileExists(rtl_str_cat(ts2, 4, (const u8 *const[]){SaveDir, S("\006savgam"), rtl_str_char(ts1, Slot), S("\004.dat")}))) {
+            rtl_str_assign(GameList, 20, rtl_str_cat(ts2, 3, (const u8 *const[]){GameList, rtl_str_char(ts1, Slot), S("\001 ")}));
           }
         if (Slot == 'J') break;
         Slot++;
@@ -702,11 +657,11 @@ void LoadGame(void)
   }
   do {
     Slot = ReadPromptChoice(S("\021Load Which Game: "), GameList, 13, 10, 15, 0, 0, &ExtKey);
-  } while (!((((((Slot >= 'A' && Slot <= 'J'))) && FileExists(rtl_str_cat(t6, 4, (const u8 *const[]){SaveDir, S("\006savgam"), rtl_str_char(t5, Slot), S("\004.dat")})))) || ((Slot == 0x00))));
+  } while (!((((((Slot >= 'A' && Slot <= 'J'))) && FileExists(rtl_str_cat(ts2, 4, (const u8 *const[]){SaveDir, S("\006savgam"), rtl_str_char(ts1, Slot), S("\004.dat")})))) || ((Slot == 0x00))));
   if (Slot == 0x00) {
     return;
   }
-  Status = OpenGameFile(rtl_str_cat(t8, 4, (const u8 *const[]){SaveDir, S("\006savgam"), rtl_str_char(t7, Slot), S("\004.dat")}), rtl_str_cat(t9, 2, (const u8 *const[]){S("\021Put save disk in "), SaveDir}), 1, (void *)&SaveFile);
+  Status = OpenGameFile(rtl_str_cat(ts2, 4, (const u8 *const[]){SaveDir, S("\006savgam"), rtl_str_char(ts1, Slot), S("\004.dat")}), rtl_str_cat(ts3, 2, (const u8 *const[]){S("\021Put save disk in "), SaveDir}), 1, (void *)&SaveFile);
   ClearPromptLine();
   DrawTextAt(0, 0x18, 0xA, S("\025Loading...Please Wait"));
   rtl_blockread(&SaveFile, (void *)&TileSet, 1, &ReadCount);
@@ -729,8 +684,8 @@ void LoadGame(void)
     if (1 <= limit) {
       I = 1;
       for (;;) {
-          rtl_str_assign(FileName, 40, MakeDosFileName(t10, DeleteAllOccurrences(t11, MemberFiles[I - 1], S("\001."))));
-          if (FileExists(rtl_str_cat(t12, 3, (const u8 *const[]){SaveDir, FileName, S("\004.sav")}))) {
+          rtl_str_assign(FileName, 40, MakeDosFileName(ts1, DeleteAllOccurrences(ts2, MemberFiles[I - 1], S("\001."))));
+          if (FileExists(rtl_str_cat(ts1, 3, (const u8 *const[]){SaveDir, FileName, S("\004.sav")}))) {
             Who = rtl_getmem(285);
             LoadCharacterFile(FileName, Who, 1, 1);
             AddPartyMember(Who);
@@ -743,16 +698,16 @@ void LoadGame(void)
   }
   Who = PartyListHead;
   while (Who != 0) {
-    rtl_str_assign(FileName, 40, rtl_str_cat(t15, 2, (const u8 *const[]){SaveDir, MakeDosFileName(t13, DeleteAllOccurrences(t14, (*FPD(TCharacter (*), Who)).Name, S("\001.")))}));
-    if (FileExists(rtl_str_cat(t16, 2, (const u8 *const[]){FileName, S("\004.cha")}))) {
-      rtl_assign(&SaveFile, rtl_str_cat(t17, 2, (const u8 *const[]){FileName, S("\004.cha")}));
+    rtl_str_assign(FileName, 40, rtl_str_cat(ts3, 2, (const u8 *const[]){SaveDir, MakeDosFileName(ts1, DeleteAllOccurrences(ts2, (*FPD(TCharacter (*), Who)).Name, S("\001.")))}));
+    if (FileExists(rtl_str_cat(ts1, 2, (const u8 *const[]){FileName, S("\004.cha")}))) {
+      rtl_assign(&SaveFile, rtl_str_cat(ts1, 2, (const u8 *const[]){FileName, S("\004.cha")}));
       rtl_erase(&SaveFile);
-      if (FileExists(rtl_str_cat(t18, 2, (const u8 *const[]){FileName, S("\004.itm")}))) {
-        rtl_assign(&SaveFile, rtl_str_cat(t19, 2, (const u8 *const[]){FileName, S("\004.itm")}));
+      if (FileExists(rtl_str_cat(ts1, 2, (const u8 *const[]){FileName, S("\004.itm")}))) {
+        rtl_assign(&SaveFile, rtl_str_cat(ts1, 2, (const u8 *const[]){FileName, S("\004.itm")}));
         rtl_erase(&SaveFile);
       }
-      if (FileExists(rtl_str_cat(t20, 2, (const u8 *const[]){FileName, S("\004.spc")}))) {
-        rtl_assign(&SaveFile, rtl_str_cat(t21, 2, (const u8 *const[]){FileName, S("\004.spc")}));
+      if (FileExists(rtl_str_cat(ts1, 2, (const u8 *const[]){FileName, S("\004.spc")}))) {
+        rtl_assign(&SaveFile, rtl_str_cat(ts1, 2, (const u8 *const[]){FileName, S("\004.spc")}));
         rtl_erase(&SaveFile);
       }
     }
@@ -816,23 +771,9 @@ void SaveGame(void)
   u8 ExtKey = 0;
   u8 Key = 0;
   u16 ErrCode = 0;
-  u8 t1[2];
-  u8 t2[256];
-  u8 t3[2];
-  u8 t4[20];
-  u8 t5[2];
-  u8 t6[9];
-  u8 t7[2];
-  u8 t8[9];
-  u8 t9[256];
-  u8 t10[256];
-  u8 t11[256];
-  u8 t12[45];
-  u8 t13[45];
-  u8 t14[45];
-  u8 t15[45];
-  u8 t16[45];
-  u8 t17[45];
+  u8 ts1[256];
+  u8 ts2[256];
+  u8 ts3[256];
   do {
     Key = ReadPromptChoice(S("\021Save Which Game: "), S("\023A B C D E F G H I J"), 13, 10, 15, 0, (ViewMode == 2), &ExtKey);
   } while (!(Key == 0x00 || (Key >= 'A' && Key <= 'J')));
@@ -841,11 +782,11 @@ void SaveGame(void)
   }
   CreateSaveDir();
   do {
-    rtl_assign(&SaveFile, rtl_str_cat(t2, 4, (const u8 *const[]){SaveDir, S("\006savgam"), rtl_str_char(t1, Key), S("\004.dat")}));
+    rtl_assign(&SaveFile, rtl_str_cat(ts2, 4, (const u8 *const[]){SaveDir, S("\006savgam"), rtl_str_char(ts1, Key), S("\004.dat")}));
     rtl_rewrite(&SaveFile, 1);
     ErrCode = rtl_IOResult();
     if (ErrCode != 0) {
-      ShowMessageLine(Yellow_OVL17, rtl_str_cat(t4, 3, (const u8 *const[]){S("\021Put save disk in "), rtl_str_char(t3, SaveDir[1]), S("\001:")}));
+      ShowMessageLine(Yellow_OVL17, rtl_str_cat(ts2, 3, (const u8 *const[]){S("\021Put save disk in "), rtl_str_char(ts1, SaveDir[1]), S("\001:")}));
     }
   } while (!(ErrCode == 0));
   ClearPromptLine();
@@ -877,7 +818,7 @@ void SaveGame(void)
   while (Walk != 0) {
     Count++;
     rtl_str_int(NumText, 1, Count, 0);
-    rtl_str_assign(MemberFiles[Count - 1], 40, rtl_str_cat(t6, 3, (const u8 *const[]){S("\006CHRDAT"), rtl_str_char(t5, Key), NumText}));
+    rtl_str_assign(MemberFiles[Count - 1], 40, rtl_str_cat(ts2, 3, (const u8 *const[]){S("\006CHRDAT"), rtl_str_char(ts1, Key), NumText}));
     Walk = (*FPD(TCharacter (*), Walk)).Next;
   }
   rtl_blockwrite(&SaveFile, (void *)&Count, 1, NULL);
@@ -888,18 +829,18 @@ void SaveGame(void)
   while (Walk != 0) {
     Count++;
     rtl_str_int(NumText, 1, Count, 0);
-    SaveCharacter(Walk, rtl_str_cat(t8, 3, (const u8 *const[]){S("\006CHRDAT"), rtl_str_char(t7, Key), NumText}));
-    rtl_str_assign(FileName, 40, rtl_str_cat(t11, 2, (const u8 *const[]){SaveDir, MakeDosFileName(t9, DeleteAllOccurrences(t10, (*FPD(TCharacter (*), Walk)).Name, S("\001.")))}));
-    if (FileExists(rtl_str_cat(t12, 2, (const u8 *const[]){FileName, S("\004.cha")}))) {
-      rtl_assign(&SaveFile, rtl_str_cat(t13, 2, (const u8 *const[]){FileName, S("\004.cha")}));
+    SaveCharacter(Walk, rtl_str_cat(ts2, 3, (const u8 *const[]){S("\006CHRDAT"), rtl_str_char(ts1, Key), NumText}));
+    rtl_str_assign(FileName, 40, rtl_str_cat(ts3, 2, (const u8 *const[]){SaveDir, MakeDosFileName(ts1, DeleteAllOccurrences(ts2, (*FPD(TCharacter (*), Walk)).Name, S("\001.")))}));
+    if (FileExists(rtl_str_cat(ts1, 2, (const u8 *const[]){FileName, S("\004.cha")}))) {
+      rtl_assign(&SaveFile, rtl_str_cat(ts1, 2, (const u8 *const[]){FileName, S("\004.cha")}));
       rtl_erase(&SaveFile);
     }
-    if (FileExists(rtl_str_cat(t14, 2, (const u8 *const[]){FileName, S("\004.itm")}))) {
-      rtl_assign(&SaveFile, rtl_str_cat(t15, 2, (const u8 *const[]){FileName, S("\004.itm")}));
+    if (FileExists(rtl_str_cat(ts1, 2, (const u8 *const[]){FileName, S("\004.itm")}))) {
+      rtl_assign(&SaveFile, rtl_str_cat(ts1, 2, (const u8 *const[]){FileName, S("\004.itm")}));
       rtl_erase(&SaveFile);
     }
-    if (FileExists(rtl_str_cat(t16, 2, (const u8 *const[]){FileName, S("\004.spc")}))) {
-      rtl_assign(&SaveFile, rtl_str_cat(t17, 2, (const u8 *const[]){FileName, S("\004.spc")}));
+    if (FileExists(rtl_str_cat(ts1, 2, (const u8 *const[]){FileName, S("\004.spc")}))) {
+      rtl_assign(&SaveFile, rtl_str_cat(ts1, 2, (const u8 *const[]){FileName, S("\004.spc")}));
       rtl_erase(&SaveFile);
     }
     Walk = (*FPD(TCharacter (*), Walk)).Next;
@@ -924,12 +865,12 @@ void SaveAndExit(const u8 *AreaScript_in)
   u8 NumText[2] = {0};
   u8 Key = 0;
   u8 ExtKey = 0;
-  u8 t1[30];
+  u8 ts1[30];
   if (FileExists(AreaScript)) {
     return;
   }
   rtl_str_int(NumText, 1, TileSet, 0);
-  rtl_str_assign(Prompt, 40, rtl_str_cat(t1, 2, (const u8 *const[]){S("\034Save and exit  Insert disk #"), NumText}));
+  rtl_str_assign(Prompt, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){S("\034Save and exit  Insert disk #"), NumText}));
   Key = ReadPromptChoice(S("\000"), Prompt, 13, 10, 15, 0, 0, &ExtKey);
   if (((ExtKey == 0)) && ((Key == 'S'))) {
     PartyMapColumn -= DirStepX[PartyFacing];

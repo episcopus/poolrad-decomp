@@ -33,9 +33,9 @@ u8 ChargeForCure(const u8 *Service_in, u16 Price)
   u8 Answer = 0;
   u16 Money = 0;
   s32 Pooled = 0;
-  u8 t1[256];
-  u8 t2[256];
-  rtl_str_assign(Service, 255, rtl_str_cat(t2, 4, (const u8 *const[]){Service, S("\020 will only cost "), WordToText(t1, Price), S("\015 gold pieces.")}));
+  u8 ts1[256];
+  u8 ts2[256];
+  rtl_str_assign(Service, 255, rtl_str_cat(ts2, 4, (const u8 *const[]){Service, S("\020 will only cost "), WordToText(ts1, Price), S("\015 gold pieces.")}));
   ShowPagedText(TextWindowLeft, TextWindowTop, TextWindowRight, TextWindowBottom, TextWindowColor, 1, Service);
   Answer = AskYesNo(S("\015pay for cure "), PromptTitleColor_OVL04, CostPromptWordColor, CostPromptHotColor);
   if (Answer == KeyYes) {
@@ -358,7 +358,7 @@ void HealMenu(void)
   u8 Done = 0;
   String40_RES06 Prompt = {0};
   u8 Key = 0;
-  u8 t1[38];
+  u8 ts1[38];
   Done = 0;
   List = 0;
   First = 0;
@@ -377,7 +377,7 @@ void HealMenu(void)
   DrawWindow(TempleLeft, TempleTop, TempleRight, TempleBottom, TempleFrameSet, TempleTitleColor, S("\000"));
   DrawWindow(TempleLeft, TempleTop, TempleRight, TempleHeaderBottom, TempleFrameSet, TempleTitleColor, S("\000"));
   do {
-    rtl_str_assign(Prompt, 40, rtl_str_cat(t1, 2, (const u8 *const[]){(*FPD(TCharacter (*), SelectedCharacter)).Name, S("\026, how can we help you\077")}));
+    rtl_str_assign(Prompt, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){(*FPD(TCharacter (*), SelectedCharacter)).Name, S("\026, how can we help you\077")}));
     DrawTextAt(TempleLeft, TempleTop, TempleTitleColor, Prompt);
     DrawWindow(TextWindowLeft, TextWindowTop, TextWindowRight, TextWindowBottom, TempleFrameSet, TempleTitleColor, S("\000"));
     Key = ChooseFromList(S("\000"), S("\011Heal Exit"), HealListHeadingColor, HealListLineColor, HealListHighlightColor, HealListLeft, HealListTop, HealListRight, HealListBottom, List, 0, &RedrawList, &Choice, &First);

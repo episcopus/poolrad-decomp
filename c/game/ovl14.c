@@ -802,12 +802,7 @@ void DoWildernessMenu(void)
   u8 MenuFlag = 0;
   u8 Menu[41] = {0};
   u8 Key2 = 0;
-  u8 t1[46];
-  u8 t2[47];
-  u8 t3[46];
-  u8 t4[46];
-  u8 t5[47];
-  u8 t6[46];
+  u8 ts1[47];
   Done = 0;
   switch (AreaViewKind) {
   case 1:
@@ -826,12 +821,12 @@ void DoWildernessMenu(void)
           rtl_str_assign(Menu, 40, S("\004Bash"));
         }
         if (((DoorMenuFlags[1] != 0)) && ((AnyMemberHasClassLevel(6) != 0))) {
-          rtl_str_assign(Menu, 40, rtl_str_cat(t1, 2, (const u8 *const[]){Menu, S("\005 Pick")}));
+          rtl_str_assign(Menu, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Menu, S("\005 Pick")}));
         }
         if (((DoorMenuFlags[2] != 0)) && ((FindMemberWithSpell(KnockSpell) != 0))) {
-          rtl_str_assign(Menu, 40, rtl_str_cat(t2, 2, (const u8 *const[]){Menu, S("\006 Knock")}));
+          rtl_str_assign(Menu, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Menu, S("\006 Knock")}));
         }
-        rtl_str_assign(Menu, 40, rtl_str_cat(t3, 2, (const u8 *const[]){Menu, S("\005 Exit")}));
+        rtl_str_assign(Menu, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Menu, S("\005 Exit")}));
         if (rtl_str_cmp(Menu, S("\005 Exit")) == 0) {
           ClearIconBits(PartyMapColumn, PartyMapRow, PartyFacing);
         } else {
@@ -863,12 +858,12 @@ void DoWildernessMenu(void)
           rtl_str_assign(Menu, 40, S("\004Bash"));
         }
         if (((DoorMenuFlags[1] != 0)) && ((AnyMemberHasClassLevel(6) != 0))) {
-          rtl_str_assign(Menu, 40, rtl_str_cat(t4, 2, (const u8 *const[]){Menu, S("\005 Pick")}));
+          rtl_str_assign(Menu, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Menu, S("\005 Pick")}));
         }
         if (((DoorMenuFlags[2] != 0)) && ((AnyMemberHasClassLevel(5) != 0))) {
-          rtl_str_assign(Menu, 40, rtl_str_cat(t5, 2, (const u8 *const[]){Menu, S("\006 Knock")}));
+          rtl_str_assign(Menu, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Menu, S("\006 Knock")}));
         }
-        rtl_str_assign(Menu, 40, rtl_str_cat(t6, 2, (const u8 *const[]){Menu, S("\005 Exit")}));
+        rtl_str_assign(Menu, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){Menu, S("\005 Exit")}));
         if (rtl_str_cmp(Menu, S("\005 Exit")) == 0) {
           ClearIconBits(PartyMapColumn, PartyMapRow, PartyFacing);
         } else {

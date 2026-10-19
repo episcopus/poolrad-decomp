@@ -263,14 +263,12 @@ u8 *TwoDigitText(u8 *Result_out, u8 Number)
   POOL_TRACE("TwoDigitText");
   u8 *Result = Result_out;
   String40_RES06 Digits = {0};
-  u8 t1[256];
-  u8 t2[42];
-  u8 t3[41];
-  rtl_str_assign(Digits, 40, ByteToText(t1, Number));
+  u8 ts1[256];
+  rtl_str_assign(Digits, 40, ByteToText(ts1, Number));
   if (Number < 10) {
-    rtl_str_assign(Digits, 40, rtl_str_cat(t2, 2, (const u8 *const[]){S("\0010"), Digits}));
+    rtl_str_assign(Digits, 40, rtl_str_cat(ts1, 2, (const u8 *const[]){S("\0010"), Digits}));
   }
-  rtl_str_assign(Result, 40, rtl_str_copy(t3, Digits, 1, 2));
+  rtl_str_assign(Result, 40, rtl_str_copy(ts1, Digits, 1, 2));
   return Result;
 }
 
@@ -286,8 +284,7 @@ void ShowRestTime(s8 Selected)
   s8 Digit = 0;
   u16 Colors[7] = {0};
   u8 Col = 0;
-  u8 t1[256];
-  u8 t2[256];
+  u8 ts1[256];
   {
     if (0 <= 6) {
       Digit = 0;
@@ -305,7 +302,7 @@ void ShowRestTime(s8 Selected)
     if (DaysDigit >= HoursDigit) {
       Digit = DaysDigit;
       for (;;) {
-          DrawTextAt((s16)(Col + 1), RestRow, Colors[Digit], TwoDigitText(t1, RestTime[Digit]));
+          DrawTextAt((s16)(Col + 1), RestRow, Colors[Digit], TwoDigitText(ts1, RestTime[Digit]));
           /* Col + 1 + 1 + 1 is the original's expression for the colon column, one past the two digits */
           DrawTextAt((s16)(((Col + 1) + 1) + 1), RestRow, RestTextColor, S("\001:"));
           Col += 3;
@@ -314,7 +311,7 @@ void ShowRestTime(s8 Selected)
       }
     }
   }
-  DrawTextAt((s16)(Col + 1), RestRow, Colors[2], TwoDigitText(t2, (u16)((MinutesPerTensDigit * RestTime[2]) + RestTime[1])));
+  DrawTextAt((s16)(Col + 1), RestRow, Colors[2], TwoDigitText(ts1, (u16)((MinutesPerTensDigit * RestTime[2]) + RestTime[1])));
 }
 
 /* ovl20:0721: retf 0, 46 bytes of locals. The rest menu: "Rest daYs Hours Mins Inc Dec Exit" under the

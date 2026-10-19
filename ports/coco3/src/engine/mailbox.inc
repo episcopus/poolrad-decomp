@@ -1,17 +1,18 @@
 * mailbox.inc: the test mailbox shared by the engine, the C programs and the harnesses.
-* It lives in logical RAM at $1000 (slot 0, always mapped, block $38 = physical $71000 on
+* It lives in logical RAM at $0900 (slot 0, always mapped, block $38 = physical $71000 on
 * a 512 KB machine), above Disk BASIC's RAM ($0000..$0DFF: its vectors at $0100, the NMI hook at $0109,
 * disk variables from $0600) which DSKCON needs intact. The harnesses (lua/mailbox.lua, scripts/xroar_run.sh) poll MB_STATUS.
 *
-*   $1000  4   magic "PRAD"
-*   $1004  1   checkpoint counter, incremented by mb_checkpoint()
-*   $1005  1   status: 0 running, 1 finished and every check passed, 2 finished with a failure
-*   $1006  2   number of failed checks
-*   $1008  1   mb_hold's acknowledge: the harness sets it nonzero to release mb_hold
-*   $1009  7   reserved
-*   $1010  64  result words r0..r31, big endian
+*   $0900  4   magic "PRAD"
+*   $0904  1   checkpoint counter, incremented by mb_checkpoint()
+*   $0905  1   status: 0 running, 1 finished and every check passed, 2 finished with a failure
+*   $0906  2   number of failed checks
+*   $0908  1   mb_hold's acknowledge: the harness sets it nonzero to release mb_hold
+*   $0909  7   reserved
+*   $0910  64  result words r0..r31, big endian
 
-MB_BASE         EQU     $1000
+MB_BASE         EQU     $0900
+SHARED_IMG      EQU     $7400   the image of the shared data ($0700..$08FF) that boot.asm copies into place (tools/mkgame.py strip_low_records)
 MB_MAGIC        EQU     MB_BASE+0
 MB_CHECKPOINT   EQU     MB_BASE+4
 MB_STATUS       EQU     MB_BASE+5
