@@ -34,6 +34,7 @@ except ImportError:                                       # Python < 3.11
 PAGE = 0x2000
 USABLE = 0x1E00                                            # data window 1 is slot 7: $E000..$FDFF, the rest of the page is I/O
 ENGINE_UNITS = {"res05", "res06", "res07", "res09", "ovl28", "ovl32", "ovl34"}
+REPLACED_UNITS = {"res07"}                                 # the engine replaces the whole unit (tools/mkgame.py ENGINE_UNITS): its text names nothing the CoCo build uses
 NAT_BASE = 0x0000                                          # DS offsets of the host model
 VM_BASE = 0x2000
 # --coco: the DS offsets are the CoCo's addresses (a native global at offset o is at address o, a block of the mapped heap
@@ -42,7 +43,8 @@ COCO_NAT_BASE = 0x4ED0
 COCO_VM_BASE = 0x8000
 CONST_END = 0x43DC
 # System unit variables and the Input/Output records the runtime reads and writes itself: always native
-SYSTEM = [(0x4400, 0x30), (0x84F0, 0x218)]
+# Input (DS:8508, 256 bytes) is not there: no unit and no runtime routine of the CoCo names it (HEAP-STUDY.md)
+SYSTEM = [(0x4400, 0x30), (0x84F0, 0x18), (0x8608, 0x100)]
 
 
 def parse_plan(path):
@@ -189,7 +191,7 @@ def main(argv):
         p = l.split()
         g.append((int(p[0], 16), int(p[1]), p[2]))
     g.sort()
-    units = {Path(f).stem: open(f).read() for f in glob.glob(gen + "/*.c")}
+    units = {Path(f).stem: open(f).read() for f in glob.glob(gen + "/*.c") if Path(f).stem not in REPLACED_UNITS}
     repo = Path(os.environ["REPO"]) if "REPO" in os.environ else Path(__file__).resolve().parents[3]
     extra = "".join(open(f).read() for d in ("c/rtl", "c/platform", "c/driver") for f in glob.glob(str(repo / d / "*.c")))
     logic = "".join(t for u, t in units.items() if u not in ENGINE_UNITS and u not in ("image", "poolvars")) + extra

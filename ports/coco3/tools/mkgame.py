@@ -18,7 +18,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-BANK_BYTES = 0x4000                      # slots 4 and 5
+BANK_BYTES = int(os.environ.get("BANK_BYTES", "0x4000"), 0)   # slots 4 and 5 (BANK_BYTES=0x2000 only to count the banks of an 8 KB window: docs/HEAP-STUDY.md)
 BANK_LIMIT = BANK_BYTES - 0x180          # room for the entry table (3 bytes an entry) and a margin
 CORE_UNITS = ["pool", "res02", "res04", "res10", "res11"]   # resident
 SKIP_UNITS = {"image", "poolvars", "vmlayout"}

@@ -20,7 +20,8 @@ for l in open(gen + "/globals.txt"):
     p = l.split()
     g.append((int(p[0], 16), int(p[1]), p[2]))
 g.sort()
-units = {path.split("/")[-1][:-2]: open(path).read() for path in glob.glob(gen + "/*.c")}
+REPLACED = {"res07"}                               # the engine replaces the whole unit: its text names nothing the CoCo build uses
+units = {path.split("/")[-1][:-2]: open(path).read() for path in glob.glob(gen + "/*.c") if path.split("/")[-1][:-2] not in REPLACED}
 text = "".join(t for u, t in units.items() if u not in ("image", "poolvars"))
 text += "".join(open(f).read() for d in ("c/rtl", "c/platform", "c/driver") for f in glob.glob(repo + "/" + d + "/*.c"))
 SYSTEM = [(0x4400, 0x30), (0x84F0, 0x218)]
@@ -84,9 +85,18 @@ for i, (lo, hi, names) in enumerate(clusters):
     size = hi - lo
     rows.append((refs[i] / size, i, lo, size, names, refs[i], eng[i]))
 rows.sort(reverse=True)
+# Kept native whatever its density: moved to the paged area, GlyphRow (21 bytes, text cursor row) made every long fight stop with the
+# bank pool exhausted (fatal 0x02: parley-combat, battle-aftermath, combat-spells, temple-heal; found bisecting NATIVE_BUDGET 1300,
+# docs/HEAP-STUDY.md). The cause is not found: no address of it is taken and no statement reads it next to two other paged globals.
+KEEP = {"GlyphRow"}
 chosen, used = [], 0
 for dens, i, lo, size, names, r, e in rows:
-    if r == 0 or any(n.startswith('system') for n in names):
+    if r == 0 or any(n.startswith('system') for n in names) or not KEEP & set(names):
+        continue
+    chosen.append((lo, size, names, r))
+    used += size
+for dens, i, lo, size, names, r, e in rows:
+    if r == 0 or any(n.startswith('system') for n in names) or KEEP & set(names):
         continue
     if used + size > budget:
         continue
