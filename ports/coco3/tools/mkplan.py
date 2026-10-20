@@ -85,18 +85,9 @@ for i, (lo, hi, names) in enumerate(clusters):
     size = hi - lo
     rows.append((refs[i] / size, i, lo, size, names, refs[i], eng[i]))
 rows.sort(reverse=True)
-# Kept native whatever its density: moved to the paged area, GlyphRow (21 bytes, text cursor row) made every long fight stop with the
-# bank pool exhausted (fatal 0x02: parley-combat, battle-aftermath, combat-spells, temple-heal; found bisecting NATIVE_BUDGET 1300,
-# docs/HEAP-STUDY.md). The cause is not found: no address of it is taken and no statement reads it next to two other paged globals.
-KEEP = {"GlyphRow"}
 chosen, used = [], 0
 for dens, i, lo, size, names, r, e in rows:
-    if r == 0 or any(n.startswith('system') for n in names) or not KEEP & set(names):
-        continue
-    chosen.append((lo, size, names, r))
-    used += size
-for dens, i, lo, size, names, r, e in rows:
-    if r == 0 or any(n.startswith('system') for n in names) or KEEP & set(names):
+    if r == 0 or any(n.startswith('system') for n in names):
         continue
     if used + size > budget:
         continue

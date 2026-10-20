@@ -152,7 +152,18 @@ PATCHES = {
 }
 
 
+# POOL_STRESS=n (a test build, never the game): every group an ECL script adds to an encounter is n times as large, up to MaxEncounterMembers (63).
+# docs/HEAP-STUDY.md: the proof that the banked heap has no ceiling a big encounter can hit; scripts/stress_host.sh builds the same on the host.
+STRESS_OLD = "  Count = OperandValue(2);\n  if ((s16)Count <= 0) {\n    Count = 1;\n  }\n"
+STRESS_NEW = "  Count = (u8)((u16)OperandValue(2) * %d);\n  if ((s16)Count <= 0) {\n    Count = 1;\n  }\n"
+
+
 def patch_unit(u, text):
+    stress = int(os.environ.get("POOL_STRESS", "0"))
+    if stress and u == "ovl03":
+        if text.count(STRESS_OLD) != 1:
+            raise SystemExit("POOL_STRESS: the group count of AddEncounterGroupCommand is not where it was")
+        text = text.replace(STRESS_OLD, STRESS_NEW % stress)
     if u not in PATCHES:
         return text
     text = text.replace('#include "game.h"\n', '#include "game.h"\n' + PATCH_DECLS, 1)

@@ -57,6 +57,7 @@ class Gen(DeclMixin, ExprMixin, BuiltinMixin, StmtMixin):
         self.coco = False                  # the CoCo profile (CMOC-readable C, step 8.2)
         self.placement = None              # pointee type name -> mapped | banked (default engine), --placement FILE
         self.peek = False                  # --peek-pointers: a pointer read out of a banked block goes through PEEKP (the CoCo build's vm_pkp)
+        self.window_escapes = []           # CoCo build: calls that hand a window address of a banked block to a routine of the game
         self.engine_derefs = {}            # (unit, type) -> dereferences of an engine-class block by game logic
         self.taken: dict[str, tuple] = {}
         self.macros: set[str] = set()
@@ -977,6 +978,7 @@ def main(argv=None) -> int:
     if g.placement:
         rep = sorted(g.engine_derefs.items(), key=lambda kv: -kv[1])
         Path(a.out, "placement-report.txt").write_text("".join("%5d %s dereferences %s (engine class) \n" % (c, u, t) for (u, t), c in rep))
+        Path(a.out, "window-escapes.txt").write_text("".join("%s\n" % x for x in sorted(set(g.window_escapes))))
         print("placement: %d dereferences of engine-class blocks by game logic (placement-report.txt)" % sum(c for _, c in rep))
     return 0
 

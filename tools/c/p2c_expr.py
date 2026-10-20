@@ -760,7 +760,15 @@ class ExprMixin:
         raise TransError("typecast to %r" % t)
 
     def arg_pass(self, p: Sym, an: N, ctx_n) -> str:
-        """The C argument text for one actual parameter."""
+        """The C argument text for one actual parameter. In the CoCo build a parameter that is an address (var, array, string) handed a window
+        address of a banked block is a pointer the callee keeps while its own accesses take the window away: every such site is listed
+        (window-escapes.txt, next to placement-report.txt) so that it is read once."""
+        r = self._arg_pass(p, an, ctx_n)
+        if self.coco and self.placement and "FPB(" in r and (p.byref or p.type.kind in ("array", "string")):
+            self.window_escapes.append("%s:%s %s(%s) <- %s" % (self.unit.name if self.unit else "?", getattr(ctx_n, "line", "?"), getattr(self, "_callee", "?"), p.name, r))
+        return r
+
+    def _arg_pass(self, p: Sym, an: N, ctx_n) -> str:
         t = p.type
         if p.byref:
             e = self.ex(an)
@@ -794,7 +802,12 @@ class ExprMixin:
         e = self.ex(an)
         k = t.kind
         if k == "string":
-            return self.to_pstr(e)
+            r = self.to_pstr(e)
+            if self.coco and self.placement and e.ty.kind == "string" and r.startswith("(*FPB("):
+                # a string field of a banked block handed to a routine of the game: the address is into a data window that the callee's own accesses
+                # take away, so the callee gets a copy (a Pascal value parameter is one anyway)
+                r = "rtl_str_assign(%s, %d, %s)" % (self.str_temp(e.ty.maxlen), e.ty.maxlen, r)
+            return r
         if k in ("array",):
             return "&%s" % self.paren(e)
         if k == "proc":
@@ -817,6 +830,7 @@ class ExprMixin:
             out.append(self.static_link(s))
         if s.ret is not None and s.ret.kind == "string":
             out.append(self.str_temp())
+        self._callee = s.name
         for p, a in zip(params, args):
             out.append(self.arg_pass(p, a, n))
         code = "%s(%s)" % (s.cname, ", ".join(out))

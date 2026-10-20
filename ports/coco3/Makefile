@@ -72,6 +72,7 @@ prof:
 risk-scan:
 	@scripts/risk_cmoc.sh
 	@python3 -I tools/riskscan.py --write
+	@python3 -I tools/winscan.py
 	@echo 'report: build/risk/report.md'
 
 coco-host:

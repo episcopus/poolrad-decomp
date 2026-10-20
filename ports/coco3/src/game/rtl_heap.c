@@ -16,13 +16,17 @@ typedef struct Blk { u16 off, sz; } Blk;
 #define BSIZE(b) ((u16)((b).sz & 0xFFF8u))
 #define BUSED(b) ((b).sz & 1u)
 #define SETSZ(b, n, u) ((b).sz = (u16)((n) | (u)))
-struct HeapData { Blk mblk[NBLKM]; Blk bblk[NBLKB]; u16 nb, rover; u8 nm, ready; };
+struct HeapData { Blk mblk[NBLKM]; Blk bblk[NBLKB]; u16 nb, rover, blive, mlive; u8 nm, ready; };
 #define HD ((struct HeapData *)HEAPDATA)
 #define mblk (HD->mblk)
 #define bblk (HD->bblk)
 #define nm (HD->nm)
 #define nb (HD->nb)
 #define rover (HD->rover)
+#define blive (HD->blive)
+#define mlive (HD->mlive)
+/* the high water of the heaps goes to result words of the mailbox for the harness (tools/baseline_table.py): 22 mapped bytes, 23 banked table entries, 24 banked bytes */
+#define MBW(n) (*(volatile u16 *)(0x0910 + 2 * (n)))
 #define heap_ready (HD->ready)
 
 static void rtl_heap_init(void);
@@ -45,6 +49,9 @@ static int alloc_m(u16 n)
             }
             else
                 mblk[i].sz |= 1;
+            mlive = (u16)(mlive + n);
+            if (mlive > MBW(22))
+                MBW(22) = mlive;
             return i;
         }
     }
@@ -56,6 +63,7 @@ static void release_m(u16 off)
     u8 i, j;
     for (i = 0; i < nm; i++) {
         if (mblk[i].off == off && BUSED(mblk[i])) {
+            mlive = (u16)(mlive - BSIZE(mblk[i]));
             mblk[i].sz &= 0xFFF8u;
             if (i + 1 < nm && !BUSED(mblk[i + 1]) && (u16)(mblk[i].off + BSIZE(mblk[i])) == mblk[i + 1].off) {
                 SETSZ(mblk[i], (u16)(BSIZE(mblk[i]) + BSIZE(mblk[i + 1])), 0);
@@ -102,6 +110,15 @@ static int find_b(u16 n)
     return -1;
 }
 
+static void note_b(u16 n)
+{
+    blive = (u16)(blive + n);
+    if (blive > MBW(24))
+        MBW(24) = blive;
+    if (nb > MBW(23))
+        MBW(23) = nb;
+}
+
 static int alloc_b(u16 n)
 {
     int i = find_b(n);
@@ -129,11 +146,13 @@ static int alloc_b(u16 n)
             SETSZ(bblk[i + 1], (u16)(BSIZE(bblk[i]) - n), 0);
             SETSZ(bblk[i], n, 1);
             rover = (u16)(i + 1);                         /* the rest of the free run: where the next block goes */
+            note_b(n);
             return i;
         }
     }
     bblk[i].sz |= 1;
     rover = (u16)i;
+    note_b(BSIZE(bblk[i]));
     return i;
 }
 
@@ -148,6 +167,7 @@ static void release_b(u16 off)
             hi = mid;
     }
     if (lo < nb && bblk[lo].off == off && BUSED(bblk[lo])) {
+        blive = (u16)(blive - BSIZE(bblk[lo]));
         bblk[lo].sz &= 0xFFF8u;
         if (lo < rover)
             rover = lo;                                   /* the hole is where the next search starts */

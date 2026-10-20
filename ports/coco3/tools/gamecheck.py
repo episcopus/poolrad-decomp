@@ -24,6 +24,9 @@ for f in sorted(glob.glob(f"{prefix}-s*.scr4"), key=lambda f: int(re.search(r"-s
     ours.append(hashlib.sha256(open(f, "rb").read()[:32016]).hexdigest())
 i, bad, hard, hard_ok, soft, soft_ok = 0, 0, 0, 0, 0, 0
 for label, h in gold:
+    if h == "text":                                   # the original ended in DOS text mode (the game ended, Halt): nothing on a CoCo screen to compare;
+        print(f"  {label:<14} the original left the game (text mode): the run's mailbox says whether the CoCo halted too")   # tools/baseline_table.py reads it
+        continue
     is_key = re.fullmatch(r"key\d+", label) is not None and (label, h) != gold[-1]   # (the last screen of a session decides, whatever it is called)
     try:
         j = ours.index(h, i) + 1

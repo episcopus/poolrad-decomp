@@ -28,6 +28,9 @@ def fatal(session):
         return "no run"
     d = open(f, "rb").read()
     status = d[5] if len(d) > 5 else 0
+    gold = "goldens/4bpp/%s.s4" % session
+    if status == 1 and os.path.exists(gold) and any(l.split()[-1:] == ["text"] for l in open(gold)):
+        return "the game ended (Halt), as the original's"      # the golden's last screen is DOS text mode: nothing to compare
     if status == 2:
         r30 = struct.unpack(">H", d[0x10 + 30 * 2:0x10 + 30 * 2 + 2])[0]
         r29 = struct.unpack(">H", d[0x10 + 29 * 2:0x10 + 29 * 2 + 2])[0]

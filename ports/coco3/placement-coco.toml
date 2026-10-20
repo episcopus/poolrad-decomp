@@ -5,6 +5,7 @@
 clusters = [
   [0x02E2, 16, "GroupFacing"],   # 84 refs
   [0x02F2, 4, "FacingCombatDir"],   # 192 refs
+  [0x02F6, 8, "RingStartCol"],   # 36 refs
   [0x02FE, 8, "RingStartRow"],   # 36 refs
   [0x0306, 124, "ds0306"],   # 1814 refs (PlacementShapes,KoboldGoblinNames,Raw0332)
   [0x0C8C, 10, "WallPieceFirstTile"],   # 374 refs
@@ -58,17 +59,21 @@ clusters = [
   [0x4A1D, 1, "CurrentVideoMode"],   # 7 refs
   [0x4A1E, 2, "VideoAdapter"],   # 83 refs (ds4A1E)
   [0x4A20, 4, "DrawBuf"],   # 104 refs
+  [0x5370, 2, "ClipChecksEnabled"],   # 7 refs (Raw5370)
   [0x5372, 1, "SoundMode"],   # 76 refs
   [0x5373, 1, "SoundModeBeforePause"],   # 7 refs
   [0x5374, 2, "SoundDriverIdle"],   # 70 refs
   [0x5376, 1, "TileSet"],   # 69 refs
   [0x5377, 1, "SavedTileSet"],   # 7 refs
+  [0x5378, 2, "UnreadWord5378"],   # 7 refs
+  [0x547A, 2, "UnreadWord547A"],   # 7 refs
   [0x557C, 1, "OpenNoPrompt"],   # 11 refs
   [0x557D, 1, "HeapErrorStop"],   # 15 refs
   [0x5D92, 4, "SelectedCharacter"],   # 409 refs
   [0x5D96, 4, "PartyListHead"],   # 789 refs
+  [0x5E1E, 2, "LoaderReadCount"],   # 7 refs
   [0x5E24, 1, "GlyphCol"],   # 39 refs
-  [0x5E25, 21, "GlyphRow"],   # 63 refs (ds5E25)
+  [0x5E52, 4, "SqrPaciBank1"],   # 14 refs
   [0x6716, 834, "ds6716"],   # 12038 refs (CombatMap,Raw6718,SortEntries)
   [0x6A58, 4, "WallSets"],   # 33319 refs (WallTiles)
   [0x6A5C, 4, "GeoBlock"],   # 4373 refs (GeoCells)
@@ -84,9 +89,9 @@ clusters = [
   [0x6DC2, 22, "ds6DC2"],   # 1269 refs (RestTime,RestStudyCountdowns,ds6DCF)
   [0x6DD8, 2, "RestHealCounter"],   # 99 refs
   [0x6DDA, 2, "RestWindowActive"],   # 11 refs (ds6DDA)
+  [0x6DDC, 2, "MarkerFrame"],   # 7 refs (ds6DDC)
   [0x6DDE, 3, "DoorMenuFlags"],   # 15 refs
   [0x6DE3, 1, "CombatRound"],   # 54 refs
-  [0x6E2F, 1, "SecondMoraleByte"],   # 3 refs
   [0x6F68, 1, "SpecialViewCode2"],   # 32 refs
   [0x6F69, 1, "SpecialViewCode1"],   # 53 refs
   [0x6F70, 4, "ReturnStack"],   # 37 refs
