@@ -54,6 +54,7 @@ make first-light   # 8.5: both sessions, screens and state
 make exploration   # 8.6: walk-explore and camp-save, screens and state
 make combat        # 8.7: camp-rest-combat and parley-combat, screens and state
 make baseline      # 8.7b: every session of tests/sessions on the CoCo (screens and state), see docs/PHASE-8.7b.md
+make play          # 8.8b: play the game in a MAME window on the host (brew install mame): `make play FAST=2` overclocks the CPU, `make play FRESH=1` forgets saved games (build/play/saves.ovl)
 make snd-check     # 8.8: the CoCo's sound driver on the host against the oracle's golden (clang, 2 s)
 make snd-wav       # 8.8: the twenty tunes as WAV files (host model and emulated CoCo); make game-wav S=combat-spells: a session's sound
 make risk-scan     # 8.7b: the static checks (docs/RISKS.md), 8.7c: tools/winscan.py

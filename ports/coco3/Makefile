@@ -18,7 +18,7 @@ LINKLIBS := -L$(CMOCLIB) -lcmoc-crt-void -lcmoc-std-void
 ENGINE_OBJ := build/obj/boot.o build/obj/mailbox.o
 P ?= byte-arith
 
-.PHONY: snd-check snd-wav game-wav stress game help doctor toolchain eng-data eng-test eng-tests gfx-ref data data-verify vol-test vol-tests sizes heap-stats prof coco-host place-host golden4 golden4-record demo test-demo run-demo probe probes asm-probe bench test clean risk-scan baseline
+.PHONY: play snd-check snd-wav game-wav stress game help doctor toolchain eng-data eng-test eng-tests gfx-ref data data-verify vol-test vol-tests sizes heap-stats prof coco-host place-host golden4 golden4-record demo test-demo run-demo probe probes asm-probe bench test clean risk-scan baseline
 .DEFAULT_GOAL := help
 
 help:
@@ -218,7 +218,13 @@ game-view: game
 	@if command -v open >/dev/null 2>&1; then open build/run/game-$(S).gif; else echo "open build/run/game-$(S).gif"; fi
 
 run-game:
-	@echo "make run-game: the game's storage is the harness' (D13): use 'make game-view S=create-character' for now" >&2; exit 2
+	@echo "make run-game: the game's storage is the harness' (D13): use 'make play' (a MAME window on the host) or 'make game-view S=create-character'" >&2; exit 2
+
+# step 8.8b: play the game in a MAME window (needs MAME on the host: brew install mame). make play [FAST=2] [FRESH=1]
+play: game
+	$(TC) python3 -I tools/mkgamedisk.py build/game build/gen/vm/DGROUP.IMG build/game/pool.dsk
+	$(TC) python3 -I tools/mkimage.py /repo/poolrad build/game build/gen/vm/DGROUP.IMG build/game/pool.img
+	scripts/play.sh $(if $(FAST),--fast $(FAST)) $(if $(FRESH),--fresh)
 
 # The game on the emulated CoCo 3 (MAME, headless): S=session; the screens it shows against goldens/4bpp (tools/gamecheck.py)
 S ?= boot-title
