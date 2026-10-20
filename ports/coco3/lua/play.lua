@@ -14,20 +14,40 @@ local img = f:read("a")
 f:close()
 local sec_over = {}
 local ovl
+-- What the game writes lives in the image's save area, and the image is laid out again at every build (a bank that shrinks moves the save area
+-- by a sector or two). The overlay therefore holds sector numbers RELATIVE to the save area (found in the image's header: u32 at byte 16), after the
+-- magic "POVL" and a version; an overlay without it (the first format held absolute sector numbers, which a rebuild turned into the wrong sectors:
+-- a directory with copies of itself, a character called "CFOO") is put aside and a new one started.
+local save_lsn = (img:byte(17) << 24) | (img:byte(18) << 16) | (img:byte(19) << 8) | img:byte(20)
+local save_sectors = (img:byte(21) << 8) | img:byte(22)
+save_sectors = (save_sectors == 0) and 512 or save_sectors
+local OVL_MAGIC = "POVL\0\0\0\1"
 if ovl_path then
   local of = io.open(ovl_path, "rb")
   if of then
     local d = of:read("a")
     of:close()
-    local n = 0
-    for p = 1, #d - 259, 260 do
-      local lsn = (d:byte(p) << 24) | (d:byte(p + 1) << 16) | (d:byte(p + 2) << 8) | d:byte(p + 3)
-      sec_over[lsn] = d:sub(p + 4, p + 259)
-      n = n + 1
+    if #d > 0 and d:sub(1, 8) ~= OVL_MAGIC then
+      local old = ovl_path .. ".old-format"
+      os.rename(ovl_path, old)
+      print(string.format("play: %s is in the old format (absolute sector numbers, wrong after the image changed): kept as %s, starting with empty saves", ovl_path, old))
+      d = ""
     end
-    print(string.format("play: %d saved sectors applied from %s", n, ovl_path))
+    local n = 0
+    for p = 9, #d - 259, 260 do
+      local rel = (d:byte(p) << 24) | (d:byte(p + 1) << 16) | (d:byte(p + 2) << 8) | d:byte(p + 3)
+      if rel < save_sectors then
+        sec_over[save_lsn + rel] = d:sub(p + 4, p + 259)
+        n = n + 1
+      end
+    end
+    if #d > 0 then print(string.format("play: %d saved sectors applied from %s", n, ovl_path)) end
   end
+  local fresh = io.open(ovl_path, "rb")
+  local empty = (fresh == nil) or (fresh:seek("end") == 0)
+  if fresh then fresh:close() end
   ovl = assert(io.open(ovl_path, "ab"))
+  if empty then ovl:write(OVL_MAGIC) ovl:flush() end
 end
 
 secreq_tap = mem:install_write_tap(0x0960, 0x0960, "secreq", function(offset, data, mask)   -- (kept referenced: the collector would remove the tap)
@@ -49,8 +69,8 @@ secreq_tap = mem:install_write_tap(0x0960, 0x0960, "secreq", function(offset, da
       for i = 0, 255 do t[#t + 1] = string.char(ram:read(at + s * 256 + i)) end
       local sec = table.concat(t)
       sec_over[lsn + s] = sec
-      if ovl then
-        local l = lsn + s
+      if ovl and lsn + s >= save_lsn and lsn + s < save_lsn + save_sectors then   -- (only the save area is kept; the game writes nothing else)
+        local l = lsn + s - save_lsn
         ovl:write(string.char((l >> 24) & 255, (l >> 16) & 255, (l >> 8) & 255, l & 255), sec)
         ovl:flush()
       end

@@ -265,6 +265,7 @@ baseline: game
 	@MB_SESSION=/repo/tests/sessions/boot-title.keys MB_LIMIT=300 scripts/game_run.sh build/run/game-boot-title > /dev/null 2>&1
 	@printf '%s\n' $(filter-out boot-title,$(BASELINE_SESSIONS)) | xargs -P 5 -I{} sh -c 'MB_NOBUILD=1 MB_SESSION=/repo/tests/sessions/{}.keys MB_LIMIT=2500 scripts/game_run.sh build/run/game-{} > build/run/game-{}.out 2>&1'
 	@for s in $(BASELINE_SESSIONS); do printf '%-18s ' $$s; python3 -I tools/gamecheck.py $$s build/run/game-$$s 2>&1 | tail -1; done
+	@for s in $(BASELINE_SESSIONS); do printf '%-18s ' $$s; python3 -I tools/savecheck.py build/game/pool.img build/run/game-$$s.saves 2>&1 | tail -1; done
 
 # step 8.9: where the time goes (docs/PHASE-8.9a.md). perf-run plays one session with the program counter sampled every frame, every far call
 # logged and every storage request logged, then prints: busy time by unit and by engine call, the bank pool under other sizes and policies, and

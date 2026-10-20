@@ -57,6 +57,18 @@ if img_path and not os.getenv("MB_NOTAP") then
   local f = assert(io.open(img_path, "rb"))
   img = f:read("a")
   f:close()
+  if os.getenv("MB_OVL") then      -- MB_OVL=file: the saved games of a `make play` (build/play/saves.ovl, format of lua/play.lua: "POVL", then records of a save area relative sector number and 256 bytes, the last of a sector wins) are applied first
+    local of = io.open(os.getenv("MB_OVL"), "rb")
+    if of then
+      local d = of:read("a")
+      of:close()
+      local save_lsn = (img:byte(17) << 24) | (img:byte(18) << 16) | (img:byte(19) << 8) | img:byte(20)
+      assert(d:sub(1, 8) == "POVL\0\0\0\1", "MB_OVL: not an overlay of the current format")
+      for p = 9, #d - 259, 260 do
+        sec_over[save_lsn + ((d:byte(p) << 24) | (d:byte(p + 1) << 16) | (d:byte(p + 2) << 8) | d:byte(p + 3))] = d:sub(p + 4, p + 259)
+      end
+    end
+  end
   -- the tap object must stay referenced: when the collector frees it MAME removes the tap (or crashes)
   secreq_tap = mem:install_write_tap(0x0960, 0x0960, "secreq", function(offset, data, mask)
     local cmd = data & 0xFF

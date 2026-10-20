@@ -136,3 +136,19 @@ make perf-all                          # every session, logs in build/run/prof-*
 make bank-groups                       # which banks to merge, from those logs (WRITE=1 writes data/bank_groups.json)
 make baseline && python3 tools/baseline_table.py   # 16 of 16
 ```
+
+## 8. Found by playing: the saved games of `make play` did not survive a rebuild (fixed)
+
+A playtest showed a corrupted "add a character" list (the name `FOO` as `CFOO`) and then a lock up. **Cause: not the game, not the optimisation itself**, but the overlay file of saved games
+(`build/play/saves.ovl`), which kept **absolute** sector numbers while the image is laid out again at every build: the 8.9a bank groups made the image two sectors shorter (6,983 to 6,981), the
+save area moved from sector 6471 to 6469, and every old record landed two sectors late (the directory's header sector on top of its second and third sector: a directory with copies of itself, a
+character list that read the start of `FOO.CHA`, two writes past the end of the image). The same thing had happened, a sector at a time, at every rebuild of the day (the overlay held headers
+written at five different places). Shown by replaying the player's keys headless on the player's saves: the 8.8b build and the 8.9a build both fail on them the same way once the layout differs, and the
+8.9a build is right on a fresh image, on the same saves moved to the right sector, and on all 17 sessions.
+
+Fixed in `lua/play.lua`: the overlay is the magic `POVL`, a version, and records of a **save-area relative** sector number; only writes inside the save area are kept; an overlay in the old format is put
+aside (`saves.ovl.old-format`) and a new one started, with a message. `tools/savecheck.py` (names printable and not repeated, rooms inside the area and not overlapping, the first free unit past every room)
+runs from `make play` (a warning) and from `make baseline` on the saved games of every session (all 16 pass). `lua/watch.lua` reads an overlay too (`MB_OVL=`), which is how the report above was reproduced.
+The old saved games of the player cannot be recovered reliably (they were already mixed from several layouts); `make play FRESH=1` or the automatic set-aside gives clean ones.
+
+Not understood and not chased: after the corrupted list a selection locks the game up; it reads garbage as a character file. A save area that is consistent never does it.

@@ -22,6 +22,10 @@ mkdir -p build/play/cfg build/play/nvram
 [ -z "$fresh" ] || unlink build/play/saves.ovl 2>/dev/null || true
 # the monitor type is a saved setting too: composite (MAME's default) turns the game's RGB palette into pink and green
 if [ -f build/play/cfg/coco3.cfg ]; then sed -i.bak 's/\(tag=":screen_config"[^>]*value=\)"0"/\1"1"/' build/play/cfg/coco3.cfg; rm -f build/play/cfg/coco3.cfg.bak; fi
+# the saved games must still fit the image (tools/savecheck.py); a warning, not a stop: --fresh forgets them
+if [ -s build/play/saves.ovl ] && head -c 4 build/play/saves.ovl | grep -q POVL; then
+  python3 tools/savecheck.py build/game/pool.img build/play/saves.ovl || echo "play: the saved games above do not match the game's save area: start with --fresh (make play FRESH=1) if the game misbehaves" >&2
+fi
 echo "Playing. The code wheel question: its code word is printed here. Keys: the host keyboard is the CoCo's (arrows, Enter, Esc = BREAK). Close the window to quit; saved games are kept in build/play/saves.ovl."
 syms=$(for n in kq kq_tail wheel_pick; do printf '%s=%s,' $n $(grep -h "^Symbol: _$n " build/game/pool.map build/game/core.map | head -1 | sed 's/.*= //'); done)
 exec env MB_IMG="$ROOT/build/game/pool.img" MB_OVL="$ROOT/build/play/saves.ovl" MB_SYMS="$syms" ${keylog:+MB_KEYLOG=1} \
