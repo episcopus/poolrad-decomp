@@ -142,9 +142,9 @@ make baseline && python3 tools/baseline_table.py   # 16 of 16
 A playtest showed a corrupted "add a character" list (the name `FOO` as `CFOO`) and then a lock up. **Cause: not the game, not the optimisation itself**, but the overlay file of saved games
 (`build/play/saves.ovl`), which kept **absolute** sector numbers while the image is laid out again at every build: the 8.9a bank groups made the image two sectors shorter (6,983 to 6,981), the
 save area moved from sector 6471 to 6469, and every old record landed two sectors late (the directory's header sector on top of its second and third sector: a directory with copies of itself, a
-character list that read the start of `FOO.CHA`, two writes past the end of the image). The same thing had happened, a sector at a time, at every rebuild of the day (the overlay held headers
-written at five different places). Shown by replaying the player's keys headless on the player's saves: the 8.8b build and the 8.9a build both fail on them the same way once the layout differs, and the
-8.9a build is right on a fresh image, on the same saves moved to the right sector, and on all 17 sessions.
+character list that read the start of `FOO.CHA`, two writes past the end of the image). The same thing had happened, a sector at a time, at every rebuild of the day (the overlay held copies of the header sector written at five different places).
+Shown by replaying the player's keys headless on the player's saves: the pre-8.9 build (whose layout the saves had been written for) shows `FOO`, the 8.9a build `CFOO`; the 8.9a build is right on a fresh
+image, on the same saves moved to their sector (the earlier ones; they were already mixed), and on all 17 sessions.
 
 Fixed in `lua/play.lua`: the overlay is the magic `POVL`, a version, and records of a **save-area relative** sector number; only writes inside the save area are kept; an overlay in the old format is put
 aside (`saves.ovl.old-format`) and a new one started, with a message. `tools/savecheck.py` (names printable and not repeated, rooms inside the area and not overlapping, the first free unit past every room)
