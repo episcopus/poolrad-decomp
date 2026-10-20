@@ -38,7 +38,7 @@ def load_map(path):
             pass                       # an assembler label: keep (kernels, irq code)
         else:
             continue
-        if name.startswith(("\x02", ".global", "funcsize_")):
+        if name.startswith(("\x02", ".global", "funcsize_")) or re.match(r"^(BP|FC|MB|MMU|BANK|DB|SCREEN)_", name):    # (equates of the assembler files show up in the map as addresses)
             continue
         syms.setdefault(addr, name)
     addrs = sorted(syms)

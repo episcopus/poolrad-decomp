@@ -182,6 +182,9 @@ def patch_unit(u, text):
         if text.count(STRESS_OLD) != 1:
             raise SystemExit("POOL_STRESS: the group count of AddEncounterGroupCommand is not where it was")
         text = text.replace(STRESS_OLD, STRESS_NEW % stress)
+    if "memset(" in text:         # the library's byte loop is slow and the game clears its 256 byte strings with it: src/game/fillmem.asm fills by PSHU
+        text = re.sub(r"\bmemset\(", "fill_mem(", text)
+        text = text.replace('#include "game.h"\n', '#include "game.h"\nvoid *fill_mem(void *s, int c, unsigned n);\n', 1)
     if u not in PATCHES:
         return text
     text = text.replace('#include "game.h"\n', '#include "game.h"\n' + PATCH_DECLS, 1)

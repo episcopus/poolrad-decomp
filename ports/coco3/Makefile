@@ -135,7 +135,7 @@ clean:
 # ---------------------------------------------------------------- builds (inside the toolchain)
 
 build/obj/%.o: src/engine/%.asm src/engine/mailbox.inc src/engine/banks.inc
-	@mkdir -p $(@D); $(AS) -o $@ $<
+	@mkdir -p $(@D); $(AS) -DENG_TEST=1 -o $@ $<
 build/obj/%.o: src/engine/%.c src/engine/mailbox.h
 	@mkdir -p $(@D); $(CC) -DENG_TEST -o $@ $<
 

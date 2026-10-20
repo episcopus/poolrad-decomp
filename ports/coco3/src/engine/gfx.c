@@ -518,7 +518,7 @@ void pic_remap(const Pic *p, u8 item, const u8 *lut)
 /* FillPlaneRect (res06): the cells (8 pixels wide, 8 rows high) l..r, t..b solid in one colour */
 void gfx_fill_cells(u8 l, u8 t, u8 r, u8 b, u8 color)
 {
-    u8 y, y1, v = (u8)(color * 17);
+    u8 y, y1, v = (u8)(color * 17), blk, cur = 0xFF;
     u16 n;
     if (l > r || t > b || l > 39 || t > 24)
         return;
@@ -530,6 +530,16 @@ void gfx_fill_cells(u8 l, u8 t, u8 r, u8 b, u8 color)
     y1 = (u8)(b * 8 + 7);
     for (y = (u8)(t * 8); y <= y1; y++) {
         u16 a = (u16)(rowa[y] + (u8)(l * 4)), rem = n, room, c;
+        if ((a & 0x1FFFu) + n <= 0x2000u) {   /* (nearly always) the whole row is in one block: map it only when it changes */
+            blk = (u8)(SCREEN_BLK + (HI(a) >> 5));
+            if (blk != cur) {
+                win_set(0, blk);
+                cur = blk;
+            }
+            k_fill(WIN0 + (a & 0x1FFFu), v, n);
+            continue;
+        }
+        cur = 0xFF;
         while (rem > 0) {                 /* a row may cross into the next block */
             room = (u16)(0x2000u - (a & 0x1FFFu));
             c = rem < room ? rem : room;
@@ -577,7 +587,7 @@ void gfx_item(const Pic *p, u8 item, u8 col, u8 row)
 #define DB_BLK 4
 #define DB_SPLIT 97
 #define DB_ROWBYTES 84
-static u8 db_dirty[DB_ROWS], db_lo[DB_ROWS], db_hi[DB_ROWS];
+u8 db_dirty[DB_ROWS], db_lo[DB_ROWS], db_hi[DB_ROWS];       /* (kernels.asm updates them) */
 
 /* the start of row y of DrawBuf, with its block mapped into window 0 */
 static u8 *db_ptr(u8 y)
@@ -592,12 +602,9 @@ static u8 *db_ptr(u8 y)
 
 static void db_clear_trackers(void)
 {
-    u8 r;
-    for (r = 0; r < DB_ROWS; r++) {
-        db_dirty[r] = 0;
-        db_lo[r] = 0xFF;
-        db_hi[r] = 0;
-    }
+    k_fill(db_dirty, 0, DB_ROWS);
+    k_fill(db_lo, 0xFF, DB_ROWS);
+    k_fill(db_hi, 0, DB_ROWS);
 }
 
 void db_init(void)
@@ -609,15 +616,77 @@ void db_init(void)
     db_clear_trackers();
 }
 
+/* cnt rows of the chunk in gbuf (and mbuf when masked) into DrawBuf from row y: n bytes a picture row, sl of them cut off on
+ * the left, nb written at column byte x0; a run of rows ends where DrawBuf's first block does */
+static void db_rows(u8 y, u8 cnt, u8 n, u8 sl, u8 nb, u8 x0, u8 mir, u8 masked)
+{
+    u8 take;
+    const u8 *src = gbuf, *msk = mbuf;
+    bp.n = n;
+    bp.sl = sl;
+    bp.nb = nb;
+    bp.x0 = x0;
+    bp.x1 = (u8)(x0 + nb - 1);
+    bp.mir = mir;
+    while (cnt > 0) {
+        take = cnt;
+        if (y < DB_SPLIT && (u8)(y + take) > DB_SPLIT)
+            take = (u8)(DB_SPLIT - y);
+        bp.d = (u16)(db_ptr(y) + x0);
+        bp.src = (u16)src;
+        bp.msk = masked ? (u16)msk : 0;
+        bp.y = y;
+        bp.rows = take;
+        k_blit();
+        y += take;
+        cnt -= take;
+        src += (u16)take * n;
+        msk += (u16)take * n;
+    }
+}
+
+#ifndef ENG_TEST
+/* DrawPictureItemClipped (res07 0464:0D71): item `item` with its top-left cell at cell column col and pixel row row * 8, cut to
+ * DrawBuf on all four sides. flags bit 0: masked; mirror: the picture drawn left for right (DrawIcon with MirrorPicture's copy).
+ * (Bit 2, the saving of the background under the picture, is not here.) */
+void db_item_clip(const Pic *p, u8 item, s16 col, s16 row, u8 flags, u8 mirror)
+{
+    s16 x0 = (s16)(col * 4), y0 = (s16)(row * 8), sl, nb, r, rend;
+    u8 n = (u8)(p->wcols * 4), take;
+    u8 masked = (flags & 1) && p->moff != 0;
+    u16 so = (u16)((u16)item * p->bytesize);
+    u16 mo = (u16)(p->moff + so);
+    sl = x0 < 0 ? (s16)-x0 : 0;
+    nb = (s16)(n - sl);
+    if (x0 + n > DB_ROWBYTES)
+        nb = (s16)(nb - (x0 + n - DB_ROWBYTES));
+    if (nb <= 0)
+        return;
+    x0 = (s16)(x0 + sl);
+    r = y0 < 0 ? (s16)-y0 : 0;                 /* the rows that are inside DrawBuf */
+    rend = p->height;
+    if (y0 + rend > DB_ROWS)
+        rend = (s16)(DB_ROWS - y0);
+    while (r < rend) {
+        take = rows_in_buf((u8)(rend - r), n);
+        pic_rd(p, (u16)(so + (u16)r * n), gbuf, (u16)(take * n));
+        if (masked)
+            pic_rd(p, (u16)(mo + (u16)r * n), mbuf, (u16)(take * n));
+        db_rows((u8)(y0 + r), take, n, (u8)sl, (u8)nb, (u8)x0, mirror, masked);
+        r = (s16)(r + take);
+    }
+}
+#endif
+
+#ifdef ENG_TEST
+/* DrawPictureItem for the engine tests (the game's is the wrapper below, over the clipped blit, which they do not carry) */
 void db_item(const Pic *p, u8 item, u8 col, u8 row, u8 flags)
 {
-    u8 n = (u8)(p->wcols * 4), h = p->height, x0 = (u8)(col * 4), x1 = (u8)(x0 + n - 1);
-    u8 y = (u8)(row * 8), take, r;
+    u8 n = (u8)(p->wcols * 4), h = p->height, x0 = (u8)(col * 4);
+    u8 y = (u8)(row * 8), take;
     u8 masked = (flags & 1) && p->moff != 0;
     u16 so = (u16)((u16)item * p->bytesize);
     u16 mo = (u16)(p->moff + (u16)item * p->bytesize);
-    u8 *d;
-    const u8 *src, *mk;
     if ((u16)x0 + n > DB_ROWBYTES || (u16)row * 8 + h > DB_ROWS)
         return;
     while (h > 0) {
@@ -625,28 +694,22 @@ void db_item(const Pic *p, u8 item, u8 col, u8 row, u8 flags)
         pic_rd(p, so, gbuf, (u16)(take * n));
         if (masked)
             pic_rd(p, mo, mbuf, (u16)(take * n));
-        src = gbuf;
-        mk = mbuf;
-        for (r = 0; r < take; r++) {
-            d = db_ptr(y) + x0;
-            if (masked)
-                k_mcopy(d, mk, src, n);
-            else
-                k_copy(d, src, n);
-            db_dirty[y] = 1;
-            if (x0 < db_lo[y])
-                db_lo[y] = x0;
-            if (x1 > db_hi[y])
-                db_hi[y] = x1;
-            src += n;
-            mk += n;
-            y++;
-        }
+        db_rows(y, take, n, 0, n, x0, 0, masked);
+        y += take;
         so += (u16)take * n;
         mo += (u16)take * n;
         h -= take;
     }
 }
+#else
+/* DrawPictureItem: the clipped blit when the whole picture is inside DrawBuf, nothing otherwise (the original wrote past the buffer) */
+void db_item(const Pic *p, u8 item, u8 col, u8 row, u8 flags)
+{
+    if ((u16)col * 4 + (u16)p->wcols * 4 > DB_ROWBYTES || (u16)row * 8 + p->height > DB_ROWS)
+        return;
+    db_item_clip(p, item, col, row, flags, 0);
+}
+#endif
 
 void db_fill(s16 col, s16 row, u16 w, u16 h, u8 color)
 {
@@ -691,30 +754,19 @@ void db_flush(void)
             continue;
         lo = db_lo[y];
         n = (u8)(db_hi[y] - lo + 1);
-        k_copy(gbuf, db_ptr(y) + lo, n);
         a = rowa[y + 8] + (u8)(lo + 4);
-        if ((a & 0x1FFFu) + n <= 0x2000u)
-            k_copy(scr_at(a), gbuf, n);
-        else
+        if ((a & 0x1FFFu) + n <= 0x2000u) {   /* the row's span is in one screen block: window 1 maps it, window 0 holds DrawBuf */
+            win_set(1, (u8)(SCREEN_BLK + (HI(a) >> 5)));
+            k_copy(WIN1 + (a & 0x1FFFu), db_ptr(y) + lo, n);
+        } else {
+            k_copy(gbuf, db_ptr(y) + lo, n);
             scr_putn(a, gbuf, n);
+        }
     }
     db_clear_trackers();
 }
 
 #ifndef ENG_TEST
-/* a row of n bytes mirrored: the bytes in reverse order, the two pixels of each swapped */
-static void mirror_row(u8 *b, u8 n)
-{
-    u8 i, j, t;
-    for (i = 0, j = (u8)(n - 1); i < j; i++, j--) {
-        t = b[i];
-        b[i] = (u8)((b[j] << 4) | (b[j] >> 4));
-        b[j] = (u8)((t << 4) | (t >> 4));
-    }
-    if (i == j)
-        b[i] = (u8)((b[i] << 4) | (b[i] >> 4));
-}
-
 /* CopyPictureItem (res12 00BA:1892): item 0 of s, colours and mask, into item `item` of d, every row mirrored when asked (the
  * PC's MirrorPicture into a temporary picture and the two Moves of the tail and the pixels) */
 void pic_item_copy(const Pic *s, const Pic *d, u8 item, u8 mirror)
@@ -726,60 +778,15 @@ void pic_item_copy(const Pic *s, const Pic *d, u8 item, u8 mirror)
     for (r = 0; r < s->height; r++) {
         pic_rd(s, (u16)(r * rb), a, rb);
         if (mirror)
-            mirror_row(a, rb);
+            k_mirror(a, rb);
         pic_wr(d, (u16)(at + r * rb), a, rb);
         if (s->moff && d->moff) {
             pic_rd(s, (u16)(s->moff + r * rb), a, rb);
             if (mirror)
-                mirror_row(a, rb);
+                k_mirror(a, rb);
             pic_wr(d, (u16)(d->moff + at + r * rb), a, rb);
         }
     }
 }
 
-/* DrawPictureItemClipped (res07 0464:0D71): item `item` with its top-left cell at cell column col and pixel row row * 8, cut to
- * DrawBuf on all four sides. flags bit 0: masked; mirror: the picture drawn left for right (DrawIcon with MirrorPicture's copy).
- * (Bit 2, the saving of the background under the picture, is not here.) */
-void db_item_clip(const Pic *p, u8 item, s16 col, s16 row, u8 flags, u8 mirror)
-{
-    s16 x0 = (s16)(col * 4), y0 = (s16)(row * 8), sl, nb, y, r;
-    u8 n = (u8)(p->wcols * 4), x1, ux0, uy;
-    u8 masked = (flags & 1) && p->moff != 0;
-    u16 so = (u16)((u16)item * p->bytesize);
-    u16 mo = (u16)(p->moff + so);
-    u8 *d;
-    sl = x0 < 0 ? (s16)-x0 : 0;
-    nb = (s16)(n - sl);
-    if (x0 + n > DB_ROWBYTES)
-        nb = (s16)(nb - (x0 + n - DB_ROWBYTES));
-    if (nb <= 0)
-        return;
-    x0 = (s16)(x0 + sl);
-    x1 = (u8)(x0 + nb - 1);
-    ux0 = (u8)x0;                          /* (CMOC: compare bytes with bytes) */
-    for (r = 0; r < p->height; r++) {
-        y = (s16)(y0 + r);
-        if (y < 0 || y >= DB_ROWS)
-            continue;
-        pic_rd(p, (u16)(so + (u16)r * n), gbuf, n);
-        if (mirror)
-            mirror_row(gbuf, n);
-        if (masked) {
-            pic_rd(p, (u16)(mo + (u16)r * n), mbuf, n);
-            if (mirror)
-                mirror_row(mbuf, n);
-        }
-        uy = (u8)y;
-        d = db_ptr(uy) + ux0;                 /* (after the reads: they move window 0 to the picture's block) */
-        if (masked)
-            k_mcopy(d, mbuf + sl, gbuf + sl, (u8)nb);
-        else
-            k_copy(d, gbuf + sl, (u8)nb);
-        db_dirty[uy] = 1;
-        if (ux0 < db_lo[uy])
-            db_lo[uy] = ux0;
-        if (x1 > db_hi[uy])
-            db_hi[uy] = x1;
-    }
-}
 #endif

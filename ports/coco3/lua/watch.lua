@@ -124,6 +124,22 @@ if os.getenv("MB_BANKLOG") then      -- MB_BANKLOG=t0-t1: the far call trampolin
   bl_tap2 = mem:install_write_tap(0x0087, 0x0088, "banklog2", function(offset, data, mask) bl_log(offset - 0x0086, data); return data end)
   bl_frame = emu.add_machine_frame_notifier(function() if #bl_buf > 0 then bl_file:write(table.concat(bl_buf)); bl_file:flush(); bl_buf = {} end end)
 end
+if os.getenv("MB_ENGCOUNT") then      -- MB_ENGCOUNT=t0-t1: how many times the game calls each engine routine between those emulated seconds (a write tap on eng_idx, which __engcall stores at every call), printed at the end as "engcount idx n"
+  local t0, t1 = os.getenv("MB_ENGCOUNT"):match("([%d.]+)-([%d.]+)")
+  local ei = tonumber((os.getenv("MB_SYMS") or ""):match("eng_idx=(%x+)") or "0", 16)
+  ec_n = {}
+  ec_tap = mem:install_write_tap(ei, ei, "engcount", function(offset, data, mask)
+    local now = m.time:as_double()
+    if now >= tonumber(t0) and now <= tonumber(t1) then ec_n[data & 0xFF] = (ec_n[data & 0xFF] or 0) + 1 end
+    return data
+  end)
+  ec_frame = emu.add_machine_frame_notifier(function()
+    if m.time:as_double() >= tonumber(t1) and not ec_done then
+      ec_done = true
+      for k, v in pairs(ec_n) do print(string.format("engcount %d %d", k, v)) end
+    end
+  end)
+end
 if os.getenv("MB_PCLOG") then      -- MB_PCLOG=t0-t1: the program counter at every video frame between those emulated seconds
   local t0, t1 = os.getenv("MB_PCLOG"):match("([%d.]+)-([%d.]+)")
   local eng_idx = tonumber((os.getenv("MB_SYMS") or ""):match("eng_idx=(%x+)") or "0", 16)

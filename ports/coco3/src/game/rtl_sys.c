@@ -157,6 +157,8 @@ rtl_proc_t rtl_proc(farptr id)
     return 0;
 }
 
+void *fill_mem(void *s, int c, unsigned n);        /* fillmem.asm: memset with PSHU */
+
 /* ---- the pseudo stack: locals whose address the game takes live here, so that the address is a far pointer ----- */
 static u8 pstack[256];
 static u16 ptop;
@@ -172,7 +174,7 @@ void *rtl_stack_alloc(u16 size)
     ptop = (u16)(ptop + ((size + 1u) & 0xFFFEu));
     if (ptop > sizeof pstack)
         rtl_fatal_code(0x31, size);
-    memset(p, 0, size);
+    fill_mem(p, 0, size);
     return p;
 }
 
@@ -189,7 +191,7 @@ void rtl_Move(const void *src, void *dst, u16 count)
 
 void rtl_FillChar(void *dst, u16 count, u8 value)
 {
-    memset(dst, value, count);
+    fill_mem(dst, value, count);
 }
 
 /* ---- Intr and IOResult (the files are in rtl_file.c) ------------------------------------------------------------- */

@@ -6,10 +6,18 @@
         SECTION code
         EXPORT  _k_copy
         EXPORT  _k_fill
-        EXPORT  _k_mcopy
+        EXPORT  _k_blit
+        ifndef  ENG_TEST
+        EXPORT  _k_mirror
+        endc
+        EXPORT  _bp
+        IMPORT  _db_dirty
+        IMPORT  _db_lo
+        IMPORT  _db_hi
         EXPORT  _k_glyph8
+        ifdef   ENG_TEST
         EXPORT  _k_sum
-        EXPORT  _k_sum
+        endc
 
 * void k_copy(u8 *dst, const u8 *src, u8 n): n bytes, eight at a time
 _k_copy
@@ -41,12 +49,19 @@ _k_copy
         bne     @l1
 @out    puls    u,y,pc
 
-* void k_fill(u8 *dst, u8 value, u16 n): four bytes a PSHU, from the top down
+* void k_fill(u8 *dst, u8 value, u16 n): from the top down, the odd bytes first, then 24 bytes (four PSHUs of D,X,Y), then four
+* at a time. FC_Y = the start, FC_D = start + 24, FC_X = start + 4.
 _k_fill
         pshs    u,y
         ldx     6,s
+        stx     <FC_Y
         ldd     10,s
         leau    d,x                     U = the end
+        ldd     <FC_Y
+        addd    #4
+        std     <FC_X
+        addd    #20
+        std     <FC_D
         ldb     11,s
         andb    #3
         beq     @quad
@@ -54,36 +69,202 @@ _k_fill
 @rem    sta     ,-u
         decb
         bne     @rem
-@quad   ldd     10,s
-        lsra
-        rorb
-        lsra
-        rorb
-        tfr     d,y                     n / 4 pushes
-        cmpy    #0
-        beq     @out
-        lda     9,s
+@quad   lda     9,s
         tfr     a,b
         tfr     d,x
-@l4     pshu    a,b,x
-        leay    -1,y
-        bne     @l4
+        tfr     d,y
+@l24    cmpu    <FC_D
+        blo     @l4
+        pshu    d,x,y
+        pshu    d,x,y
+        pshu    d,x,y
+        pshu    d,x,y
+        bra     @l24
+@l4     cmpu    <FC_X
+        blo     @out
+        pshu    d,x
+        bra     @l4
 @out    puls    u,y,pc
 
-* void k_mcopy(u8 *dst, const u8 *mask, const u8 *src, u8 n): dst = (dst & mask) | src
-_k_mcopy
+* void k_blit(void): rows of a picture into DrawBuf (step 8.9). The parameters are in `bp` (gfx.c sets them):
+*   d     the destination of the first row, DrawBuf's window 0 address with the column included
+*   src   the first row of the picture in RAM (gbuf), n bytes a row; msk the same for the mask, 0 = none (opaque)
+*   sl    bytes cut off the left of the row (of the mirrored row when mirrored), nb bytes written to each row
+*   rows  how many rows; y the DrawBuf row of the first (for the trackers); x0, x1 the first and last byte changed in a row
+*   mir   the row is drawn left for right: the bytes in reverse order, the two pixels of each swapped
+* A row: dst = (dst & mask) | colour, or dst = colour. The trackers (db_dirty, db_lo, db_hi) follow. Rows are 84 bytes apart.
+BP_D    EQU     0
+BP_SRC  EQU     2
+BP_MSK  EQU     4
+BP_N    EQU     6
+BP_SL   EQU     7
+BP_NB   EQU     8
+BP_ROWS EQU     9
+BP_Y    EQU     10
+BP_X0   EQU     11
+BP_X1   EQU     12
+BP_MIR  EQU     13
+_k_blit
+        pshs    u,y
+@row    ldx     >_bp+BP_D
+        ldy     >_bp+BP_SRC
+        ldu     >_bp+BP_MSK
+        tst     >_bp+BP_MIR
+        bne     @mir
+        clra
+        ldb     >_bp+BP_SL
+        leay    d,y
+        ldb     >_bp+BP_NB
+        andb    #1
+        stb     <FC_D+1                 an odd byte at the end
+        ldb     >_bp+BP_NB
+        lsrb
+        stb     <FC_D                   whole words
+        cmpu    #0
+        beq     @sopq
+        clra
+        ldb     >_bp+BP_SL
+        leau    d,u
+        tst     <FC_D
+        beq     @smodd
+@sm2    ldd     ,x
+        anda    ,u+
+        andb    ,u+
+        ora     ,y+
+        orb     ,y+
+        std     ,x++
+        dec     <FC_D
+        bne     @sm2
+@smodd  tst     <FC_D+1
+        beq     @done
+        lda     ,x
+        anda    ,u
+        ora     ,y
+        sta     ,x
+        bra     @done
+@sopq   tst     <FC_D
+        beq     @soodd
+@so2    ldd     ,y++
+        std     ,x++
+        dec     <FC_D
+        bne     @so2
+@soodd  tst     <FC_D+1
+        beq     @done
+        lda     ,y
+        sta     ,x
+        bra     @done
+* mirrored: the source is read backwards from its end less the skip, a pair of nibbles swapped (x16 puts the high nibble in A,
+* the low one in B)
+@mir    clra
+        ldb     >_bp+BP_N
+        subb    >_bp+BP_SL
+        leay    d,y
+        ldb     >_bp+BP_NB
+        stb     <FC_D
+        cmpu    #0
+        beq     @mopq
+        ldb     >_bp+BP_N
+        subb    >_bp+BP_SL
+        clra
+        leau    d,u
+@mm     lda     ,-y
+        ldb     #16
+        mul
+        pshs    a
+        orb     ,s+
+        stb     <FC_Y
+        lda     ,-u
+        ldb     #16
+        mul
+        pshs    a
+        orb     ,s+
+        lda     ,x
+        pshs    b
+        anda    ,s+
+        ora     <FC_Y
+        sta     ,x+
+        dec     <FC_D
+        bne     @mm
+        bra     @done
+@mopq   lda     ,-y
+        ldb     #16
+        mul
+        pshs    a
+        orb     ,s+
+        stb     ,x+
+        dec     <FC_D
+        bne     @mopq
+@done   clra
+        ldb     >_bp+BP_Y
+        ldx     #_db_dirty
+        abx
+        lda     #1
+        sta     ,x
+        ldx     #_db_lo
+        abx
+        lda     >_bp+BP_X0
+        cmpa    ,x
+        bhs     @nolo
+        sta     ,x
+@nolo   ldx     #_db_hi
+        ldb     >_bp+BP_Y
+        abx
+        lda     >_bp+BP_X1
+        cmpa    ,x
+        bls     @nohi
+        sta     ,x
+@nohi   ldd     >_bp+BP_D
+        addd    #84
+        std     >_bp+BP_D
+        clra
+        ldb     >_bp+BP_N
+        std     <FC_D
+        ldd     >_bp+BP_SRC
+        addd    <FC_D
+        std     >_bp+BP_SRC
+        ldd     >_bp+BP_MSK
+        beq     @nomsk
+        addd    <FC_D
+        std     >_bp+BP_MSK
+@nomsk  inc     >_bp+BP_Y
+        dec     >_bp+BP_ROWS
+        lbne    @row
+        puls    u,y,pc
+
+        ifndef  ENG_TEST                (the engine tests do not mirror)
+* void k_mirror(u8 *b, u8 n): the row of n bytes reversed, the two pixels of each byte swapped
+_k_mirror
         pshs    u,y
         ldx     6,s
-        ldy     8,s
-        ldu     10,s
-        ldb     13,s
-@l      lda     ,x
-        anda    ,y+
-        ora     ,u+
-        sta     ,x+
-        decb
-        bne     @l
-        puls    u,y,pc
+        clra
+        ldb     9,s
+        leay    d,x
+        leay    -1,y                    Y = the last byte
+@l      pshs    y
+        cmpx    ,s++
+        bhs     @mid
+        lda     ,x
+        bsr     @swap
+        pshs    a                       the first byte, swapped
+        lda     ,y
+        bsr     @swap
+        sta     ,x+                     first := the last, swapped
+        puls    a
+        sta     ,y                      last := the first, swapped
+        leay    -1,y
+        bra     @l
+@mid    bne     @out                    (X = Y: the middle byte of an odd row)
+        lda     ,x
+        bsr     @swap
+        sta     ,x
+@out    puls    u,y,pc
+@swap   ldb     #16
+        mul
+        pshs    a
+        orb     ,s+
+        tfr     b,a
+        rts
+        endc
 
 * void k_glyph8(u8 *scr, const u8 *glyph, const u8 *tab): eight font rows to eight screen rows 160 bytes apart; each
 * row byte is four two-pixel codes, tab[code] the two colour nibbles
@@ -127,6 +308,7 @@ _k_glyph8
         bne     @row
         puls    u,y,pc
 
+        ifdef   ENG_TEST                (the tests sum what they read)
 * u16 k_sum(const u8 *p, u16 n): the sum of n bytes, modulo 65536
 _k_sum
         pshs    u,y
@@ -145,4 +327,9 @@ _k_sum
         bne     @l
 @out    ldd     <FC_Y
         puls    u,y,pc
+        endc
+        ENDSECTION
+
+        SECTION bss
+_bp     RMB     14                      the parameters of k_blit
         ENDSECTION
