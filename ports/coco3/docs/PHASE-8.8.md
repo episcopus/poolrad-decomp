@@ -95,3 +95,11 @@ interrupt's increment of `snd_n`.
 New: `src/snd/{snd.h, snd_driver.c (generated), snd_core.c}`, `src/engine/snd.asm`, `src/engtest/t_snd.c`, `tools/{mksnd.py, snd_check.sh, snd_check.py, snd_compare.py, dac2wav.py}`, `probes/snd_ref.c`, `tests/unit/test_snd.py`.
 Changed: `src/engine/{engcall.asm, mmu.asm, irq.asm (_firq_isr exported), gameboot.c (snd_install), eng.h}`, `src/game/{platform.c (the stubs are gone, SoundMode 1, SilenceSound), rtl_sys.c (the pump)}`,
 `tools/mkgame.py` (the bank, the core's call into it, the engine's `snd` object), `lua/{mailbox,watch}.lua` and the two run scripts (`MB_DAC`, `MB_WTAP`), `Makefile`, `data/state_ignore.txt`.
+
+## 7. Playtest fixes (step 8.8b, `make play`)
+
+Found by playing the build in a MAME window (intro, slums, the orcs at 13,1):
+
+* **Pink and green colours.** MAME's coco3 starts with the *composite* monitor, which turns the game's RGB palette into other hues. `Field:set_value()` from Lua does nothing on the host's MAME 0.289 (the port keeps its value); assigning `user_value` does, one frame later. `lua/play.lua` and `lua/watch.lua` assign it and `scripts/play.sh` also writes `value="1"` into `build/play/cfg/coco3.cfg` before MAME starts (the setting is saved with the configuration).
+* **Animations ran once.** `LoadSpriteList` (the ovl28 patch in `tools/mkgame.py`) copied each frame's delay, a longint in the DAX file's byte order, into the slot's four bytes unchanged; the animation loops read it as the CoCo's big endian longint (0x02000000 for a delay of 2) and never left the first frame. The patch now stores it big endian. The camp's fire and the encounter pictures cycle (frame changes every 20 to 25 ticks, read from the run). The translation of ovl18 (the finale) already reads the bytes as `*(s32 *)`.
+* **The program ends when the party is destroyed.** The original returns to DOS (`Halt` after "Press any key to continue"); on the CoCo the engine stops with `MB_STATUS` set. `lua/play.lua` sees a status that stays non-zero for two seconds, clears BASIC's warm start flag (`$0071`; a warm start keeps Disk BASIC's variables, which the game's use of low RAM has overwritten, and `LOADM` then hangs) and resets the machine. MAME starts the script again with the machine, which boots the game; the saved games are kept (they live in `build/play/saves.ovl`).

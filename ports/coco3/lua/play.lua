@@ -61,13 +61,17 @@ secreq_tap = mem:install_write_tap(0x0960, 0x0960, "secreq", function(offset, da
   mem:write_u8(0x0961, ok)
 end)
 
-pcall(function() m.ioport.ports[":screen_config"].fields["Monitor Type"]:set_value(1) end)   -- RGB
-emu.wait(2)                                                    -- BASIC needs a moment after reset before it takes keys
-m.natkeyboard:post((os.getenv("MB_CMD") or 'LOADM"POOL":EXEC') .. "\n")
+local function rgb() pcall(function() m.ioport.ports[":screen_config"].fields["Monitor Type"].user_value = 1 end) end   -- RGB (set_value does nothing on the host)
+rgb()
+local function boot(settle)
+  emu.wait(settle)                                             -- BASIC needs a moment after reset before it takes keys (longer after a reset)
+  m.natkeyboard:post((os.getenv("MB_CMD") or 'LOADM"POOL":EXEC') .. "\r")
+end
+boot(m.time:as_double() > 5 and 6 or 2)           -- (MAME runs this script again after a reset)
 -- (the monitor type is set again a few seconds in: a first run once showed the composite palette, MAME's own settings can come in after the script's)
 for _ = 1, 3 do
   emu.wait(4)
-  pcall(function() m.ioport.ports[":screen_config"].fields["Monitor Type"]:set_value(1) end)
+  rgb()
 end
 
 -- The copy protection: the game asks for the code word that goes with a pair of runes of the original's paper code wheel (CheckCodeWheel,
@@ -90,8 +94,23 @@ local WHEEL_WORDS = {"BEWARE", "ZOMBIE", "NOTNOW", "COPPER", "DRAGON", "EFREET",
 local function core_phys(a) return 0x30 * 0x2000 + a - 0x2000 end
 local function polls() return mem:read_u16(0x090A) end   -- the game polls the keyboard (MB_POLLS) while it waits for a key
 local shown
+local MB_STATUS = 0x0905
 while syms.wheel_pick do
   emu.wait(0.5)
+  local status = mem:read_u8(MB_STATUS)
+  if status ~= 0 then                       -- the program ended (the original returns to DOS: Halt; a party destroyed does it); BASIC's memory test also writes here while it starts: only a steady value counts
+    emu.wait(2)
+  end
+  if status ~= 0 and mem:read_u8(MB_STATUS) == status then
+    print("play: the game ended (status " .. status .. "): starting it again (BASIC starts cold, which takes a while)")
+    io.stdout:flush()
+    mem:write_u8(MB_STATUS, 0)
+    mem:write_u8(0x0071, 0)                 -- (BASIC's warm start flag: a cold start sets up Disk BASIC's variables again, which the game's low RAM has overwritten)
+    m:soft_reset()                          -- (the script starts again with the machine: this run is over; the check is for a MAME that does not)
+    emu.wait(20)                            -- (reached only when MAME did not start the script again)
+    boot(0)
+    rgb()
+  end
   local pick = ram:read(core_phys(syms.wheel_pick))
   if pick >= 0x80 and pick < 0x80 + #WHEEL_WORDS and polls() > 50 then
     local before = polls()

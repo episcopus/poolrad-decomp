@@ -47,7 +47,7 @@ local cmd = os.getenv("MB_CMD") or 'LOADM"POOL":EXEC'
 local limit = tonumber(os.getenv("MB_LIMIT") or "120")
 local ram = emu.item(m.devices[":ram"].items["0/m_pointer"])
 
-pcall(function() m.ioport.ports[":screen_config"].fields["Monitor Type"]:set_value(1) end) -- RGB
+pcall(function() m.ioport.ports[":screen_config"].fields["Monitor Type"].user_value = 1 end) -- RGB
 -- the storage backend of the development build (porting guide D13): a write tap on the doorbell at $0960 serves sector reads and
 -- writes between the image file (MB_IMG) and physical RAM at once, the status goes to $0961
 last_io = 0                                          -- when the game last used the storage (the session driver waits it out)

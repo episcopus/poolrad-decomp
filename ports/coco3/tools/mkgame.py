@@ -74,7 +74,11 @@ PATCHES = {
   Offset = 1;
   L.Flag = 1;
   for (I = 1; I <= Count; I++) {
-    DaxRead(Offset, L.Slots[I - 1].Data, 4);
+    DaxRead(Offset, tmp, 4);                             /* the delay of the frame: a longint in the file's byte order, the CoCo's in the list */
+    L.Slots[I - 1].Data[0] = tmp[3];
+    L.Slots[I - 1].Data[1] = tmp[2];
+    L.Slots[I - 1].Data[2] = tmp[1];
+    L.Slots[I - 1].Data[3] = tmp[0];
     DaxRead((u16)(Offset + 4), tmp, 4);
     Height = (u16)((u16)tmp[0] | ((u16)tmp[1] << 8));
     WidthCols = (u16)((u16)tmp[2] | ((u16)tmp[3] << 8));
