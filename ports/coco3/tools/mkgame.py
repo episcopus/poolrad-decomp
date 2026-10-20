@@ -139,6 +139,13 @@ PATCHES = {
     # destinations of a known type: the translator turns them round itself (p2c_expr move_swaps, step 8.7b); the patches that did it by hand swapped twice.
     "ovl17": [("all", "  rtl_Move((void *)&(*FPD(u8 *, Block)), (void *)&(*FPD(u8 *, Who)), 285);\n",
                "  rtl_Move((void *)&(*FPD(u8 *, Block)), (void *)&(*FPD(u8 *, Who)), 285);\n  rtl_swapdesc((void *)&(*FPB(TCharacter *, Who)), swd_ovl17_0);\n")],
+    # res03 WaitHundredths: the time of day costs the 6809 about 30 ms a pass (32 bit divisions), and the sound pump runs once a pass: the
+    # tune of a step (30 ms) was over between two passes. The wait counts the frames of the clock (the pump runs at every look at it).
+    "res03": [("fn", "WaitHundredths", """void WaitHundredths(u16 Hundredths)
+{
+  POOL_TRACE("WaitHundredths");
+  rtl_Delay((u16)(Hundredths * 10));
+}""")],
     "ovl32": [("between", "Load24x24Set", "  CopyBytes = (u16)(*FPB(TMemPic *, Loaded))", "Tail[DestOfs], CopyBytes);\n  }\n",
                "  if (SqrPaciBank1 != 0) {\n    PictureAppend((u16)Loaded, (u16)SqrPaciBank1, Index);\n  }\n"),
               ("fn", "DrawIcon", """void DrawIcon(s8 CellCol, s8 CellRow, u8 IconSet, u8 Mirror, u8 PicIndex)
