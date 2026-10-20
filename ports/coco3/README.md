@@ -15,6 +15,10 @@ Step 8.7b (not a row of the plan): the answer to the review of the approach. `ma
 52.4 % after), `tools/c/explore_*.py` find the missing sessions on the translation, ten new sessions cover the shop, the temple, the party menus, camp casting, spells in combat,
 the end of a fight and a scripted fight, `make risk-scan` looks for the classes of defect already met in the code no session runs. The new sessions found three defects of the translation
 and some of the CoCo build (heap, record byte order, a combat that leaves the original's dice stream); `docs/PHASE-8.7b.md` has the baseline table and `docs/RISKS.md` the open classes.
+Step 8.7c (the human's requirement: the whole game, encounters of 63 members included): `docs/HEAP-STUDY.md` measured the mapped heap (8.5 KB, full) and the options, the native diet fixed the shop
+and the spell fight, and option 1 was built: characters, combatants, affects and items live in the banked heap behind `vm_bp` (65 cycles), the mapped heap peaks at 3.3 KB, 16 of 16 sessions
+match, `council-guards` plays to the end, `make stress N=3 S=council-guards` fills the banked heap to 46 KB of 61 KB at 63 members without a fatal, and the bank pool no longer limits the depth of a call
+chain (`docs/PHASE-8.7c.md`, `docs/RISKS.md` classes 8, 12 and 13).
 Sound (8.8) is next.
 Step 8.5: the game itself, translated, runs on the emulated CoCo 3 (`make first-light`, headless MAME). `boot-title` shows the original's
 ssi-logo, title and credits screens bit for bit; `create-character` plays the whole session (wheel, race, sex, class, alignment, the
@@ -47,7 +51,8 @@ make first-light   # 8.5: both sessions, screens and state
 make exploration   # 8.6: walk-explore and camp-save, screens and state
 make combat        # 8.7: camp-rest-combat and parley-combat, screens and state
 make baseline      # 8.7b: every session of tests/sessions on the CoCo (screens and state), see docs/PHASE-8.7b.md
-make risk-scan     # 8.7b: the static checks (docs/RISKS.md)
+make risk-scan     # 8.7b: the static checks (docs/RISKS.md), 8.7c: tools/winscan.py
+make stress N=3 S=council-guards   # 8.7c: a test build with encounters N times as large (up to 63 members), the heaps' high water; `make game` afterwards
 make game-view S=create-character  # 8.5: play a session and open what it showed as an animated GIF
 make data          # 8.4: the nine volumes (build/data/*.dsk); make data-verify checks them, make vol-tests reads every block on the CoCo
 make gfx-ref       # 8.3: rerun the Phase 7 C engine on the t_gfx script and compare with goldens/engine

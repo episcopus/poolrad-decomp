@@ -4,6 +4,12 @@ Date: 2026-10-19. Question from step 8.7b: three sessions (`shop-buy`, `combat-s
 (8,552 bytes, `$5E98..$7FFF`) has no free block. Find and measure ways to give it more, without breaking the sessions that pass. This report does not decide D12:
 it gives numbers and a recommendation. Tags: **[V]** verified by running something, **[E]** estimate, **[?]** open.
 
+> **Update, later on 2026-10-19: option 1 was built (`docs/PHASE-8.7c.md`).** The human made it a requirement that the port runs the whole game, 63 member encounters included.
+> Characters, combatants, affects, items and the typed views of a character are in the banked heap (eight pages) behind `vm_bp` (65 cycles in the asm); the mapped heap peaks at 3.3 KB;
+> 16 of 16 sessions match, `council-guards` ends the game as the original does, and the stress builds (`make stress N=3 S=council-guards`) fill the banked heap to 46 KB of 61 KB at 63 members
+> without a fatal. Both findings of section 6 are settled: the bank pool is no longer a limit (a bank on the bank stack that was evicted is loaded again on the return: two banks in the
+> pool pass the long sessions) and the 21 byte global needs no exception. Sections 1 to 5 are the study as it was written, before the build; section 7 is the recommendation it ended with.
+
 ## 0. Result
 
 * **Demand [V]**: the mapped heap needs 8,624 bytes for `shop-buy` and 8,656 for `combat-spells` (the heap had 8,552: short by 72 and 104 bytes), 16,392 for `council-guards`
@@ -132,13 +138,13 @@ Measured with `BANK_BYTES=0x2000 mkgame.py` (compile and split only, in `build/h
 
 ## 6. Found on the way
 
-1. **The bank pool is one chain short [V].** While bisecting item 2 below, two builds that differ in nothing but a few bytes of code stopped `parley-combat` in the same place with
+1. **The bank pool is one chain short [V]; settled in 8.7c: `farcall.asm @reload`.** While bisecting item 2 below, two builds that differ in nothing but a few bytes of code stopped `parley-combat` in the same place with
    `fatal 0x00`, result words 29 = 2 and 31 = 39: `api_bankload` found all 8 banks of the pool on the bank stack and was asked for a ninth (`ovl32`). The bank stack of both runs, read from the dump,
    is the same chain: `ovl03_2, ovl03_1, ovl08, ovl09, ovl13_1, ovl13_2, res12_2, ovl31` and then `ovl32`: **9 distinct banks nested** in the first long fight. The sessions that passed run the same code, and
    `ovl03` split at different routines in the passing build (parts of 10,176 and 11,105 bytes, in the failing ones 10,840 and 10,569), so one of the calls of that chain was inside a bank there. The game works while the split
    puts a call inside one bank and stops when it does not [?: the chain of the passing build was not dumped]: any change of code size (every option here, option 2 most of all) can flip it. **A pool of 12 banks
    (24 blocks) or a depth check in `mkgame` should come first.** The stop is `api.c:48` (`MB_RESULT(29) = 2`, `MB_RESULT(31) = bank`).
-2. **`GlyphRow` (21 bytes, the text cursor row) paged breaks every long fight [V].** `battle-aftermath`, `combat-spells`, `parley-combat`, `temple-heal` ended with the stop of item 1 when the cluster was in the
+2. **`GlyphRow` (21 bytes, the text cursor row) paged breaks every long fight [V]; settled in 8.7c: it was item 1, `KEEP` is gone.** `battle-aftermath`, `combat-spells`, `parley-combat`, `temple-heal` ended with the stop of item 1 when the cluster was in the
    paged area, and pass with it native; bisected by building the failing plan with each group of the cold globals put back (`NATIVE_BUDGET=1300`: group of tables, then 4, then 1 cluster). The cause is not
    found; item 1 may explain it [?] (the layout of the paged area shifted by 21 bytes and the code size by a few bytes changed the `ovl03` split), which makes it a symptom, not a defect of the variable.
    `mkplan.py` keeps it native (`KEEP`).

@@ -18,7 +18,7 @@ LINKLIBS := -L$(CMOCLIB) -lcmoc-crt-void -lcmoc-std-void
 ENGINE_OBJ := build/obj/boot.o build/obj/mailbox.o
 P ?= byte-arith
 
-.PHONY: game help doctor toolchain eng-data eng-test eng-tests gfx-ref data data-verify vol-test vol-tests sizes heap-stats prof coco-host place-host golden4 golden4-record demo test-demo run-demo probe probes asm-probe bench test clean risk-scan baseline
+.PHONY: stress game help doctor toolchain eng-data eng-test eng-tests gfx-ref data data-verify vol-test vol-tests sizes heap-stats prof coco-host place-host golden4 golden4-record demo test-demo run-demo probe probes asm-probe bench test clean risk-scan baseline
 .DEFAULT_GOAL := help
 
 help:
@@ -241,6 +241,16 @@ combat:
 
 # step 8.7b: every session on the CoCo, five at a time (one disk image: built first), then the verdicts (docs/PHASE-8.7b.md)
 BASELINE_SESSIONS := $(filter-out create-elf-mage,$(patsubst ../../tests/sessions/%.keys,%,$(wildcard ../../tests/sessions/*.keys)))
+# step 8.7c: the proof that no encounter can fill the banked heap: a build in which every group an ECL script adds is N times as large (up to the 63 members
+# of MaxEncounterMembers), one session played on it, the heaps' high water read from the run (docs/HEAP-STUDY.md). A test build: `make game` makes the game again.
+#   make stress N=3 S=council-guards
+stress:
+	@$(TC) env POOL_STRESS=$(N) scripts/game_build.sh >/dev/null
+	@MB_SESSION=/repo/tests/sessions/$(S).keys MB_LIMIT=$(or $(LIMIT),6000) scripts/game_run.sh build/run/game-$(S)-stress$(N) > build/run/game-$(S)-stress$(N).out 2>&1
+	@python3 -I tools/mbdump.py build/run/game-$(S)-stress$(N).mbx | grep -E "status|r(22|23|24|29|30) "
+	@python3 -I tools/heaptab.py build/run/game-$(S)-stress$(N).core
+	@echo "this was a test build: run 'make game' before anything else"
+
 baseline: game
 	@MB_SESSION=/repo/tests/sessions/boot-title.keys MB_LIMIT=300 scripts/game_run.sh build/run/game-boot-title > /dev/null 2>&1
 	@printf '%s\n' $(filter-out boot-title,$(BASELINE_SESSIONS)) | xargs -P 5 -I{} sh -c 'MB_NOBUILD=1 MB_SESSION=/repo/tests/sessions/{}.keys MB_LIMIT=2500 scripts/game_run.sh build/run/game-{} > build/run/game-{}.out 2>&1'
