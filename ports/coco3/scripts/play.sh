@@ -22,7 +22,7 @@ mkdir -p build/play/cfg build/play/nvram
 [ -z "$fresh" ] || unlink build/play/saves.ovl 2>/dev/null || true
 echo "Playing. The code wheel question: its code word is printed here. Keys: the host keyboard is the CoCo's (arrows, Enter, Esc = BREAK). Close the window to quit; saved games are kept in build/play/saves.ovl."
 syms=$(for n in kq kq_tail wheel_pick; do printf '%s=%s,' $n $(grep -h "^Symbol: _$n " build/game/pool.map build/game/core.map | head -1 | sed 's/.*= //'); done)
-MB_IMG="$ROOT/build/game/pool.img" MB_OVL="$ROOT/build/play/saves.ovl" MB_SYMS="$syms" ${keylog:+MB_KEYLOG=1} \
-  exec mame coco3 -rompath "$ROOT/roms" -ramsize 512K -flop1 "$ROOT/build/game/pool.dsk" \
+exec env MB_IMG="$ROOT/build/game/pool.img" MB_OVL="$ROOT/build/play/saves.ovl" MB_SYMS="$syms" ${keylog:+MB_KEYLOG=1} \
+  mame coco3 -rompath "$ROOT/roms" -ramsize 512K -flop1 "$ROOT/build/game/pool.dsk" \
     -window -nomaximize -skip_gameinfo -nvram_directory "$ROOT/build/play/nvram" -cfg_directory "$ROOT/build/play/cfg" \
     ${oc[@]+"${oc[@]}"} -autoboot_script "$ROOT/lua/play.lua"
