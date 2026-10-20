@@ -224,7 +224,7 @@ run-game:
 play: game
 	$(TC) python3 -I tools/mkgamedisk.py build/game build/gen/vm/DGROUP.IMG build/game/pool.dsk
 	$(TC) python3 -I tools/mkimage.py /repo/poolrad build/game build/gen/vm/DGROUP.IMG build/game/pool.img
-	scripts/play.sh $(if $(FAST),--fast $(FAST)) $(if $(FRESH),--fresh)
+	scripts/play.sh $(if $(FAST),--fast $(FAST)) $(if $(FRESH),--fresh) $(if $(KEYLOG),--keylog)
 
 # The game on the emulated CoCo 3 (MAME, headless): S=session; the screens it shows against goldens/4bpp (tools/gamecheck.py)
 S ?= boot-title

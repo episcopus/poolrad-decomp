@@ -70,6 +70,17 @@ m.natkeyboard:post((os.getenv("MB_CMD") or 'LOADM"POOL":EXEC') .. "\n")
 -- (whitepaper 5.12): the word is printed on the terminal once the question is on the screen. You type it yourself.
 local syms = {}
 for k, v in string.gmatch(os.getenv("MB_SYMS") or "", "([%w_]+)=(%x+)") do syms[k] = tonumber(v, 16) end
+-- MB_KEYLOG=1: print every key the engine's keyboard scan queues (a write tap on kq_tail, the queue's tail index): the code the game will read,
+-- with the emulated time, so what the game was given can be told from what was pressed
+if os.getenv("MB_KEYLOG") and syms.kq and syms.kq_tail then
+  keylog_tap = mem:install_write_tap(syms.kq_tail, syms.kq_tail, "keylog", function(offset, data, mask)
+    local tail = data & 15
+    local code = mem:read_u8(syms.kq + ((tail - 1) & 15))
+    if code == 0 then return end                   -- (the engine clears the queue at start)
+    print(string.format("play: t=%.1f key queued: code %d (%s)", m.time:as_double(), code, code >= 32 and code < 127 and string.char(code) or "-"))
+    io.stdout:flush()
+  end)
+end
 local WHEEL_WORDS = {"BEWARE", "ZOMBIE", "NOTNOW", "COPPER", "DRAGON", "EFREET", "FRIEND", "JUNGLE", "KNIGHT", "SAVIOR", "TEMPLE", "VULCAN", "WYVERN"}
 local function core_phys(a) return 0x30 * 0x2000 + a - 0x2000 end
 local function polls() return mem:read_u16(0x090A) end   -- the game polls the keyboard (MB_POLLS) while it waits for a key
