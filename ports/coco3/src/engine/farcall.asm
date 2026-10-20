@@ -35,6 +35,7 @@ __farcall
 @retry  ldx     #_banktab-1
         lda     b,x
         beq     @missing                the bank is not in memory: the loader has to bring it
+        bsr     fcstamp                 used now: the loader evicts the bank used longest ago (step 8.9)
         sta     MMU_SLOT4               map the callee's bank
         sta     MMU_SH
         inca
@@ -50,6 +51,7 @@ __farcall
 @remap  ldx     #_banktab-1
         lda     a,x
         beq     @reload                 the caller's bank was taken for another while the callee ran: bring it back
+        bsr     fcstamp
         sta     MMU_SLOT4
         sta     MMU_SH
         inca
@@ -101,6 +103,17 @@ __farcall
         orcc    #$50
 @stop   bra     @stop
         endc
+
+* A = the first block of a bank in the pool: stamp it with the tick. Keeps A, takes B and X. (The test builds keep their banks outside
+* the pool and stamp nothing.)
+fcstamp
+        ifdef   GAME
+        inc     <FC_TICK
+        ldb     <FC_TICK
+        ldx     #FC_STAMP-BANK_POOL_FIRST
+        stb     a,x
+        endc
+        rts
 
         ifndef  GAME
         SECTION code

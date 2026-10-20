@@ -10,6 +10,7 @@ BANK_ENTRY_SIZE EQU     3
 MMU_SLOT4       EQU     $FFA4           task 0 register for logical $8000
 MMU_SLOT5       EQU     $FFA5           task 0 register for logical $A000
 
+BANK_POOL_FIRST EQU     $18             the game's pool of banks: two blocks each from here (gamemap.h)
 BANK1_BLK       EQU     $0C             physical blocks $0C,$0D
 BANK2_BLK       EQU     $0E             physical blocks $0E,$0F
 

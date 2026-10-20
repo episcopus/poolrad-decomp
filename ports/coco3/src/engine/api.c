@@ -19,7 +19,8 @@ void eng_halt(void);
 
 #define POOL_N ((BANK_POOL_END - BANK_POOL_FIRST) / 2)
 static u8 pool_bank[POOL_N];              /* the bank in pool entry k, 0 = free */
-static u8 pool_next;
+#define FC_TICK (*(volatile u8 *)0x90)         /* farcall.asm: the tick, and the tick at which the bank in a pool block was last used */
+#define FC_STAMP ((volatile u8 *)(0x91 - BANK_POOL_FIRST))
 
 /* Any bank can be taken for another one: a caller on the bank stack that finds its bank gone is brought back by the return
  * path of farcall.asm (@reload), so a chain of calls can nest more banks than the pool holds (docs/HEAP-STUDY.md section 6). The
@@ -28,13 +29,19 @@ static u8 pool_next;
 u16 api_bankload(u16 bank)
 {
     DaxEntry e;
-    u8 k, t;
+    u8 k, t, a, b;
     DBG(1, bank);
-    k = pool_next;                         /* the next entry in turn, a free one first */
+    k = 0;                                 /* a free entry first, else the bank used longest ago (the trampoline stamps the pool block of every bank it enters) */
+    a = 0;
     for (t = 0; t < POOL_N; t++) {
-        if (pool_bank[(pool_next + t) % POOL_N] == 0) {
-            k = (u8)((pool_next + t) % POOL_N);
+        if (pool_bank[t] == 0) {
+            k = t;
             break;
+        }
+        b = (u8)(FC_TICK - FC_STAMP[BANK_POOL_FIRST + 2 * t]);
+        if (b >= a) {
+            a = b;
+            k = t;
         }
     }
     if (pool_bank[k])
@@ -50,7 +57,6 @@ u16 api_bankload(u16 bank)
     MB_RESULT(9) = (u16)(MB_RESULT(9) + 1);
     pool_bank[k] = (u8)bank;
     banktab[bank - 1] = (u8)(BANK_POOL_FIRST + 2 * k);
-    pool_next = (u8)((k + 1) % POOL_N);
     return 0;
 }
 

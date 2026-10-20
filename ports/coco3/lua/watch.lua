@@ -110,13 +110,28 @@ if os.getenv("MB_ITRACE") then      -- MB_ITRACE=t: from that emulated second, M
     end
   end)
 end
+if os.getenv("MB_BANKLOG") then      -- MB_BANKLOG=t0-t1: the far call trampoline's writes of FC_CURBANK ($80, the bank the code runs in or returns to) and FC_X ($87, the entry a call goes to) between those emulated seconds, two bytes each (kind 0 = bank, 1 = entry high, 2 = entry low; value), into OUT.banklog; tools/bankpool_sim.py replays it against other pool sizes and policies
+  local t0, t1 = os.getenv("MB_BANKLOG"):match("([%d.]+)-([%d.]+)")
+  bl_file, bl_buf = io.open(out .. ".banklog", "wb"), {}
+  local function bl_log(kind, data)
+    local now = m.time:as_double()
+    if now >= tonumber(t0) and now <= tonumber(t1) then
+      bl_buf[#bl_buf + 1] = string.char(kind, data & 0xFF)
+      if #bl_buf >= 4096 then bl_file:write(table.concat(bl_buf)); bl_buf = {} end
+    end
+  end
+  bl_tap = mem:install_write_tap(0x0080, 0x0080, "banklog", function(offset, data, mask) bl_log(0, data); return data end)
+  bl_tap2 = mem:install_write_tap(0x0087, 0x0088, "banklog2", function(offset, data, mask) bl_log(offset - 0x0086, data); return data end)
+  bl_frame = emu.add_machine_frame_notifier(function() if #bl_buf > 0 then bl_file:write(table.concat(bl_buf)); bl_file:flush(); bl_buf = {} end end)
+end
 if os.getenv("MB_PCLOG") then      -- MB_PCLOG=t0-t1: the program counter at every video frame between those emulated seconds
   local t0, t1 = os.getenv("MB_PCLOG"):match("([%d.]+)-([%d.]+)")
+  local eng_idx = tonumber((os.getenv("MB_SYMS") or ""):match("eng_idx=(%x+)") or "0", 16)
   pc_frame = emu.add_machine_frame_notifier(function()
     local now = m.time:as_double()
     if now >= tonumber(t0) and now <= tonumber(t1) then
       local st = m.devices[":maincpu"].state
-      print(string.format("pc t=%.3f pc=%04X s=%04X mmu=%02X%02X%02X%02X", now, st["PC"].value, st["S"].value, mem:read_u8(0xFFA0), mem:read_u8(0xFFA1), mem:read_u8(0xFFA2), mem:read_u8(0xFFA3)))
+      print(string.format("pc t=%.3f pc=%04X s=%04X task=%d bank=%d polls=%d eng=%d", now, st["PC"].value, st["S"].value, mem:read_u8(0x0909), mem:read_u8(0x0080), mem:read_u16(0x090A), mem:read_u8(eng_idx)))   -- (task: FC_TASK, bank: FC_CURBANK, polls: MB_POLLS, eng: the engine call in progress when task is 1; tools/prof_pc.py turns the samples into a profile)
     end
   end)
 end

@@ -22,6 +22,7 @@ BANK_BYTES = int(os.environ.get("BANK_BYTES", "0x4000"), 0)   # slots 4 and 5 (B
 BANK_LIMIT = BANK_BYTES - 0x180          # room for the entry table (3 bytes an entry) and a margin
 CORE_UNITS = ["pool", "res02", "res04", "res10", "res11"]   # resident
 SKIP_UNITS = {"image", "poolvars", "vmlayout"}
+BANK_GROUPS = json.loads((Path(__file__).resolve().parent.parent / "data/bank_groups.json").read_text()) if (Path(__file__).resolve().parent.parent / "data/bank_groups.json").exists() else []
 RTL_BANK = ("rtl_heap", "rtl_file", "rtl_strx")                     # the runtime that has no variables lives in a bank of its own (the core is small)
 # Replaced by the engine (step 8.5d): whole units, and routines of units that stay. The engine provides them under the same
 # names; until a routine is written a stub stops the program and says which one was asked for.
@@ -676,6 +677,30 @@ def main(argv):
         raise SystemExit("lwasm failed on proc_table.asm: " + p2.stderr[:300])
     info["proc_table"] = objinfo(str(obj / "proc_table.o"))
     core.append("proc_table")
+    # banks that are used together share one bank (step 8.9: data/bank_groups.json, made by tools/bankgroup.py from the bank logs of the sessions)
+    for grp in BANK_GROUPS:
+        ms = [b for b in banks if b["name"] in grp]
+        if len(ms) != len(grp):
+            print("bank group %s: %s not found, skipped" % (grp, sorted(set(grp) - {b["name"] for b in ms})))
+            continue
+        size = sum(b["size"] for b in ms)
+        if size > BANK_LIMIT:
+            raise SystemExit("bank group %s is %d bytes, over the limit %d" % (grp, size, BANK_LIMIT))
+        merged = {"name": "_".join(b["name"] for b in ms), "objs": [o for b in ms for o in b["objs"]], "size": size,
+                  "units": [u for b in ms for u in b["units"]]}
+        minfo = {"code": 0, "rodata": 0, "exports": set(), "imports": set(), "funcs": {}}
+        for b in ms:
+            i2 = info.pop(b["name"])
+            minfo["code"] += i2["code"]
+            minfo["rodata"] += i2["rodata"]
+            minfo["exports"] |= i2["exports"]
+            minfo["imports"] |= i2["imports"]
+            minfo["funcs"].update(i2["funcs"])
+        minfo["imports"] -= minfo["exports"]
+        info[merged["name"]] = minfo
+        at = banks.index(ms[0])
+        banks = [b for b in banks if b not in ms]
+        banks.insert(at, merged)
     # who defines what
     defined = {}
     for b in banks:
