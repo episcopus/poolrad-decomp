@@ -148,7 +148,13 @@ PATCHES = {
                "(*FPB(TMemPic_OVL16 *, PictureSlots[Dest].u.a0.SecondPic)).Pixels)), PixelBytes);\n",
                """  PictureCopy((u16)PictureSlots[Source].u.a0.FirstPic, (u16)PictureSlots[Dest].u.a0.FirstPic);
   PictureCopy((u16)PictureSlots[Source].u.a0.SecondPic, (u16)PictureSlots[Dest].u.a0.SecondPic);
-""")],
+"""),
+              # A DEVIATION FROM THE ORIGINAL, for a soft lock the original has (found playing, 8.8b): at the icon editor's "Head Weapon Exit" prompt any key
+              # that is not Exit (Enter, which ReadPromptChoice returns as 13, a stray letter) became the part, and the "Next Prev Keep Exit" prompt that
+              # followed has no case for it: Next, Prev, Keep and Exit then did nothing, for ever, since only Exit in the main state leaves the editor.
+              # Here only H and W are parts; any other key leaves the prompt where it is. The host C build and the PC original keep the lock.
+              ("all", "              } else {\n                fr.PartKey = fr.Key;\n                fr.State = EditCharacterIcon_StateStep;\n              }\n",
+               "              } else if (fr.Key == 'H' || fr.Key == 'W') {\n                fr.PartKey = fr.Key;\n                fr.State = EditCharacterIcon_StateStep;\n              }\n")],
 }
 
 

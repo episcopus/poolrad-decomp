@@ -64,6 +64,11 @@ end)
 pcall(function() m.ioport.ports[":screen_config"].fields["Monitor Type"]:set_value(1) end)   -- RGB
 emu.wait(2)                                                    -- BASIC needs a moment after reset before it takes keys
 m.natkeyboard:post((os.getenv("MB_CMD") or 'LOADM"POOL":EXEC') .. "\n")
+-- (the monitor type is set again a few seconds in: a first run once showed the composite palette, MAME's own settings can come in after the script's)
+for _ = 1, 3 do
+  emu.wait(4)
+  pcall(function() m.ioport.ports[":screen_config"].fields["Monitor Type"]:set_value(1) end)
+end
 
 -- The copy protection: the game asks for the code word that goes with a pair of runes of the original's paper code wheel (CheckCodeWheel,
 -- ovl02). There are 13 questions, the core keeps the last Random(13) it drew in wheel_pick (bit 7 set), and the words are the game's own table

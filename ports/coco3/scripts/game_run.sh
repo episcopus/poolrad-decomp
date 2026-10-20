@@ -22,7 +22,7 @@ syms=$(for n in kq kq_head kq_tail rand_seed wheel_pick pics pic_live; do printf
 tr=$(grep '^Symbol: _eng_tr ' build/game/pool.map | sed 's/.*= //'); tn=$(grep '^Symbol: _eng_tn ' build/game/pool.map | sed 's/.*= //')
 run_toolchain env ${MB_DAC:+MB_DAC=1} ${MB_WTAP:+MB_WTAP=$MB_WTAP} ${MB_NOTAP:+MB_NOTAP=1} ${MB_SECLOG:+MB_SECLOG=1} MB_IMG=/work/build/game/pool.img MB_TRACE=$((16#$tr)) MB_TRACEN=$((16#$tn)) MB_SYMS="$syms" ${MB_SESSION:+MB_SESSION=$MB_SESSION} ${MB_WATCH:+MB_WATCH=$MB_WATCH} ${MB_WATCH_N:+MB_WATCH_N=$MB_WATCH_N} ${MB_WATCH_IGNORE:+MB_WATCH_IGNORE=$MB_WATCH_IGNORE} ${MB_PCLOG:+MB_PCLOG=$MB_PCLOG} ${MB_DUMPRAM:+MB_DUMPRAM=$MB_DUMPRAM} ${MB_RLOG:+MB_RLOG=$MB_RLOG} ${MB_ITRACE:+MB_ITRACE=$MB_ITRACE} ${MB_PEEK:+"MB_PEEK=$MB_PEEK"} ${MB_PEEK_T:+MB_PEEK_T=$MB_PEEK_T} ${MB_WATCH_AFTER:+MB_WATCH_AFTER=$MB_WATCH_AFTER} ${MB_STILL:+MB_STILL=$MB_STILL} ${MB_KEYGAP:+MB_KEYGAP=$MB_KEYGAP} MB_OUT="/work/$out" MB_LIMIT="$limit" ${MB_KEYS:+"MB_KEYS=$MB_KEYS"} \
   mame coco3 -rompath /work/roms -pluginspath /usr/local/share/mame/plugins \
-    -ramsize 512K -flop1 /work/build/game/pool.dsk ${extra[@]+"${extra[@]}"} ${MB_DEBUGGER:+-debug -debugger none} -video soft -sound none -nothrottle \
+    -ramsize 512K -flop1 /work/build/game/pool.dsk ${extra[@]+"${extra[@]}"} ${MB_DEBUGGER:+-debug -debugger none} -video soft -sound none ${MB_THROTTLE:--nothrottle} \
     -skip_gameinfo -nvram_directory /tmp/nvram -cfg_directory /tmp/cfg \
     -snapshot_directory "/work/$(dirname "$out")" \
     -autoboot_script /work/lua/watch.lua -seconds_to_run "${MB_SECONDS:-$((limit + 30))}" 2>&1 \
