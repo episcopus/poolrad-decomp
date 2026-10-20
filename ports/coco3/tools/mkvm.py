@@ -39,7 +39,7 @@ NAT_BASE = 0x0000                                          # DS offsets of the h
 VM_BASE = 0x2000
 # --coco: the DS offsets are the CoCo's addresses (a native global at offset o is at address o, a block of the mapped heap
 # likewise) and the paged globals live at offsets from $8000 up, which no address of the map is used for.
-COCO_NAT_BASE = 0x4ED0
+COCO_NAT_BASE = 0x5790                                    # after HEAPDATA (src/game/coco_map.h: $4C80, 2,822 bytes)
 COCO_VM_BASE = 0x8000
 CONST_END = 0x43DC
 # System unit variables and the Input/Output records the runtime reads and writes itself: always native
@@ -262,6 +262,9 @@ def main(argv):
             yield m.group(1), [a.strip() for a in args]
 
     bare = {nm: re.compile(r"^(?:\((?:void|u8|const u8)? ?\*\))?&?\(?" + nm + r"\)?$") for nm, (_, k) in kinds.items() if k != "scalar"}
+    # a scalar is a pointer only when its address is taken: `&BattleExperience` handed to ComputeBattleExperience points into a data window that the
+    # callee's own accesses take away (HEAP-STUDY.md, option 1: with the characters banked the callee maps more pages and the pointer was stale)
+    bare.update({nm: re.compile(r"^(?:\((?:void|u8|const u8)? ?\*\))?&\(?" + nm + r"\)?$") for nm, (_, k) in kinds.items() if k == "scalar"})
     for u, t in units.items():
         if u in ENGINE_UNITS or u in ("image", "poolvars"):
             continue

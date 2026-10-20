@@ -47,8 +47,9 @@ __farcall
         pulu    a                       the bank to restore
         sta     <FC_CURBANK
         beq     @nomap                  0: the caller was resident code
-        ldx     #_banktab-1
+@remap  ldx     #_banktab-1
         lda     a,x
+        beq     @reload                 the caller's bank was taken for another while the callee ran: bring it back
         sta     MMU_SLOT4
         sta     MMU_SH
         inca
@@ -60,6 +61,28 @@ __farcall
         ldu     <FC_U
         ldd     <FC_D
         jmp     ,x
+@reload
+        ifdef   GAME
+*       a bank on the bank stack can be evicted (a chain of calls can nest more banks than the pool holds): the loader brings it
+*       back before the return goes on. U is the bank stack pointer of the pulls above, the result is in FC_D
+        lda     <FC_CURBANK
+        tfr     a,b
+        clra
+        ldx     <FC_D                   the callee's result: the loader's kernels use FC_D and FC_Y as scratch
+        pshs    u,y,x,d
+        clrb
+        jsr     __engcall
+        leas    2,s
+        puls    x,y,u
+        stx     <FC_D
+        lda     <FC_CURBANK
+        bra     @remap
+        else
+        lda     #3
+        sta     MB_STATUS
+        orcc    #$50
+@stop2  bra     @stop2
+        endc
 @missing
         ifdef   GAME
 *       the game: the engine loads the bank (api_bankload, routine 0) and the call is tried again

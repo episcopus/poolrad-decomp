@@ -56,6 +56,7 @@ class Gen(DeclMixin, ExprMixin, BuiltinMixin, StmtMixin):
     def __init__(self):
         self.coco = False                  # the CoCo profile (CMOC-readable C, step 8.2)
         self.placement = None              # pointee type name -> mapped | banked (default engine), --placement FILE
+        self.peek = False                  # --peek-pointers: a pointer read out of a banked block goes through PEEKP (the CoCo build's vm_pkp)
         self.engine_derefs = {}            # (unit, type) -> dereferences of an engine-class block by game logic
         self.taken: dict[str, tuple] = {}
         self.macros: set[str] = set()
@@ -933,11 +934,13 @@ def main(argv=None) -> int:
                     help="pc: the PC memory model (c/game); coco: C that CMOC reads (step 8.2, tools/c/p2c_coco.py)")
     ap.add_argument("--placement", help="a TOML file placing pointer types: mapped (a native 16-bit address), banked (an accessor), "
                     "engine (default: the PC heap); only with --profile coco (ports/coco3/placement.toml)")
+    ap.add_argument("--peek-pointers", action="store_true", help="the CoCo build: a pointer that is a field of a banked block is read through PEEKP (ports/coco3/src/game/pool.h)")
     ap.add_argument("units", nargs="*", help="unit ids to translate (default: all)")
     a = ap.parse_args(argv)
     files = sorted((ROOT / "src").glob("*.PAS"))
     g = Gen()
     g.coco = a.profile == "coco"
+    g.peek = a.peek_pointers
     if a.placement:
         import tomllib
         pl = tomllib.loads(Path(a.placement).read_text())

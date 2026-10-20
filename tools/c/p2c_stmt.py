@@ -297,8 +297,17 @@ class StmtMixin:
                 raise TransError("with over a non-record (line %d)" % n.line)
             self.cur.nwith += 1
             nm = "w%d" % self.cur.nwith
-            self.emit("%s *%s = &%s;" % (self.record_ctype(e.ty), nm, self.paren(e)))
-            self.cur.withs.append((e.ty, nm + "->"))
+            sp = self.split_fpb(e.code)
+            if sp:
+                # a banked block is reached through a data window that the next access to another page takes away: the with keeps
+                # the far pointer and maps the block again at every field (docs/HEAP-STUDY.md, option 1)
+                self.emit("farptr %sp = %s;" % (nm, sp[1]))
+                self.cur.withs.append((e.ty, "(*FPB(%s, %sp))%s." % (sp[0], nm, sp[2])))
+            else:
+                if "FPB(" in e.code:
+                    self.emit("/* WINDOW-WITH (line %d): the pointer below is into a data window that the body may take away */" % n.line)
+                self.emit("%s *%s = &%s;" % (self.record_ctype(e.ty), nm, self.paren(e)))
+                self.cur.withs.append((e.ty, nm + "->"))
             added += 1
         self.body_of(n.body)
         for _ in range(added):

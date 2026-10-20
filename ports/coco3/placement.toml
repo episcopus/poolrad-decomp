@@ -12,13 +12,15 @@
 
 [mapped]
 types = [
-  "TCharacter", "TAffect", "TMenuLine", "TCombatant", "TCombatNode", "TLineState", "TReturnEntry",
-  "TCombatMap", "TMapRows", "TGeoCellBlock", "TBlock400", "TScoredCharacter",
-  "TVmWords9700", "TSheetFields", "TAbilityBlock", "TDamageDice", "TResistView",
+  "TCombatNode", "TLineState", "TReturnEntry",
+  "TCombatMap", "TMapRows", "TGeoCellBlock", "TBlock400",
+  "TVmWords9700",
 ]
 
 [banked]
 types = [
+  "TCharacter", "TAffect", "TMenuLine", "TCombatant",   # option 1 of docs/HEAP-STUDY.md: what scales with the size of an encounter (characters, their combat records, affects, items)
+  "TScoredCharacter", "TSheetFields", "TAbilityBlock", "TDamageDice", "TResistView",   # typed views of a TCharacter: they follow it
   "TGameVars", "TEclCode", "TVmWords4900", "TVmWords6B00", "TMemPic", "TPictureHeader",
   "TWallTiles", "TWallSets",         # 8.7: 2.3 KB the mapped heap needs for a fight; one block, two typed views (WallSets is absolute WallTiles), so both banked
 ]

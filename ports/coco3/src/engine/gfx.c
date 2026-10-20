@@ -196,6 +196,7 @@ static const u8 run_n[PIC_RUNS] = {6, 8, 5};                  /* blocks in each 
 #define PIC_SPACE ((u32)PIC_NBLK * 0x2000UL)
 static u32 ext_lin[PIC_EXTENTS];          /* start in the linear space */
 static u16 ext_len[PIC_EXTENTS];          /* 0 = free slot */
+static u16 pic_live;                      /* live bytes / 16 (measurement) */
 
 static u8 pic_phys(u8 idx)                /* linear block index -> physical block */
 {
@@ -258,6 +259,10 @@ static u8 pic_place(u16 total, u8 *blk, u16 *off)
         return 6;
     ext_lin[i] = at;
     ext_len[i] = total;
+    pic_live = (u16)(pic_live + (total >> 4));
+    MB_RESULT(26) = pic_live;
+    if ((u16)((at + total) >> 4) > MB_RESULT(25))              /* the high water of the picture store, in 16 byte units (docs/HEAP-STUDY.md) */
+        MB_RESULT(25) = (u16)((at + total) >> 4);
     *blk = pic_phys((u8)(at >> 13));
     *off = (u16)(at & 0x1FFFUL);
     return 0;
@@ -269,6 +274,8 @@ void pic_free(const Pic *p)
     u32 at = (u32)pic_lin(p->blk) * 0x2000UL + p->off;
     for (i = 0; i < PIC_EXTENTS; i++)
         if (ext_len[i] && ext_lin[i] == at) {
+            pic_live = (u16)(pic_live - (ext_len[i] >> 4));
+            MB_RESULT(26) = pic_live;
             ext_len[i] = 0;
             return;
         }

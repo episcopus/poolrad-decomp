@@ -55,11 +55,16 @@ end
 if os.getenv("MB_WATCH") then      -- MB_WATCH=hexfrom-hexto: log the first writes into that range (pc, s, address, value)
   local lo, hi = os.getenv("MB_WATCH"):match("(%x+)-(%x+)")
   local n = 0
+  local il, ih = (os.getenv("MB_WATCH_IGNORE") or ""):match("(%x+)-(%x+)")
+  local ignore_lo, ignore_hi = il and tonumber(il, 16), ih and tonumber(ih, 16)
   watch_tap = mem:install_write_tap(tonumber(lo, 16), tonumber(hi, 16), "watch", function(offset, data, mask)
+    local st = m.devices[":maincpu"].state
+    if ignore_lo and st["PC"].value >= ignore_lo and st["PC"].value < ignore_hi then return end     -- MB_WATCH_IGNORE=from-to: writes by code in that range are not logged (the far-call trampoline)
     if n < tonumber(os.getenv("MB_WATCH_N") or "12") and m.time:as_double() >= tonumber(os.getenv("MB_WATCH_AFTER") or "0") then
       n = n + 1
-      local st = m.devices[":maincpu"].state
-      print(string.format("watch write %04X=%02X pc=%04X s=%04X u=%04X x=%04X t=%.1f", offset, data & 0xFF, st["PC"].value, st["S"].value, st["U"].value, st["X"].value, m.time:as_double()))
+      local sp, bytes = st["S"].value, {}
+      for k = 0, 23 do bytes[#bytes + 1] = string.format("%02X", mem:read_u8(sp + k)) end
+      print(string.format("watch write %04X=%02X pc=%04X s=%04X u=%04X x=%04X t=%.1f stack %s", offset, data & 0xFF, st["PC"].value, sp, st["U"].value, st["X"].value, m.time:as_double(), table.concat(bytes, " ")))
     end
   end)
 end
@@ -267,8 +272,9 @@ do   -- the paged globals (physical blocks $10..$13) and the native area of the 
   local lf = io.open(out .. ".low", "wb")                -- slot 0: the shared page (stack, mailbox, bank stack)
   lf:write(ram:read_block(0x38 * 0x2000, 0x2000))
   lf:close()
-  local bf = io.open(out .. ".bheap", "wb")              -- the banked heap: its four pages are the physical blocks $14..$17 (VMBLK_HEAP); a heap pointer is
-  bf:write(ram:read_block(0x14 * 0x2000, 0x8000))        -- the linear address BHEAP_LIN0 ($2C7C0, rtl_heap.c) + page * $2000 + the offset in the page
+  local bf = io.open(out .. ".bheap", "wb")              -- the banked heap: eight pages, the physical blocks $14..$17 and $24..$27 (VMBLK_HEAP, VMBLK_HEAP2); a heap
+  bf:write(ram:read_block(0x14 * 0x2000, 0x8000))        -- pointer is BSEG ($2000) + page in the high word and the offset in the page in the low one
+  bf:write(ram:read_block(0x24 * 0x2000, 0x8000))
   bf:close()
   local nf = io.open(out .. ".core", "wb")
   nf:write(ram:read_block(0x30 * 0x2000, 0x6000))

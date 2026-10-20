@@ -134,7 +134,7 @@ PATCHES = {
     # in it turn from the file's order into the CoCo's, as BlockRead does for the records of a character file. The affect and item records are Move
     # destinations of a known type: the translator turns them round itself (p2c_expr move_swaps, step 8.7b); the patches that did it by hand swapped twice.
     "ovl17": [("all", "  rtl_Move((void *)&(*FPD(u8 *, Block)), (void *)&(*FPD(u8 *, Who)), 285);\n",
-               "  rtl_Move((void *)&(*FPD(u8 *, Block)), (void *)&(*FPD(u8 *, Who)), 285);\n  rtl_swapdesc((void *)&(*FPM(TCharacter *, Who)), swd_ovl17_0);\n")],
+               "  rtl_Move((void *)&(*FPD(u8 *, Block)), (void *)&(*FPD(u8 *, Who)), 285);\n  rtl_swapdesc((void *)&(*FPB(TCharacter *, Who)), swd_ovl17_0);\n")],
     "ovl32": [("between", "Load24x24Set", "  CopyBytes = (u16)(*FPB(TMemPic *, Loaded))", "Tail[DestOfs], CopyBytes);\n  }\n",
                "  if (SqrPaciBank1 != 0) {\n    PictureAppend((u16)Loaded, (u16)SqrPaciBank1, Index);\n  }\n"),
               ("fn", "DrawIcon", """void DrawIcon(s8 CellCol, s8 CellRow, u8 IconSet, u8 Mirror, u8 PicIndex)

@@ -235,6 +235,24 @@ class ExprMixin:
             return self.call_routine(s, [], n)
         return self.const_E(s.value, s.type)
 
+    @staticmethod
+    def split_fpb(code):
+        """`(*FPB(T *, ptr)).rest` -> (`T *`, `ptr`, `.rest`), the pointer being the outermost banked deref of the text; None if the text is not one."""
+        if not code.startswith("(*FPB("):
+            return None
+        i = len("(*FPB(")
+        j = code.index(", ", i)
+        depth, k = 1, j + 2
+        while k < len(code) and depth:
+            if code[k] in "([":
+                depth += 1
+            elif code[k] in ")]":
+                depth -= 1
+            k += 1
+        if depth or not code.startswith(")", k):
+            return None
+        return code[i:j], code[j + 2:k - 1], code[k + 1:]
+
     def ex_deref(self, n):
         a = self.ex(n.a)
         t = a.ty
@@ -248,7 +266,18 @@ class ExprMixin:
                 return E("(*FPD(u8 *, %s))" % a.code, P.BYTE, lv=True)      # an untyped pointer: raw bytes
             if t.kind != "ptr" or t.elem is None:
                 raise TransError("dereference of %r (line %d)" % (t, n.line))
-        return E("(*%s(%s, %s))" % (self.deref_macro(t), ptr_ctype(t.elem), a.code), t.elem, lv=True)
+        macro = self.deref_macro(t)
+        pcode = a.code
+        if macro == "FPB" and self.coco and self.peek:
+            # the pointer is itself a field of a banked block, (*FPB(U *, q)).path: read it without taking a data window (vm_pkp), so that
+            # the mapping this deref makes is the only one it adds. A struct copy or a call with two addresses keeps the first one while the
+            # second is worked out: with the pointer read through a window of its own the second needs no more than two windows (HEAP-STUDY.md)
+            sp = self.split_fpb(pcode)
+            if sp and sp[2].startswith(".") and "," not in sp[2] and "FPB(" not in sp[2] and "VMV(" not in sp[2] and "FPD(" not in sp[2]:
+                pcode = "PEEKP(%s, %s, %s)" % (sp[0], sp[1], sp[2])
+        e = E("(*%s(%s, %s))" % (macro, ptr_ctype(t.elem), pcode), t.elem, lv=True)
+        e.deref = (macro, ptr_ctype(t.elem), pcode)           # st_with keeps the pointer, not the address, of a banked block
+        return e
 
     ENGINE_UNITS = {"RES05", "RES06", "RES07", "RES09", "OVL28", "OVL32", "OVL34"}
 

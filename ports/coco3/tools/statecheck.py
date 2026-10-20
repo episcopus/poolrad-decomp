@@ -251,13 +251,27 @@ def check_party(session, prefix):
         if len(f) >= 3 and f[2] == "PartyListHead":
             head = int(f[0], 16)
     a = next(new + head - lo for lo, sz, c, new in clusters if lo <= head < lo + sz and c == "N")
-    ptr = struct.unpack(">I", core[a - 0x2000:a - 0x2000 + 4])[0] & 0xFFFF
+    ptr = struct.unpack(">I", core[a - 0x2000:a - 0x2000 + 4])[0]
+    bheap = open(prefix + ".bheap", "rb").read() if os.path.exists(prefix + ".bheap") else b""
+
+    def record(p):
+        """the 0x120 bytes of the record a far pointer names: a block of the mapped heap (DGROUP's segment, the offset is the address) or of the
+        banked heap (BSEG + the page in the high word, the offset in the page: src/game/coco_map.h)"""
+        seg, off = p >> 16, p & 0xFFFF
+        if seg == 0x1C7C:
+            return core[off - 0x2000:off - 0x2000 + 0x120]
+        if seg >> 8 == 0x20:
+            at = (seg & 0xFF) * 0x2000 + off
+            return bheap[at:at + 0x120]
+        return b""
+
     coco = []
-    while ptr and len(coco) < 30:
-        r = core[ptr - 0x2000:ptr - 0x2000 + 0x120]
+    while ptr and len(coco) < 70:
+        r = record(ptr)
+        if len(r) < 0x120:
+            break
         coco.append(r)
-        nxt = struct.unpack(">I", r[0x104:0x108])[0]
-        ptr = nxt & 0xFFFF if nxt else 0
+        ptr = struct.unpack(">I", r[0x104:0x108])[0]
     bad = 0
     if len(coco) != len(host):
         print("  party: %d records on the CoCo, %d on the host" % (len(coco), len(host)))

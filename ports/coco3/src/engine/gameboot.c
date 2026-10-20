@@ -40,8 +40,8 @@ int main(void)
     MB_RESULT(3) = img_entry("DGROUP  ", 2, &e);
     if (MB_RESULT(3) == 0)
         MB_RESULT(8) = dax_unpack(&img_vol.f, &e, 0, 0, (u8)(GAME_BLK + (nat_base >> 13) - 1), (u16)(nat_base & 0x1FFFu), 0);
-    for (i = 0; i < 4; i++) {                                           /* the banked heap starts zero */
-        win_set(0, (u8)(VMBLK_HEAP + i));
+    for (i = 0; i < NBPAGES; i++) {                                     /* the banked heap starts zero */
+        win_set(0, (u8)(i < 4 ? VMBLK_HEAP + i : VMBLK_HEAP2 + i - 4));
         k_fill(WIN0, 0, 0x2000);
     }
     for (b = 0; b < 3; b++)                                             /* task 0's slots 1..3: the core */

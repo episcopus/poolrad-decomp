@@ -21,34 +21,21 @@ void eng_halt(void);
 static u8 pool_bank[POOL_N];              /* the bank in pool entry k, 0 = free */
 static u8 pool_next;
 
-/* a bank is in use when it is mapped or a caller on the bank stack will come back to it (farcall.asm: 5 bytes an entry,
- * the first is the bank that was mapped before the call) */
-static u8 bank_in_use(u8 bank)
-{
-    const u8 *p = *(u8 **)0x81;           /* FC_BSPTR */
-    if (*(u8 *)0x80 == bank)              /* FC_CURBANK */
-        return 1;
-    for (; p < (const u8 *)0x2000; p += 5)
-        if (*p == bank)
-            return 1;
-    return 0;
-}
+/* Any bank can be taken for another one: a caller on the bank stack that finds its bank gone is brought back by the return
+ * path of farcall.asm (@reload), so a chain of calls can nest more banks than the pool holds (docs/HEAP-STUDY.md section 6). The
+ * bank being loaded is the one place no other bank may take. */
 
 u16 api_bankload(u16 bank)
 {
     DaxEntry e;
     u8 k, t;
     DBG(1, bank);
+    k = pool_next;                         /* the next entry in turn, a free one first */
     for (t = 0; t < POOL_N; t++) {
-        k = (u8)((pool_next + t) % POOL_N);
-        if (pool_bank[k] == 0 || !bank_in_use(pool_bank[k]))
+        if (pool_bank[(pool_next + t) % POOL_N] == 0) {
+            k = (u8)((pool_next + t) % POOL_N);
             break;
-    }
-    if (t == POOL_N) {                     /* every bank is on the stack: cannot happen with 8 and a call depth of 5 */
-        MB_RESULT(29) = 2;
-        MB_RESULT(31) = bank;
-        MB_STATUS = MB_FAIL;
-        eng_halt();
+        }
     }
     if (pool_bank[k])
         banktab[pool_bank[k] - 1] = 0;
