@@ -7,6 +7,7 @@
         EXPORT  _k_copy
         EXPORT  _k_fill
         EXPORT  _k_blit
+        EXPORT  _k_mask
         ifndef  ENG_TEST
         EXPORT  _k_mirror
         endc
@@ -85,6 +86,41 @@ _k_fill
         pshu    d,x
         bra     @l4
 @out    puls    u,y,pc
+
+* void k_mask(u8 *d, u8 *m, u8 n, u8 key): the colour key of a masked picture becomes its mask (UnpackPicturePixels): for each byte of d the
+* mask byte is $F0 for a high nibble equal to the key and $0F for a low one; the byte loses those nibbles. n >= 1.
+_k_mask
+        pshs    u,y
+        ldx     6,s
+        ldy     8,s
+        ldb     11,s
+        stb     <FC_D
+        ldb     13,s
+        stb     <FC_Y
+@l      lda     ,x
+        clrb
+        pshs    a
+        lsra
+        lsra
+        lsra
+        lsra
+        cmpa    <FC_Y
+        bne     @lo
+        ldb     #$F0
+@lo     lda     ,s
+        anda    #$0F
+        cmpa    <FC_Y
+        bne     @st
+        orb     #$0F
+@st     stb     ,y+
+        comb
+        puls    a
+        stb     <FC_Y+1
+        anda    <FC_Y+1
+        sta     ,x+
+        dec     <FC_D
+        bne     @l
+        puls    u,y,pc
 
 * void k_blit(void): rows of a picture into DrawBuf (step 8.9). The parameters are in `bp` (gfx.c sets them):
 *   d     the destination of the first row, DrawBuf's window 0 address with the column included

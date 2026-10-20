@@ -193,10 +193,10 @@ void gfx_text(u8 col, u8 row, u8 color, const char *s)
 static const u8 run_first[PIC_RUNS] = {0x08, 0x28, 0x33};      /* physical block of the first block of each run */
 static const u8 run_n[PIC_RUNS] = {6, 8, 5};                  /* blocks in each run */
 #define PIC_NBLK 19                                            /* all runs: linear block indexes 0..18 */
-#define PIC_SPACE ((u32)PIC_NBLK * 0x2000UL)
-static u32 ext_lin[PIC_EXTENTS];          /* start in the linear space */
-static u16 ext_len[PIC_EXTENTS];          /* 0 = free slot */
-static u16 pic_live;                      /* live bytes / 16 (measurement) */
+#define PIC_UNITS (PIC_NBLK * 512)                              /* the store in 16 byte units (16 bit arithmetic: the 32 bit helpers of the compiler cost 10% of a walk) */
+static u16 ext_lin[PIC_EXTENTS];          /* start in the linear space, in units */
+static u16 ext_len[PIC_EXTENTS];          /* length in units, 0 = free slot */
+static u16 pic_live;                      /* live units (measurement) */
 
 static u8 pic_phys(u8 idx)                /* linear block index -> physical block */
 {
@@ -220,13 +220,13 @@ static u8 pic_lin(u8 blk)
     return 0;
 }
 
-/* the end (linear byte) of the run that holds byte `at` */
-static u32 run_end(u32 at)
+/* the end (in units) of the run that holds unit `at` */
+static u16 run_end(u16 at)
 {
     u8 r;
-    u32 end = 0;
+    u16 end = 0;
     for (r = 0; r < PIC_RUNS; r++) {
-        end += (u32)run_n[r] * 0x2000UL;
+        end = (u16)(end + run_n[r] * 512u);
         if (at < end)
             return end;
     }
@@ -236,45 +236,45 @@ static u32 run_end(u32 at)
 static u8 pic_place(u16 total, u8 *blk, u16 *off)
 {
     u8 i, j;
-    u32 at = 0;
+    u16 at = 0, units = (u16)((total + 15u) >> 4);
     if (total > PIC_TOTAL_MAX)
         return 5;
     for (;;) {                             /* candidate: 0, then the end of every extent */
-        if (at + total > PIC_SPACE)
+        if ((u16)(at + units) > PIC_UNITS)
             return 6;
-        if (at + total > run_end(at)) {    /* a picture does not cross from one run of blocks to the next */
+        if ((u16)(at + units) > run_end(at)) {    /* a picture does not cross from one run of blocks to the next */
             at = run_end(at);
             continue;
         }
         for (j = 0; j < PIC_EXTENTS; j++)
-            if (ext_len[j] && ext_lin[j] < at + total && ext_lin[j] + ext_len[j] > at)
+            if (ext_len[j] && ext_lin[j] < (u16)(at + units) && (u16)(ext_lin[j] + ext_len[j]) > at)
                 break;
         if (j == PIC_EXTENTS)
             break;
-        at = ext_lin[j] + ext_len[j];      /* retry behind the extent in the way */
+        at = (u16)(ext_lin[j] + ext_len[j]);      /* retry behind the extent in the way */
     }
     for (i = 0; i < PIC_EXTENTS && ext_len[i]; i++)
         ;
     if (i == PIC_EXTENTS)
         return 6;
     ext_lin[i] = at;
-    ext_len[i] = total;
-    pic_live = (u16)(pic_live + (total >> 4));
+    ext_len[i] = units;
+    pic_live = (u16)(pic_live + units);
     MB_RESULT(26) = pic_live;
-    if ((u16)((at + total) >> 4) > MB_RESULT(25))              /* the high water of the picture store, in 16 byte units (docs/HEAP-STUDY.md) */
-        MB_RESULT(25) = (u16)((at + total) >> 4);
-    *blk = pic_phys((u8)(at >> 13));
-    *off = (u16)(at & 0x1FFFUL);
+    if ((u16)(at + units) > MB_RESULT(25))              /* the high water of the picture store, in 16 byte units (docs/HEAP-STUDY.md) */
+        MB_RESULT(25) = (u16)(at + units);
+    *blk = pic_phys((u8)(at >> 9));
+    *off = (u16)((at & 0x1FF) << 4);
     return 0;
 }
 
 void pic_free(const Pic *p)
 {
     u8 i;
-    u32 at = (u32)pic_lin(p->blk) * 0x2000UL + p->off;
+    u16 at = (u16)(pic_lin(p->blk) * 512u + (p->off >> 4));
     for (i = 0; i < PIC_EXTENTS; i++)
         if (ext_len[i] && ext_lin[i] == at) {
-            pic_live = (u16)(pic_live - (ext_len[i] >> 4));
+            pic_live = (u16)(pic_live - ext_len[i]);
             MB_RESULT(26) = pic_live;
             ext_len[i] = 0;
             return;
@@ -423,7 +423,7 @@ u8 pic_load(Pic *p, RsFile *f, u8 id, u8 key, u8 masked)
 u8 pic_load_e(Pic *p, RsFile *f, const DaxEntry *e, u8 key, u8 masked)
 {
     u8 hdr[17];
-    u8 st, v, k, d[128], m[128];
+    u8 st, k, d[128], m[128];
     u16 size, total, i, n, rel;
     if (e->raw <= 17)
         return 4;
@@ -457,15 +457,7 @@ u8 pic_load_e(Pic *p, RsFile *f, const DaxEntry *e, u8 key, u8 masked)
         for (rel = 0; rel < size; rel = (u16)(rel + n)) {
             n = (u16)(size - rel) < 128 ? (u16)(size - rel) : 128;
             pic_rd(p, rel, d, n);
-            for (i = 0; i < n; i++) {
-                v = d[i];
-                m[i] = 0;
-                if ((v >> 4) == k)
-                    m[i] = 0xF0;
-                if ((v & 15) == k)
-                    m[i] = (u8)(m[i] + 0x0F);
-                d[i] = (u8)(v & ~m[i]);
-            }
+            k_mask(d, m, (u8)n, k);       /* m = the pixels equal to the colour key, d = the others */
             for (i = 0; i < n;) {          /* back to the pixels and the mask, mind the block border */
                 u16 c;
                 w = pic_ptr(p, (u16)(rel + i), &room);
@@ -501,6 +493,7 @@ u8 pic_alloc(Pic *p, u8 height, u8 wcols, u8 items, u8 masked)
     return 0;
 }
 
+#ifndef ENG_TEST
 /* RemapPictureColors, 4 bits a pixel: every pixel of item `item` becomes lut[pixel] (the mask stays) */
 void pic_remap(const Pic *p, u8 item, const u8 *lut)
 {
@@ -514,6 +507,7 @@ void pic_remap(const Pic *p, u8 item, const u8 *lut)
         rel = (u16)(rel + c);
     }
 }
+#endif
 
 /* FillPlaneRect (res06): the cells (8 pixels wide, 8 rows high) l..r, t..b solid in one colour */
 void gfx_fill_cells(u8 l, u8 t, u8 r, u8 b, u8 color)

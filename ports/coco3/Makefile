@@ -18,7 +18,7 @@ LINKLIBS := -L$(CMOCLIB) -lcmoc-crt-void -lcmoc-std-void
 ENGINE_OBJ := build/obj/boot.o build/obj/mailbox.o
 P ?= byte-arith
 
-.PHONY: play snd-check snd-wav game-wav stress game help doctor toolchain eng-data eng-test eng-tests gfx-ref data data-verify vol-test vol-tests sizes heap-stats prof coco-host place-host golden4 golden4-record demo test-demo run-demo probe probes asm-probe bench test clean risk-scan baseline
+.PHONY: perf-run perf-all bank-groups play snd-check snd-wav game-wav stress game help doctor toolchain eng-data eng-test eng-tests gfx-ref data data-verify vol-test vol-tests sizes heap-stats prof coco-host place-host golden4 golden4-record demo test-demo run-demo probe probes asm-probe bench test clean risk-scan baseline
 .DEFAULT_GOAL := help
 
 help:
@@ -265,6 +265,25 @@ baseline: game
 	@MB_SESSION=/repo/tests/sessions/boot-title.keys MB_LIMIT=300 scripts/game_run.sh build/run/game-boot-title > /dev/null 2>&1
 	@printf '%s\n' $(filter-out boot-title,$(BASELINE_SESSIONS)) | xargs -P 5 -I{} sh -c 'MB_NOBUILD=1 MB_SESSION=/repo/tests/sessions/{}.keys MB_LIMIT=2500 scripts/game_run.sh build/run/game-{} > build/run/game-{}.out 2>&1'
 	@for s in $(BASELINE_SESSIONS); do printf '%-18s ' $$s; python3 -I tools/gamecheck.py $$s build/run/game-$$s 2>&1 | tail -1; done
+
+# step 8.9: where the time goes (docs/PHASE-8.9a.md). perf-run plays one session with the program counter sampled every frame, every far call
+# logged and every storage request logged, then prints: busy time by unit and by engine call, the bank pool under other sizes and policies, and
+# what was read from the image. perf-all does it for every session (five at a time, the image built first); bank-groups chooses which banks
+# share a bank from those logs (WRITE=1 writes data/bank_groups.json, which `make game` reads).
+perf-run: game
+	MB_PCLOG=0-$(or $(LIMIT),2500) MB_BANKLOG=0-$(or $(LIMIT),2500) MB_SECLOG=1 MB_SESSION=/repo/tests/sessions/$(S).keys MB_LIMIT=$(or $(LIMIT),2500) scripts/game_run.sh build/run/prof-$(S) > build/run/prof-$(S).out 2>&1
+	python3 -I tools/prof_pc.py build/run/prof-$(S).out --unit --top 12
+	python3 -I tools/prof_pc.py build/run/prof-$(S).out --api --top 25
+	python3 -I tools/bankpool_sim.py build/run/prof-$(S).banklog
+	python3 -I tools/seclog.py build/run/prof-$(S).out --rate 12.6
+
+perf-all: game
+	@MB_SESSION=/repo/tests/sessions/boot-title.keys MB_LIMIT=300 scripts/game_run.sh build/run/game-boot-title > /dev/null 2>&1
+	@printf '%s\n' $(BASELINE_SESSIONS) | xargs -P 5 -I{} sh -c 'MB_PCLOG=0-2500 MB_BANKLOG=0-2500 MB_SECLOG=1 MB_NOBUILD=1 MB_SESSION=/repo/tests/sessions/{}.keys MB_LIMIT=2500 scripts/game_run.sh build/run/prof-{} > build/run/prof-{}.out 2>&1'
+	@echo "logs in build/run/prof-*.out and prof-*.banklog; make bank-groups"
+
+bank-groups:
+	python3 -I tools/bankgroup.py 'build/run/prof-*.banklog' --slots 6 --policy lru $(if $(WRITE),--write data/bank_groups.json)
 
 # step 8.8: the sound (docs/PHASE-8.8.md)
 snd-check:

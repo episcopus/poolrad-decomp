@@ -92,6 +92,7 @@ typedef struct BlitParams {
 } BlitParams;
 extern BlitParams bp;
 void k_blit(void);
+void k_mask(u8 *d, u8 *m, u8 n, u8 key);                      /* UnpackPicturePixels: m[i] = the nibbles of d[i] equal to key as F or 0, d[i] without them */
 void k_mirror(u8 *b, u8 n);                                    /* a row reversed, the two pixels of each byte swapped */
 void k_glyph8(u8 *scr, const u8 *glyph, const u8 *tab);         /* 8 font rows to rows 160 bytes apart */
 u16 k_sum(const u8 *p, u16 n);                                  /* the sum of the bytes, modulo 65536 */
