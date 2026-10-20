@@ -18,7 +18,7 @@ LINKLIBS := -L$(CMOCLIB) -lcmoc-crt-void -lcmoc-std-void
 ENGINE_OBJ := build/obj/boot.o build/obj/mailbox.o
 P ?= byte-arith
 
-.PHONY: stress game help doctor toolchain eng-data eng-test eng-tests gfx-ref data data-verify vol-test vol-tests sizes heap-stats prof coco-host place-host golden4 golden4-record demo test-demo run-demo probe probes asm-probe bench test clean risk-scan baseline
+.PHONY: snd-check snd-wav game-wav stress game help doctor toolchain eng-data eng-test eng-tests gfx-ref data data-verify vol-test vol-tests sizes heap-stats prof coco-host place-host golden4 golden4-record demo test-demo run-demo probe probes asm-probe bench test clean risk-scan baseline
 .DEFAULT_GOAL := help
 
 help:
@@ -34,6 +34,9 @@ help:
 	@echo "  make vol-test VOL=n 8.4: every block of volume n read from its image on the emulated CoCo, MAME and XRoar"
 	@echo "  make vol-tests      the nine volumes"
 	@echo "  make eng-tests      every engine test"
+	@echo "  make snd-check      8.8: the CoCo's sound driver on the host against the oracle's golden (clang, no emulator)"
+	@echo "  make snd-wav        8.8: the twenty tunes as WAV files, the host model's and the emulated CoCo's (needs MAME)"
+	@echo "  make game-wav S=x   8.8: a session of the game with its sound as a WAV (build/run/game-x.wav)"
 	@echo "  make gfx-ref        rerun the Phase 7 C engine on the t_gfx script and compare with goldens/engine (WRITE=1 rewrites)"
 	@echo "  make sizes          compile every generated unit of ../../c/game with CMOC, tabulate the sizes (step 8.1)"
 	@echo "  make heap-stats     replay the sessions on a heap-stats build of the C game: heap peak, DGROUP use"
@@ -176,7 +179,7 @@ build/demo/demo.dsk: build/demo/demo.bin
 
 # ---------------------------------------------------------------- engine tests (step 8.3)
 POOLRAD_DATA ?= ../../poolrad
-ENG_OBJ := build/obj/boot.o build/obj/mailbox.o build/obj/mmu.o build/obj/disk.o build/obj/irq.o build/obj/rsdos.o build/obj/rle.o build/obj/kernels.o build/obj/vol.o build/obj/dax.o build/obj/gfx.o build/obj/nobanks.o
+ENG_OBJ := build/obj/boot.o build/obj/mailbox.o build/obj/mmu.o build/obj/disk.o build/obj/irq.o build/obj/snd.o build/obj/rsdos.o build/obj/rle.o build/obj/kernels.o build/obj/vol.o build/obj/dax.o build/obj/gfx.o build/obj/nobanks.o
 ENG_TESTS := $(filter-out t_vol,$(patsubst src/engtest/%.c,%,$(wildcard src/engtest/t_*.c)))
 T ?= t_disk
 ENG_LIMIT_t_skew := 400
@@ -189,6 +192,7 @@ ENG_KEYS_t_irq := 12 !A\\n
 
 eng-data:
 	@python3 -I tools/engdata.py $(POOLRAD_DATA) build/eng
+	@$(if $(filter t_snd,$(T)),tools/snd_check.sh expect)
 
 eng-test: eng-data data
 	@$(TC) $(IMAKE) --no-print-directory build/eng/$(T).dsk build/eng/$(T).bin
@@ -256,6 +260,21 @@ baseline: game
 	@printf '%s\n' $(filter-out boot-title,$(BASELINE_SESSIONS)) | xargs -P 5 -I{} sh -c 'MB_NOBUILD=1 MB_SESSION=/repo/tests/sessions/{}.keys MB_LIMIT=2500 scripts/game_run.sh build/run/game-{} > build/run/game-{}.out 2>&1'
 	@for s in $(BASELINE_SESSIONS); do printf '%-18s ' $$s; python3 -I tools/gamecheck.py $$s build/run/game-$$s 2>&1 | tail -1; done
 
+# step 8.8: the sound (docs/PHASE-8.8.md)
+snd-check:
+	@tools/snd_check.sh
+
+# the twenty tunes as WAV files: the host model's (build/snd/host-reference.wav) and the emulated CoCo's (build/run/t_snd-mame.wav, from the DAC writes)
+snd-wav: snd-check
+	@build/snd/snd_ref ideal --dac build/snd/ideal.dac 2>/dev/null; python3 -I tools/dac2wav.py build/snd/ideal.dac build/snd/host-reference.wav --units
+	@MB_DAC=1 $(MAKE) --no-print-directory eng-test T=t_snd | grep -E "status|MAME"
+	@python3 -I tools/dac2wav.py build/run/t_snd-mame.dac build/run/t_snd-mame.wav; python3 -I tools/snd_compare.py build/run/t_snd-mame
+
+# a session of the game with its sound: make game-wav S=combat-spells  ->  build/run/game-<S>.wav
+game-wav: game
+	MB_DAC=1 MB_SESSION=$(or $(KEYS),/repo/tests/sessions/$(S).keys) MB_LIMIT=$(or $(LIMIT),300) scripts/game_run.sh build/run/game-$(S) > /dev/null
+	python3 -I tools/dac2wav.py build/run/game-$(S).dac build/run/game-$(S).wav --squeeze --rate 22050
+
 # step 8.6: the exploration sessions on the CoCo, screens and state
 exploration:
 	$(MAKE) game-run S=walk-explore LIMIT=500
@@ -284,6 +303,14 @@ eng-tests:
 build/eng/%.o: src/engtest/%.c src/engine/eng.h src/engine/mailbox.h
 	@mkdir -p $(@D); $(CC) -Ibuild/eng -Ibuild/data -o $@ $<
 build/eng/t_vol.o: build/eng/expectvol.h
+build/eng/t_snd.o: src/snd/snd.h src/snd/snd_core.c src/snd/snd_driver.c build/eng/snd_expect.h
+# t_snd links the interrupts and the sound only (the driver and its tunes are 8 KB of the test)
+ENG_OBJ_t_snd := build/obj/boot.o build/obj/mailbox.o build/obj/mmu.o build/obj/irq.o build/obj/snd.o build/obj/nobanks.o
+build/eng/t_snd.bin build/eng/t_snd.map: build/eng/t_snd.o $(ENG_OBJ_t_snd) src/engine/core.link
+	lwlink --format=decb --script=src/engine/core.link --map=build/eng/t_snd.map \
+	  -o build/eng/t_snd.bin $(ENG_OBJ_t_snd) build/eng/t_snd.o $(LINKLIBS)
+	python3 -I tools/maplimit.py build/eng/t_snd.map program_end 7BFF
+	python3 -I tools/stripbin.py build/eng/t_snd.bin
 build/eng/%.bin build/eng/%.map: build/eng/%.o $(ENG_OBJ) src/engine/core.link
 	lwlink --format=decb --script=src/engine/core.link --map=build/eng/$*.map \
 	  -o build/eng/$*.bin $(ENG_OBJ) build/eng/$*.o $(LINKLIBS)

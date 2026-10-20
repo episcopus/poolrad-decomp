@@ -19,7 +19,10 @@ Step 8.7c (the human's requirement: the whole game, encounters of 63 members inc
 and the spell fight, and option 1 was built: characters, combatants, affects and items live in the banked heap behind `vm_bp` (65 cycles), the mapped heap peaks at 3.3 KB, 16 of 16 sessions
 match, `council-guards` plays to the end, `make stress N=3 S=council-guards` fills the banked heap to 46 KB of 61 KB at 63 members without a fatal, and the bank pool no longer limits the depth of a call
 chain (`docs/PHASE-8.7c.md`, `docs/RISKS.md` classes 8, 12 and 13).
-Sound (8.8) is next.
+Step 8.8 (sound, the PC speaker's effects on the CoCo's 6 bit DAC; no Tandy/GMC by the human's decision): the game plays its 20 effects. The tune interpreter is generated from the host's proven driver
+(`tools/mksnd.py`), the square wave is made by the GIME timer's FIRQ (code in the constant page, `src/engine/snd.asm`), the driver's 236.7 Hz clock is the count of those interrupts, run by the game's clock and
+keyboard polls. The host model makes the oracle's 7,045 speaker events of the golden `sound-driver` and the 6809 makes the same calls; 16 of 16 sessions still match, with no DGROUP place open
+(`docs/PHASE-8.8.md`). Listen: `make snd-wav`, `make game-wav S=combat-spells`. Step 8.9 (performance, release) is next.
 Step 8.5: the game itself, translated, runs on the emulated CoCo 3 (`make first-light`, headless MAME). `boot-title` shows the original's
 ssi-logo, title and credits screens bit for bit; `create-character` plays the whole session (wheel, race, sex, class, alignment, the
 rolled sheet, head and body, the icon editor, the save) and its labelled screens are equal to the goldens, the character record and
@@ -51,6 +54,8 @@ make first-light   # 8.5: both sessions, screens and state
 make exploration   # 8.6: walk-explore and camp-save, screens and state
 make combat        # 8.7: camp-rest-combat and parley-combat, screens and state
 make baseline      # 8.7b: every session of tests/sessions on the CoCo (screens and state), see docs/PHASE-8.7b.md
+make snd-check     # 8.8: the CoCo's sound driver on the host against the oracle's golden (clang, 2 s)
+make snd-wav       # 8.8: the twenty tunes as WAV files (host model and emulated CoCo); make game-wav S=combat-spells: a session's sound
 make risk-scan     # 8.7b: the static checks (docs/RISKS.md), 8.7c: tools/winscan.py
 make stress N=3 S=council-guards   # 8.7c: a test build with encounters N times as large (up to 63 members), the heaps' high water; `make game` afterwards
 make game-view S=create-character  # 8.5: play a session and open what it showed as an animated GIF

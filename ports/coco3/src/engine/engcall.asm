@@ -20,6 +20,7 @@
         EXPORT  _eng_tr
         EXPORT  _eng_tn
         IMPORT  _eng_entry
+        IMPORT  _tins
 
 __engcall
         stb     >_eng_idx               B = the routine's number
@@ -35,12 +36,16 @@ __engcall
         pshs    x                       the engine routine returns here
         lda     #1
         sta     >FC_TASK
+        ora     >_tins                  (the timer's fast clock, when the sound runs: src/engine/snd.asm)
         sta     >$FF91                  task 1: the next instruction comes from the same shared slot 0
         jmp     >_eng_entry
 
 eng_back
         clr     >FC_TASK
-        clr     >$FF91                  task 0
+        pshs    a                       (the engine's result is in D)
+        lda     >_tins
+        sta     >$FF91                  task 0 (and the timer's clock)
+        puls    a
         jmp     [eng_ret]
 
         ENDSECTION

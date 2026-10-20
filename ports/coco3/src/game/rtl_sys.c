@@ -22,6 +22,11 @@ void rtl_Halt(u16 code)
     eng_halt();
 }
 
+/* ---- the sound driver's clock (step 8.8): the game waits by polling the clock and the keyboard, so these are where the driver runs -------- */
+extern u16 snd_n, snd_thresh;          /* the interrupt's count of the timer's expiries, and the count at which a tick of the driver is due (0: no sound) */
+void snd_run(void);                    /* the sound bank: run the driver for the ticks that have passed */
+#define SND_PUMP() do { if (snd_thresh && snd_n >= snd_thresh) snd_run(); } while (0)
+
 /* ---- the clock: the vertical sync, 59.92 Hz ----------------------------------------------------------------- */
 u16 frame_count(void);
 
@@ -29,7 +34,9 @@ static u32 frames32(void)
 {
     static u16 last;
     static u16 hi;
-    u16 now = frame_count();
+    u16 now;
+    SND_PUMP();
+    now = frame_count();
     if (now < last)
         hi++;
     last = now;
@@ -74,6 +81,7 @@ static u8 pending_scan;                /* ReadKey returns an extended key as 0 a
 int rtl_KeyPressed(void)
 {
     MB_POLLS++;
+    SND_PUMP();
     if (pending_scan)
         return 1;
     if (!pending)

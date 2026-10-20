@@ -18,6 +18,9 @@ void eng_leave(void);
 #define WIN0 ((u8 *)0x8000)
 #define WIN1 ((u8 *)0xA000)
 
+/* ---- snd.asm: the sound interrupt's code is copied to the constant page ($FE00) once, by the engine, before the game or a test starts the sound */
+void snd_install(void);
+
 /* ---- disk.asm (DSKCON through Disk BASIC's ROM) and rsdos.c (a read-only RS-DOS file system). */
 extern u8 dsk_buf[256];
 u8 dsk_read(u8 drive, u8 track, u8 sector);   /* 0 = ok; else Disk BASIC's status byte */

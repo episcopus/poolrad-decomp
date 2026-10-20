@@ -32,9 +32,6 @@ FillPageSegment res06: the EGA page segment
 CurrentVideoMode res07: SetVideoMode is the engine's and does not write this variable
 RowFirstChangedCol res07: the changed-rows trackers of DrawBuf (the engine has its own, gfx.c)
 IconBackgroundBuffer res07: a picture pointer (a handle on the CoCo)
-SoundMode res08 init: the CoCo starts with the sound driver off (8.9)
-SoundModeBeforePause res06: sound state (8.9)
-SoundDriverIdle res03: sound driver state (8.9)
 # Pointers: what a pointer holds is an address of the PC's heap or a segment, on the CoCo a handle of a picture, an address of
 # the mapped heap or the id of a routine
 SheetCharacter pointer to a character

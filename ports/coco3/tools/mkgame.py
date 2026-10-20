@@ -632,6 +632,28 @@ def main(argv):
     rinfo["imports"] -= rinfo["exports"]
     banks.append({"name": "rtl", "objs": robjs, "size": rinfo["code"] + rinfo["rodata"], "units": ["rtl"]})
     info["rtl"] = rinfo
+    # the sound driver (step 8.8): the generated driver (tools/mksnd.py) and its backend, one bank. The tune data is its rodata; the driver's variables are a
+    # block in the mapped heap (snd.h), the interrupt's are in the engine's shared data (src/engine/snd.asm).
+    sobjs = []
+    sincs = [str(here / "shim"), str(inc), str(here / "src/snd")]
+    for stem in ("snd_driver", "snd_core"):
+        o2 = obj / (stem + ".o")
+        compile_c(str(here / "src/snd" / (stem + ".c")), str(o2), sincs)
+        sobjs.append(str(o2))
+    sinfo = {"code": 0, "rodata": 0, "exports": set(), "imports": set(), "funcs": {}}
+    for o2 in sobjs:
+        i2 = objinfo(o2)
+        sinfo["code"] += i2["code"]
+        sinfo["rodata"] += i2["rodata"]
+        sinfo["exports"] |= i2["exports"]
+        sinfo["imports"] |= i2["imports"]
+    sinfo["imports"] -= sinfo["exports"]
+    if sinfo["code"] + sinfo["rodata"] > BANK_LIMIT:
+        raise SystemExit("the sound bank is %d bytes, over the bank limit %d" % (sinfo["code"] + sinfo["rodata"], BANK_LIMIT))
+    banks.append({"name": "snd", "objs": sobjs, "size": sinfo["code"] + sinfo["rodata"], "units": ["snd"]})
+    info["snd"] = sinfo
+    # the C files of src/game (the core: they are not units, so nothing above sees what they import) call these routines of banks
+    info["corec"] = {"code": 0, "rodata": 0, "exports": set(), "imports": {"_snd_run"}, "funcs": {}}
     p2 = run(["lwasm", "--6809", "-fobj", "-o", str(obj / "proc_table.o"), str(out / "src/proc_table.asm")])
     if p2.returncode:
         raise SystemExit("lwasm failed on proc_table.asm: " + p2.stderr[:300])
@@ -749,7 +771,7 @@ def main(argv):
 
 
 ENGINE_C = ["api", "gameboot", "vol", "img", "dax", "gfx", "rsdos", "mailbox"]
-ENGINE_ASM = ["boot", "mmu", "disk", "irq", "kernels", "rle", "engcall", "apitab", "nobanks"]
+ENGINE_ASM = ["boot", "mmu", "disk", "irq", "snd", "kernels", "rle", "engcall", "apitab", "nobanks"]
 
 
 def build_engine(out, here):

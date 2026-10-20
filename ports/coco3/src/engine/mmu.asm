@@ -4,6 +4,7 @@
         INCLUDE mailbox.inc
 
         SECTION code
+        IMPORT  _tins
         EXPORT  _mmu_set
         EXPORT  _mmu_get
         EXPORT  _win_set
@@ -40,12 +41,14 @@ _eng_enter
         pshs    a
         lda     #1
         sta     FC_TASK
+        ora     >_tins                  (the timer's fast clock: snd.asm)
         sta     $FF91
         puls    a,pc
 _eng_leave
         pshs    a
         clr     FC_TASK
-        clr     $FF91
+        lda     >_tins
+        sta     $FF91
         puls    a,pc
 
 * u8 mmu_get(u8 slot)

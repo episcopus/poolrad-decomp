@@ -22,6 +22,7 @@ int main(void)
     u16 nat_base;
     k_fill(banktab, 0, 64);
     irq_start();                                                        /* the frame clock */
+    snd_install();                                                      /* the sound interrupt, into the constant page (snd.asm) */
     for (b = 0; b < 3; b++) {                                           /* the game's native memory starts as zeros (heap tables, bss) */
         win_set(0, (u8)(GAME_BLK + b));
         k_fill(WIN0, 0, 0x2000);

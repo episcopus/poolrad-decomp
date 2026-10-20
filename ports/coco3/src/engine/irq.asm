@@ -30,6 +30,7 @@
         EXPORT  _game_launch
         IMPORT  _eng_init0
         EXPORT  _eng_halt
+        EXPORT  _firq_isr
 
 * void irq_start(void): vectors, GIME sources on, interrupts unmasked
 _irq_start
@@ -37,7 +38,7 @@ _irq_start
         ldd     #irq_isr
         std     $FFF8                   the vectors where the CPU fetches them with all RAM mapped (RAM at the top of
         std     $FEF8                   the last block) and, as Disk BASIC's ROM has them, through the stubs in the
-        ldd     #firq_isr               constant page: $FEF7 (IRQ) and $FEF4 (FIRQ) hold three bytes, here a JMP
+        ldd     #_firq_isr               constant page: $FEF7 (IRQ) and $FEF4 (FIRQ) hold three bytes, here a JMP
         std     $FFF6
         std     $FEF5
         lda     #$7E
@@ -172,7 +173,7 @@ irq_isr
         bsr     kbd_tick
 @out    rti
 
-firq_isr
+_firq_isr
         pshs    d
         lda     $FF93                   acknowledge
         ldd     >ticks

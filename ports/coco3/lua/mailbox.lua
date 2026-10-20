@@ -14,6 +14,39 @@ local limit = tonumber(os.getenv("MB_LIMIT") or "60")
 
 pcall(function() m.ioport.ports[":screen_config"].fields["Monitor Type"]:set_value(1) end) -- RGB
 
+
+-- MB_DAC=1: every change of the 6 bit DAC ($FF20 bits 7..2) goes to <out>.dac as `seconds value` (tools/dac2wav.py makes the WAV: step 8.8)
+local dac_lines, dac_last, dac_tap = {}, -1, nil
+if os.getenv("MB_DAC") then
+  dac_tap = mem:install_write_tap(0xFF20, 0xFF20, "dac", function(offset, data, mask)
+    local v = data & 0xFC
+    if v ~= dac_last and #dac_lines < 4000000 then
+      dac_last = v
+      dac_lines[#dac_lines + 1] = string.format("%.7f %d", m.time:as_double(), v)
+    end
+  end)
+end
+-- MB_WTAP=addr (hex): the time of every write to that byte goes to <out>.wtap (step 8.8: the sound interrupt's counter)
+local wtap_lines, wtap_tap = {}, nil
+if os.getenv("MB_WTAP") then
+  local a = tonumber(os.getenv("MB_WTAP"), 16)
+  wtap_tap = mem:install_write_tap(a, a, "wtap", function(offset, data, mask)
+    if #wtap_lines < 400000 then wtap_lines[#wtap_lines + 1] = string.format("%.7f %d", m.time:as_double(), data & 0xFF) end
+  end)
+end
+local function dac_save(out)
+  if os.getenv("MB_WTAP") then
+    local wf = io.open(out .. ".wtap", "w")
+    for _, l in ipairs(wtap_lines) do wf:write(l, "\n") end
+    wf:close()
+  end
+  if os.getenv("MB_DAC") then
+    local df = io.open(out .. ".dac", "w")
+    for _, l in ipairs(dac_lines) do df:write(l, "\n") end
+    df:close()
+  end
+end
+
 -- BASIC needs a moment after reset before it takes keys.
 emu.wait(2)
 m.natkeyboard:post(cmd .. "\n")
@@ -50,6 +83,7 @@ while m.time:as_double() - t0 < limit do
     if mem:read_u8(0x0905) ~= 0 then break end
   end
 end
+dac_save(out)
 local cf = io.open(out .. ".cp", "wb")
 for _, l in ipairs(cps) do cf:write(l, "\n") end
 cf:close()

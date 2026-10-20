@@ -1,5 +1,5 @@
 /* platform.c: the game's start on the CoCo (step 8.5c): what the PC's Turbo Pascal program header and the initialisation part
- * of RES08 did, and the hardware layer of the sound driver (nothing yet: no sound). */
+ * of RES08 did. The sound driver is src/snd (step 8.8: the PC speaker's tunes on the CoCo's DAC); its first call allocates its state. */
 #include "game.h"
 #include "mailbox.h"
 
@@ -10,7 +10,7 @@ void eng_leave(void);
 void vm_init(void);
 
 /* the initialisation part of RES08, with the answers of POOL.CFG the original ran with (E, P, C:\POOLRAD\, C:\POOLRAD\SAVE\, F):
- * the EGA's semantics for the game, no sound hardware */
+ * the EGA's semantics for the game, the PC speaker (SoundSpeaker: the CoCo's DAC plays its tunes) */
 void init_RES08(void)
 {
     CheckBreak = 0;
@@ -22,18 +22,12 @@ void init_RES08(void)
     FillTextPage = 0;
     SetActivePage(TextPage);
     SetPageSegment(FillTextPage);
-    SoundMode = 2;
+    SoundMode = SoundSpeaker;
+    SilenceSound();                     /* as RES08: saves SoundMode, starts the driver, no tune, stops it (the sound bank loads here) */
     rtl_str_assign(GameDir, 255, S("\013C:\\POOLRAD\\"));
     rtl_str_assign(SaveDir, 255, S("\020C:\\POOLRAD\\SAVE\\"));
     CfgFlagF = 1;
 }
-
-/* the hardware layer of res03's sound driver */
-void SetSoundOutput(u16 enabled) { (void)enabled; }
-void SetSpeakerTune(u16 tune) { (void)tune; }
-void SetTandyTune(u16 tune) { (void)tune; }
-void StartSoundTimer(void) { }
-void StopSoundTimer(void) { }
 
 int main(void)
 {
