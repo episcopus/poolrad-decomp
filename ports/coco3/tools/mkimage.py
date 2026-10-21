@@ -12,6 +12,7 @@ Layout, big endian ("PIM2"; src/engine/img.c and vol.c read it):
                (BANK/id, CORE/0, DGROUP/0) or, for DGROUP/1 and /2, a run length coded block (tools/mkvm.py)
   data         the blocks, back to back; the raw objects start on a sector boundary so that a whole sector read lands in a block
   save area    save_sectors sectors at save_lsn (the character and game files the game writes; zero at first)"""
+import hashlib
 import json
 import struct
 import sys
@@ -21,6 +22,7 @@ HERE = Path(__file__).resolve().parent
 import os
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, os.path.join(os.environ.get("REPO", str(HERE.parent.parent.parent)), "tools/re"))
+import dax  # noqa: E402  (tools/re)
 import mkvolumes  # noqa: E402
 from mkgamedisk import flatten  # noqa: E402
 
@@ -90,9 +92,21 @@ def main(data_dir, gamedir, dgroup, out):
     data_off = -(-(ents_off + 10 * nent) // 256) * 256
     body = bytearray()
     placed = []
-    for fi, bid, packed, raw, kind, payload in ents:
+    shared = {}                                                    # unpacked content of a coded block -> (offset, packed size, raw size) of its one copy
+    saved = 0
+    for k, (fi, bid, packed, raw, kind, payload) in enumerate(ents):
         if kind == 1 and len(body) % 256:
             body += bytes(256 - len(body) % 256)
+        if kind == 0 and fi != files.index("DGROUP"):
+            # the eight tileset files of a family hold blocks identical to each other (PIC1..8, 8X8D1..8, ...): one copy serves every entry
+            key = hashlib.md5(dax.unrle(payload)).digest()
+            if key in shared and shared[key][2] == raw:
+                off, pk, _ = shared[key]
+                placed.append(off)
+                ents[k] = (fi, bid, pk, raw, kind, payload)
+                saved += len(payload)
+                continue
+            shared[key] = (data_off + len(body), len(payload), raw)
         placed.append(data_off + len(body))
         body += payload
     if len(body) % 256:
@@ -112,7 +126,7 @@ def main(data_dir, gamedir, dgroup, out):
         img[ents_off + 10 * i:ents_off + 10 * i + 10] = struct.pack(">BBLHH", fi, bid, off, packed, raw)
     img += body + seed_saves(data_dir)
     Path(out).write_bytes(bytes(img))
-    print("mkimage: %d files, %d entries, %d sectors (%d KB), saves at sector %d" % (len(files), nent, len(img) // 256, len(img) // 1024, save_lsn))
+    print("mkimage: %d files, %d entries, %d sectors (%d KB), saves at sector %d; identical blocks stored once: %d bytes saved" % (len(files), nent, len(img) // 256, len(img) // 1024, save_lsn, saved))
 
 
 if __name__ == "__main__":

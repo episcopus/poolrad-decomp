@@ -18,7 +18,7 @@ LINKLIBS := -L$(CMOCLIB) -lcmoc-crt-void -lcmoc-std-void
 ENGINE_OBJ := build/obj/boot.o build/obj/mailbox.o
 P ?= byte-arith
 
-.PHONY: perf-run perf-all bank-groups play snd-check snd-wav game-wav stress game help doctor toolchain eng-data eng-test eng-tests gfx-ref data data-verify vol-test vol-tests sizes heap-stats prof coco-host place-host golden4 golden4-record demo test-demo run-demo probe probes asm-probe bench test clean risk-scan baseline
+.PHONY: perf-run perf-all step-check bank-groups play snd-check snd-wav game-wav stress game help doctor toolchain eng-data eng-test eng-tests gfx-ref data data-verify vol-test vol-tests sizes heap-stats prof coco-host place-host golden4 golden4-record demo test-demo run-demo probe probes asm-probe bench test clean risk-scan baseline
 .DEFAULT_GOAL := help
 
 help:
@@ -280,11 +280,20 @@ perf-run: game
 
 perf-all: game
 	@MB_SESSION=/repo/tests/sessions/boot-title.keys MB_LIMIT=300 scripts/game_run.sh build/run/game-boot-title > /dev/null 2>&1
-	@printf '%s\n' $(BASELINE_SESSIONS) | xargs -P 5 -I{} sh -c 'MB_PCLOG=0-2500 MB_BANKLOG=0-2500 MB_SECLOG=1 MB_NOBUILD=1 MB_SESSION=/repo/tests/sessions/{}.keys MB_LIMIT=2500 scripts/game_run.sh build/run/prof-{} > build/run/prof-{}.out 2>&1'
-	@echo "logs in build/run/prof-*.out and prof-*.banklog; make bank-groups"
+	@printf '%s\n' $(BASELINE_SESSIONS) | xargs -P 5 -I{} sh -c 'MB_PCLOG=0-2500 MB_BANKLOG=0-2500 MB_SECLOG=1 MB_NOBUILD=1 MB_SESSION=/repo/tests/sessions/{}.keys MB_LIMIT=2500 scripts/game_run.sh build/run/game-{} > build/run/game-{}.out 2>&1'
+	@echo "logs in build/run/game-*.out and game-*.banklog (the files the baseline writes, with the profile logs on): make bank-groups, tools/baseline_table.py, tools/stepmetrics.py"
+
+# step 8.9c: one run that proves a step and measures it: every session with the profile logs on, then the screens, the state and the save area against the goldens,
+# then the numbers (tools/stepmetrics.py) under LABEL. The image is built first by perf-all. Exit 1 if a labelled screen or the state fails.
+step-check: perf-all
+	@bad=0; for s in $(BASELINE_SESSIONS); do python3 -I tools/gamecheck.py $$s build/run/game-$$s 2>&1 | tail -1 | grep -q "^$$s: \([0-9]*\) of \1 labelled" || { echo "SCREENS FAIL: $$s"; bad=1; }; done; \
+	  for s in $(BASELINE_SESSIONS); do python3 -I tools/savecheck.py build/game/pool.img build/run/game-$$s.saves | grep -q ": ok" || { echo "SAVE AREA FAIL: $$s"; bad=1; }; done; \
+	  python3 -I tools/baseline_table.py 2>&1 | awk -F'|' 'NR>2 {print $$2,$$3,$$5,$$6}'; \
+	  python3 -I tools/baseline_table.py 2>&1 | grep -E "[1-9][0-9]* open|[1-9][0-9]* differ" | grep -v "0 differ" ; \
+	  python3 -I tools/stepmetrics.py "$(LABEL)"; exit $$bad
 
 bank-groups:
-	python3 -I tools/bankgroup.py 'build/run/prof-*.banklog' --slots 6 --policy lru $(if $(WRITE),--write data/bank_groups.json)
+	python3 -I tools/bankgroup.py 'build/run/game-*.banklog' --slots 6 --policy lru $(if $(WRITE),--write data/bank_groups.json)
 
 # step 8.8: the sound (docs/PHASE-8.8.md)
 snd-check:
