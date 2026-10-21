@@ -196,7 +196,8 @@ PATCHES = {
 """)],
     # step 8.9e (combat): the target scan of the AI and its line walk (patches/*.c), the search of a combatant's number
     "ovl30": [("fn", "SetupLine", (PATCHDIR / "ovl30_setupline.c").read_text()), ("fn", "StepLine", (PATCHDIR / "ovl30_stepline.c").read_text()),
-              ("fn", "WalkLine", (PATCHDIR / "ovl30_walkline.c").read_text()), ("fn", "ScanTargets", (PATCHDIR / "ovl30_scantargets.c").read_text())],
+              ("fn", "WalkLine", (PATCHDIR / "ovl30_walkline.c").read_text()), ("fn", "ScanTargets", (PATCHDIR / "ovl30_scantargets.c").read_text()),
+              ("fn", "SortTable", (PATCHDIR / "ovl30_sorttable.c").read_text())],
     "ovl31": [("fn", "CombatantIndex", (PATCHDIR / "ovl31_combatantindex.c").read_text())],
     "ovl13": [("between", "ShowAttackAnimation", "  PixelBytes = (*FPB(TPictureHeader *, CombatAnimationPicture)).ByteSize;\n",
                "    PixelBytes = ((u16)PixelBytes / 4);\n  }\n", ""),
