@@ -45,6 +45,7 @@ WRAPPED = {"LoadPicture", "AllocatePicture", "ReleasePicture", "RemapPictureColo
 # one marker through another (inclusive) in one function.
 PATCH_DECLS = ("void DrawIconPic(u16 h, s16 col, s16 row, u8 mirror);\nvoid PictureCopy(u16 src, u16 dst);\nvoid SetPictureXY(u16 h, u16 x, u16 y);\n"
                "u16 PictureBytes(u16 h);\nvoid DrawWallTiles(s16 Col, s16 Row, u8 W, u8 H, u8 Flags, s16 Ofs, const u8 *Tiles, const u16 *Banks, const u16 *Bases);\nvoid PicData(u16 h, u16 rel, const u8 *buf, u8 n, u8 key);\nvoid DrawSpritePic(u16 h);\nvoid PictureAppend(u16 src, u16 dst, u8 index);\nvoid PictureItemCopy(u16 src, u16 dst, u8 item, u8 mirror);\nu16 DaxLoad(const u8 *name, u16 id);\nvoid DaxRead(u16 off, u8 *dst, u16 n);\n")
+PATCHDIR = Path(__file__).resolve().parent.parent / "patches"       # the replacement texts of whole routines (step 8.9e)
 PATCHES = {
     # ovl07 ScaleMoney and ovl03 LoseMoneyAndItemsCommand (ECL command 40, what paying off an encounter runs): the original scales each of the seven money
     # amounts by a Real, (100 - Percent) / 100, and truncates; CMOC has no floating point library here (five symbols were missing at link time and the
@@ -193,6 +194,10 @@ PATCHES = {
   }
 }
 """)],
+    # step 8.9e (combat): the target scan of the AI and its line walk (patches/*.c), the search of a combatant's number
+    "ovl30": [("fn", "SetupLine", (PATCHDIR / "ovl30_setupline.c").read_text()), ("fn", "StepLine", (PATCHDIR / "ovl30_stepline.c").read_text()),
+              ("fn", "WalkLine", (PATCHDIR / "ovl30_walkline.c").read_text()), ("fn", "ScanTargets", (PATCHDIR / "ovl30_scantargets.c").read_text())],
+    "ovl31": [("fn", "CombatantIndex", (PATCHDIR / "ovl31_combatantindex.c").read_text())],
     "ovl13": [("between", "ShowAttackAnimation", "  PixelBytes = (*FPB(TPictureHeader *, CombatAnimationPicture)).ByteSize;\n",
                "    PixelBytes = ((u16)PixelBytes / 4);\n  }\n", ""),
               # CMOC 0.1.100 -O2 crashes (segmentation fault) compiling ResolveCombatantAttacks once its Attacker is a 16 bit handle (tools/narrow.py): the store through
