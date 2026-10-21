@@ -86,6 +86,7 @@ u8 vol_lookup(const char *name8, u8 id, Vol **vp, DaxEntry *e);     /* over ever
 /* ---- kernels.asm: the inner loops. Nothing here maps a window; the pointers must be valid when called. */
 void k_copy(u8 *dst, const u8 *src, u8 n);                      /* n = 0 copies nothing */
 void k_fill(u8 *dst, u8 value, u16 n);
+void k_fillrect(u8 *dst, u8 value, u8 n, u8 rows);                 /* rows rows of n bytes (a multiple of 4), 160 bytes apart, in the mapped window */
 /* rows of a picture into DrawBuf with the trackers (kernels.asm; the parameters are set in bp first) */
 typedef struct BlitParams {
     u16 d, src, msk;                      /* the destination of the first row (window 0, the column included), the picture's rows and the mask's in RAM (0 = opaque) */

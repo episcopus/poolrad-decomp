@@ -515,8 +515,8 @@ void pic_remap(const Pic *p, u8 item, const u8 *lut)
 /* FillPlaneRect (res06): the cells (8 pixels wide, 8 rows high) l..r, t..b solid in one colour */
 void gfx_fill_cells(u8 l, u8 t, u8 r, u8 b, u8 color)
 {
-    u8 y, y1, v = (u8)(color * 17), blk, cur = 0xFF;
-    u16 n;
+    u8 y, y1, v = (u8)(color * 17), rows;
+    u16 n, a, rem, room, c;
     if (l > r || t > b || l > 39 || t > 24)
         return;
     if (r > 39)
@@ -525,25 +525,27 @@ void gfx_fill_cells(u8 l, u8 t, u8 r, u8 b, u8 color)
         b = 24;
     n = (u16)(r - l + 1) * 4u;
     y1 = (u8)(b * 8 + 7);
-    for (y = (u8)(t * 8); y <= y1; y++) {
-        u16 a = (u16)(rowa[y] + (u8)(l * 4)), rem = n, room, c;
-        if ((a & 0x1FFFu) + n <= 0x2000u) {   /* (nearly always) the whole row is in one block: map it only when it changes */
-            blk = (u8)(SCREEN_BLK + (HI(a) >> 5));
-            if (blk != cur) {
-                win_set(0, blk);
-                cur = blk;
-            }
-            k_fill(WIN0 + (a & 0x1FFFu), v, n);
+    y = (u8)(t * 8);
+    while (y <= y1) {
+        a = rowa[y] + (u8)(l * 4);
+        if ((a & 0x1FFFu) + n <= 0x2000u) {   /* the rows that lie in this block are filled by one call (step 8.9e) */
+            rows = (u8)((0x2000u - (a & 0x1FFFu) - n) / 160u + 1u);
+            if (rows > (u8)(y1 - y + 1))
+                rows = (u8)(y1 - y + 1);
+            win_set(0, (u8)(SCREEN_BLK + (HI(a) >> 5)));
+            k_fillrect(WIN0 + (a & 0x1FFFu), v, (u8)n, rows);
+            y = (u8)(y + rows);
             continue;
         }
-        cur = 0xFF;
-        while (rem > 0) {                 /* a row may cross into the next block */
+        rem = n;                           /* a row that crosses into the next block */
+        while (rem > 0) {
             room = (u16)(0x2000u - (a & 0x1FFFu));
             c = rem < room ? rem : room;
             k_fill(scr_at(a), v, c);
             a += c;
             rem -= c;
         }
+        y++;
     }
 }
 

@@ -106,6 +106,11 @@ _dsk_motor_off
         clr     DRGRAM
         rts
 
+        ENDSECTION
+
+* The sector buffer and the variables of the driver: not in the code, and not in the engine's address space below the image of the shared data either (step 8.9e needed
+* the room): at $7C90, where the image of the shared data is until the boot has copied it into place. Everything in it is set before it is read.
+        SECTION dskbss,bss
 _dsk_buf
         RMB     256
 dsk_try RMB     1

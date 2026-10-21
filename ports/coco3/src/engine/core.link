@@ -20,3 +20,4 @@ section bss,bss
 section program_end
 entry boot
 section hibss,bss load 7E00
+section dskbss,bss load 7C90

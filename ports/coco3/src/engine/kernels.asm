@@ -6,6 +6,7 @@
         SECTION code
         EXPORT  _k_copy
         EXPORT  _k_fill
+        EXPORT  _k_fillrect
         EXPORT  _k_blit
         ifndef  ENG_TEST
         EXPORT  _k_tile8
@@ -92,6 +93,52 @@ _k_fill
         pshu    d,x
         bra     @l4
 @out    puls    u,y,pc
+
+* void k_fillrect(u8 *dst, u8 value, u8 n, u8 rows): rows rows of n bytes (a multiple of 4) at dst, 160 bytes apart, all in the window that is mapped (FillPlaneRect's
+* rectangles: the combat map's 64 byte by 168 row clear and the like took 18 ms through k_fill, a call a row). Each row is filled from its end down by PSHU, six bytes at a time.
+_k_fillrect
+        pshs    u,y
+        leas    -4,s                    0,s q (six byte groups a row)  1,s the words left over  2,s rows left
+        lda     15,s                    n
+        clrb
+@d      cmpa    #6
+        blo     @e
+        suba    #6
+        incb
+        bra     @d
+@e      lsra                            the leftover bytes (0, 2 or 4), as words
+        sta     1,s
+        stb     0,s
+        lda     17,s
+        sta     2,s
+        ldu     10,s
+        ldb     15,s
+        leau    b,u                     U = the end of the first row
+@row    stu     <FC_Y
+        lda     0,s
+        sta     <FC_D
+        lda     1,s
+        sta     <FC_D+1
+        lda     13,s
+        tfr     a,b
+        tfr     d,x
+        tfr     d,y
+        tst     <FC_D
+        beq     @w
+@g      pshu    d,x,y
+        dec     <FC_D
+        bne     @g
+@w      tst     <FC_D+1
+        beq     @nx
+        pshu    d
+        dec     <FC_D+1
+        bra     @w
+@nx     ldu     <FC_Y
+        leau    160,u
+        dec     2,s
+        bne     @row
+        leas    4,s
+        puls    u,y,pc
 
 * void k_mask(u8 *d, u8 *m, u8 n, u8 key): the colour key of a masked picture becomes its mask (UnpackPicturePixels): for each byte of d the
 * mask byte is $F0 for a high nibble equal to the key and $0F for a low one; the byte loses those nibbles. n >= 1.
