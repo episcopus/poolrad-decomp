@@ -118,7 +118,7 @@ if os.getenv("MB_ITRACE") then      -- MB_ITRACE=t: from that emulated second, M
   itrace_frame = emu.add_machine_frame_notifier(function()
     if not itrace_on and m.time:as_double() >= t0 and m.debugger then
       itrace_on = true
-      m.debugger:command("trace /work/build/run/itrace.txt,maincpu,noloop")
+      m.debugger:command("trace /work/build/run/itrace.txt,maincpu,noloop" .. (os.getenv("MB_ITRACE_ACT") and (",{" .. os.getenv("MB_ITRACE_ACT") .. "}") or ""))
     end
   end)
 end

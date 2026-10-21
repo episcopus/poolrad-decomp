@@ -93,6 +93,7 @@ typedef struct BlitParams {
 } BlitParams;
 extern BlitParams bp;
 void k_blit(void);
+void k_tile8(u8 yb, u8 x0, const u8 *src, const u8 *msk, u8 y);   /* an 8x8 item into DrawBuf, trackers included (kernels.asm; not in the engine tests) */
 void k_mask(u8 *d, u8 *m, u8 n, u8 key);                      /* UnpackPicturePixels: m[i] = the nibbles of d[i] equal to key as F or 0, d[i] without them */
 void k_mirror(u8 *b, u8 n);                                    /* a row reversed, the two pixels of each byte swapped */
 void k_glyph8(u8 *scr, const u8 *glyph, const u8 *tab);         /* 8 font rows to rows 160 bytes apart */

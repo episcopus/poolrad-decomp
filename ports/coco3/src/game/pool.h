@@ -127,6 +127,7 @@ u8 *rtl_str_assign(u8 *dst, int maxlen, const u8 *src);
 u8 *rtl_str_cat(u8 *dst, int n, ...);
 u8 *rtl_str_cat_v(u8 *dst, int n, ...);          /* the same with the parts as arguments (CoCo profile: no compound literals) */
 u8 *rtl_str_char(u8 *dst, u8 c);
+u8 *rtl_str_push(u8 *dst, int maxlen, u8 c);       /* dst := dst + Chr(c), in place */
 int rtl_str_cmp(const u8 *a, const u8 *b);
 u8 *rtl_str_copy(u8 *dst, const u8 *s, int idx, int cnt);
 u8 rtl_str_pos(const u8 *sub, const u8 *s);

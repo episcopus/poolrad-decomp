@@ -155,6 +155,33 @@ PATCHES = {
   POOL_TRACE("CopyPictureItem");
   PictureItemCopy((u16)PictureSlots[PicIndex].u.a1.Pics[Half], (u16)CombatAnimationPicture, ItemIndex, Mirror);
 }""")],
+    # ovl29 DrawWallPiece (the 3D view draws about 200 tiles a step): the tile numbers of the piece come out of the banked heap once, not twice a tile through vm_bp
+    "ovl29": [("fn", "DrawWallPiece", """void DrawWallPiece(s8 Col, s8 Row, u8 Wall, u8 Piece)
+{
+  POOL_TRACE("DrawWallPiece");
+  s16 LastCol_ = 0;
+  s16 LastRow_ = 0;
+  s16 TileCol = 0;
+  s16 TileRow = 0;
+  u8 Tile = 0;
+  u8 First = 0;
+  u8 Sym = 0;
+  u8 Tiles[156];
+  Tile = WallPieceFirstTile[Piece];
+  First = Tile;
+  LastCol_ = (s16)((s16)WallPieceWidth[Piece] + Col) - 1;
+  LastRow_ = (s16)((s16)WallPieceHeight[Piece] + Row) - 1;
+  memcpy(Tiles, &FPBL(struct PA_u8_15_156 *, WallTiles)->a[Wall - 1][Tile], (u8)((u8)WallPieceWidth[Piece] * (u8)WallPieceHeight[Piece]));
+  for (TileRow = Row; TileRow <= LastRow_; TileRow++) {
+    for (TileCol = Col; TileCol <= LastCol_; TileCol++) {
+      Sym = Tiles[(u8)(Tile - First)];
+      if (TileRow >= 0 && TileRow <= ViewLast && TileCol >= 0 && TileCol <= ViewLast && Sym > 0)
+        Put8x8Symbol((s16)((s16)((s16)TileCol + ViewLeft_OVL29) - 1), (s16)((s16)((s16)TileRow + ViewLeft_OVL29) - 1), Sym, DrawDirect, WallTileAttr);
+      Tile++;
+    }
+  }
+}
+""")],
     "ovl13": [("between", "ShowAttackAnimation", "  PixelBytes = (*FPB(TPictureHeader *, CombatAnimationPicture)).ByteSize;\n",
                "    PixelBytes = ((u16)PixelBytes / 4);\n  }\n", ""),
               # CMOC 0.1.100 -O2 crashes (segmentation fault) compiling ResolveCombatantAttacks once its Attacker is a 16 bit handle (tools/narrow.py): the store through
@@ -202,7 +229,16 @@ STRESS_OLD = "  Count = OperandValue(2);\n  if ((s16)Count <= 0) {\n    Count = 
 STRESS_NEW = "  Count = (u8)((u16)OperandValue(2) * %d);\n  if ((s16)Count <= 0) {\n    Count = 1;\n  }\n"
 
 
+STR_PUSH = re.compile(r"rtl_str_assign\(([^,()]+(?:\[[^\]]*\])?), (\d+), rtl_str_cat_v\(ts\d+, 2, \1, rtl_str_char\(ts\d+, ((?:[^()]|\([^()]*\))*)\)\)\)")
+
+
+def str_push(text):
+    """s := s + Chr(c) (a character appended to the string it comes from) made in place: rtl_str_push (the translation copies the string twice a character)"""
+    return STR_PUSH.sub(lambda m: "rtl_str_push(%s, %s, %s)" % (m.group(1), m.group(2), m.group(3)), text)
+
+
 def _patch_unit(u, text):
+    text = str_push(text)
     stress = int(os.environ.get("POOL_STRESS", "0"))
     if stress and u == "ovl03":
         if text.count(STRESS_OLD) != 1:

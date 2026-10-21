@@ -7,6 +7,9 @@
         EXPORT  _k_copy
         EXPORT  _k_fill
         EXPORT  _k_blit
+        ifndef  ENG_TEST
+        EXPORT  _k_tile8
+        endc
         EXPORT  _k_mask
         ifndef  ENG_TEST
         EXPORT  _k_mirror
@@ -266,6 +269,87 @@ _k_blit
         dec     >_bp+BP_ROWS
         lbne    @row
         puls    u,y,pc
+
+        ifndef  ENG_TEST
+* void k_tile8(u8 yb, u8 x0, const u8 *src, const u8 *msk, u8 y): an 8x8 item (eight rows of four bytes) into DrawBuf, the common case of k_blit without the per row
+* set up: yb the first row's number in the DrawBuf block that window 0 shows (rows 84 bytes apart), x0 the column byte, src and msk (0 = opaque) the item's 32 bytes where
+* they are (the picture's block in window 1), y the DrawBuf row of the first for the trackers, which follow as k_blit's do (db_dirty, db_lo, db_hi).
+* Step 8.9d: the 3D view draws about 200 of them a step.
+_k_tile8
+        pshs    u,y
+        lda     7,s
+        ldb     #84
+        mul
+        addd    #$8000
+        tfr     d,x
+        ldb     9,s
+        abx
+        ldy     10,s
+        ldu     12,s
+        lda     #8
+        sta     <FC_D
+        cmpu    #0
+        beq     @opq
+@m      ldd     ,x
+        anda    ,u+
+        andb    ,u+
+        ora     ,y+
+        orb     ,y+
+        std     ,x
+        ldd     2,x
+        anda    ,u+
+        andb    ,u+
+        ora     ,y+
+        orb     ,y+
+        std     2,x
+        leax    84,x
+        dec     <FC_D
+        bne     @m
+        bra     @trk
+@opq    ldd     ,y++
+        std     ,x
+        ldd     ,y++
+        std     2,x
+        leax    84,x
+        dec     <FC_D
+        bne     @opq
+@trk    ldb     15,s
+        ldx     #_db_dirty
+        abx
+        lda     #1
+        sta     ,x
+        sta     1,x
+        sta     2,x
+        sta     3,x
+        sta     4,x
+        sta     5,x
+        sta     6,x
+        sta     7,x
+        ldb     15,s
+        ldx     #_db_lo
+        abx
+        lda     9,s
+        ldb     #8
+@lo     cmpa    ,x
+        bhs     @nl
+        sta     ,x
+@nl     leax    1,x
+        decb
+        bne     @lo
+        ldb     15,s
+        ldx     #_db_hi
+        abx
+        lda     9,s
+        adda    #3
+        ldb     #8
+@hi     cmpa    ,x
+        bls     @nh
+        sta     ,x
+@nh     leax    1,x
+        decb
+        bne     @hi
+        puls    u,y,pc
+        endc
 
         ifndef  ENG_TEST                (the engine tests do not mirror)
 * void k_mirror(u8 *b, u8 n): the row of n bytes reversed, the two pixels of each byte swapped

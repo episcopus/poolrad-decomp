@@ -716,10 +716,53 @@ void db_item(const Pic *p, u8 item, u8 col, u8 row, u8 flags)
     }
 }
 #else
+/* An 8x8 item (the 3D view's wall tiles, about 200 a step: step 8.9d) straight from the picture's block, which window 1 shows, into DrawBuf in window 0: no staging
+ * copy, no clipping (the caller checked the item is inside), one kernel call. 0 when the item lies across a block border, or its rows across DrawBuf's two blocks, or
+ * its mask is in another block than its pixels and does not fit: the general path then does it. */
+static u8 db_tile8(const Pic *p, u8 item, u8 col, u8 row, u8 flags)
+{
+    u8 y = (u8)(row << 3), x0 = (u8)(col << 2), ib, blk = DB_BLK, yb = y;
+    u16 lin = (u16)(p->off + ((u16)item << 5)), io = (u16)(lin & 0x1FFFu), ml, mo;
+    u8 *msk = 0;
+    if (io > 0x2000u - 32)
+        return 0;
+    if (y >= DB_SPLIT) {
+        blk = DB_BLK + 1;
+        yb = (u8)(y - DB_SPLIT);
+    } else if ((u8)(y + 8) > DB_SPLIT)
+        return 0;
+    ib = (u8)(p->blk + (u8)(lin >> 13));
+    if ((flags & 1) && p->moff != 0) {
+        u8 mb;
+        ml = (u16)(lin + p->moff);
+        mo = (u16)(ml & 0x1FFFu);
+        if (mo > 0x2000u - 32)
+            return 0;
+        mb = (u8)(p->blk + (u8)(ml >> 13));
+        win_set(1, mb);
+        if (mb == ib)
+            msk = (u8 *)(0xA000u + mo);
+        else {
+            k_copy(mbuf, (const u8 *)(0xA000u + mo), 32);
+            msk = mbuf;
+            win_set(1, ib);
+        }
+    } else
+        win_set(1, ib);
+    win_set(0, blk);
+    k_tile8(yb, x0, (const u8 *)(0xA000u + io), msk, y);
+    return 1;
+}
+
 /* DrawPictureItem: the clipped blit when the whole picture is inside DrawBuf, nothing otherwise (the original wrote past the buffer) */
 void db_item(const Pic *p, u8 item, u8 col, u8 row, u8 flags)
 {
-    if ((u16)col * 4 + (u16)p->wcols * 4 > DB_ROWBYTES || (u16)row * 8 + p->height > DB_ROWS)
+    if (p->wcols == 1 && p->height == 8) {
+        if (col > 20 || row > 20)             /* (col * 4 + 4 > DB_ROWBYTES or row * 8 + 8 > DB_ROWS) */
+            return;
+        if (db_tile8(p, item, col, row, flags))
+            return;
+    } else if ((u16)col * 4 + (u16)p->wcols * 4 > DB_ROWBYTES || (u16)row * 8 + p->height > DB_ROWS)
         return;
     db_item_clip(p, item, col, row, flags, 0, 0);
 }

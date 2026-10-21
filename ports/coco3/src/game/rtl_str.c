@@ -39,6 +39,18 @@ u8 *rtl_str_cat_v(u8 *dst, int n, ...)
     return dst;
 }
 
+/* s := s + Chr(c) for a string of maxlen characters, in place (tools/mkgame.py str_push: the translation built two 256 byte temporaries and copied them twice for each character) */
+u8 *rtl_str_push(u8 *dst, int maxlen, u8 c)
+{
+    u8 n = dst[0];
+    if (n < maxlen) {
+        n++;
+        dst[n] = c;
+        dst[0] = n;
+    }
+    return dst;
+}
+
 u8 *rtl_str_char(u8 *dst, u8 c)
 {
     dst[0] = 1;
