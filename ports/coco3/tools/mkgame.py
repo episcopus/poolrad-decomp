@@ -199,7 +199,30 @@ PATCHES = {
 {
   POOL_TRACE("WaitHundredths");
   rtl_Delay((u16)(Hundredths * 10));
-}""")],
+}"""),
+              # PlaySound with the timer driver idle (the game's setting: every sound a brief one) starts the tune and waits BriefSoundTime (a tenth of a second) before it
+              # silences it. Four of the twenty tunes are over long before (38, 42 and 72 ms of sound, and tune 21 makes none: measured on the host model of the driver,
+              # build/snd/snd_ref ideal), and the Tandy device makes no sound on the CoCo at all: the wait is as long as the sound, a tick of margin. A step in the 3D view
+              # plays two sounds. (Sounds that last longer than the wait are cut at it as before.)
+              ("before", "PlaySound", """u16 BriefWait(u16 Sound_)
+{
+  if ((s16)SoundMode != SoundSpeaker) {
+    return 0;
+  }
+  switch (Sound_) {
+  case 9:
+    return 5;
+  case 10:
+    return 4;
+  case 20:
+    return 8;
+  case 21:
+    return 1;
+  }
+  return BriefSoundTime;
+}
+"""),
+              ("all", "    WaitHundredths(BriefSoundTime);\n    SetTandyTune(NoTune);", "    WaitHundredths(BriefWait(Sound_));\n    SetTandyTune(NoTune);")],
     "ovl32": [("between", "Load24x24Set", "  CopyBytes = (u16)(*FPB(TMemPic *, Loaded))", "Tail[DestOfs], CopyBytes);\n  }\n",
                "  if (SqrPaciBank1 != 0) {\n    PictureAppend((u16)Loaded, (u16)SqrPaciBank1, Index);\n  }\n"),
               ("fn", "DrawIcon", """void DrawIcon(s8 CellCol, s8 CellRow, u8 IconSet, u8 Mirror, u8 PicIndex)
