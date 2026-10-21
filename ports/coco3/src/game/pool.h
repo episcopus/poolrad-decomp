@@ -37,6 +37,7 @@ typedef u32 farptr;                      /* segment in the high word, offset in 
 
 /* the layout of DGROUP (mkvm.py --coco: a DS offset below $8000 is a CoCo address, the paged globals are above) */
 void *vm_ptr(u16 v);                     /* the page of DGROUP offset v (>= $8000) into a data window; the pointer is good until the next call */
+void *vm_bpv(const farptr *pp);          /* vm_bp of the farptr pp points to: no four byte copy onto the stack (vm.asm; step 8.9c) */
 void *vm_bp(farptr p);                   /* a block of the banked heap: the page of p into a data window (vm.asm); the pointer is good until the next call */
 u8 *vm_pkp(farptr p, u16 off);           /* the four bytes at off of a banked block, read without taking a window: the address of a native copy */
 void *vm_far(farptr p);                  /* any address the game holds: native, paged or in the banked heap */
@@ -49,6 +50,7 @@ void rtl_fatal_code(u8 code, u16 info);  /* stop the program: result words 30 an
 #define VMU(o) vm_unplaced(o)
 #define FPD(T, p) ((T)vm_far(p))
 #define FPB(T, p) ((T)vm_bp(p))
+#define FPBV(T, p) ((T)vm_bpv(&(p)))        /* FPB of a variable (tools/hoist.py byref) */
 #define PEEKP(T, p, rest) (*(farptr *)vm_pkp((p), (u16)&((*(T)0) rest)))     /* the pointer field `rest` of the banked block p, for the deref that follows */
 #define FPM(T, p) ((T)((u16)(p) | 0))        /* the | 0: CMOC 0.1.100 crashes on a bare cast here */
 farptr rtl_getmem_m(u16 size);           /* a block of the mapped heap */

@@ -9,6 +9,7 @@
         EXPORT  _vm_ptr
         EXPORT  _vm_pp
         EXPORT  _vm_bp
+        EXPORT  _vm_bpv
         EXPORT  _vm_pkp
         IMPORT  _vm_far
         EXPORT  _vm_w0
@@ -42,6 +43,25 @@ _vm_bp
         ldx     4,s
         lbra    vmmap
 @slow   jmp     _vm_far
+
+* void *vm_bpv(const farptr *pp): vm_bp of the farptr that pp points to. The caller gives the address of its variable (two bytes) instead of
+* copying the four bytes of the value onto the stack with a library routine (idea 5 of step 8.9c).
+_vm_bpv
+        ldx     2,s
+        lda     ,x
+        cmpa    #$20
+        bne     @slow
+        ldb     1,x
+        addb    #4                      page id 4..11
+        ldx     2,x
+        lbra    vmmap
+@slow   ldd     2,x
+        pshs    d
+        ldd     ,x
+        pshs    d
+        jsr     _vm_far
+        leas    4,s
+        rts
 
 * u8 *vm_pkp(farptr p, u16 off): the four bytes at offset `off` of the banked block p names, read WITHOUT taking a data window: a page that
 * is in a window is read where it is, any other is mapped into the window that would be the next victim for the length of the read and the

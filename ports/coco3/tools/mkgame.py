@@ -247,7 +247,7 @@ def _patch_unit(u, text):
     return text
 
 
-HOIST_STATS = {"uses": 0, "calls": 0}
+HOIST_STATS = {"uses": 0, "calls": 0, "byref": 0}
 
 
 def patch_unit(u, text):
@@ -255,6 +255,8 @@ def patch_unit(u, text):
     text, st = hoist.hoist(_patch_unit(u, text))
     HOIST_STATS["uses"] += st["uses"]
     HOIST_STATS["calls"] += st["calls"]
+    text, bv = hoist.byref(text)
+    HOIST_STATS["byref"] += bv["calls"]
     return text
 
 
@@ -843,7 +845,7 @@ def main(argv):
         "banks": [{"name": b["name"], "id": ids[b["name"]], "objs": b["objs"], "entries": entries[b["name"]], "size": b["size"]} for b in banks],
         "core": core, "engine_api": engine_api}, indent=1))
     tot = sum(b["size"] for b in banks)
-    print("hoisted: %(uses)d uses of FPB are %(calls)d calls" % HOIST_STATS)
+    print("hoisted: %(uses)d uses of FPB are %(calls)d calls; %(byref)d calls of vm_bp take the pointer by reference" % HOIST_STATS)
     print("%d banks (%d bytes), core units %s; %d far entries; %d engine routines" %
           (len(banks), tot, " ".join(core), sum(len(v) for v in entries.values()), len(engine_api)))
     for b in banks:

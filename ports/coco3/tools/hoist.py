@@ -148,3 +148,44 @@ if __name__ == "__main__":
         if s["calls"]:
             print("%-40s %4d uses -> %4d calls" % (f, s["uses"], s["calls"]))
     print("total: %d uses of FPB become %d calls (%d fewer)" % (tot["uses"], tot["calls"], tot["uses"] - tot["calls"]))
+
+
+DECL = re.compile(r"^\s+(?:const )?[A-Za-z_][\w ]*?[ *]\**(\w+)( = [^;]*)?;\s*$")
+
+
+def byref(text):
+    """FPB(T, p) with p a variable or parameter of the function becomes FPBV(T, p): vm_bpv(&p), which reads the four bytes of the farptr where they are
+    instead of having the caller copy them onto the stack (push4ByteStruct: a call, a loop of four moves, and the cleanup) and returns the pointer the same way."""
+    lines = text.split("\n")
+    out = []
+    n = {"calls": 0}
+    i = 0
+    while i < len(lines):
+        out.append(lines[i])
+        if lines[i] == "{" and i > 0 and re.match(r"^[A-Za-z_].*\)\s*$", lines[i - 1]) and not lines[i - 1].startswith(("typedef", "struct", "enum")):
+            hdr = lines[i - 1]
+            j = i + 1
+            while j < len(lines) and lines[j] != "}":
+                j += 1
+            body = lines[i + 1:j]
+            names = set()
+            m = re.match(r"^[^(]*\((.*)\)\s*$", hdr)
+            if m and m.group(1).strip() not in ("", "void"):
+                for a in m.group(1).split(","):
+                    t = re.findall(r"[A-Za-z_]\w*", a)
+                    if t and "[" not in a:
+                        names.add(t[-1])
+            for l in body:
+                d = DECL.match(l)
+                if d and "[" not in l.split("=")[0] and "(" not in l.split("=")[0]:
+                    names.add(d.group(1))
+            def rep(mo):
+                if mo.group(2) in names:
+                    n["calls"] += 1
+                    return "FPBV(%s, %s)" % (mo.group(1), mo.group(2))
+                return mo.group(0)
+            out.extend(FPB_ID.sub(rep, l) for l in body)
+            i = j
+            continue
+        i += 1
+    return "\n".join(out), n
