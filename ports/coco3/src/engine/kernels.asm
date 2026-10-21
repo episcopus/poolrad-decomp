@@ -111,9 +111,10 @@ _k_fillrect
         stb     0,s
         lda     17,s
         sta     2,s
-        ldu     10,s
+        ldx     10,s
         ldb     15,s
-        leau    b,u                     U = the end of the first row
+        abx                             (an accumulator offset of an indexed mode is signed: ABX adds B as it is)
+        tfr     x,u                     U = the end of the first row
 @row    stu     <FC_Y
         lda     0,s
         sta     <FC_D
