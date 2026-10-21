@@ -49,3 +49,36 @@ The floor with the first two lines done is about 0.8 s a step. A different class
 |---|---|
 | time of each key press by unit and routine | `python3 tools/walkstat.py build/run/prof-X.out --from T [--key CODE] [--api] [--caller]` after a run with `MB_PCLOG=0-1500`; `tests/profile/walk-profile.keys` is the walking session (12 moves twice) |
 | exact profile with call stacks of one step | `MB_DEBUGGER=1 MB_ITRACE=T MB_ITRACE_ACT='tracelog "%02X %02X %02X %04X\|",b@909,b@80,b@<eng_idx>,w@90A' scripts/game_run.sh ...` (the limit in whole seconds), then `python3 tools/itrprof.py --busy [--tree ROUTINE]` |
+
+## 6. Round 2: ways forward 1 to 4, built and measured [V]
+
+Branch `perf/walk-3d-2` on top of the merged round 1 (193f29b0). The forward step in the Phlan streets, same session and method as section 1 (16 steps, 6 left turns, 2 right turns):
+
+| Step | Forward | Left | Right | Engine ends |
+|---|---:|---:|---:|---|
+| start of round 2 | 1.27 s | 0.71 | 0.82 | $7B8C |
+| 1 a brief sound waits as long as it sounds | 1.19 | 0.66 | 0.77 | $7B8C |
+| 2 `DrawWallTiles`, one engine call a piece | 1.13 | 0.61 | 0.68 | $7C61 |
+| 2b the bank's picture looked up once a call | 1.07 | 0.56 | 0.63 | $7C73 |
+| 3 window registers written directly in the tile path | 1.06 | 0.55 | 0.62 | $7C4F |
+| 4 `(s32)x OP constant` made a 16 bit compare (97 sites) | **1.04** | **0.54** | **0.62** | $7C4F |
+
+Over the whole work on walking: a step 2.34 to 1.04 s (-56 %), a left turn 1.17 to 0.54 s, a right turn 1.43 to 0.62 s. 16 of 16 sessions pass (`make step-check`: screens, 15 sessions with 0 DGROUP places open, the council fight has no state comparison, party records, save area), the engine tests pass.
+Busy time over all sessions 2,403 to 2,374 s; banks 314,322 to 313,496 bytes.
+
+**1. The sound wait.** The upper bound (no wait at all) is -0.16 s a step, so this was never going to be large. The asynchronous version (the stop of a sound done by the pump while the game draws) was built and dropped: the pump runs only where the game polls, a late pump
+catches up all its ticks at once, and the tone was silenced before it had been applied (the 25 ms footstep vanished: measured on the DAC). What stayed: a brief sound waits for the length of its tune, not for 100 ms. Four of the twenty tunes are short (38, 42 and 72 ms; tune 21 makes no
+sound), measured on the host model of the driver; the footstep tone is the same 36 bursts of 24 to 25 ms before and after (`build/run/dacburst.py` over `MB_DAC=1`). The Tandy device makes no sound on the CoCo, so its wait is 0. The sounds of the fights are longer than the wait and unchanged.
+
+**2. The tile call.** `api_DrawWallTiles` (engine) draws a piece's w x h tiles from the symbols the game keeps on its stack, with the bank lookup of `Put8x8Symbol` and `DrawPictureItem` done inside; `DrawWallPiece` makes one call when `DrawDirect` is set (the 3D view) and keeps the old loop otherwise.
+The engine had 116 bytes left, so the image of the shared data (346 bytes, $0700..$08FF, copied by the boot) moved from $7C00 to $7C90 (`SHARED_IMG` in `mailbox.inc`; it must end before $7E00, where BASIC's stack is while LOADM runs). **The engine has 65 bytes of room now.**
+
+**3. The view's clear and text.** Measured upper bound: with every `DrawGlyph` and `FillPlaneRect` removed a step is 0.97 s instead of 1.07, so the whole of the text and the cell fills is 0.10 s (9 %). Skipping the text that did not change needs a shadow of the screen's 40 x 25 cells that the engine
+has no room for; the prompt line is drawn one glyph at a time (46 calls a step, 1.3 ms each). A version of `db_flush` that maps its windows only when the block changes saves about 0.007 s and costs 68 bytes of engine: not built. What was done: the tile path writes the window registers ($FFAC, $FFAD) itself, 36 bytes smaller and 0.01 s faster.
+
+**4. 32 bit arithmetic.** In a traced step 12,600 of 13,000 calls of `cmpDWordSignedInt`, `isDWordZero` and `initDWordFromUnsignedWord` come from `ReadPromptChoice` polling the clock while it waits for a key, and the sound's wait loop uses them too: time that is spent waiting. What the work of a step spends in the helpers is 0.15 s,
+of which 0.05 s is the sound wait, 0.03 s the prompt and 0.04 s the script machine. The translation widens a Word compared with a constant to `(s32)`; `tools/narrow.py cmp16` makes it a 16 bit compare when the operand is a byte or word (a local, a parameter, an element of a u8/u16 array) and the constant fits: 97 sites,
+-826 bytes of banks, -0.02 s a step. CMOC 0.1.100 crashes (segmentation fault) on `x == 0xFFu` against a word read through `FPBL`: the `u` suffix is written only for constants above 32767. The other 280 `(s32)` of the game are 32 bit values (money, experience) or expressions.
+
+**What is left in a step (1.04 s), by the sampled profile:** the wall tiles 0.23 s (the kernel 0.12, C round it 0.10), the flush to the screen 0.06, glyphs 0.06, cell fills 0.05, the script machine 0.15, the sound wait 0.07, the rest 0.3. Ideas not built: the tile loop in assembly (about -0.07 s, needs the room), a mask kept in the same block as the pixels so that it needs no copy (0.03 s),
+exact trackers by tile row (0.02 s), and skipping the intermediate redraws when keys are queued (large when a key is held, changes what the screen shows between steps).
