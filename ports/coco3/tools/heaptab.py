@@ -3,7 +3,7 @@
 
   heaptab.py build/run/game-shop-buy.core [more.core ...]
 
-The tables of src/game/rtl_heap.c are at HEAPDATA ($4C80): struct HeapData, 64 entries of the mapped heap and 640 of the banked heap (4 bytes: offset,
+The tables of src/game/rtl_heap.c are at HEAPDATA ($4E80): struct HeapData, 64 entries of the mapped heap and 640 of the banked heap (4 bytes: offset,
 size with bit 0 = in use), then the banked table's length, its rover, the bytes live in the banked and in the mapped heap, the mapped table's length and the ready flag. Prints, per run and per heap, the bytes in
 use, the free bytes, the largest free block and the blocks in use by size (at the end of the run, or at the fatal stop of one that ran out: that is the
 failure state). The banked heap is eight pages of 7,680 usable bytes: a block never crosses a page, so the largest free block is the number that matters."""
@@ -12,7 +12,7 @@ import sys
 from collections import Counter
 
 CORE_BASE = 0x2000
-HEAPDATA = 0x4C80
+HEAPDATA = 0x4E80
 NBLKM, NBLKB = 64, 640
 PAGE = 0x2000
 

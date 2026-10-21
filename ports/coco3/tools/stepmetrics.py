@@ -20,7 +20,7 @@ def end(mapfile):
         e = max(e, int(m.group(3), 16) + int(m.group(4), 16))
     return e
 img = os.path.getsize(B + "/game/pool.img")
-busy = loads = reqs = kb = 0
+busy = loadcpu = loads = reqs = kb = 0
 SESSIONS = [os.path.basename(f)[:-5] for f in sorted(glob.glob(B + "/../../../tests/sessions/*.keys"))]
 for s in SESSIONS:
     f = B + "/run/game-%s.out" % s
@@ -28,10 +28,12 @@ for s in SESSIONS:
         continue
     last = None
     t = open(f, errors="replace").read()
-    for m in re.finditer(r"pc t=[\d.]+ pc=\S+ s=\S+ task=\d+ bank=\d+ polls=(\d+)", t):
-        p = int(m.group(1))
+    for m in re.finditer(r"pc t=[\d.]+ pc=\S+ s=\S+ task=(\d+) bank=\d+ polls=(\d+) eng=(\d+)", t):
+        p = int(m.group(2))
         if last is not None and p == last:
             busy += 1
+            if m.group(1) == "1" and m.group(3) == "0":      # the engine's bank loader (engine call 0)
+                loadcpu += 1
         last = p
     m = re.search(r" r9 +(\d+)", t)
     loads += int(m.group(1)) if m else 0
@@ -40,5 +42,5 @@ for s in SESSIONS:
     if m:
         reqs += int(m.group(1))
         kb += int(m.group(2))
-print("%-28s banks %7d B  core ends $%04X  engine ends $%04X  image %8d B | sessions: loads %5d  busy %6.0f s  read %6d KB  requests %6d" % (
-    label, bank_bytes, end(B + "/game/core.map"), end(B + "/game/pool.map"), img, loads, busy / 60.0, kb, reqs))
+print("%-28s banks %7d B  core ends $%04X  engine ends $%04X  image %8d B | sessions: loads %5d  busy %6.0f s (%5.0f s of it loading banks)  read %6d KB  requests %6d" % (
+    label, bank_bytes, end(B + "/game/core.map"), end(B + "/game/pool.map"), img, loads, busy / 60.0, loadcpu / 60.0, kb, reqs))

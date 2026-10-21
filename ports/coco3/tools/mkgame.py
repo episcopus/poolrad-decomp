@@ -18,6 +18,9 @@ import subprocess
 import sys
 from pathlib import Path
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import hoist  # noqa: E402
+
 BANK_BYTES = int(os.environ.get("BANK_BYTES", "0x4000"), 0)   # slots 4 and 5 (BANK_BYTES=0x2000 only to count the banks of an 8 KB window: docs/HEAP-STUDY.md)
 BANK_LIMIT = BANK_BYTES - 0x180          # room for the entry table (3 bytes an entry) and a margin
 CORE_UNITS = ["pool", "res02", "res04", "res10", "res11"]   # resident
@@ -194,7 +197,7 @@ STRESS_OLD = "  Count = OperandValue(2);\n  if ((s16)Count <= 0) {\n    Count = 
 STRESS_NEW = "  Count = (u8)((u16)OperandValue(2) * %d);\n  if ((s16)Count <= 0) {\n    Count = 1;\n  }\n"
 
 
-def patch_unit(u, text):
+def _patch_unit(u, text):
     stress = int(os.environ.get("POOL_STRESS", "0"))
     if stress and u == "ovl03":
         if text.count(STRESS_OLD) != 1:
@@ -241,6 +244,17 @@ def patch_unit(u, text):
             body = body[:a] + p[4] + body[b + len(p[3]):]
             items[hit[0]] = ("fn", p[1], items[hit[0]][2], body)
             text = "\n".join(it[1] if it[0] == "other" else it[3] for it in items) + "\n"
+    return text
+
+
+HOIST_STATS = {"uses": 0, "calls": 0}
+
+
+def patch_unit(u, text):
+    """the unit's source with its patches, and the runs of statements that name one record of the banked heap more than once taking it by one call (tools/hoist.py)"""
+    text, st = hoist.hoist(_patch_unit(u, text))
+    HOIST_STATS["uses"] += st["uses"]
+    HOIST_STATS["calls"] += st["calls"]
     return text
 
 
@@ -709,8 +723,9 @@ def main(argv):
             print("bank group %s: %s not found, skipped" % (grp, sorted(set(grp) - {b["name"] for b in ms})))
             continue
         size = sum(b["size"] for b in ms)
-        if size > BANK_LIMIT:
-            raise SystemExit("bank group %s is %d bytes, over the limit %d" % (grp, size, BANK_LIMIT))
+        if size > BANK_LIMIT:                # the code changed since the group was chosen: the group is skipped, `make bank-groups` chooses again from new logs
+            print("bank group %s is %d bytes, over the limit %d: skipped" % (grp, size, BANK_LIMIT))
+            continue
         merged = {"name": "_".join(b["name"] for b in ms), "objs": [o for b in ms for o in b["objs"]], "size": size,
                   "units": [u for b in ms for u in b["units"]]}
         minfo = {"code": 0, "rodata": 0, "exports": set(), "imports": set(), "funcs": {}}
@@ -828,6 +843,7 @@ def main(argv):
         "banks": [{"name": b["name"], "id": ids[b["name"]], "objs": b["objs"], "entries": entries[b["name"]], "size": b["size"]} for b in banks],
         "core": core, "engine_api": engine_api}, indent=1))
     tot = sum(b["size"] for b in banks)
+    print("hoisted: %(uses)d uses of FPB are %(calls)d calls" % HOIST_STATS)
     print("%d banks (%d bytes), core units %s; %d far entries; %d engine routines" %
           (len(banks), tot, " ".join(core), sum(len(v) for v in entries.values()), len(engine_api)))
     for b in banks:
@@ -962,8 +978,8 @@ def link_all(out, here, banks, ids, info, core, entries):
     if not missing:
         (out / "missing.txt").unlink(missing_ok=True)       # (play.lua names a stopped game's missing symbol from it)
     print("core: ends at $%04X (%d bytes from $2000); %d symbols still missing" % (end, end - 0x2000, len(missing)))
-    if end > 0x4C80:
-        raise SystemExit("the core ends at $%04X, past the heap tables at $4C80 (src/game/coco_map.h)" % end)
+    if end > 0x4E80:
+        raise SystemExit("the core ends at $%04X, past the heap tables at $4E80 (src/game/coco_map.h)" % end)
     for m in missing:
         print("   missing", m)
     # the banks
