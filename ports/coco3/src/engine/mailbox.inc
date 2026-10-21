@@ -32,7 +32,7 @@ FC_Y            EQU     $85     word: scratch
 FC_X            EQU     $87     word: scratch (target entry)
 FC_D            EQU     $89     word: scratch
 FC_TICK         EQU     $90     byte: a counter the far call trampoline advances at every call and return; the loader's idea of time
-FC_STAMP        EQU     $91     12 bytes: the tick of the last use of the bank in each pool block, indexed by the block number from BANK_POOL_FIRST
+FC_STAMP        EQU     $91     13 bytes: the tick of the last use of the bank in each pool block, indexed by the block number from BANK_POOL_FIRST (the seventh slot as block $24)
 
 BANKSTK_TOP     EQU     $2000   bank stack lives in $1F80..$1FFF
 SYSSTK_TOP      EQU     $1F80   system stack S, grows down from here

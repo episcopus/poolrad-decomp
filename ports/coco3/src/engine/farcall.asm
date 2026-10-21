@@ -108,10 +108,17 @@ __farcall
 * the pool and stamp nothing.)
 fcstamp
         ifdef   GAME
+        pshs    a
         inc     <FC_TICK
-        ldb     <FC_TICK
-        ldx     #FC_STAMP-BANK_POOL_FIRST
-        stb     a,x
+        tfr     a,b
+        cmpb    #$30
+        blo     @low
+        subb    #$18                    the seventh slot's blocks ($3C) are stamped as $24, a block the pool does not use
+@low    ldx     #FC_STAMP-BANK_POOL_FIRST
+        abx
+        lda     <FC_TICK
+        sta     ,x
+        puls    a
         endc
         rts
 

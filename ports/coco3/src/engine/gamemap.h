@@ -8,5 +8,6 @@
 #define NBPAGES 8
 #define BANK_POOL_FIRST 0x18   /* the code banks: two blocks each, 12 of them */
 #define BANK_POOL_END 0x24    /* six banks; $24..$27 are banked heap pages and $28..$2F pictures */
+#define BANK_SLOT7 0x3C        /* the seventh: $3C and $3D, which DSKCON leaves alone (src/engtest/t_hide.c; $3E is a spare block, $3F stays reserved) */
 void game_launch(void);        /* shared memory: leave the engine's task and jump to the game's entry */
 #endif

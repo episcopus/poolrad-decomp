@@ -17,10 +17,12 @@ void eng_halt(void);
 
 /* ---- the code banks */
 
-#define POOL_N ((BANK_POOL_END - BANK_POOL_FIRST) / 2)
+#define POOL_N (((BANK_POOL_END - BANK_POOL_FIRST) / 2) + 1)      /* six slots from BANK_POOL_FIRST and the seventh at BANK_SLOT7 */
+#define POOL_BLK(k) ((k) < POOL_N - 1 ? (u8)(BANK_POOL_FIRST + 2 * (k)) : (u8)BANK_SLOT7)
 static u8 pool_bank[POOL_N];              /* the bank in pool entry k, 0 = free */
 #define FC_TICK (*(volatile u8 *)0x90)         /* farcall.asm: the tick, and the tick at which the bank in a pool block was last used */
-#define FC_STAMP ((volatile u8 *)(0x91 - BANK_POOL_FIRST))
+#define FC_STAMP ((volatile u8 *)(0x91 - BANK_POOL_FIRST))     /* indexed by the block, but BANK_SLOT7 as BANK_SLOT7 - $18 (farcall.asm fcstamp) */
+#define STAMP_OF(blk) ((blk) >= 0x30 ? (u8)((blk) - 0x18) : (blk))
 
 /* Any bank can be taken for another one: a caller on the bank stack that finds its bank gone is brought back by the return
  * path of farcall.asm (@reload), so a chain of calls can nest more banks than the pool holds (docs/HEAP-STUDY.md section 6). The
@@ -38,7 +40,7 @@ u16 api_bankload(u16 bank)
             k = t;
             break;
         }
-        b = (u8)(FC_TICK - FC_STAMP[BANK_POOL_FIRST + 2 * t]);
+        b = (u8)(FC_TICK - FC_STAMP[STAMP_OF(POOL_BLK(t))]);
         if (b >= a) {
             a = b;
             k = t;
@@ -46,7 +48,7 @@ u16 api_bankload(u16 bank)
     }
     if (pool_bank[k])
         banktab[pool_bank[k] - 1] = 0;
-    if (img_entry("BANK    ", (u8)bank, &e) != 0 || img_read_blocks(e.offset, e.raw, (u8)(BANK_POOL_FIRST + 2 * k)) != 0) {
+    if (img_entry("BANK    ", (u8)bank, &e) != 0 || img_read_blocks(e.offset, e.raw, POOL_BLK(k)) != 0) {
         MB_RESULT(31) = bank;
         MB_RESULT(29) = 1;                 /* the bank is not in the image or cannot be read */
         MB_STATUS = MB_FAIL;
@@ -56,7 +58,7 @@ u16 api_bankload(u16 bank)
     MB_RESULT(8) = e.raw;
     MB_RESULT(9) = (u16)(MB_RESULT(9) + 1);
     pool_bank[k] = (u8)bank;
-    banktab[bank - 1] = (u8)(BANK_POOL_FIRST + 2 * k);
+    banktab[bank - 1] = POOL_BLK(k);
     return 0;
 }
 
