@@ -263,7 +263,8 @@ def patch_unit(u, text):
 DEBUG_PATCH = json.loads(Path("build/run/debug_patch.json").read_text()) if Path("build/run/debug_patch.json").exists() else {}   # {unit: [[old, new], ...]}: a temporary probe (delete the file when done)
 if DEBUG_PATCH:
     print("mkgame: DEBUG PATCH applied to", ", ".join(DEBUG_PATCH))
-CMOC = ["cmoc", "-c", "--void-target", "--no-relocate", "-O2", "-fomit-frame-pointer", "-w"]
+CMOC = ["cmoc", "-c", "--void-target", "--no-relocate", "-O2", "-fomit-frame-pointer", "-w",
+        "--lwasm=" + str(Path(__file__).resolve().parent / "lwasm_peep.sh")]      # the assembler CMOC calls runs the peephole pass first (tools/peep.py)
 
 
 def stub_sym(name):
