@@ -214,6 +214,57 @@ def lowword(text):
     return "\n".join(lines), cnt[0]
 
 
+ACC16 = r"FPBL?\(struct PA_(?P<et>u16|u8)_\d+ \*, \w+\)->a\[[^\]]*\]"
+CONST = r"(?P<k>-?(?:0x[0-9A-Fa-f]+|\d+))"
+CMP = re.compile(r"\(s32\)(?P<x>%s|(?P<id>[A-Za-z_]\w*)) (?P<op>==|!=|>=|<=|>|<) %s(?=\s*(?:\)|&&|\|\||;|\?))" % (ACC16, CONST))
+SMALL = {"u8": (0, 255, True), "u16": (0, 65535, True), "s8": (-128, 127, False), "s16": (-32768, 32767, False)}
+
+
+def cmp16(text):
+    """(s32)x OP constant, where x is a byte or a word (a local, a parameter or an element of a u8/u16 array) and the constant lies in x's type: the
+    comparison needs no 32 bit helper (cmpDWordSignedInt is 150 cycles, a word compare 15). The translation widens a Word compared with an Integer constant
+    above 32767 and every compare of the game variables; the result is the same. Returns (text, count)."""
+    lines, funcs = functions(text)
+    cnt = [0]
+    for head_i, end_i, m, body in funcs:
+        types = {}
+        for prm in split_params(m.group("params")):
+            tn = re.match(r"^(u8|u16|s8|s16)\s+(\w+)$", prm)
+            if tn:
+                types[tn.group(2)] = tn.group(1)
+        clash = set()
+        for ln in body:
+            lm = LOCAL.match(ln)
+            if lm and lm.group("type") in SMALL:
+                nm = lm.group("name")
+                if types.get(nm, lm.group("type")) != lm.group("type"):
+                    clash.add(nm)                   # the same name with two types in nested blocks: left alone
+                types[nm] = lm.group("type")
+            elif lm and lm.group("name") in types:
+                clash.add(lm.group("name"))
+        for nm in clash:
+            del types[nm]
+        def rep(mo):
+            x, op, k = mo.group("x"), mo.group("op"), int(mo.group("k"), 0)
+            if mo.group("id"):
+                t = types.get(x)
+                if t is None:
+                    return mo.group(0)
+            else:
+                t = mo.group("et")
+            lo, hi, uns = SMALL[t]
+            if not (lo <= k <= hi) and not (t in ("u8", "u16") and 0 <= k <= 65535):
+                return mo.group(0)
+            kk = mo.group("k") + ("u" if t in ("u8", "u16") and k > 32767 else "")      # (a constant above 32767 is unsigned)
+            cnt[0] += 1
+            return "%s %s %s" % (x, op, kk)
+        for k, ln in enumerate(body):
+            if "(s32)" in ln:
+                body[k] = CMP.sub(rep, ln)
+        lines[head_i + 2:head_i + 2 + len(body)] = body
+    return "\n".join(lines), cnt[0]
+
+
 def analyse(units, header, exclude=()):
     """units: {name: text} of the generated units that are compiled for the game; header: game.h; exclude: routines whose signature stays as it is"""
     n = Narrowing()

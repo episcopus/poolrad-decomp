@@ -332,6 +332,8 @@ def patch_unit(u, text):
     text = _patch_unit(u, text)
     if NARROWING is not None:
         text = NARROWING.unit(text)
+        text, n16 = narrow.cmp16(text)
+        NARROWING.stats["cmp16"] = NARROWING.stats.get("cmp16", 0) + n16
     text, st = hoist.hoist(text)
     HOIST_STATS["uses"] += st["uses"]
     HOIST_STATS["calls"] += st["calls"]
@@ -940,7 +942,7 @@ def main(argv):
     tot = sum(b["size"] for b in banks)
     print("hoisted: %(uses)d uses of FPB are %(calls)d calls; %(byref)d calls of vm_bp take the pointer by reference" % HOIST_STATS)
     if NARROWING is not None:
-        print("narrowed: %(params)d parameters, %(locals)d locals, %(results)d results as 16 bit handles; %(kept)d kept four bytes; %(lowword)d FPB of a 32 bit value read by its low word" % dict(NARROWING.stats, lowword=NARROWING.stats.get("lowword", 0)))
+        print("narrowed: %(params)d parameters, %(locals)d locals, %(results)d results as 16 bit handles; %(kept)d kept four bytes; %(lowword)d FPB of a 32 bit value read by its low word; %(cmp16)d 32 bit compares made 16 bit" % dict(NARROWING.stats, lowword=NARROWING.stats.get("lowword", 0), cmp16=NARROWING.stats.get("cmp16", 0)))
     print("%d banks (%d bytes), core units %s; %d far entries; %d engine routines" %
           (len(banks), tot, " ".join(core), sum(len(v) for v in entries.values()), len(engine_api)))
     for b in banks:
