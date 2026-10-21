@@ -94,51 +94,82 @@ _k_fill
         bra     @l4
 @out    puls    u,y,pc
 
-* void k_fillrect(u8 *dst, u8 value, u8 n, u8 rows): rows rows of n bytes (a multiple of 4) at dst, 160 bytes apart, all in the window that is mapped (FillPlaneRect's
-* rectangles: the combat map's 64 byte by 168 row clear and the like took 18 ms through k_fill, a call a row). Each row is filled from its end down by PSHU, six bytes at a time.
+* void k_fillrect(u8 *dst, u8 value, u8 n, u8 rows): rows rows of n bytes (a multiple of 4, at most 160) at dst, 160 bytes apart, all in the window that is mapped
+* (FillPlaneRect's rectangles: the combat map's 64 byte by 168 row clear and the like took 18 ms through k_fill, a call a row). A row is filled from its end down by PSHU,
+* six bytes at a time: a run of 26 PSHU entered at the point that leaves the row's number of groups, then the odd words; the pattern stays in D, X and Y for all rows.
 _k_fillrect
         pshs    u,y
-        leas    -4,s                    0,s q (six byte groups a row)  1,s the words left over  2,s rows left
-        lda     15,s                    n
+        leas    -3,s                    0,s a leftover word  1,s a second one  2,s rows left
+        lda     14,s                    n
         clrb
 @d      cmpa    #6
         blo     @e
         suba    #6
         incb
         bra     @d
-@e      lsra                            the leftover bytes (0, 2 or 4), as words
-        sta     1,s
-        stb     0,s
-        lda     17,s
+@e      clr     0,s
+        clr     1,s
+        cmpa    #2
+        blo     @n
+        inc     0,s
+        cmpa    #4
+        blo     @n
+        inc     1,s
+@n      aslb                            B = 2 bytes of code for each group of six
+        clra
+        std     <FC_X
+        ldd     #@runend
+        subd    <FC_X
+        std     <FC_X                   the entry in the run
+        lda     16,s
         sta     2,s
-        ldx     10,s
-        ldb     15,s
+        ldx     9,s
+        ldb     14,s
         abx                             (an accumulator offset of an indexed mode is signed: ABX adds B as it is)
         tfr     x,u                     U = the end of the first row
-@row    stu     <FC_Y
-        lda     0,s
-        sta     <FC_D
-        lda     1,s
-        sta     <FC_D+1
-        lda     13,s
+        lda     12,s
         tfr     a,b
         tfr     d,x
         tfr     d,y
-        tst     <FC_D
-        beq     @w
-@g      pshu    d,x,y
-        dec     <FC_D
-        bne     @g
-@w      tst     <FC_D+1
+@row    stu     <FC_Y
+        jmp     [$0087]
+        pshu    d,x,y
+        pshu    d,x,y
+        pshu    d,x,y
+        pshu    d,x,y
+        pshu    d,x,y
+        pshu    d,x,y
+        pshu    d,x,y
+        pshu    d,x,y
+        pshu    d,x,y
+        pshu    d,x,y
+        pshu    d,x,y
+        pshu    d,x,y
+        pshu    d,x,y
+        pshu    d,x,y
+        pshu    d,x,y
+        pshu    d,x,y
+        pshu    d,x,y
+        pshu    d,x,y
+        pshu    d,x,y
+        pshu    d,x,y
+        pshu    d,x,y
+        pshu    d,x,y
+        pshu    d,x,y
+        pshu    d,x,y
+        pshu    d,x,y
+        pshu    d,x,y
+@runend tst     0,s
+        beq     @s2
+        pshu    d
+@s2     tst     1,s
         beq     @nx
         pshu    d
-        dec     <FC_D+1
-        bra     @w
 @nx     ldu     <FC_Y
         leau    160,u
         dec     2,s
-        bne     @row
-        leas    4,s
+        lbne    @row
+        leas    3,s
         puls    u,y,pc
 
 * void k_mask(u8 *d, u8 *m, u8 n, u8 key): the colour key of a masked picture becomes its mask (UnpackPicturePixels): for each byte of d the
