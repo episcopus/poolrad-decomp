@@ -19,9 +19,11 @@
         EXPORT  _bp
         EXPORT  _gbuf
         EXPORT  _mbuf
-        IMPORT  _db_dirty
-        IMPORT  _db_lo
-        IMPORT  _db_hi
+        EXPORT  _db_dirty
+        EXPORT  _db_lo
+        EXPORT  _db_hi
+        IMPORT  _rowa
+        EXPORT  _k_flush
         EXPORT  _k_glyph8
         ifdef   ENG_TEST
         EXPORT  _k_sum
@@ -171,6 +173,113 @@ _k_fillrect
         lbne    @row
         leas    3,s
         puls    u,y,pc
+
+* void k_flush(void): the dirty rows of DrawBuf to the screen, 8 pixels right and 8 rows down: for each row y with db_dirty[y] set, the bytes db_lo[y] to db_hi[y] go to the
+* screen at rowa[y + 8] + db_lo[y] + 4 (db_flush). Window 0 shows DrawBuf's block, window 1 the screen's, each mapped only when it changes; a span that crosses a block border
+* of the screen is copied in two parts. Step 8.9e: a flush took 27 ms for 49 rows of 42 bytes, most of it the C loop's work for each row.
+_k_flush
+        pshs    u,y
+        leas    -5,s                    0,s DrawBuf's block in window 0  1,s the screen's in window 1  2,s y  3,s bytes to the border  4,s the rest
+        lda     #$FF
+        sta     0,s
+        sta     1,s
+        clr     2,s
+        ldu     #_db_dirty
+@y      lda     ,u
+        lbeq    @skip
+        ldb     168,u
+        clra
+        tfr     d,y                     Y = lo
+        lda     336,u
+        suba    168,u
+        inca
+        sta     <FC_Y                   n
+        ldb     2,s
+        clra
+        addd    #8
+        aslb
+        rola
+        ldx     #_rowa
+        ldd     d,x                     rowa[y + 8]
+        leay    d,y
+        leay    4,y                     Y = the screen address of the span
+        tfr     y,d
+        lsra
+        lsra
+        lsra
+        lsra
+        lsra                            A = the screen block (SCREEN_BLK is 0)
+        cmpa    1,s
+        beq     @w1
+        sta     1,s
+        sta     $FFAD
+@w1     tfr     y,d
+        anda    #$1F
+        addd    #$A000
+        tfr     d,x                     X = the destination in window 1
+        ldb     2,s
+        cmpb    #97
+        blo     @b4
+        subb    #97
+        lda     #5
+        bra     @mp
+@b4     lda     #4
+@mp     cmpa    0,s
+        beq     @w0
+        sta     0,s
+        sta     $FFAC
+@w0     lda     #84
+        mul
+        addd    #$8000
+        tfr     d,y
+        ldb     168,u
+        leay    b,y                     Y = the span in DrawBuf (lo < 128)
+        tfr     x,d
+        addb    <FC_Y
+        adca    #0
+        cmpd    #$C001
+        blo     @one
+        pshs    x
+        ldd     #$C000
+        subd    ,s++                    D = the bytes that fit the screen block
+        stb     3,s
+        ldb     <FC_Y
+        subb    3,s
+        stb     4,s
+        ldb     3,s
+        bsr     @cpy
+        lda     1,s
+        inca
+        sta     1,s
+        sta     $FFAD
+        ldx     #$A000
+        ldb     4,s
+        bsr     @cpy
+        bra     @skip
+@one    ldb     <FC_Y
+        bsr     @cpy
+@skip   leau    1,u
+        inc     2,s
+        lda     2,s
+        cmpa    #168
+        lblo    @y
+        leas    5,s
+        puls    u,y,pc
+* B bytes (1 to 160) from Y to X
+@cpy    stb     <FC_D+1
+        lsrb
+        beq     @odd
+        stb     <FC_D
+@wl     ldd     ,y++
+        std     ,x++
+        dec     <FC_D
+        bne     @wl
+@odd    lda     <FC_D+1
+        anda    #1
+        beq     @cx
+        lda     ,y+
+        sta     ,x+
+@cx     rts
 
 * void k_mask(u8 *d, u8 *m, u8 n, u8 key): the colour key of a masked picture becomes its mask (UnpackPicturePixels): for each byte of d the
 * mask byte is $F0 for a high nibble equal to the key and $0F for a low one; the byte loses those nibbles. n >= 1.
@@ -688,6 +797,10 @@ _k_sum
 
         SECTION bss
 _bp     RMB     14                      the parameters of k_blit
+* the trackers of DrawBuf: a row has been drawn on, the first and the last byte of it that changed (they are in one block so that k_flush finds them at fixed distances)
+_db_dirty RMB   168
+_db_lo  RMB     168
+_db_hi  RMB     168
         ENDSECTION
 
 * The two staging buffers of the picture routines (gfx.c: a picture's rows copied out of their block, and its mask). They are at $7E00 and $7F00, above the

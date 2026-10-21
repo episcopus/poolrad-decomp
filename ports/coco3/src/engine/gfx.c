@@ -71,7 +71,7 @@ void gfx_pal_reg(u8 reg, u8 color)
  * from one block to the next (8192 is not a multiple of 160), so the general write (scr_putn) splits it; the fast
  * paths test that a span stays in a block. The source is always in core RAM (below the windows). rowa[y] = y * 160. */
 #define HI(x) (*(u8 *)&(x))               /* the high byte of a 16-bit variable (the CPU is big endian) */
-static u16 rowa[200];
+u16 rowa[200];                            /* (kernels.asm k_flush reads it) */
 extern u8 gbuf[256];                      /* (kernels.asm, at $7E00) */                      /* a picture's rows, copied out of their block in one go */
 extern u8 mbuf[256];                      /* (at $7F00) */
 /* the engine's windows 0 and 1 are the task 1 slot registers $FFAC and $FFAD (mmu.asm win_set): written directly on this path, the call costs more than the store */
@@ -586,7 +586,7 @@ void gfx_item(const Pic *p, u8 item, u8 col, u8 row)
 #define DB_BLK 4
 #define DB_SPLIT 97
 #define DB_ROWBYTES 84
-u8 db_dirty[DB_ROWS], db_lo[DB_ROWS], db_hi[DB_ROWS];       /* (kernels.asm updates them) */
+extern u8 db_dirty[DB_ROWS], db_lo[DB_ROWS], db_hi[DB_ROWS];       /* (kernels.asm owns them and updates them) */
 
 /* the start of row y of DrawBuf, with its block mapped into window 0 */
 static u8 *db_ptr(u8 y)
@@ -817,22 +817,7 @@ void db_fill(s16 col, s16 row, u16 w, u16 h, u8 color)
 
 void db_flush(void)
 {
-    u8 y, n, lo;
-    u16 a;
-    for (y = 0; y < DB_ROWS; y++) {
-        if (!db_dirty[y])
-            continue;
-        lo = db_lo[y];
-        n = (u8)(db_hi[y] - lo + 1);
-        a = rowa[y + 8] + (u8)(lo + 4);
-        if ((a & 0x1FFFu) + n <= 0x2000u) {   /* the row's span is in one screen block: window 1 maps it, window 0 holds DrawBuf */
-            win_set(1, (u8)(SCREEN_BLK + (HI(a) >> 5)));
-            k_copy(WIN1 + (a & 0x1FFFu), db_ptr(y) + lo, n);
-        } else {
-            k_copy(gbuf, db_ptr(y) + lo, n);
-            scr_putn(a, gbuf, n);
-        }
-    }
+    k_flush();
     db_clear_trackers();
 }
 
