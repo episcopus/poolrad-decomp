@@ -9,6 +9,7 @@
         EXPORT  _k_blit
         ifndef  ENG_TEST
         EXPORT  _k_tile8
+        EXPORT  _k_icon
         endc
         EXPORT  _k_mask
         ifndef  ENG_TEST
@@ -344,6 +345,160 @@ _k_tile8
         lda     9,s
         adda    #3
         ldb     #8
+@hi     cmpa    ,x
+        bls     @nh
+        sta     ,x
+@nh     leax    1,x
+        decb
+        bne     @hi
+        puls    u,y,pc
+
+* void k_icon(u8 yb, u8 x0, const u8 *src, const u8 *msk, u8 y, u8 mirror): a 3 cell by 24 row item (12 bytes a row) into DrawBuf, k_tile8's case for the icons of the
+* combat map: yb the first row in the block that window 0 shows, x0 the column byte, src and msk (0 = opaque) the item's 288 bytes where they are, y the DrawBuf row of
+* the first for the trackers, mirror 1 = drawn left for right (the bytes of a row in reverse order, the two pixels of each swapped, as k_blit's mirrored loop does).
+* Step 8.9e: the combat map draws two to four thousand of them in a big fight, each took 10 to 25 ms through k_blit and the staging buffers.
+_k_icon
+        pshs    u,y
+        lda     7,s
+        ldb     #84
+        mul
+        addd    #$8000
+        tfr     d,x
+        ldb     9,s
+        abx
+        ldy     10,s
+        ldu     12,s
+        lda     #24
+        sta     <FC_D
+        tst     17,s
+        bne     @mir
+        cmpu    #0
+        beq     @opq
+@m      ldd     ,x
+        anda    ,u+
+        andb    ,u+
+        ora     ,y+
+        orb     ,y+
+        std     ,x++
+        ldd     ,x
+        anda    ,u+
+        andb    ,u+
+        ora     ,y+
+        orb     ,y+
+        std     ,x++
+        ldd     ,x
+        anda    ,u+
+        andb    ,u+
+        ora     ,y+
+        orb     ,y+
+        std     ,x++
+        ldd     ,x
+        anda    ,u+
+        andb    ,u+
+        ora     ,y+
+        orb     ,y+
+        std     ,x++
+        ldd     ,x
+        anda    ,u+
+        andb    ,u+
+        ora     ,y+
+        orb     ,y+
+        std     ,x++
+        ldd     ,x
+        anda    ,u+
+        andb    ,u+
+        ora     ,y+
+        orb     ,y+
+        std     ,x++
+        leax    72,x
+        dec     <FC_D
+        bne     @m
+        bra     @trk
+@opq    ldd     ,y++
+        std     ,x++
+        ldd     ,y++
+        std     ,x++
+        ldd     ,y++
+        std     ,x++
+        ldd     ,y++
+        std     ,x++
+        ldd     ,y++
+        std     ,x++
+        ldd     ,y++
+        std     ,x++
+        leax    72,x
+        dec     <FC_D
+        bne     @opq
+        bra     @trk
+@mir    leay    12,y                    the row's end: the bytes are read backwards
+        cmpu    #0
+        beq     @mopq
+        leau    12,u
+@mrow   ldb     #12
+        stb     <FC_D+1
+@mb     lda     ,-y
+        ldb     #16
+        mul
+        sta     <FC_Y+1
+        orb     <FC_Y+1
+        stb     <FC_Y                   the colour byte, its pixels swapped
+        lda     ,-u
+        ldb     #16
+        mul
+        sta     <FC_Y+1
+        orb     <FC_Y+1                 B = the mask byte, swapped
+        stb     <FC_Y+1
+        lda     ,x
+        anda    <FC_Y+1
+        ora     <FC_Y
+        sta     ,x+
+        dec     <FC_D+1
+        bne     @mb
+        leax    72,x
+        leay    24,y
+        leau    24,u
+        dec     <FC_D
+        bne     @mrow
+        bra     @trk
+@mopq   ldb     #12
+        stb     <FC_D+1
+@mob    lda     ,-y
+        ldb     #16
+        mul
+        sta     <FC_Y+1
+        orb     <FC_Y+1
+        stb     ,x+
+        dec     <FC_D+1
+        bne     @mob
+        leax    72,x
+        leay    24,y
+        dec     <FC_D
+        bne     @mopq
+@trk    ldb     15,s
+        ldx     #_db_dirty
+        abx
+        lda     #1
+        ldb     #24
+@dr     sta     ,x+
+        decb
+        bne     @dr
+        ldb     15,s
+        ldx     #_db_lo
+        abx
+        lda     9,s
+        ldb     #24
+@lo     cmpa    ,x
+        bhs     @nl
+        sta     ,x
+@nl     leax    1,x
+        decb
+        bne     @lo
+        ldb     15,s
+        ldx     #_db_hi
+        abx
+        lda     9,s
+        adda    #11
+        ldb     #24
 @hi     cmpa    ,x
         bls     @nh
         sta     ,x

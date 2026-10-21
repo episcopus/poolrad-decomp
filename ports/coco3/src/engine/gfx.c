@@ -74,6 +74,9 @@ void gfx_pal_reg(u8 reg, u8 color)
 static u16 rowa[200];
 extern u8 gbuf[256];                      /* (kernels.asm, at $7E00) */                      /* a picture's rows, copied out of their block in one go */
 extern u8 mbuf[256];                      /* (at $7F00) */
+/* the engine's windows 0 and 1 are the task 1 slot registers $FFAC and $FFAD (mmu.asm win_set): written directly on this path, the call costs more than the store */
+#define MMU_W0 (*(volatile u8 *)0xFFAC)
+#define MMU_W1 (*(volatile u8 *)0xFFAD)
 
 static void rowa_init(void)
 {
@@ -661,8 +664,54 @@ static void db_save_rows(const Pic *save, s16 y0, s16 r, u8 take, u8 n, u8 sl, u
  * DrawBuf on all four sides. flags bit 0: masked; mirror: the picture drawn left for right (DrawIcon with MirrorPicture's copy).
  * save: the picture of flag bit 2 (IconBackgroundBuffer), which first takes the bytes about to be overwritten; 0 when the call has no
  * bit 2. */
+/* An 8x8 item (the 3D view's wall tiles, about 200 a step: step 8.9d) or a 3 cell by 24 row item (the combat map's icons and terrain: about 2,700 draws in a 30 member fight:
+ * step 8.9e) wholly inside DrawBuf, straight from the picture's block, which window 1 shows, into DrawBuf in window 0: no staging copy, no clipping, one kernel call
+ * (k_tile8, or k_icon, which also mirrors). 0 when the item lies across a block border, or its rows across DrawBuf's two blocks, or its mask is in another block than its pixels
+ * (a tile's mask is copied then; an icon's is not) and does not fit: the general path then does it. */
+static u8 db_blk(const Pic *p, u8 item, u8 col, u8 row, u8 flags, u8 mirror, u8 big)
+{
+    u8 y = (u8)(row << 3), x0 = (u8)(col << 2), ib, blk = DB_BLK, yb = y, h = big ? 24 : 8, mb;
+    u16 sz = big ? 288 : 32, lin, io, ml, mo;
+    u8 *msk = 0;
+    lin = (u16)(p->off + (big ? (u16)(((u16)item << 8) + ((u16)item << 5)) : (u16)((u16)item << 5)));
+    io = (u16)(lin & 0x1FFFu);
+    if (io > 0x2000u - sz)
+        return 0;
+    if (y >= DB_SPLIT) {
+        blk = DB_BLK + 1;
+        yb = (u8)(y - DB_SPLIT);
+    } else if ((u8)(y + h) > DB_SPLIT)
+        return 0;
+    ib = (u8)(p->blk + (u8)(lin >> 13));
+    if ((flags & 1) && p->moff != 0) {
+        ml = (u16)(lin + p->moff);
+        mo = (u16)(ml & 0x1FFFu);
+        if (mo > 0x2000u - sz)
+            return 0;
+        mb = (u8)(p->blk + (u8)(ml >> 13));
+        MMU_W1 = mb;
+        if (mb == ib)
+            msk = (u8 *)(0xA000u + mo);
+        else if (big)
+            return 0;
+        else {
+            k_copy(mbuf, (const u8 *)(0xA000u + mo), 32);
+            msk = mbuf;
+        }
+    }
+    MMU_W1 = ib;
+    MMU_W0 = blk;
+    if (big)
+        k_icon(yb, x0, (const u8 *)(0xA000u + io), msk, y, mirror);
+    else
+        k_tile8(yb, x0, (const u8 *)(0xA000u + io), msk, y);
+    return 1;
+}
+
 void db_item_clip(const Pic *p, u8 item, s16 col, s16 row, u8 flags, u8 mirror, const Pic *save)
 {
+    if (save == 0 && p->wcols == 3 && p->height == 24 && (u16)col < 19 && (u16)row < 19 && db_blk(p, item, (u8)col, (u8)row, flags, mirror, 1))
+        return;
     s16 x0 = (s16)(col * 4), y0 = (s16)(row * 8), sl, nb, r, rend;
     u8 n = (u8)(p->wcols * 4), take;
     u8 masked = (flags & 1) && p->moff != 0;
@@ -716,54 +765,13 @@ void db_item(const Pic *p, u8 item, u8 col, u8 row, u8 flags)
     }
 }
 #else
-/* An 8x8 item (the 3D view's wall tiles, about 200 a step: step 8.9d) straight from the picture's block, which window 1 shows, into DrawBuf in window 0: no staging
- * copy, no clipping (the caller checked the item is inside), one kernel call. 0 when the item lies across a block border, or its rows across DrawBuf's two blocks, or
- * its mask is in another block than its pixels and does not fit: the general path then does it. */
-/* the engine's windows 0 and 1 are the task 1 slot registers $FFAC and $FFAD (mmu.asm win_set): written directly on this path, the call costs more than the store */
-#define MMU_W0 (*(volatile u8 *)0xFFAC)
-#define MMU_W1 (*(volatile u8 *)0xFFAD)
-static u8 db_tile8(const Pic *p, u8 item, u8 col, u8 row, u8 flags)
-{
-    u8 y = (u8)(row << 3), x0 = (u8)(col << 2), ib, blk = DB_BLK, yb = y;
-    u16 lin = (u16)(p->off + ((u16)item << 5)), io = (u16)(lin & 0x1FFFu), ml, mo;
-    u8 *msk = 0;
-    if (io > 0x2000u - 32)
-        return 0;
-    if (y >= DB_SPLIT) {
-        blk = DB_BLK + 1;
-        yb = (u8)(y - DB_SPLIT);
-    } else if ((u8)(y + 8) > DB_SPLIT)
-        return 0;
-    ib = (u8)(p->blk + (u8)(lin >> 13));
-    if ((flags & 1) && p->moff != 0) {
-        u8 mb;
-        ml = (u16)(lin + p->moff);
-        mo = (u16)(ml & 0x1FFFu);
-        if (mo > 0x2000u - 32)
-            return 0;
-        mb = (u8)(p->blk + (u8)(ml >> 13));
-        MMU_W1 = mb;
-        if (mb == ib)
-            msk = (u8 *)(0xA000u + mo);
-        else {
-            k_copy(mbuf, (const u8 *)(0xA000u + mo), 32);
-            msk = mbuf;
-            MMU_W1 = ib;
-        }
-    } else
-        MMU_W1 = ib;
-    MMU_W0 = blk;
-    k_tile8(yb, x0, (const u8 *)(0xA000u + io), msk, y);
-    return 1;
-}
-
 /* DrawPictureItem: the clipped blit when the whole picture is inside DrawBuf, nothing otherwise (the original wrote past the buffer) */
 void db_item(const Pic *p, u8 item, u8 col, u8 row, u8 flags)
 {
     if (p->wcols == 1 && p->height == 8) {
         if (col > 20 || row > 20)             /* (col * 4 + 4 > DB_ROWBYTES or row * 8 + 8 > DB_ROWS) */
             return;
-        if (db_tile8(p, item, col, row, flags))
+        if (db_blk(p, item, col, row, flags, 0, 0))
             return;
     } else if ((u16)col * 4 + (u16)p->wcols * 4 > DB_ROWBYTES || (u16)row * 8 + p->height > DB_ROWS)
         return;
