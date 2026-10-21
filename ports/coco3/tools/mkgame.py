@@ -37,7 +37,7 @@ ENGINE_ROUTINES = {
     "res06": ["SetEgaFillRegisters", "SetActivePage", "SetPageSegment", "FillPlaneRect", "LoadGameFont", "DrawGlyph"],   # GameClock: rtl_sys.c
     "ovl17": ["MergePictureData"],
 }
-ENGINE_EXTRA = ["ShowPictureItem", "DaxLoad", "DaxRead", "FileKnown", "DrawIconPic", "PictureCopy", "SaveRead", "SaveWrite", "SetPictureXY", "PictureBytes", "PicData", "DrawSpritePic", "PictureAppend", "PictureItemCopy"]                       # engine routines the original does not have (called by src/game/engapi.c)
+ENGINE_EXTRA = ["ShowPictureItem", "DaxLoad", "DaxRead", "FileKnown", "DrawIconPic", "PictureCopy", "SaveRead", "SaveWrite", "SetPictureXY", "PictureBytes", "PicData", "DrawSpritePic", "PictureAppend", "PictureItemCopy", "SetIconBackground"]                       # engine routines the original does not have (called by src/game/engapi.c)
 WRAPPED = {"LoadPicture", "AllocatePicture", "ReleasePicture", "RemapPictureColors"}   # engine routines with a wrapper in src/game/engapi.c: the stub is _eng_<Name>
 # Game routines that reach into a picture record (the PC's layout: Tail, Pixels, ByteSize) cannot: a picture is a handle and the
 # pixels are the engine's. These are rewritten after the translation to say the same thing through the engine (step 8.5; the

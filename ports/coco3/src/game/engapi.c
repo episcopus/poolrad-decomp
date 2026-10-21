@@ -12,6 +12,7 @@ void ShowPictureItem(s16 col, s16 row, u16 handle, u8 item);
 u16 DaxLoad(const u8 *name, u16 id);
 void DaxRead(u16 off, u8 *dst, u16 n);
 void eng_RemapPictureColors(const u8 *from, const u8 *to, s16 first, u8 flicker, u16 handle);
+void SetIconBackground(u16 handle);
 
 void LoadPicture(const u8 *Text_in, u8 BlockId, u8 AllocFlags, u8 Color, void *Target)
 {
@@ -36,6 +37,8 @@ void LoadPicture(const u8 *Text_in, u8 BlockId, u8 AllocFlags, u8 Color, void *T
 void AllocatePicture(u16 Height, u16 WidthCols, u8 ItemCount, u8 AllocFlags, void *Pic)
 {
     *(farptr *)Pic = eng_AllocatePicture(Height, WidthCols, ItemCount, AllocFlags);
+    if (Pic == (void *)&IconBackgroundBuffer)          /* the engine saves the background under the animated icons into it */
+        SetIconBackground((u16)(*(farptr *)Pic));
 }
 
 void ReleasePicture(void *Pic)

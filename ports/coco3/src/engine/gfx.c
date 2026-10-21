@@ -640,10 +640,28 @@ static void db_rows(u8 y, u8 cnt, u8 n, u8 sl, u8 nb, u8 x0, u8 mir, u8 masked)
 }
 
 #ifndef ENG_TEST
+/* The bytes of DrawBuf under the visible part of rows r..r+take-1 of a picture drawn at column byte x0, y0 (nb bytes a row), into
+ * the save picture at the picture's own row layout (row r at r * n, the cut-off sl bytes skipped): what DrawPictureItemClipped's
+ * flag bit 2 does with IconBackgroundBuffer; drawing that picture back (flags 0) restores them. Rows beyond the save picture
+ * are not kept. */
+static void db_save_rows(const Pic *save, s16 y0, s16 r, u8 take, u8 n, u8 sl, u8 nb, u8 x0)
+{
+    u16 rel, size = (u16)((u16)save->height * (u16)(save->wcols * 4));
+    u8 i;
+    for (i = 0; i < take; i++) {
+        rel = (u16)((u16)(r + i) * n + sl);
+        if ((u16)(rel + nb) > size)
+            return;
+        k_copy(gbuf, db_ptr((u8)(y0 + r + i)) + x0, nb);
+        pic_wr(save, rel, gbuf, nb);
+    }
+}
+
 /* DrawPictureItemClipped (res07 0464:0D71): item `item` with its top-left cell at cell column col and pixel row row * 8, cut to
  * DrawBuf on all four sides. flags bit 0: masked; mirror: the picture drawn left for right (DrawIcon with MirrorPicture's copy).
- * (Bit 2, the saving of the background under the picture, is not here.) */
-void db_item_clip(const Pic *p, u8 item, s16 col, s16 row, u8 flags, u8 mirror)
+ * save: the picture of flag bit 2 (IconBackgroundBuffer), which first takes the bytes about to be overwritten; 0 when the call has no
+ * bit 2. */
+void db_item_clip(const Pic *p, u8 item, s16 col, s16 row, u8 flags, u8 mirror, const Pic *save)
 {
     s16 x0 = (s16)(col * 4), y0 = (s16)(row * 8), sl, nb, r, rend;
     u8 n = (u8)(p->wcols * 4), take;
@@ -663,6 +681,8 @@ void db_item_clip(const Pic *p, u8 item, s16 col, s16 row, u8 flags, u8 mirror)
         rend = (s16)(DB_ROWS - y0);
     while (r < rend) {
         take = rows_in_buf((u8)(rend - r), n);
+        if (save)
+            db_save_rows(save, y0, r, take, n, (u8)sl, (u8)nb, (u8)x0);
         pic_rd(p, (u16)(so + (u16)r * n), gbuf, (u16)(take * n));
         if (masked)
             pic_rd(p, (u16)(mo + (u16)r * n), mbuf, (u16)(take * n));
@@ -701,7 +721,7 @@ void db_item(const Pic *p, u8 item, u8 col, u8 row, u8 flags)
 {
     if ((u16)col * 4 + (u16)p->wcols * 4 > DB_ROWBYTES || (u16)row * 8 + p->height > DB_ROWS)
         return;
-    db_item_clip(p, item, col, row, flags, 0);
+    db_item_clip(p, item, col, row, flags, 0, 0);
 }
 #endif
 

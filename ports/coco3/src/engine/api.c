@@ -179,12 +179,23 @@ void api_DrawPictureItem(s16 col, s16 row, u8 item, u8 flags, u32 src, u32 dst)
         db_item(p, item, (u8)col, (u8)row, flags);
 }
 
+/* IconBackgroundBuffer: the picture the game's AllocatePicture wrapper names here (ovl11), where flag bit 2 of the clipped draw saves
+ * the background and a flags-0 draw of it puts it back (the cursor, missile and icon animations of res12) */
+static u16 icon_bg;
+
+void api_SetIconBackground(u16 h)
+{
+    icon_bg = h;
+}
+
 void api_DrawPictureItemClipped(s16 col, s16 row, u8 item, u8 flags, u32 src, u32 dst)
 {
-    Pic *p = pic_of(src);
+    Pic *p = pic_of(src), *save = 0;
     (void)dst;                             /* always DrawBuf */
+    if (flags & 4)
+        save = pic_of(icon_bg);
     if (p && item < p->items)
-        db_item_clip(p, item, col, row, flags, 0);
+        db_item_clip(p, item, col, row, flags, 0, save);
 }
 
 /* DrawIcon's blit (ovl32 04FC): the original copies the picture (mirrored for icon sets above 3) into a new one, draws that
@@ -194,7 +205,7 @@ void api_DrawIconPic(u16 h, s16 col, s16 row, u8 mirror)
 {
     Pic *p = pic_of(h);
     if (p)
-        db_item_clip(p, 0, col, row, 1, mirror);
+        db_item_clip(p, 0, col, row, 1, mirror, 0);
 }
 
 /* CopyPictureSlot's copies of the editor (ovl16 nested) and MergePictureData (ovl17 032F) on the pictures of the icon */
@@ -277,7 +288,7 @@ void api_DrawSpritePic(u16 h)
 {
     Pic *p = pic_of(h);
     if (p)
-        db_item_clip(p, 0, (s16)(p->x + 2), (s16)(p->y + 2), 1, 0);
+        db_item_clip(p, 0, (s16)(p->x + 2), (s16)(p->y + 2), 1, 0, 0);
 }
 
 void api_FillPictureRect(s16 col, s16 row, u16 w, u16 h, u8 color, u32 palette, u32 target)
