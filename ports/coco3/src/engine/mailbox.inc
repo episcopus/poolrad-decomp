@@ -12,7 +12,7 @@
 *   $0910  64  result words r0..r31, big endian
 
 MB_BASE         EQU     $0900
-SHARED_IMG      EQU     $7C00   the image of the shared data ($0700..$08FF) that boot.asm copies into place (tools/mkgame.py strip_low_records)
+SHARED_IMG      EQU     $7C90   the image of the shared data ($0700..$08FF) that boot.asm copies into place (tools/mkgame.py strip_low_records)
 MB_MAGIC        EQU     MB_BASE+0
 MB_CHECKPOINT   EQU     MB_BASE+4
 MB_STATUS       EQU     MB_BASE+5

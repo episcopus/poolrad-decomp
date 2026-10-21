@@ -37,14 +37,14 @@ ENGINE_ROUTINES = {
     "res06": ["SetEgaFillRegisters", "SetActivePage", "SetPageSegment", "FillPlaneRect", "LoadGameFont", "DrawGlyph"],   # GameClock: rtl_sys.c
     "ovl17": ["MergePictureData"],
 }
-ENGINE_EXTRA = ["ShowPictureItem", "DaxLoad", "DaxRead", "FileKnown", "DrawIconPic", "PictureCopy", "SaveRead", "SaveWrite", "SetPictureXY", "PictureBytes", "PicData", "DrawSpritePic", "PictureAppend", "PictureItemCopy", "SetIconBackground"]                       # engine routines the original does not have (called by src/game/engapi.c)
+ENGINE_EXTRA = ["ShowPictureItem", "DaxLoad", "DaxRead", "FileKnown", "DrawIconPic", "PictureCopy", "SaveRead", "SaveWrite", "SetPictureXY", "PictureBytes", "PicData", "DrawSpritePic", "PictureAppend", "PictureItemCopy", "SetIconBackground", "DrawWallTiles"]                       # engine routines the original does not have (called by src/game/engapi.c)
 WRAPPED = {"LoadPicture", "AllocatePicture", "ReleasePicture", "RemapPictureColors"}   # engine routines with a wrapper in src/game/engapi.c: the stub is _eng_<Name>
 # Game routines that reach into a picture record (the PC's layout: Tail, Pixels, ByteSize) cannot: a picture is a handle and the
 # pixels are the engine's. These are rewritten after the translation to say the same thing through the engine (step 8.5; the
 # whitepaper's 4.2.3 and the routines' own comments name what each does). "fn" replaces a whole function, "between" the lines from
 # one marker through another (inclusive) in one function.
 PATCH_DECLS = ("void DrawIconPic(u16 h, s16 col, s16 row, u8 mirror);\nvoid PictureCopy(u16 src, u16 dst);\nvoid SetPictureXY(u16 h, u16 x, u16 y);\n"
-               "u16 PictureBytes(u16 h);\nvoid PicData(u16 h, u16 rel, const u8 *buf, u8 n, u8 key);\nvoid DrawSpritePic(u16 h);\nvoid PictureAppend(u16 src, u16 dst, u8 index);\nvoid PictureItemCopy(u16 src, u16 dst, u8 item, u8 mirror);\nu16 DaxLoad(const u8 *name, u16 id);\nvoid DaxRead(u16 off, u8 *dst, u16 n);\n")
+               "u16 PictureBytes(u16 h);\nvoid DrawWallTiles(s16 Col, s16 Row, u8 W, u8 H, u8 Flags, s16 Ofs, const u8 *Tiles, const u16 *Banks, const u16 *Bases);\nvoid PicData(u16 h, u16 rel, const u8 *buf, u8 n, u8 key);\nvoid DrawSpritePic(u16 h);\nvoid PictureAppend(u16 src, u16 dst, u8 index);\nvoid PictureItemCopy(u16 src, u16 dst, u8 item, u8 mirror);\nu16 DaxLoad(const u8 *name, u16 id);\nvoid DaxRead(u16 off, u8 *dst, u16 n);\n")
 PATCHES = {
     # ovl07 ScaleMoney and ovl03 LoseMoneyAndItemsCommand (ECL command 40, what paying off an encounter runs): the original scales each of the seven money
     # amounts by a Real, (100 - Percent) / 100, and truncates; CMOC has no floating point library here (five symbols were missing at link time and the
@@ -172,6 +172,17 @@ PATCHES = {
   LastCol_ = (s16)((s16)WallPieceWidth[Piece] + Col) - 1;
   LastRow_ = (s16)((s16)WallPieceHeight[Piece] + Row) - 1;
   memcpy(Tiles, &FPBL(struct PA_u8_15_156 *, WallTiles)->a[Wall - 1][Tile], (u8)((u8)WallPieceWidth[Piece] * (u8)WallPieceHeight[Piece]));
+  if (DrawDirect != 0) {
+    u16 Banks_[5];
+    u16 Bases_[5];
+    u8 K = 0;
+    for (K = 0; K < 5; K++) {
+      Banks_[K] = (u16)TileBanks[K];
+      Bases_[K] = SymbolBase[K];
+    }
+    DrawWallTiles(Col, Row, WallPieceWidth[Piece], WallPieceHeight[Piece], WallTileAttr, (s16)((s16)ViewLeft_OVL29 - 1), Tiles, Banks_, Bases_);
+    return;
+  }
   for (TileRow = Row; TileRow <= LastRow_; TileRow++) {
     for (TileCol = Col; TileCol <= LastCol_; TileCol++) {
       Sym = Tiles[(u8)(Tile - First)];
@@ -983,8 +994,8 @@ def build_engine(out, here):
     end = max(a + n for _, a, n in sec if a >= 0x2000)
     print("engine: %d routines of the game (%d written), ends at $%04X (%d bytes from $2000)" %
           (len(names), len(have & set(names)), end, end - 0x2000))
-    if end > 0x7C00:
-        raise SystemExit("the engine ends at $%04X, past the image of the shared data at $7C00" % end)
+    if end > 0x7C90:
+        raise SystemExit("the engine ends at $%04X, past the image of the shared data at $7C90" % end)
     sys.path.insert(0, str(here / "tools"))
     import symexport
     syms = symexport.read_map(str(out / "pool.map"))

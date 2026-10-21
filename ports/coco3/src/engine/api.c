@@ -188,6 +188,34 @@ void api_SetIconBackground(u16 h)
     icon_bg = h;
 }
 
+/* DrawWallTiles: Put8x8Symbol (ovl34) and DrawPictureItem for a w x h block of the 3D view's wall tiles in one call (step 8.9d: DrawWallPiece made about 200 calls a step,
+ * each through the call gate, the argument frame and the lookup of the picture). tiles: the block's symbols row by row (a symbol is 1..255; 0 is none), at the
+ * view's tile (col, row) from the top left, drawn at cell (col + ofs, row + ofs) when inside the 11x11 view. banks[b] the picture of bank b (symbols 1..45, 46..115, 116..185,
+ * 186..255), bases[b] the first symbol of its items. The pointers are to the game's stack, which the engine shares. A symbol with no picture, or beyond its items, is skipped
+ * as DrawPictureItem skips it. */
+void api_DrawWallTiles(s16 col, s16 row, u8 w, u8 h, u8 flags, s16 ofs, const u8 *tiles, const u16 *banks, const u16 *bases)
+{
+    u8 r, c, sym, b, item, last = 4;
+    s16 tr, tc;
+    const Pic *p = 0;
+    for (r = 0; r < h; r++)
+        for (c = 0; c < w; c++) {
+            sym = *tiles++;
+            tr = (s16)(row + r);
+            tc = (s16)(col + c);
+            if (sym == 0 || (u16)tr > 10 || (u16)tc > 10)
+                continue;
+            b = sym < 46 ? 0 : sym < 116 ? 1 : sym < 186 ? 2 : 3;
+            if (b != last) {                                  /* the picture of the bank, looked up when the bank changes */
+                last = b;
+                p = pic_of(banks[b]);
+            }
+            item = (u8)(sym - bases[b]);
+            if (p && item < p->items)
+                db_item(p, item, (u8)(tc + ofs), (u8)(tr + ofs), flags);
+        }
+}
+
 void api_DrawPictureItemClipped(s16 col, s16 row, u8 item, u8 flags, u32 src, u32 dst)
 {
     Pic *p = pic_of(src), *save = 0;
