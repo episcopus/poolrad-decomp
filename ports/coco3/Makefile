@@ -115,7 +115,7 @@ probe:
 asm-probe:
 	@$(TC) scripts/asm-probe.sh $(P)
 
-PROBES := $(patsubst probes/%.c,%,$(wildcard probes/*.c))
+PROBES := $(filter-out zxbench lz4bench,$(patsubst probes/%.c,%,$(wildcard probes/*.c)))      # (the two decoder benchmarks need a sample: build/run/zx/bench.sh, docs/PHASE-8.9b.md)
 probes:
 	@for p in $(PROBES); do $(MAKE) --no-print-directory probe P=$$p || exit 1; done
 
