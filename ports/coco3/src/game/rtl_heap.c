@@ -1,8 +1,9 @@
 /* rtl_heap.c: the game's two heaps on the CoCo (step 8.5c, the banked heap rewritten for HEAP-STUDY.md, option 1). The mapped heap is
  * native memory from MAPPED_LO to MAPPED_HI (the pointer is the address), for the blocks game logic keeps hold of through a plain
  * address; the banked heap is NBPAGES pages of 7,680 usable bytes reached through the data windows, for the blocks that scale with
- * the size of an encounter (characters, combatants, affects, items) and the cold ones. A banked pointer is BSEG + page in the high
- * word and the offset in the page in the low word (vm.asm: vm_bp turns it into a window address in about 100 cycles). Both heaps hand
+ * the size of an encounter (characters, combatants, affects, items) and the cold ones. A banked pointer is a handle in the low word (the
+ * high word is 0): the page in its top three bits, the offset in the page in the other thirteen (vm.asm: vm_bp turns it into a window address
+ * in about 80 cycles; step 8.9c idea 6, it was BSEG + page in the high word). Both heaps hand
  * out 8 byte units; a block is never split over a page, so a window always shows the whole of it. */
 #include "pool.h"
 
@@ -187,6 +188,8 @@ static void rtl_heap_init(void)
         bblk[k].off = (u16)(k * 0x2000u);
         SETSZ(bblk[k], 0x1E00, 0);
     }
+    bblk[0].off = 8;                                    /* handle 0 is nil: the first block of page 0 starts at 8 */
+    SETSZ(bblk[0], 0x1DF8, 0);
     nb = NBPAGES;
     rover = 0;
 }
@@ -216,7 +219,7 @@ farptr rtl_getmem(u16 size)
     i = alloc_b((u16)((size + 7u) & 0xFFF8u));
     if (i < 0)
         rtl_fatal_code(0x24, size);
-    return POOL_FARPTR((u16)(BSEG + (bblk[i].off >> 13)), bblk[i].off & 0x1FFFu);
+    return (farptr)bblk[i].off;                        /* the handle: page * $2000 + the offset in the page */
 }
 
 void rtl_freemem(farptr p, u16 size)
@@ -229,8 +232,8 @@ void rtl_freemem(farptr p, u16 size)
         release_m(off);
         return;
     }
-    if ((seg >> 8) == (BSEG >> 8) && (u16)(seg - BSEG) < NBPAGES) {
-        release_b((u16)(((seg - BSEG) << 13) | off));
+    if (seg == 0) {
+        release_b(off);
         return;
     }
     rtl_fatal_code(0x25, off);

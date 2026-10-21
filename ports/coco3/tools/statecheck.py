@@ -256,13 +256,12 @@ def check_party(session, prefix):
 
     def record(p):
         """the 0x120 bytes of the record a far pointer names: a block of the mapped heap (DGROUP's segment, the offset is the address) or of the
-        banked heap (BSEG + the page in the high word, the offset in the page: src/game/coco_map.h)"""
+        banked heap (the high word 0, the handle in the low word: page << 13 | the offset in the page; src/game/coco_map.h)"""
         seg, off = p >> 16, p & 0xFFFF
         if seg == 0x1C7C:
             return core[off - 0x2000:off - 0x2000 + 0x120]
-        if seg >> 8 == 0x20:
-            at = (seg & 0xFF) * 0x2000 + off
-            return bheap[at:at + 0x120]
+        if seg == 0 and off:
+            return bheap[off:off + 0x120]
         return b""
 
     coco = []

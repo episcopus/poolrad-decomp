@@ -350,7 +350,7 @@ do   -- the paged globals (physical blocks $10..$13) and the native area of the 
   lf:write(ram:read_block(0x38 * 0x2000, 0x2000))
   lf:close()
   local bf = io.open(out .. ".bheap", "wb")              -- the banked heap: eight pages, the physical blocks $14..$17 and $24..$27 (VMBLK_HEAP, VMBLK_HEAP2); a heap
-  bf:write(ram:read_block(0x14 * 0x2000, 0x8000))        -- pointer is BSEG ($2000) + page in the high word and the offset in the page in the low one
+  bf:write(ram:read_block(0x14 * 0x2000, 0x8000))        -- a banked pointer is a handle: the high word 0, the low word page * $2000 + the offset in the page
   bf:write(ram:read_block(0x24 * 0x2000, 0x8000))
   bf:close()
   local nf = io.open(out .. ".core", "wb")

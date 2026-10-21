@@ -4,6 +4,8 @@ Date: 2026-10-20. Follows `docs/PHASE-8.9a.md`. Tags: **[V]** verified by runnin
 
 ## 0. Result
 
+* **Ideas 1, 2, 4, 5, 6 and 7 are built and measured (section 4b)**, 16 of 16 sessions passing after each: banks -5.9 %, image -19.7 %, storage requests -30 %, game CPU -0.8 %. The estimates of section 4 for 4, 5, 6 and 7 were 3 to 6 times too high; 2 was better than estimated.
+
 * **The seventh bank slot is built [V]** (blocks `$3C`, `$3D`, which `DSKCON` leaves alone: `src/engtest/t_hide.c`). With the groups chosen again for seven slots (`data/bank_groups.json`: 37 banks) the bank loads of the
   15 sessions are **2,760** (6,972 before this step, 20,123 at the start of 8.9a): **-60 % and -86 %**. `parley-combat` 311 loads (2,335 at the start). 16 of 16 sessions match, the 63 member stress build passes.
   One honest change in the checker: the camp's fire flickers by the game's random numbers and how many frames were drawn depends on the machine's speed, so after the speed-up the final screen of `camp-save`
@@ -117,7 +119,7 @@ Ideas: load only the tiles of the current map, or keep masks at one bit a pixel 
 
 | # | Idea | Buys | Effort | Evidence |
 |---|---|---|---|---|
-| 1 | **Share identical blocks in the image** (mkimage) | -330 KB of 1,634 (-20 %), no runtime cost | hours | 3.1 [V] |
+| 1 | **Share identical blocks in the image** (mkimage) (built: 4b) | -330 KB of 1,634 (-20 %), no runtime cost | hours | 3.1 [V] |
 | 2 | **The entry table in RAM** (img.c) | -8 % of storage requests, fewer seeks | hours | 3.3 [V] |
 | 3 | **Order the files by use** (volumes and disk sets) | fewer disk swaps; 18 % of data is read in a long session | days | 3.4 [V] |
 | 4 | **Hoist the pointer of a banked record in the translator**: one `vm_bp` per run of statements that use the same record and call nothing in between | 2,098 repeat uses; about 25 bytes each when hoisted: **-25 to -30 KB (8 to 9 %)** of code and the time of every access | days, needs the window validity rule checked | 2 [E] |
@@ -132,6 +134,46 @@ Ideas: load only the tiles of the current map, or keep masks at one bit a pixel 
 | 13 | The 6309's native mode as an option | speed on the machines that have one | a patched set of kernels | [H] |
 
 Not worth doing, with the reason: removing duplicated code (1.2 KB); shortening strings (16 KB of rodata); dropping the never-run 25 % (it is the game); any compiler switch (there is none that matters).
+
+## 4b. What was built, and what each idea bought (measured, step 8.9c)
+
+Ideas 1, 2, 4, 5, 6 and 7 were built one at a time. After each, `make step-check` ran all 16 sessions: every labelled screen, the final state, the party records and the save area against the goldens (16 of 16 passed after every step), and
+`tools/stepmetrics.py` took the numbers from the same run (60 Hz program counter sampling; "game CPU" is the busy time minus the bank loader's samples). The order was 1, 2, 4, 5, 7, 6: idea 7 first, because it needed no change of the data layout.
+
+| Step | Banks (bytes) | Core ends | Image (bytes) | Storage requests | KB read | Busy s (loader s) | Game CPU s |
+|---|---:|---|---:|---:|---:|---:|---:|
+| start (8.9b) | 334,242 | $4B87 | 1,785,856 | 29,572 | 41,026 | 2,482 | |
+| 1 identical blocks stored once | 334,242 | $4B87 | 1,456,128 | 29,590 | 41,030 | 2,483 | |
+| 2 entry table in RAM | 334,242 | $4B87 | 1,456,128 | 19,747 | 38,754 | 2,464 (28) | 2,436 |
+| 4 hoisted pointers | 329,871 | $4B7D | 1,450,496 | 21,155 | 44,232 | 2,465 (35) | 2,430 |
+| 5 vm_bpv by reference | 324,568 | $4BA4 | 1,446,144 | 21,163 | 43,797 | 2,461 (35) | 2,426 |
+| 7 peephole R1 to R3 | 317,238 | $4B8A | 1,437,952 | 21,315 | 43,047 | 2,443 (34) | 2,409 |
+| 6a handles, `vm_bp(u16)` | 321,028 | $4B4C | 1,441,792 | 21,152 | 43,614 | 2,451 (36) | 2,415 |
+| 6b narrowed locals, parameters, results | 314,507 | $4B65 | 1,435,136 | 21,316 | 42,747 | 2,448 (36) | 2,412 |
+| 6 final, groups chosen again | **314,507** | $4B5D | **1,434,880** | 20,691 | 41,629 | 2,446 (34) | 2,412 |
+
+Bank loads: 2,760 at the start; 4,022 from idea 4 on (the shrinking code moved the split points: `ovl16` is two 14 KB parts that nothing can share a bank with, where it was four small ones), 3,652 after the last choice of groups. The loads of the rows
+from 4 on are not comparable with the first rows, which is why the table compares bytes and game CPU. Totals over the whole step: **banks -19,735 bytes (-5.9 %), image -351 KB (-19.7 %), storage requests -30 %, KB read +1.5 %** (more loads), **game CPU -0.8 %**.
+
+| Idea | Estimated in section 4 | Measured | Notes |
+|---|---|---|---|
+| 1 identical blocks | -330 KB of the image | **-329,728 bytes (-18.5 % of 1,785,856)**, no runtime cost | as predicted. `mkimage.py` hashes the unpacked blocks and stores each once. |
+| 2 entry table in RAM | -8 % of requests | **requests 29,590 to 19,747 (-33 %)**, KB read -5.5 %, busy -19 s, engine 328 bytes smaller | better than estimated: every `img_find` chunk read was a request, not only the 8 % that were index reads. |
+| 4 hoisted pointers | -25 to -30 KB (8 to 9 %) | **-4,371 bytes (-1.3 %)**, game CPU -6 s | the estimate counted every repeat use; the rule that is safe with two data windows (no call in the run, at most one other window access) finds 573 uses in 217 runs. The core's limit moved to $4E80 (the heap tables 512 bytes up) to fit the results. |
+| 5 register accessor | -17 KB (5 %) | **-5,303 bytes (-1.6 %)**, game CPU -4 s | built as `vm_bpv(&p)`: the callee reads the farptr where it is, 1,751 calls (CMOC has no register arguments, so the register form of the estimate does not exist). |
+| 7 peephole | 5 to 8 % | **-7,330 bytes (-2.3 %)**, game CPU -17 s (-0.7 %) | `tools/peep.py` through `--lwasm=`: three rules (the index idiom, merged `LEAS`, a copy of a word): R1 1,508, R2 283, R3 948 sites. |
+| 6 16 bit far pointers | -3.8 % (and the bound re-measured on this code: -18.5 KB, -5.8 %, every `farptr` a `u16`, it does not link) | **-2,731 bytes (-0.9 %) over idea 7**, game CPU +3 s (noise) | see below. |
+
+**Idea 6, what was built.** The record layout and the files keep four bytes per pointer, so the 16 bits cannot be the type of a field. A banked pointer became a handle: the high word of the `farptr` is 0, the low word is `page << 13 | offset`
+(page 0 starts at offset 8 so that 0 stays nil). C's own conversions between `u16` and `u32` then keep the high word 0 and no expression of the generated code changes. `vm_bp`, `vm_pkp` and `vm_far` take the handle; `rtl_getmem`,
+`rtl_far` and `statecheck.py` produce and read it. Step 6a (only the accessors) was **bigger** by 3,790 bytes: CMOC converts a `u32` to a `u16` with a library call (`initWordFromDWord`), which costs more than the 4 byte push it replaced.
+Two things fixed that: `tools/narrow.py` types the locals, by-value parameters and results of the banked pointer types as `hptr` (178 parameters, 223 locals, 5 results; not the routines reached through a procedure variable or defined outside the generated
+units; not a variable whose address is taken), and the 557 uses that remain on 32 bit variables read the low word where it is (`FPBL`). CMOC 0.1.100 -O2 crashes (segmentation fault) on one statement of `ResolveCombatantAttacks` once its
+parameter is a `u16`; a patch in `mkgame.py` goes through a local pointer. **Why it buys so little [V]**: most uses of banked pointers were already by-reference (idea 5) or hoisted (idea 4), and the fields, which are still four bytes, are where most reads start. The bound of
+-5.8 % assumed every `farptr` narrow, fields and globals too. Going further means changing record layouts, the D7 decision on the save format.
+
+What the six ideas did not buy: bank loads (they rose from 2,760 to 3,652 because the units now split differently; a finer split of `ovl16` is the way back) and speed (game CPU -0.8 %). The code is 6 % smaller and the image 20 %; the game is not faster, because the cost is in the
+far calls, the data windows and the drawing, not in the instructions the ideas removed.
 
 ## 5. Tools and how to repeat the measurements
 

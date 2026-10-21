@@ -173,11 +173,11 @@ def byref(text):
             if m and m.group(1).strip() not in ("", "void"):
                 for a in m.group(1).split(","):
                     t = re.findall(r"[A-Za-z_]\w*", a)
-                    if t and "[" not in a:
+                    if t and "[" not in a and t[0] != "hptr":       # a 16 bit handle (tools/narrow.py) is passed by value: vm_bp(h) is as short
                         names.add(t[-1])
             for l in body:
                 d = DECL.match(l)
-                if d and "[" not in l.split("=")[0] and "(" not in l.split("=")[0]:
+                if d and "[" not in l.split("=")[0] and "(" not in l.split("=")[0] and not l.strip().startswith("hptr "):
                     names.add(d.group(1))
             def rep(mo):
                 if mo.group(2) in names:

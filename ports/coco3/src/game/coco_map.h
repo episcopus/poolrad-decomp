@@ -16,5 +16,5 @@
 #define VMBLK_HEAP 0x14        /* and of the first four pages of the banked heap */
 #define VMBLK_HEAP2 0x24       /* the next four (the last blocks of what was the bank pool: it is six banks now) */
 #define NBPAGES 8              /* pages of the banked heap: ids 4..11 of vm.asm */
-#define BSEG 0x2000u           /* the high word of a banked heap pointer is BSEG + the page, the low word the offset in the page */
+/* a banked heap pointer: the high word is 0, the low word the handle (page << 13 | the offset in the page; 0 is nil). Until step 8.9c idea 6 the high word was $2000 + the page */
 #endif

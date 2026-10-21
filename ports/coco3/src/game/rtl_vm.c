@@ -1,6 +1,7 @@
 /* rtl_vm.c: addresses of the game (step 8.5c). A farptr the game holds is DGROUP's segment and an offset (a native global or
  * heap block below $8000: the offset is the address; a paged global from $8000 up), a pointer into a native or window
- * address it took with @ (rtl_far), or a block of the banked heap (BSEG + the page in the high word, the offset in the page in the low one).
+ * address it took with @ (rtl_far), or a block of the banked heap (the high word is 0, the low word the handle: the page in its top three
+ * bits, the offset in the page in the other thirteen; 0 is nil).
  * vm_far turns any of them into a pointer, mapping a page when it has to; vm_bp (vm.asm) does the banked ones fast. */
 #include "pool.h"
 
@@ -26,8 +27,8 @@ void *vm_far(farptr f)
     }
     if (f == 0)
         return (void *)0;                     /* a nil read through: the page at address 0 (the host reads it too) */
-    if ((seg >> 8) == (BSEG >> 8) && (u16)(seg - BSEG) < NBPAGES)
-        return vm_pp((u8)(4 + (seg - BSEG)), off);
+    if (seg == 0)
+        return vm_pp((u8)(4 + (off >> 13)), off & 0x1FFFu);
     rtl_fatal_code(0x11, off);
     return (void *)0;
 }
@@ -45,7 +46,7 @@ farptr rtl_far(const void *p)
         rtl_fatal_code(0x13, a);
     if (id < 4)
         return POOL_FARPTR(POOL_DS_SEG, 0x8000u + ((u16)id << 13) + (a & 0x1FFFu));
-    return POOL_FARPTR((u16)(BSEG + (id - 4)), (u16)(a & 0x1FFFu));
+    return (farptr)(u16)(((u16)(id - 4) << 13) | (a & 0x1FFFu));
 }
 
 /* the physical block of every page, from the layout in coco_map.h (the loader may have changed it) */

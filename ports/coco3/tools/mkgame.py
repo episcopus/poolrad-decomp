@@ -20,6 +20,7 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import hoist  # noqa: E402
+import narrow  # noqa: E402
 
 BANK_BYTES = int(os.environ.get("BANK_BYTES", "0x4000"), 0)   # slots 4 and 5 (BANK_BYTES=0x2000 only to count the banks of an 8 KB window: docs/HEAP-STUDY.md)
 BANK_LIMIT = BANK_BYTES - 0x180          # room for the entry table (3 bytes an entry) and a margin
@@ -155,7 +156,11 @@ PATCHES = {
   PictureItemCopy((u16)PictureSlots[PicIndex].u.a1.Pics[Half], (u16)CombatAnimationPicture, ItemIndex, Mirror);
 }""")],
     "ovl13": [("between", "ShowAttackAnimation", "  PixelBytes = (*FPB(TPictureHeader *, CombatAnimationPicture)).ByteSize;\n",
-               "    PixelBytes = ((u16)PixelBytes / 4);\n  }\n", "")],
+               "    PixelBytes = ((u16)PixelBytes / 4);\n  }\n", ""),
+              # CMOC 0.1.100 -O2 crashes (segmentation fault) compiling ResolveCombatantAttacks once its Attacker is a 16 bit handle (tools/narrow.py): the store through
+              # a block named by a pointer read out of another block (PEEKP) as the first statement after the clearing ones. Through a local pointer it compiles.
+              ("all", "  (*FPB(TCombatant *, PEEKP(TCharacter *, Attacker, .Combat))).Pad8 = 1;\n",
+               "  { TCombatant *pc = FPB(TCombatant *, PEEKP(TCharacter *, Attacker, .Combat)); (*pc).Pad8 = 1; }\n")],
     # ovl17 LoadMonster: the monster record comes out of a DAX block as bytes (a Pointer argument, so the translation does not know its type): the words
     # in it turn from the file's order into the CoCo's, as BlockRead does for the records of a character file. The affect and item records are Move
     # destinations of a known type: the translator turns them round itself (p2c_expr move_swaps, step 8.7b); the patches that did it by hand swapped twice.
@@ -248,15 +253,23 @@ def _patch_unit(u, text):
 
 
 HOIST_STATS = {"uses": 0, "calls": 0, "byref": 0}
+NARROWING = None             # tools/narrow.py: the banked pointers held in registers as 16 bit handles (NARROW=0 in the environment turns it off)
 
 
 def patch_unit(u, text):
-    """the unit's source with its patches, and the runs of statements that name one record of the banked heap more than once taking it by one call (tools/hoist.py)"""
-    text, st = hoist.hoist(_patch_unit(u, text))
+    """the unit's source with its patches, the banked pointers of its locals, parameters and results as 16 bit values (tools/narrow.py), and the runs of statements that name
+    one record of the banked heap more than once taking it by one call (tools/hoist.py)"""
+    text = _patch_unit(u, text)
+    if NARROWING is not None:
+        text = NARROWING.unit(text)
+    text, st = hoist.hoist(text)
     HOIST_STATS["uses"] += st["uses"]
     HOIST_STATS["calls"] += st["calls"]
     text, bv = hoist.byref(text)
     HOIST_STATS["byref"] += bv["calls"]
+    if NARROWING is not None:
+        text, nl = narrow.lowword(text)
+        NARROWING.stats["lowword"] = NARROWING.stats.get("lowword", 0) + nl
     return text
 
 
@@ -603,6 +616,12 @@ def main(argv):
     for u, names in ENGINE_ROUTINES.items():
         engine_api += names
     engine_api += ENGINE_EXTRA
+    global NARROWING
+    if os.environ.get("NARROW", "1") != "0":
+        keep = set(fns.values()) | set(engine_api) | {n for v in CORE_ROUTINES.values() for n in v} | {n for v in ENGINE_ROUTINES.values() for n in v}
+        NARROWING = narrow.analyse({u: (gen / (u + ".c")).read_text() for u in units}, (gen / "game.h").read_text(), keep)
+        (inc / "game.h").write_text(NARROWING.header((inc / "game.h").read_text()))
+        print("narrowed: %d routines with a 16 bit banked pointer in the signature" % len(NARROWING.sig))
     # the initialisation parts that do nothing (the translation only announces them) are not called: each call would bring its
     # bank in from the disk at start-up
     trivial = set()
@@ -639,7 +658,10 @@ def main(argv):
             t = (gen / "pool.c").read_text()
             for n in sorted(trivial):
                 t = re.sub(r"^  %s\(\);\n" % n, "", t, flags=re.M)
-            src.write_text(t)
+            src.write_text(narrow.lowword(NARROWING.unit(t))[0] if NARROWING is not None else t)
+        elif u in CORE_UNITS and NARROWING is not None and not (u in ENGINE_ROUTINES or u in CORE_ROUTINES):
+            src = out / "src" / (u + ".c")
+            src.write_text(narrow.lowword(NARROWING.unit((gen / (u + ".c")).read_text()))[0])
         if u in CORE_UNITS and (u in ENGINE_ROUTINES or u in CORE_ROUTINES):      # the routines the engine or the core take over are cut out of the unit
             src = out / "src" / (u + ".c")
             src.write_text(patch_unit(u, strip_routines((gen / (u + ".c")).read_text(), set(ENGINE_ROUTINES.get(u, [])) | set(CORE_ROUTINES.get(u, [])))))
@@ -847,6 +869,8 @@ def main(argv):
         "core": core, "engine_api": engine_api}, indent=1))
     tot = sum(b["size"] for b in banks)
     print("hoisted: %(uses)d uses of FPB are %(calls)d calls; %(byref)d calls of vm_bp take the pointer by reference" % HOIST_STATS)
+    if NARROWING is not None:
+        print("narrowed: %(params)d parameters, %(locals)d locals, %(results)d results as 16 bit handles; %(kept)d kept four bytes; %(lowword)d FPB of a 32 bit value read by its low word" % dict(NARROWING.stats, lowword=NARROWING.stats.get("lowword", 0)))
     print("%d banks (%d bytes), core units %s; %d far entries; %d engine routines" %
           (len(banks), tot, " ".join(core), sum(len(v) for v in entries.values()), len(engine_api)))
     for b in banks:

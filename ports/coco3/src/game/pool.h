@@ -7,7 +7,7 @@
  *   VMV(o)   a paged global: the 8 KB page of o is mapped into a data window (asm: vm.asm), the pointer returned is good
  *            until the next VMV/FPB
  *   FPM(T,p) a block of the mapped class: native memory
- *   FPB(T,p) a block of the banked class: vm_bp (assembly, ~100 cycles: BSEG + page and offset), any other far address through vm_far
+ *   FPB(T,p) a block of the banked class: vm_bp (assembly, ~80 cycles: the handle in the low word is the page and the offset), any other far address through vm_far
  *   FPD      the same as FPB: game logic must not hold a pointer to what only the engine owns (a picture), and vm_far
  *            stops the program when it is given one
  */
@@ -25,6 +25,7 @@ typedef unsigned long u32;
 typedef long s32;
 
 typedef u32 farptr;                      /* segment in the high word, offset in the low word */
+typedef u16 hptr;                        /* a pointer of the banked heap held in a register: the low word of the farptr, the high word being 0 (tools/narrow.py) */
 
 #define POOL_DS_SEG 0x1C7Cu              /* DGROUP's segment, as the original runs it: the high word of every game address */
 #define POOL_FARPTR(seg, off) ((((u32)(u16)(seg)) << 16) | (u32)(u16)(off))
@@ -38,8 +39,8 @@ typedef u32 farptr;                      /* segment in the high word, offset in 
 /* the layout of DGROUP (mkvm.py --coco: a DS offset below $8000 is a CoCo address, the paged globals are above) */
 void *vm_ptr(u16 v);                     /* the page of DGROUP offset v (>= $8000) into a data window; the pointer is good until the next call */
 void *vm_bpv(const farptr *pp);          /* vm_bp of the farptr pp points to: no four byte copy onto the stack (vm.asm; step 8.9c) */
-void *vm_bp(farptr p);                   /* a block of the banked heap: the page of p into a data window (vm.asm); the pointer is good until the next call */
-u8 *vm_pkp(farptr p, u16 off);           /* the four bytes at off of a banked block, read without taking a window: the address of a native copy */
+void *vm_bp(u16 h);                      /* a block of the banked heap named by its handle (page and offset, the low word of the farptr): the page into a data window (vm.asm); the pointer is good until the next call */
+u8 *vm_pkp(u16 h, u16 off);              /* the four bytes at off of a banked block, read without taking a window: the address of a native copy */
 void *vm_far(farptr p);                  /* any address the game holds: native, paged or in the banked heap */
 void *vm_unplaced(u16 off);
 void vm_init(void);
@@ -49,7 +50,8 @@ void rtl_fatal_code(u8 code, u16 info);  /* stop the program: result words 30 an
 #define VMV(o) vm_ptr(o)
 #define VMU(o) vm_unplaced(o)
 #define FPD(T, p) ((T)vm_far(p))
-#define FPB(T, p) ((T)vm_bp(p))
+#define FPB(T, p) ((T)vm_bp((u16)(p)))
+#define FPBL(T, p) ((T)vm_bp(((u16 *)&(p))[1]))      /* FPB of a 32 bit variable, field or element: its low word read where it is (tools/narrow.py lowword) */
 #define FPBV(T, p) ((T)vm_bpv(&(p)))        /* FPB of a variable (tools/hoist.py byref) */
 #define PEEKP(T, p, rest) (*(farptr *)vm_pkp((p), (u16)&((*(T)0) rest)))     /* the pointer field `rest` of the banked block p, for the deref that follows */
 #define FPM(T, p) ((T)((u16)(p) | 0))        /* the | 0: CMOC 0.1.100 crashes on a bare cast here */

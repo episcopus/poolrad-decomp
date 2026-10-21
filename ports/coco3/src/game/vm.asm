@@ -11,7 +11,6 @@
         EXPORT  _vm_bp
         EXPORT  _vm_bpv
         EXPORT  _vm_pkp
-        IMPORT  _vm_far
         EXPORT  _vm_w0
         EXPORT  _vm_w1
         EXPORT  _vm_pgblk
@@ -32,50 +31,47 @@ _vm_ptr
         tfr     a,b                     B = page id 0..3
         lbra    vmmap
 
-* void *vm_bp(farptr p): a block of the banked heap, the high word BSEG + page (high byte $20), the low word the offset in the page. The
-* fast path of FPB: about 100 cycles with the caller's push; any other farptr (nil, a native or paged address) goes to vm_far.
-_vm_bp
-        lda     2,s
-        cmpa    #$20
-        bne     @slow
-        ldb     3,s
-        addb    #4                      page id 4..11
-        ldx     4,s
-        lbra    vmmap
-@slow   jmp     _vm_far
-
-* void *vm_bpv(const farptr *pp): vm_bp of the farptr that pp points to. The caller gives the address of its variable (two bytes) instead of
-* copying the four bytes of the value onto the stack with a library routine (idea 5 of step 8.9c).
+* void *vm_bp(u16 h): a block of the banked heap. A banked pointer is a handle: the high word of the farptr is 0 and the low word h holds the
+* page (the top three bits, page id 4..11 = h>>13 + 4) and the offset in the page (the low thirteen). nil is 0. The fast path of FPB: about 80 cycles
+* with the caller's push (step 8.9c idea 6: before it the pointer was BSEG + page in the high word, four bytes pushed, and a test of the high byte).
+* void *vm_bpv(const farptr *pp): vm_bp of the farptr that pp points to (its low word), without copying the value onto the stack (idea 5).
 _vm_bpv
         ldx     2,s
-        lda     ,x
-        cmpa    #$20
-        bne     @slow
-        ldb     1,x
-        addb    #4                      page id 4..11
-        ldx     2,x
+        ldx     2,x                     the low word of the farptr
+        bra     vmb
+_vm_bp
+        ldx     2,s
+vmb     beq     @nil
+        tfr     x,d
+        lsra
+        lsra
+        lsra
+        lsra
+        lsra
+        adda    #4                      page id 4..11
+        tfr     a,b
         lbra    vmmap
-@slow   ldd     2,x
-        pshs    d
-        ldd     ,x
-        pshs    d
-        jsr     _vm_far
-        leas    4,s
+@nil    tfr     x,d                     nil reads through as the pointer 0 (the host reads it too)
         rts
 
-* u8 *vm_pkp(farptr p, u16 off): the four bytes at offset `off` of the banked block p names, read WITHOUT taking a data window: a page that
+* u8 *vm_pkp(u16 h, u16 off): the four bytes at offset `off` of the banked block the handle h names, read WITHOUT taking a data window: a page that
 * is in a window is read where it is, any other is mapped into the window that would be the next victim for the length of the read and the
 * old block goes back. Returns the address of a native copy (_vm_pk). A pointer field read as the address of another deref (PEEKP) therefore
 * adds one mapping to a statement, not two: a struct copy or a call with two addresses needs no more than the two windows.
 _vm_pkp
-        lda     2,s
-        cmpa    #$20
-        bne     @pslow
-        ldd     4,s
-        addd    6,s
+        ldd     2,s
+        beq     @pnil
+        anda    #$1F
+        addd    4,s
         tfr     d,x                     X = the offset in the page
-        ldb     3,s
-        addb    #4                      B = page id
+        lda     2,s
+        lsra
+        lsra
+        lsra
+        lsra
+        lsra
+        adda    #4
+        tfr     a,b                     B = page id
         cmpb    _vm_w0
         beq     @h0
         cmpb    _vm_w1
@@ -109,16 +105,8 @@ _vm_pkp
         ldy     2,x
         sty     _vm_pk+2
         rts
-@pslow  ldx     4,s
-        pshs    x
-        ldd     4,s
-        pshs    d
-        jsr     _vm_far
-        leas    4,s
-        tfr     d,x
-        ldd     6,s
-        leax    d,x
-        bra     @h
+@pnil   ldx     4,s                     nil: the offset is the address (a native read, as the host's)
+        lbra    @h
 
 * void *vm_pp(u8 id, u16 off): page id 0..11, offset in the page
 _vm_pp
