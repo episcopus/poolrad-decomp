@@ -112,10 +112,10 @@ Pool slots are the lever: **8 slots instead of 6 cut the traffic by 60 %, 10 slo
 
 ## 6. Open, and what the human has to decide
 
-1. **Memory for the pool (D9/D12).** Today the blocks are: screen 4, DrawBuf 2, image index 2, pictures 19, stage 2, paged DGROUP 4, banked heap 8, **bank pool 12**, core 3, slot 0 and engine 4,
-   **`$3C..$3F` 4 (Disk BASIC's ROM images for `DSKCON`)**. If the final medium is not a floppy read through `DSKCON` (SDC command mode, DriveWire), `$3C..$3F` become two more
-   slots: 8 slots, -60 % of the traffic, no other change (a block table instead of `BANK_POOL_FIRST + 2 * k` in `api.c`, the stamp table to 40 bytes). If the floppy stays, only the
-   Disk ROM's own block (`$3E`) may be needed, and one slot can still be had. Nothing was changed: it depends on the choice of media.
+1. **Memory for the pool (corrected 2026-10-20).** The first version of this item said the four blocks `$3C..$3F` hold Disk BASIC's ROM images that `DSKCON` needs, so they could be freed only if the floppy path
+   went. That was wrong: `disk.asm` only maps those blocks into slots 4..7 and switches to ROM mode for the length of a call; the RAM under them is not read. `src/engtest/t_hide.c` (MAME and XRoar) fills `$3C`, `$3D` and `$3E` with a pattern,
+   reads a file through `DSKCON` and finds the pattern intact; with `$3F` filled (below the constant page) the call never returns, so `$3F` stays reserved. **Blocks `$3C` and `$3D` can be a seventh bank slot whatever the medium** (a block
+   table instead of `BANK_POOL_FIRST + 2 * k` in `api.c`, the stamp table to 40 bytes, and `$3E` is a spare single block): the simulator says 7 slots load 58 % less than 6 (2,986 loads, 37 MB against 7,132, 69 MB), 8 slots 27 MB. Not built yet.
 2. **Routine level banks.** Banks are whole units; 14 routines make 80 % of the far calls. Putting the hot, small routines of several units into one hot bank needs
    `split_unit` to cut by routine lists and a call trace that includes the calls inside a unit (the far call log does not see them). It is the other large lever, and the larger job.
 3. **The image's index** costs a request or two per load: 2,172 index requests against 1,287 for the banks themselves in `parley-combat` (`img_find` scans the entries of a file from
