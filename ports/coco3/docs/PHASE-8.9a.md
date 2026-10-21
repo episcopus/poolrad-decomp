@@ -152,3 +152,22 @@ runs from `make play` (a warning) and from `make baseline` on the saved games of
 The old saved games of the player cannot be recovered reliably (they were already mixed from several layouts); `make play FRESH=1` or the automatic set-aside gives clean ones.
 
 Not understood and not chased: after the corrupted list a selection locks the game up; it reads garbage as a character file. A save area that is consistent never does it.
+
+## 9. Found by playing: paying off goblins stopped the game (money scaling had no Real arithmetic)
+
+A playtest: the slums by Phlan, goblins, Parley, 100 gp paid, they left, then "the game ended (status 2)" and the harness started the game again (the screen full of coloured characters is the machine
+restarting over RAM that was not cleared). **Most likely cause [E, not reproduced]**: the script command that takes money. ECL command 40 (`LoseMoneyAndItemsCommand`, `ovl03:1DB1`) scales the money of the selected
+character or of the whole party by `(100 - Percent) / 100` through `ScaleMoney` (`ovl07:1CC3`), a Pascal `Real`; the CoCo build had no floating point and linked five stubs for it (`_rtl_trunc`, `divSingleSingle`, `initSingleFrom*`,
+`mulSingleSingle`; every `make game` printed them as "missing", 8.6 listed them as open). A stub stops the program with status 2: exactly what the player saw, right after a payment. Nothing else in the game uses a Real,
+none of the 17 sessions runs the command (`coverage.json` lists both routines as never run), and the encounter is random and unrecorded, so the exact script path was not replayed.
+
+Fixed in `tools/mkgame.py` (PATCHES, ovl03 and ovl07, and the declaration in the copy of `game.h`): the factor is the percentage kept (an `s16`) and each of the seven amounts becomes `Money * Keep / 100` with a 32 bit product. The
+build links with **0 symbols missing** for the first time. Checked: `probes/money.c` (15 amounts and percentages, from 0 to 65,535 and 0 to 100, against the exact integer scaling; CMOC and MAME), and a probe build that called `ScaleMoney(50, ...)`
+in a running session (`camp-rest-combat`): the party record's money changed, no stop; then the 17 sessions again (16 of 16, 0 open) without the probe.
+
+**Not exact [?]**: the original's `Real` has a 40 bit significand, so `trunc(Money * Real(100 - Percent) / 100)` can be one coin less than the integer result when the product is a whole number (a model of the format, rounding to
+nearest: 1,708 of the 6.6 million combinations, 0.03 %, e.g. 1,900 gold at 53 % kept: 1,006, not 1,007; the host's `double` of Phase 7 differs from the integer in 462 other cases). Which one the original gives needs the original's
+Real routines run on these values (the oracle); until then the integer result is the documented choice.
+
+`lua/play.lua` now says why a game ended: the Halt code, a fatal's code and information, the name of the missing symbol (from `build/game/missing.txt`) and the mailbox words, so the next stop identifies itself.
+

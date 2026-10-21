@@ -42,6 +42,24 @@ WRAPPED = {"LoadPicture", "AllocatePicture", "ReleasePicture", "RemapPictureColo
 PATCH_DECLS = ("void DrawIconPic(u16 h, s16 col, s16 row, u8 mirror);\nvoid PictureCopy(u16 src, u16 dst);\nvoid SetPictureXY(u16 h, u16 x, u16 y);\n"
                "u16 PictureBytes(u16 h);\nvoid PicData(u16 h, u16 rel, const u8 *buf, u8 n, u8 key);\nvoid DrawSpritePic(u16 h);\nvoid PictureAppend(u16 src, u16 dst, u8 index);\nvoid PictureItemCopy(u16 src, u16 dst, u8 item, u8 mirror);\nu16 DaxLoad(const u8 *name, u16 id);\nvoid DaxRead(u16 off, u8 *dst, u16 n);\n")
 PATCHES = {
+    # ovl07 ScaleMoney and ovl03 LoseMoneyAndItemsCommand (ECL command 40, what paying off an encounter runs): the original scales each of the seven money
+    # amounts by a Real, (100 - Percent) / 100, and truncates; CMOC has no floating point library here (five symbols were missing at link time and the
+    # game stopped the first time a script paid or lost money). The truncated product of an integer and that Real is the integer product divided by 100
+    # (the Real's rounding error, 2^-40, cannot move a product of 16 bit amounts across an integer), so the factor is the percentage kept.
+    "ovl07": [
+        ("fn", "ScaleMoney", """void ScaleMoney(s16 Keep, PCharacter Who)
+{
+  POOL_TRACE("ScaleMoney");
+  u8 K;
+  for (K = 0; K < 7; K++)
+    (*FPB(TCharacter *, Who)).Money[K] = (u16)((s32)(*FPB(TCharacter *, Who)).Money[K] * Keep / 100);
+}
+"""),
+    ],
+    "ovl03": [
+        ("all", "  double Factor = 0;\n", "  s16 Factor = 0;\n"),
+        ("all", "  Factor = ((double)((s16)((s16)100 - Percent)) / (double)100);\n", "  Factor = (s16)((s16)100 - Percent);\n"),
+    ],
     # ovl28 LoadSpriteList and Show3DSprite: the picture record's X and Y, ByteSize and pixels are the engine's (handles), and the PIC
     # block of the camp (7,787 bytes) does not fit a page of the banked heap: LoadSpriteList reads the block from the engine's stage
     # (DaxLoad, DaxRead) as it goes instead of copying it first; the sprite list is worked on as a local copy.
@@ -534,6 +552,10 @@ def main(argv):
     here = Path(__file__).resolve().parent.parent
     for f in ("game.h", "vmlayout.h"):
         (inc / f).write_text((gen / f).read_text())
+    gh_text = (inc / "game.h").read_text()                  # ScaleMoney takes the percentage kept, not a Real (PATCHES, ovl07)
+    if "void ScaleMoney(double Factor, PCharacter Who);" not in gh_text:
+        raise SystemExit("mkgame: the declaration of ScaleMoney is not where the patch expects it")
+    (inc / "game.h").write_text(gh_text.replace("void ScaleMoney(double Factor, PCharacter Who);", "void ScaleMoney(s16 Keep, PCharacter Who);"))
     for f in ("pool.h", "coco_map.h"):
         (inc / f).write_text((here / "src/game" / f).read_text())
     incs = [str(here / "shim"), str(inc), str(gen)]
@@ -937,6 +959,8 @@ def link_all(out, here, banks, ids, info, core, entries):
     sec = [(m.group(1), int(m.group(3), 16), int(m.group(4), 16)) for m in
            re.finditer(r"^Section: (\S+) \((.*?)\) load at ([0-9A-Fa-f]+), length ([0-9A-Fa-f]+)", (out / "core.map").read_text(), re.M)]
     end = max(a + n for _, a, n in sec)
+    if not missing:
+        (out / "missing.txt").unlink(missing_ok=True)       # (play.lua names a stopped game's missing symbol from it)
     print("core: ends at $%04X (%d bytes from $2000); %d symbols still missing" % (end, end - 0x2000, len(missing)))
     if end > 0x4C80:
         raise SystemExit("the core ends at $%04X, past the heap tables at $4C80 (src/game/coco_map.h)" % end)

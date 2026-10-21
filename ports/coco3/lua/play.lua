@@ -123,6 +123,19 @@ while syms.wheel_pick do
   end
   if status ~= 0 and mem:read_u8(MB_STATUS) == status then
     print("play: the game ended (status " .. status .. "): starting it again (BASIC starts cold, which takes a while)")
+    do   -- why: what the program left in the mailbox (src/engine/mailbox.h): Halt's code r28, a fatal's code and information r30 and r29, the symbol nothing defined yet ($093C, a stub of the core), the bank that could not be loaded
+      local function r(i) return mem:read_u16(0x0910 + 2 * i) end
+      local missing, name = mem:read_u16(0x093C), nil
+      if missing >= 0x100 then
+        local mf = io.open((img_path:gsub("[^/]*$", "")) .. "missing.txt", "r")
+        if mf then
+          for l in mf:lines() do local n, sym = l:match("^(%d+) (%S+)") if n and tonumber(n) == missing then name = sym end end
+          mf:close()
+        end
+      end
+      print(string.format("play: why: halt code %d, fatal code %02X info %04X, missing symbol %s (%04X), bank that failed to load %d, mailbox words r25..r31 = %04X %04X %04X %04X %04X %04X %04X",
+        r(28), r(30), r(29), name or "none", missing, mem:read_u16(0x093E), r(25), r(26), r(27), r(28), r(29), r(30), r(31)))
+    end
     io.stdout:flush()
     mem:write_u8(MB_STATUS, 0)
     mem:write_u8(0x0071, 0)                 -- (BASIC's warm start flag: a cold start sets up Disk BASIC's variables again, which the game's low RAM has overwritten)
