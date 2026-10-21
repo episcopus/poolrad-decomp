@@ -72,8 +72,8 @@ void gfx_pal_reg(u8 reg, u8 color)
  * paths test that a span stays in a block. The source is always in core RAM (below the windows). rowa[y] = y * 160. */
 #define HI(x) (*(u8 *)&(x))               /* the high byte of a 16-bit variable (the CPU is big endian) */
 static u16 rowa[200];
-static u8 gbuf[256];                      /* a picture's rows, copied out of their block in one go */
-static u8 mbuf[256];
+extern u8 gbuf[256];                      /* (kernels.asm, at $7E00) */                      /* a picture's rows, copied out of their block in one go */
+extern u8 mbuf[256];                      /* (at $7F00) */
 
 static void rowa_init(void)
 {

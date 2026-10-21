@@ -19,3 +19,4 @@ section rwdata
 section bss,bss
 section program_end
 entry boot
+section hibss,bss load 7E00

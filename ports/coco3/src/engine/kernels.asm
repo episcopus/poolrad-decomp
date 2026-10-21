@@ -15,6 +15,8 @@
         EXPORT  _k_mirror
         endc
         EXPORT  _bp
+        EXPORT  _gbuf
+        EXPORT  _mbuf
         IMPORT  _db_dirty
         IMPORT  _db_lo
         IMPORT  _db_hi
@@ -452,4 +454,12 @@ _k_sum
 
         SECTION bss
 _bp     RMB     14                      the parameters of k_blit
+        ENDSECTION
+
+* The two staging buffers of the picture routines (gfx.c: a picture's rows copied out of their block, and its mask). They are at $7E00 and $7F00, above the
+* image of the shared data ($7C90..$7DEA) and below the constant page: the loader's own stack is there while LOADM runs, but nothing is after it, and the engine's
+* address space below $7C90 is full (step 8.9e, which needed the room for faster icon draws).
+        SECTION hibss,bss
+_gbuf   RMB     256
+_mbuf   RMB     256
         ENDSECTION

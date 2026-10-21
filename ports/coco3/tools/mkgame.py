@@ -999,7 +999,7 @@ def build_engine(out, here):
     text = (out / "pool.map").read_text()
     sec = [(m.group(1), int(m.group(3), 16), int(m.group(4), 16)) for m in
            re.finditer(r"^Section: (\S+) \((.*?)\) load at ([0-9A-Fa-f]+), length ([0-9A-Fa-f]+)", text, re.M)]
-    end = max(a + n for _, a, n in sec if a >= 0x2000)
+    end = max(a + n for nm, a, n in sec if a >= 0x2000 and nm != "hibss")
     print("engine: %d routines of the game (%d written), ends at $%04X (%d bytes from $2000)" %
           (len(names), len(have & set(names)), end, end - 0x2000))
     if end > 0x7C90:
