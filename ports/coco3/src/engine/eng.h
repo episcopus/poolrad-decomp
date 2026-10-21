@@ -47,6 +47,7 @@ u8 sec_io(u8 cmd, u32 lsn, u16 count, u8 blk, u16 off);   /* between the image a
 u8 img_read(u32 offset, u8 *dst, u16 n);                  /* bytes of the image into RAM below $8000 or in slot 0 */
 u8 img_write(u32 offset, const u8 *src, u16 n);          /* bytes into the image (at most 128 at a time); 0 = ok */
 u8 img_read_blocks(u32 offset, u16 nbytes, u8 first_blk); /* offset a multiple of 256, into physical blocks */
+u8 img_read_blocks_at(u32 offset, u16 nbytes, u8 first_blk, u16 first_off);   /* the same, starting at first_off (a multiple of 256) in the first block */
 u8 img_write_blocks(u32 offset, u16 nbytes, u8 first_blk);
 u8 img_mount(void);                                       /* read the header and the file table; 0 = ok */
 extern u32 img_save_lsn;                                  /* the saves area (sectors) */

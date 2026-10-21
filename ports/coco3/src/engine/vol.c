@@ -12,17 +12,18 @@ Vol vols[4];
 Vol img_vol;
 u32 img_save_lsn;
 u16 img_save_sectors;
-static u32 img_ents_off;                  /* the entry table of the image, from the start of the image */
-static u8 ebuf[250];                      /* 25 entries at a time */
+#define ENT_AT 0x600                      /* the entry table of the image in blocks 6 and 7 (one 16 KB run at $8000 through windows 0 and 1), behind the table of files */
+#define ENT_END 0x4000
 
 /* The image (tools/mkimage.py, "PIM2"): header { "PIM2", u16 nfiles, u16 nent, u32 files_off, u32 ents_off, u32 save_lsn, u16
  * save_sectors }, the table of files (name8, u16 first entry, u16 count; kept in physical block 6) and the table of entries
- * (the 10 byte entries of the volumes), which a lookup reads from the image a few at a time. */
+ * (the 10 byte entries of the volumes), which follows it in blocks 6 and 7: read once at mount, so that a lookup is a scan of RAM (it used to read
+ * the entries from the image a chunk at a time: two requests of the medium for every bank loaded, step 8.9c). */
 u8 img_mount(void)
 {
     u8 h[24];
     u16 n;
-    u32 files_off;
+    u32 files_off, ents_off;
     img_vol.mounted = 0;
     img_vol.drive = IMG_DRIVE;
     img_vol.f.drive = IMG_DRIVE;
@@ -33,14 +34,16 @@ u8 img_mount(void)
     img_vol.nfiles = (u8)(((u16)h[4] << 8) | h[5]);
     img_vol.nent = (u16)(((u16)h[6] << 8) | h[7]);
     files_off = ((u32)h[8] << 24) | ((u32)h[9] << 16) | ((u32)h[10] << 8) | h[11];
-    img_ents_off = ((u32)h[12] << 24) | ((u32)h[13] << 16) | ((u32)h[14] << 8) | h[15];
+    ents_off = ((u32)h[12] << 24) | ((u32)h[13] << 16) | ((u32)h[14] << 8) | h[15];
     img_save_lsn = ((u32)h[16] << 24) | ((u32)h[17] << 16) | ((u32)h[18] << 8) | h[19];
     img_save_sectors = (u16)(((u16)h[20] << 8) | h[21]);
     n = (u16)((u16)img_vol.nfiles * 12u);       /* (CMOC multiplies two bytes in 8 bits) */
-    if (n > 0x2000u)
+    if (n > ENT_AT || (u16)(ENT_AT + (u16)img_vol.nent * 10u) > ENT_END)
         return 3;
     if (img_read_blocks(files_off, n, 6) != 0)
         return 4;
+    if (img_read_blocks_at(ents_off, (u16)((u16)img_vol.nent * 10u), 6, ENT_AT) != 0)
+        return 5;
     img_vol.mounted = 1;
     return 0;
 }
@@ -66,22 +69,20 @@ static u8 img_file(const char *name8, u16 *first, u16 *count)
 
 static u8 img_find(const char *name8, u8 id, DaxEntry *e)
 {
-    u16 first, count, done, k, n;
-    u8 *p;
+    u16 first, count, k;
+    const u8 *p;
     if (img_file(name8, &first, &count) == 0xFF)
         return 1;
-    for (done = 0; done < count; done = (u16)(done + 25)) {
-        n = (u16)(count - done) < 25 ? (u16)(count - done) : 25;
-        if (img_read(img_ents_off + (u32)(first + done) * 10, ebuf, (u16)(n * 10)) != 0)
-            return 3;
-        for (k = 0, p = ebuf; k < n; k++, p += 10)
-            if (p[1] == id) {
-                e->offset = ((u32)p[2] << 24) | ((u32)p[3] << 16) | ((u32)p[4] << 8) | p[5];
-                e->packed = (u16)(((u16)p[6] << 8) | p[7]);
-                e->raw = (u16)(((u16)p[8] << 8) | p[9]);
-                return 0;
-            }
-    }
+    win_set(0, 6);
+    win_set(1, 7);
+    p = (const u8 *)0x8000u + ENT_AT + (u16)(first * 10u);
+    for (k = 0; k < count; k++, p += 10)
+        if (p[1] == id) {
+            e->offset = ((u32)p[2] << 24) | ((u32)p[3] << 16) | ((u32)p[4] << 8) | p[5];
+            e->packed = (u16)(((u16)p[6] << 8) | p[7]);
+            e->raw = (u16)(((u16)p[8] << 8) | p[9]);
+            return 0;
+        }
     return 2;
 }
 

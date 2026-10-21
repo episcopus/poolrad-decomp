@@ -65,12 +65,12 @@ u8 img_read(u32 offset, u8 *dst, u16 n)
     return 0;
 }
 
-/* nbytes (at most 64 KB) of the image from byte `offset` (a multiple of 256) into physical blocks first_blk, +1, ... */
-u8 img_read_blocks(u32 offset, u16 nbytes, u8 first_blk)
+/* nbytes (at most 64 KB) of the image from byte `offset` (a multiple of 256) into physical blocks first_blk, +1, ..., starting first_off (a multiple of 256) into the first */
+u8 img_read_blocks_at(u32 offset, u16 nbytes, u8 first_blk, u16 first_off)
 {
     u32 lsn = offset >> 8;
     u16 sectors = (u16)((nbytes + 255u) >> 8), room, c;
-    u16 off = 0;
+    u16 off = first_off;
     u8 blk = first_blk;
     while (sectors > 0) {
         room = (u16)((0x2000u - off) >> 8);
@@ -87,6 +87,11 @@ u8 img_read_blocks(u32 offset, u16 nbytes, u8 first_blk)
     }
     cached = 0xFFFFFFFFUL;                 /* (the harness may have written SCRATCH's block; the cache is only a guess) */
     return 0;
+}
+
+u8 img_read_blocks(u32 offset, u16 nbytes, u8 first_blk)
+{
+    return img_read_blocks_at(offset, nbytes, first_blk, 0);
 }
 
 /* nbytes of physical blocks from first_blk into the image at byte `offset` (a multiple of 256) */
