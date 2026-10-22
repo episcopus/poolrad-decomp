@@ -111,7 +111,7 @@ static void scr_putn(u16 a, const u8 *src, u8 n)
 }
 
 /* ---- text */
-static u8 font[1416];                     /* 177 glyphs of 8 rows; a row's top bit is its leftmost pixel */
+u8 font[1416];                          /* 177 glyphs of 8 rows; a row's top bit is its leftmost pixel */
 static u8 font_ok;
 
 u8 gfx_font_load(RsFile *f)
@@ -136,44 +136,9 @@ u8 gfx_font_load_e(RsFile *f, const DaxEntry *e)
 
 void gfx_glyph(u8 col, u8 row, u8 color, u8 count, u8 glyph, u8 textset)
 {
-    u8 tab[4], buf[4], i, line, b, c, y0;
-    const u8 *g;
-    u16 idx, a0, a1;
     if (col > 39 || row > 24 || !font_ok)
         return;
-    idx = glyph;
-    if (textset) {
-        if (glyph >= 'a' && glyph <= 'z')
-            idx = (u16)(glyph - 32);
-        idx = idx & 63;
-    }
-    if (idx > 176)
-        return;                           /* the original reads past the font block here */
-    tab[0] = 0;
-    tab[1] = color & 15;
-    tab[2] = (u8)(color << 4);
-    tab[3] = (u8)((color << 4) | (color & 15));
-    g = font + idx * 8;
-    y0 = (u8)(row * 8);
-    for (i = 0; i < count; i++) {
-        c = (u8)(col + i);
-        if (c > 39)
-            break;                        /* the original runs into the next row; no caller does */
-        a0 = rowa[y0] + (u8)(c * 4);
-        a1 = rowa[y0 + 7] + (u8)(c * 4) + 3;
-        if ((HI(a0) >> 5) == (HI(a1) >> 5)) {
-            k_glyph8(scr_at(a0), g, tab);  /* the eight rows are in one block */
-            continue;
-        }
-        for (line = 0; line < 8; line++) {
-            b = g[line];
-            buf[0] = tab[b >> 6];
-            buf[1] = tab[(b >> 4) & 3];
-            buf[2] = tab[(b >> 2) & 3];
-            buf[3] = tab[b & 3];
-            scr_putn(rowa[y0 + line] + (u8)(c * 4), buf, 4);
-        }
-    }
+    k_text(col, row, color, count, glyph, textset);     /* (step 8.9f: kernels.asm; a glyph's eight rows may cross a block border of the screen, two windows show both) */
 }
 
 void gfx_text(u8 col, u8 row, u8 color, const char *s)

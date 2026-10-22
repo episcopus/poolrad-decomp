@@ -24,6 +24,8 @@
         EXPORT  _db_lo
         EXPORT  _db_hi
         IMPORT  _rowa
+        IMPORT  _font
+        EXPORT  _k_text
         EXPORT  _k_flush
         EXPORT  _k_glyph8
         ifdef   ENG_TEST
@@ -320,6 +322,106 @@ _k_put
         abx
         dec     <FC_D
         bne     @row
+        puls    u,y,pc
+
+* u8 k_text(u8 col, u8 row, u8 color, u8 count, u8 glyph, u8 textset): count copies of a glyph on the text row, from cell col (gfx_glyph's loop for the glyphs whose eight rows are in one
+* block of the screen). Windows 0 and 1 show the screen block of the cell and the next one, so that a glyph whose rows cross a block border is drawn as any other. Returns 0 (the C code of gfx_glyph is the slow path of an older design). The font and the
+* colour table are made here; the pixels are k_glyph8's. Step 8.9f: a menu draws 8,000 single glyphs a screen, the C code round the kernel cost as much as the kernel.
+_k_text
+        pshs    u,y
+        leas    -8,s                    0..3 the colour table  4 glyphs done  5 the block in window 0  6,7 the glyph's rows in the font
+        ldb     23,s                    glyph
+        tst     25,s
+        beq     @ni
+        cmpb    #$61
+        blo     @m
+        cmpb    #$7A
+        bhi     @m
+        subb    #32
+@m      andb    #63
+@ni     cmpb    #176
+        lbhi    @none
+        clra
+        aslb
+        rola
+        aslb
+        rola
+        aslb
+        rola
+        addd    #_font
+        std     6,s
+        clr     0,s
+        ldb     19,s
+        andb    #15
+        stb     1,s
+        ldb     19,s
+        aslb
+        aslb
+        aslb
+        aslb
+        stb     2,s
+        orb     1,s
+        stb     3,s
+        clr     4,s
+        lda     #$FF
+        sta     5,s
+@loop   ldb     4,s
+        cmpb    21,s
+        lbhs    @none
+        ldb     15,s
+        addb    4,s
+        cmpb    #39
+        lbhi    @none
+        stb     <FC_Y                   c
+        ldb     17,s
+        aslb
+        aslb
+        aslb
+        stb     <FC_Y+1                 y0
+        clra
+        aslb
+        rola
+        ldx     #_rowa
+        ldd     d,x
+        tfr     d,x
+        ldb     <FC_Y
+        clra
+        aslb
+        rola
+        aslb
+        rola
+        leax    d,x                     X = the screen address of the cell's first row
+        tfr     x,d
+        lsra
+        lsra
+        lsra
+        lsra
+        lsra
+        sta     <FC_D
+        lda     <FC_D
+        cmpa    5,s
+        beq     @w
+        sta     5,s
+        sta     $FFAC
+        inca
+        sta     $FFAD                   window 1 shows the next block: a glyph that crosses a block border is in both
+@w      tfr     x,d
+        anda    #$1F
+        addd    #$8000
+        std     <FC_X
+        leax    0,s
+        pshs    x
+        ldx     8,s
+        pshs    x
+        ldx     <FC_X
+        pshs    x
+        jsr     _k_glyph8
+        leas    6,s
+        inc     4,s
+        lbra    @loop
+@none   clrb
+@ret    clra
+        leas    8,s
         puls    u,y,pc
 
 * void k_mask(u8 *d, u8 *m, u8 n, u8 key): the colour key of a masked picture becomes its mask (UnpackPicturePixels): for each byte of d the

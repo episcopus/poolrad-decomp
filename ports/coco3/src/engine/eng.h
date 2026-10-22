@@ -95,6 +95,7 @@ typedef struct BlitParams {
 } BlitParams;
 extern BlitParams bp;
 void k_blit(void);
+u8 k_text(u8 col, u8 row, u8 color, u8 count, u8 glyph, u8 textset);   /* a run of one glyph on the screen; returns how many are left for gfx_glyph's C code */
 void k_flush(void);                       /* db_flush's row loop (kernels.asm) */
 void k_tile8(u8 yb, u8 x0, const u8 *src, const u8 *msk, u8 y);
 void k_icon(u8 yb, u8 x0, const u8 *src, const u8 *msk, u8 y, u8 mirror);   /* a 3 cell by 24 row item into DrawBuf (kernels.asm) */   /* an 8x8 item into DrawBuf, trackers included (kernels.asm; not in the engine tests) */
