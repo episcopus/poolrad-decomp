@@ -221,9 +221,9 @@ _k_flush
         addd    #$A000
         tfr     d,x                     X = the destination in window 1
         ldb     2,s
-        cmpb    #97
+        cmpb    #96
         blo     @b4
-        subb    #97
+        subb    #96
         lda     #5
         bra     @mp
 @b4     lda     #4
@@ -268,15 +268,33 @@ _k_flush
         lblo    @y
         leas    5,s
         puls    u,y,pc
-* B bytes (1 to 160) from Y to X
+* B bytes (1 to 160) from Y to X: the words left over after groups of four first, then the groups of four words unrolled (9 cycles a byte; a word a pass was 12.5: step 8.9g)
 @cpy    stb     <FC_D+1
         lsrb
         beq     @odd
         stb     <FC_D
+        andb    #3
+        beq     @q
+        stb     <FC_X+1
 @wl     ldd     ,y++
         std     ,x++
-        dec     <FC_D
+        dec     <FC_X+1
         bne     @wl
+@q      lda     <FC_D
+        lsra
+        lsra
+        beq     @odd
+        sta     <FC_X+1
+@wq     ldd     ,y++
+        std     ,x++
+        ldd     ,y++
+        std     ,x++
+        ldd     ,y++
+        std     ,x++
+        ldd     ,y++
+        std     ,x++
+        dec     <FC_X+1
+        bne     @wq
 @odd    lda     <FC_D+1
         anda    #1
         beq     @cx

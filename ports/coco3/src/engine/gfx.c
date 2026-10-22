@@ -50,6 +50,7 @@ void gfx_init(void)
     gfx_default_palette();
 }
 
+#ifdef ENG_TEST                           /* (the engine tests only: the game does not call these two; step 8.9g needed the room) */
 /* A DAX block holding a picture record of 320x200: 17 bytes of header, then 32,000 bytes of pixels that go straight
  * into the screen blocks. */
 u8 gfx_show_title(RsFile *f, u8 block)
@@ -61,6 +62,7 @@ u8 gfx_show_title(RsFile *f, u8 block)
         return st;
     return dax_unpack(f, &e, hdr, 17, SCREEN_BLK, 0, 0);
 }
+#endif
 
 void gfx_pal_reg(u8 reg, u8 color)
 {
@@ -111,6 +113,7 @@ static void scr_putn(u16 a, const u8 *src, u8 n)
 u8 font[1416];                          /* 177 glyphs of 8 rows; a row's top bit is its leftmost pixel */
 static u8 font_ok;
 
+#if 1
 u8 gfx_font_load(RsFile *f)
 {
     DaxEntry e;
@@ -119,6 +122,7 @@ u8 gfx_font_load(RsFile *f)
         return st;
     return gfx_font_load_e(f, &e);
 }
+#endif
 
 u8 gfx_font_load_e(RsFile *f, const DaxEntry *e)
 {
@@ -138,6 +142,7 @@ void gfx_glyph(u8 col, u8 row, u8 color, u8 count, u8 glyph, u8 textset)
     k_text(col, row, color, count, glyph, textset);     /* (step 8.9f: kernels.asm; a glyph's eight rows may cross a block border of the screen, two windows show both) */
 }
 
+#ifdef ENG_TEST
 void gfx_text(u8 col, u8 row, u8 color, const char *s)
 {
     if (col > 39 || row > 39)
@@ -148,6 +153,7 @@ void gfx_text(u8 col, u8 row, u8 color, const char *s)
         col++;
     }
 }
+#endif
 
 /* ---- pictures */
 /* The picture store: the blocks PIC_SEG_A and PIC_SEG_B read as one linear space of 8 KB blocks. A picture is a
@@ -376,6 +382,7 @@ static u16 le16(const u8 *p)
     return (u16)(p[0] | ((u16)p[1] << 8));
 }
 
+#ifdef ENG_TEST
 u8 pic_load(Pic *p, RsFile *f, u8 id, u8 key, u8 masked)
 {
     DaxEntry e;
@@ -384,6 +391,7 @@ u8 pic_load(Pic *p, RsFile *f, u8 id, u8 key, u8 masked)
         return st;
     return pic_load_e(p, f, &e, key, masked);
 }
+#endif
 
 u8 pic_load_e(Pic *p, RsFile *f, const DaxEntry *e, u8 key, u8 masked)
 {
@@ -555,11 +563,11 @@ void gfx_item(const Pic *p, u8 item, u8 col, u8 row)
     }
 }
 
-/* ---- DrawBuf: 168 rows of 84 bytes; rows 0..96 in block 4, 97..167 in block 5 (a row never crosses a block). The
+/* ---- DrawBuf: 168 rows of 84 bytes; rows 0..95 in block 4, 96..167 in block 5 (the split is at 96 since step 8.9g, four cells of the combat map: it was 97, the most a block holds, and the cells of the fifth row crossed it) (a row never crosses a block). The
  * trackers hold, for each row, the first and last changed byte of the row (the original's flat offsets, made row
  * relative: the order within a row is the same). */
 #define DB_BLK 4
-#define DB_SPLIT 97
+#define DB_SPLIT 96
 #define DB_ROWBYTES 84
 extern u8 db_dirty[DB_ROWS], db_lo[DB_ROWS], db_hi[DB_ROWS];       /* (kernels.asm owns them and updates them) */
 
@@ -686,7 +694,7 @@ static u8 db_blk(const Pic *p, u8 item, u8 col, u8 row, u8 flags, u8 mirror, u8 
 }
 
 /* The rows r.. of an item, as many as lie in one block of the picture (and of its mask, which must be in the same block) and in one block of DrawBuf, by k_rows: the rows done, 0 when
- * the first row lies across a border or the mask is in another block (the staging path then does them). The item must lie inside DrawBuf across (no cut at the left or right, not
+ * the first row lies across a border, 255 when the mask is in another block (the staging path then does the row, or the rows). The item must lie inside DrawBuf across (no cut at the left or right, not
  * mirrored). Step 8.9f. */
 static u8 db_chunk(const Pic *p, u16 so, u8 masked, s16 y0, s16 r, s16 rend, u8 n, u8 x0)
 {
@@ -696,7 +704,7 @@ static u8 db_chunk(const Pic *p, u16 so, u8 masked, s16 y0, s16 r, s16 rend, u8 
         ml = (u16)(lin + p->moff);
         mo = (u16)(ml & 0x1FFFu);
         if ((u8)(HI(ml) >> 5) != (u8)(HI(lin) >> 5))
-            return 0;
+            return 255;
     }
     if (y < DB_SPLIT) {
         blk = DB_BLK;
@@ -735,14 +743,18 @@ void db_item_clip(const Pic *p, u8 item, s16 col, s16 row, u8 flags, u8 mirror, 
     if (y0 + rend > DB_ROWS)
         rend = (s16)(DB_ROWS - y0);
     while (r < rend) {
+        take = 255;
         if (save == 0 && !mirror && sl == 0 && nb == n) {
             take = db_chunk(p, so, masked, y0, r, rend, n, (u8)x0);
-            if (take) {
+            if (take != 0 && take != 255) {
                 r = (s16)(r + take);
                 continue;
             }
         }
-        take = rows_in_buf((u8)(rend - r), n);
+        if (take == 0)                            /* (a row across a block border: that row alone is staged, the rest goes by k_rows again) */
+            take = 1;
+        else
+            take = rows_in_buf((u8)(rend - r), n);
         if (save)
             db_save_rows(save, y0, r, take, n, (u8)sl, (u8)nb, (u8)x0);
         pic_rd(p, (u16)(so + (u16)r * n), gbuf, (u16)(take * n));

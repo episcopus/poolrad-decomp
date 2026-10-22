@@ -25,6 +25,7 @@ def main():
     ap.add_argument("--top", type=int, default=30)
     ap.add_argument("--api", action="store_true")
     ap.add_argument("--key", help="only the presses of this key code")
+    ap.add_argument("--min-busy", type=float, default=0.0, help="only the presses that took at least this many busy seconds (the scrolls among the cursor moves)")
     ap.add_argument("--to", dest="t1", type=float, default=1e9)
     ap.add_argument("--caller", action="store_true", help="a sample in the core is labelled with the code bank that was running (the caller, usually)")
     a = ap.parse_args()
@@ -71,6 +72,8 @@ def main():
             continue
         end = presses[k + 1][0] if k + 1 < len(presses) else t + 30
         busy = [(u, f) for (ft, w, u, f) in frames if t <= ft < end and not w]
+        if len(busy) / 60.0 < a.min_busy:
+            continue
         print("%8.1f %-6s %7.2f" % (t, NAMES.get(code, chr(code) if 32 <= code < 127 else code), len(busy) / 60.0))
         nkeys += 1
         for u, f in busy:

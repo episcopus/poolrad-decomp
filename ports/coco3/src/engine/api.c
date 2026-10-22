@@ -179,6 +179,22 @@ void api_DrawPictureItem(s16 col, s16 row, u8 item, u8 flags, u32 src, u32 dst)
         db_item(p, item, (u8)col, (u8)row, flags);
 }
 
+/* DrawCellGrid: the ground of the combat map's 7 by 7 view in one call (ScrollViewTo drew the 49 cells with a far call each: step 8.9g). codes: the picture code of each cell row by row,
+ * as DrawCellPicture takes it (above 127: item code - 128 of the bank src2, else item code of src1); the cell at (i, j) is drawn at cell column 3 * i and row 3 * j, flags 0. */
+void api_DrawCellGrid(const u8 *codes, u16 src1, u16 src2)
+{
+    u8 i, j, c;
+    Pic *p;
+    for (j = 0; j < 21; j += 3)
+        for (i = 0; i < 21; i += 3) {
+            c = *codes++;
+            p = pic_of(c > 127 ? src2 : src1);
+            c &= 127;
+            if (p && c < p->items)
+                db_item(p, c, i, j, 0);
+        }
+}
+
 /* IconBackgroundBuffer: the picture the game's AllocatePicture wrapper names here (ovl11), where flag bit 2 of the clipped draw saves
  * the background and a flags-0 draw of it puts it back (the cursor, missile and icon animations of res12) */
 static u16 icon_bg;
