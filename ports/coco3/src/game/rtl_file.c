@@ -3,8 +3,8 @@
  *   saves     the files the game writes (SAVE\RAD.CHA, .ITM, .SPC, CHARLIST.TXT, saved games) live in the save area of the image
  *             (img.c: byte addressed through the engine's SaveRead and SaveWrite). The area starts with a directory: a header
  *             ("PSAV", the first free 256 byte unit) and 127 entries of 16 bytes (name as 8 + 3 characters, start unit, size in
- *             units, size in bytes). A file gets its room when it is created (4 KB, 15 KB for .DAT) and keeps it; an erased
- *             file's room is not reused (development storage: a real backend decides how, after 8.9).
+ *             units, size in bytes). A file gets its room when it is created (4 KB, 15 KB for .DAT) and keeps it while it exists;
+ *             an erased file's room is free again: a new file takes the smallest run of units no live entry covers (find_room).
  *   volumes   the read only game data (DAX files, ITEMS) the engine reads from the image (engapi.c, DaxLoad and DaxRead).
  *
  * This code is in the runtime bank, which holds no variables: the state of an open file is in the file variable itself (the
@@ -106,11 +106,47 @@ static u8 dir_find(const u8 *key, u8 *e)
     return 0xFF;
 }
 
-/* a file created: its entry (new, or the old one emptied) with room for cap units; the 16 bytes in e */
+/* the start of the smallest run of at least cap free units, 0xFFFF when there is none. A unit is free when no live entry's room
+ * covers it (the directory takes the first eight): the room of an erased file is free again, and so is a room that an earlier
+ * version of this code lost track of (it kept an erased entry's room by writing a new file's entry over it). */
+static u16 find_room(u8 cap)
+{
+    u8 map[SAVE_UNITS / 8], e[16], i;
+    u16 u, s, c, run = 0, start = 0, best = 0xFFFF, bestlen = 0xFFFF;
+    memset(map, 0, sizeof(map));
+    map[0] = 0xFF;
+    for (i = 0; i < DIR_ENTRIES; i++) {
+        SaveRead((u32)entry_at(i), e, 16);
+        if (e[0] == 0)
+            continue;
+        s = g16(e + 11);
+        for (c = e[13]; c != 0 && s < SAVE_UNITS; c--, s++)
+            map[s >> 3] |= (u8)(1 << (s & 7));
+    }
+    for (u = 0; u <= SAVE_UNITS; u++) {
+        if (u < SAVE_UNITS && (map[u >> 3] & (1 << (u & 7))) == 0) {
+            if (run == 0)
+                start = u;
+            run++;
+        } else {
+            if (run >= cap && run < bestlen) {
+                best = start;
+                bestlen = run;
+            }
+            run = 0;
+        }
+    }
+    return best;
+}
+
+/* a file created: its entry with room for cap units; the 16 bytes in e. The room of a name the directory still has is kept (the
+ * file starts empty) when it is big enough. Otherwise the file gets an entry and a room of free units (find_room): the game
+ * erases a character's files and writes them again at every save, and rooms that were never given back filled the area (an
+ * erase then a rewrite took 5 new units each time, until the 512 were gone: fatal 40 in the middle of a save). */
 static u8 dir_create(const u8 *key, u8 cap, u8 *e)
 {
-    u8 i, h[8];
-    u16 next;
+    u8 i, h[8], z = 0;
+    u16 start, next;
     SaveRead(0UL, h, 8);
     if (memcmp(h, "PSAV", 4) != 0) {                    /* a save area nobody has used */
         memcpy(h, "PSAV", 4);
@@ -120,26 +156,34 @@ static u8 dir_create(const u8 *key, u8 cap, u8 *e)
         SaveWrite(0UL, h, 8);
     }
     i = dir_find(key, e);
-    if (i != 0xFF && e[13] >= cap) {
-        p16(e + 14, 0);
-        SaveWrite((u32)entry_at(i), e, 16);
-        return i;
+    if (i != 0xFF) {
+        if (e[13] >= cap) {
+            p16(e + 14, 0);
+            SaveWrite((u32)entry_at(i), e, 16);
+            return i;
+        }
+        SaveWrite((u32)entry_at(i), &z, 1);              /* too small for what is asked now: erased, its room is free */
     }
     for (i = 0; i < DIR_ENTRIES; i++) {                  /* the first free entry */
         SaveRead((u32)entry_at(i), e, 16);
         if (e[0] == 0)
             break;
     }
-    next = g16(h + 4);
-    if (i == DIR_ENTRIES || next + cap > SAVE_UNITS)
-        rtl_fatal_code(0x40, i);
+    if (i == DIR_ENTRIES)
+        rtl_fatal_code(0x40, DIR_ENTRIES);               /* 127 files */
+    start = find_room(cap);
+    if (start == 0xFFFF)
+        rtl_fatal_code(0x40, (u16)(0x100 | cap));        /* no run of cap free units (the info is 256 + cap) */
     memcpy(e, key, NAME_LEN);
-    p16(e + 11, next);
+    p16(e + 11, start);
     e[13] = cap;
     p16(e + 14, 0);
     SaveWrite((u32)entry_at(i), e, 16);
-    p16(h + 4, (u16)(next + cap));
-    SaveWrite(4UL, h + 4, 2);
+    next = g16(h + 4);
+    if (start + cap > next) {                            /* the header's first free unit: behind every room */
+        p16(h + 4, (u16)(start + cap));
+        SaveWrite(4UL, h + 4, 2);
+    }
     return i;
 }
 
