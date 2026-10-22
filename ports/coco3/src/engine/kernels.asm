@@ -27,7 +27,6 @@
         IMPORT  _font
         EXPORT  _k_text
         EXPORT  _k_flush
-        EXPORT  _k_glyph8
         ifdef   ENG_TEST
         EXPORT  _k_sum
         endc
@@ -324,14 +323,16 @@ _k_put
         bne     @row
         puls    u,y,pc
 
-* u8 k_text(u8 col, u8 row, u8 color, u8 count, u8 glyph, u8 textset): count copies of a glyph on the text row, from cell col (gfx_glyph's loop for the glyphs whose eight rows are in one
-* block of the screen). Windows 0 and 1 show the screen block of the cell and the next one, so that a glyph whose rows cross a block border is drawn as any other. Returns 0 (the C code of gfx_glyph is the slow path of an older design). The font and the
-* colour table are made here; the pixels are k_glyph8's. Step 8.9f: a menu draws 8,000 single glyphs a screen, the C code round the kernel cost as much as the kernel.
+* u8 k_text(u8 col, u8 row, u8 color, u8 count, u8 glyph, u8 textset): count copies of a glyph on the text row, from cell col (cut at column 39): the font's eight rows of the glyph
+* become eight rows of four bytes each. Windows 0 and 1 show the screen block of the cell and the next one, so that a glyph whose rows cross a block border is drawn as any other.
+* A byte of the font is two nibbles, each of which gives two bytes of the screen (a pixel pair each): the 16 entries of that table for the last colour are kept (_ttab, _tkey) and made
+* again when the colour changes; a glyph of eight zero bytes (a space) is eight rows of zeros. Step 8.9f: a menu draws 8,000 single glyphs a screen; this is 2 to 5 times faster than the
+* version with a table of four entries and a call of the kernel for each cell. Returns 0.
 _k_text
         pshs    u,y
-        leas    -8,s                    0..3 the colour table  4 glyphs done  5 the block in window 0  6,7 the glyph's rows in the font
-        ldb     23,s                    glyph
-        tst     25,s
+        leas    -10,s                   0 blank  1 cells  2..5 the colour table of four  6,7 the font rows  8,9 the cell
+        ldb     25,s
+        tst     27,s
         beq     @ni
         cmpb    #$61
         blo     @m
@@ -340,7 +341,7 @@ _k_text
         subb    #32
 @m      andb    #63
 @ni     cmpb    #176
-        lbhi    @none
+        lbhi    @out
         clra
         aslb
         rola
@@ -349,79 +350,131 @@ _k_text
         aslb
         rola
         addd    #_font
-        std     6,s
-        clr     0,s
-        ldb     19,s
+        tfr     d,y                     Y = the glyph's eight font bytes
+        lda     #40
+        suba    17,s
+        lbls    @out
+        cmpa    23,s
+        blo     @nn
+        lda     23,s
+@nn     sta     1,s                     the cells: count, or what is left of the row
+        lbeq    @out
+        ldd     ,y
+        ora     2,y
+        orb     3,y
+        ora     4,y
+        orb     5,y
+        ora     6,y
+        orb     7,y
+        sta     0,s
+        orb     0,s
+        stb     0,s                     0 when all eight rows are zero
+        beq     @addr
+        ldb     21,s
         andb    #15
-        stb     1,s
-        ldb     19,s
-        aslb
-        aslb
-        aslb
-        aslb
-        stb     2,s
-        orb     1,s
+        cmpb    _tkey
+        beq     @addr
+        stb     _tkey
+        clr     2,s
         stb     3,s
-        clr     4,s
-        lda     #$FF
-        sta     5,s
-@loop   ldb     4,s
-        cmpb    21,s
-        lbhs    @none
-        ldb     15,s
-        addb    4,s
-        cmpb    #39
-        lbhi    @none
-        stb     <FC_Y                   c
-        ldb     17,s
         aslb
         aslb
         aslb
-        stb     <FC_Y+1                 y0
+        aslb
+        stb     4,s
+        orb     3,s
+        stb     5,s
+        sty     6,s                     (the font pointer, while Y is the table builder's)
+        ldx     #_ttab
+        clr     <FC_Y
+@hl     clr     <FC_Y+1
+@ll     leau    2,s
+        ldb     <FC_Y
+        lda     b,u
+        ldb     <FC_Y+1
+        ldb     b,u
+        std     ,x++
+        inc     <FC_Y+1
+        ldb     <FC_Y+1
+        cmpb    #4
+        blo     @ll
+        inc     <FC_Y
+        ldb     <FC_Y
+        cmpb    #4
+        blo     @hl
+        ldy     6,s
+@addr   ldb     19,s
+        aslb
+        aslb
+        aslb
         clra
         aslb
         rola
         ldx     #_rowa
         ldd     d,x
         tfr     d,x
-        ldb     <FC_Y
+        ldb     17,s
         clra
         aslb
         rola
         aslb
         rola
-        leax    d,x                     X = the screen address of the cell's first row
+        leax    d,x                     X = the screen address of the first cell's first row
         tfr     x,d
         lsra
         lsra
         lsra
         lsra
         lsra
-        sta     <FC_D
-        lda     <FC_D
-        cmpa    5,s
-        beq     @w
-        sta     5,s
         sta     $FFAC
         inca
-        sta     $FFAD                   window 1 shows the next block: a glyph that crosses a block border is in both
-@w      tfr     x,d
+        sta     $FFAD                   window 1 shows the next block
+        tfr     x,d
         anda    #$1F
         addd    #$8000
-        std     <FC_X
-        leax    0,s
-        pshs    x
-        ldx     8,s
-        pshs    x
-        ldx     <FC_X
-        pshs    x
-        jsr     _k_glyph8
-        leas    6,s
-        inc     4,s
-        lbra    @loop
-@none   clrb
-@ret    clra
-        leas    8,s
+        tfr     d,x                     X = its address in the windows
+        sty     6,s                     the font rows, for every cell
+        ldu     #_ttab
+@cell   stx     8,s
+        tst     0,s
+        bne     @px
+        ldd     #0
+        ldb     #8
+        stb     <FC_D+1
+        clrb
+@br     std     ,x
+        std     2,x
+        leax    160,x
+        dec     <FC_D+1
+        bne     @br
+        bra     @nx
+@px     ldy     6,s
+        lda     #8
+        sta     <FC_D+1
+@row    lda     ,y+
+        tfr     a,b
+        anda    #$F0
+        lsra
+        lsra
+        lsra
+        andb    #$0F
+        aslb
+        stb     <FC_D
+        ldd     a,u
+        std     ,x
+        ldb     <FC_D
+        ldd     b,u
+        std     2,x
+        leax    160,x
+        dec     <FC_D+1
+        bne     @row
+@nx     ldx     8,s
+        leax    4,x
+        dec     1,s
+        bne     @cell
+@out    clrb
+        clra
+        leas    10,s
         puls    u,y,pc
 
 * void k_mask(u8 *d, u8 *m, u8 n, u8 key): the colour key of a masked picture becomes its mask (UnpackPicturePixels): for each byte of d the
@@ -874,48 +927,6 @@ _k_mirror
         rts
         endc
 
-* void k_glyph8(u8 *scr, const u8 *glyph, const u8 *tab): eight font rows to eight screen rows 160 bytes apart; each
-* row byte is four two-pixel codes, tab[code] the two colour nibbles
-_k_glyph8
-        pshs    u,y
-        ldx     6,s
-        ldy     8,s
-        ldu     10,s
-        lda     #8
-        sta     <FC_D+1
-@row    lda     ,y+
-        sta     <FC_D
-        lsra
-        lsra
-        lsra
-        lsra
-        lsra
-        lsra
-        ldb     a,u
-        stb     ,x
-        lda     <FC_D
-        lsra
-        lsra
-        lsra
-        lsra
-        anda    #3
-        ldb     a,u
-        stb     1,x
-        lda     <FC_D
-        lsra
-        lsra
-        anda    #3
-        ldb     a,u
-        stb     2,x
-        lda     <FC_D
-        anda    #3
-        ldb     a,u
-        stb     3,x
-        leax    160,x
-        dec     <FC_D+1
-        bne     @row
-        puls    u,y,pc
-
         ifdef   ENG_TEST                (the tests sum what they read)
 * u16 k_sum(const u8 *p, u16 n): the sum of n bytes, modulo 65536
 _k_sum
@@ -940,6 +951,8 @@ _k_sum
 
         SECTION bss
 _bp     RMB     14                      the parameters of k_blit
+_tkey   RMB     1                       the colour (0 to 15) that _ttab is the table of
+_ttab   RMB     32                      for each nibble of a font byte, the two screen bytes it makes
 * the trackers of DrawBuf: a row has been drawn on, the first and the last byte of it that changed (they are in one block so that k_flush finds them at fixed distances)
 _db_dirty RMB   168
 _db_lo  RMB     168
