@@ -7,6 +7,7 @@
         EXPORT  _k_copy
         EXPORT  _k_fill
         EXPORT  _k_fillrect
+        EXPORT  _k_put
         EXPORT  _k_blit
         ifndef  ENG_TEST
         EXPORT  _k_tile8
@@ -280,6 +281,46 @@ _k_flush
         lda     ,y+
         sta     ,x+
 @cx     rts
+
+* void k_put(u8 *dst, const u8 *src, u8 n, u8 rows): rows rows of n bytes (a multiple of 4) from src (n bytes a row, one after the other) to dst (160 bytes a row, the screen's),
+* both in the windows that are mapped. gfx_item's copy of a picture item to the screen: it staged the item through a 256 byte buffer and called k_copy for every row.
+* Step 8.9f: a menu draws three thousand 8x8 items (the windows' frames) in a screen.
+_k_put
+        pshs    u,y
+        ldx     6,s
+        ldy     8,s
+        ldb     11,s
+        cmpb    #4
+        bne     @gen
+        lda     13,s
+        sta     <FC_D
+@t      ldd     ,y++
+        std     ,x
+        ldd     ,y++
+        std     2,x
+        leax    160,x
+        dec     <FC_D
+        bne     @t
+        puls    u,y,pc
+@gen    lda     #160
+        stb     <FC_Y+1
+        suba    <FC_Y+1
+        sta     <FC_Y                   the step from the end of one row to the start of the next
+        lsrb
+        stb     <FC_X                   words a row
+        lda     13,s
+        sta     <FC_D
+@row    ldb     <FC_X
+        stb     <FC_D+1
+@w      ldd     ,y++
+        std     ,x++
+        dec     <FC_D+1
+        bne     @w
+        ldb     <FC_Y
+        abx
+        dec     <FC_D
+        bne     @row
+        puls    u,y,pc
 
 * void k_mask(u8 *d, u8 *m, u8 n, u8 key): the colour key of a masked picture becomes its mask (UnpackPicturePixels): for each byte of d the
 * mask byte is $F0 for a high nibble equal to the key and $0F for a low one; the byte loses those nibbles. n >= 1.

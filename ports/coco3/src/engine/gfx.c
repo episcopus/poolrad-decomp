@@ -562,6 +562,19 @@ void gfx_item(const Pic *p, u8 item, u8 col, u8 row)
     u16 so = (u16)((u16)item * p->bytesize);
     u16 a = rowa[y] + (u8)(col * 4);
     const u8 *src;
+    /* the whole item in one block of the picture and its rows in one block of the screen (nearly always): straight from one window into the other, one kernel call (step 8.9f) */
+    {
+        u16 lin = (u16)(p->off + so), a2;
+        if (y + h <= 200 && (u16)((lin & 0x1FFFu) + p->bytesize) <= 0x2000u) {
+            a2 = (u16)(rowa[y + h - 1] + (u8)(col * 4) + n - 1);
+            if ((HI(a2) >> 5) == (HI(a) >> 5)) {
+                MMU_W1 = (u8)(p->blk + (u8)(HI(lin) >> 5));
+                MMU_W0 = (u8)(SCREEN_BLK + (HI(a) >> 5));
+                k_put(WIN0 + (a & 0x1FFFu), WIN1 + (lin & 0x1FFFu), n, h);
+                return;
+            }
+        }
+    }
     while (h > 0 && y < 200) {
         take = rows_in_buf(h, n);
         pic_rd(p, so, gbuf, (u16)(take * n));

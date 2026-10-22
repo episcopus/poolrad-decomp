@@ -73,7 +73,7 @@ void api_unimpl(void)
 
 /* ---- pictures */
 
-#define NPIC 128
+#define NPIC 96                    /* (the extent table holds 64 pictures: slots beyond 96 could never be used; it was 128 until step 8.9f, which needed 480 bytes of the engine's room) */
 #define H_DRAWBUF 0x7F01u                 /* DrawBuf, the staging buffer of gfx.c: not a Pic */
 Pic pics[NPIC];
 u8 pic_live[NPIC];

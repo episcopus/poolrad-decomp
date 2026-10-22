@@ -25,6 +25,7 @@ def main():
     ap.add_argument("--top", type=int, default=30)
     ap.add_argument("--api", action="store_true")
     ap.add_argument("--key", help="only the presses of this key code")
+    ap.add_argument("--to", dest="t1", type=float, default=1e9)
     ap.add_argument("--caller", action="store_true", help="a sample in the core is labelled with the code bank that was running (the caller, usually)")
     a = ap.parse_args()
     meta = json.load(open(os.path.join(B, "banks.json")))
@@ -66,11 +67,11 @@ def main():
     units, fns, total, nkeys = {}, {}, 0, 0
     print("%8s %-6s %7s %s" % ("t", "key", "busy s", "(frames from the press to the next one)"))
     for k, (t, code) in enumerate(presses):
-        if t < a.t0 or (a.key and str(code) != a.key):
+        if t < a.t0 or t > a.t1 or (a.key and str(code) != a.key):
             continue
         end = presses[k + 1][0] if k + 1 < len(presses) else t + 30
         busy = [(u, f) for (ft, w, u, f) in frames if t <= ft < end and not w]
-        print("%8.1f %-6s %7.2f" % (t, NAMES.get(code, code), len(busy) / 60.0))
+        print("%8.1f %-6s %7.2f" % (t, NAMES.get(code, chr(code) if 32 <= code < 127 else code), len(busy) / 60.0))
         nkeys += 1
         for u, f in busy:
             units[u] = units.get(u, 0) + 1
