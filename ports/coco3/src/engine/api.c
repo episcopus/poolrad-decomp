@@ -239,6 +239,18 @@ void api_PutTileRun(s16 col, s16 row, u8 n, u8 vert, u16 sym, const u16 *banks, 
     }
 }
 
+/* DrawTextRun: the glyphs of the Pascal string text (length byte first, in the game's stack) one after the other from cell (col, row), each as DrawGlyph(c, row, color, 1, glyph, 1) with
+ * c the cell, a byte that wraps as the game's does (step 8.9f: DrawTextAt called the gate once for every character: 8,000 times a screen of a menu). */
+void api_DrawTextRun(u8 col, u8 row, u8 color, const u8 *text)
+{
+    u8 i, n = text[0];
+    for (i = 1; i <= n; i++) {
+        gfx_glyph((u8)(col + i - 1), row, color, 1, text[i], 1);
+        if (i == 255)
+            break;
+    }
+}
+
 void api_DrawPictureItemClipped(s16 col, s16 row, u8 item, u8 flags, u32 src, u32 dst)
 {
     Pic *p = pic_of(src), *save = 0;
