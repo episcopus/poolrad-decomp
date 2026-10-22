@@ -37,14 +37,14 @@ ENGINE_ROUTINES = {
     "res06": ["SetEgaFillRegisters", "SetActivePage", "SetPageSegment", "FillPlaneRect", "LoadGameFont", "DrawGlyph"],   # GameClock: rtl_sys.c
     "ovl17": ["MergePictureData"],
 }
-ENGINE_EXTRA = ["ShowPictureItem", "DaxLoad", "DaxRead", "FileKnown", "DrawIconPic", "PictureCopy", "SaveRead", "SaveWrite", "SetPictureXY", "PictureBytes", "PicData", "DrawSpritePic", "PictureAppend", "PictureItemCopy", "SetIconBackground", "DrawWallTiles"]                       # engine routines the original does not have (called by src/game/engapi.c)
+ENGINE_EXTRA = ["ShowPictureItem", "DaxLoad", "DaxRead", "FileKnown", "DrawIconPic", "PictureCopy", "SaveRead", "SaveWrite", "SetPictureXY", "PictureBytes", "PicData", "DrawSpritePic", "PictureAppend", "PictureItemCopy", "SetIconBackground", "DrawWallTiles", "PutTileRun"]                       # engine routines the original does not have (called by src/game/engapi.c)
 WRAPPED = {"LoadPicture", "AllocatePicture", "ReleasePicture", "RemapPictureColors"}   # engine routines with a wrapper in src/game/engapi.c: the stub is _eng_<Name>
 # Game routines that reach into a picture record (the PC's layout: Tail, Pixels, ByteSize) cannot: a picture is a handle and the
 # pixels are the engine's. These are rewritten after the translation to say the same thing through the engine (step 8.5; the
 # whitepaper's 4.2.3 and the routines' own comments name what each does). "fn" replaces a whole function, "between" the lines from
 # one marker through another (inclusive) in one function.
 PATCH_DECLS = ("void DrawIconPic(u16 h, s16 col, s16 row, u8 mirror);\nvoid PictureCopy(u16 src, u16 dst);\nvoid SetPictureXY(u16 h, u16 x, u16 y);\n"
-               "u16 PictureBytes(u16 h);\nvoid DrawWallTiles(s16 Col, s16 Row, u8 W, u8 H, u8 Flags, s16 Ofs, const u8 *Tiles, const u16 *Banks, const u16 *Bases);\nvoid PicData(u16 h, u16 rel, const u8 *buf, u8 n, u8 key);\nvoid DrawSpritePic(u16 h);\nvoid PictureAppend(u16 src, u16 dst, u8 index);\nvoid PictureItemCopy(u16 src, u16 dst, u8 item, u8 mirror);\nu16 DaxLoad(const u8 *name, u16 id);\nvoid DaxRead(u16 off, u8 *dst, u16 n);\n")
+               "u16 PictureBytes(u16 h);\nvoid DrawWallTiles(s16 Col, s16 Row, u8 W, u8 H, u8 Flags, s16 Ofs, const u8 *Tiles, const u16 *Banks, const u16 *Bases);\nvoid PutTileRun(s16 Col, s16 Row, u8 N, u8 Vert, u16 Sym, const u16 *Banks, const u16 *Bases);\nvoid PicData(u16 h, u16 rel, const u8 *buf, u8 n, u8 key);\nvoid DrawSpritePic(u16 h);\nvoid PictureAppend(u16 src, u16 dst, u8 index);\nvoid PictureItemCopy(u16 src, u16 dst, u8 item, u8 mirror);\nu16 DaxLoad(const u8 *name, u16 id);\nvoid DaxRead(u16 off, u8 *dst, u16 n);\n")
 PATCHDIR = Path(__file__).resolve().parent.parent / "patches"       # the replacement texts of whole routines (step 8.9e)
 PATCHES = {
     # ovl07 ScaleMoney and ovl03 LoseMoneyAndItemsCommand (ECL command 40, what paying off an encounter runs): the original scales each of the seven money
@@ -195,6 +195,8 @@ PATCHES = {
 }
 """)],
     # step 8.9e (combat): the target scan of the AI and its line walk (patches/*.c), the search of a combatant's number
+    # step 8.9f (menus): the frame of a window, 8 runs of tiles instead of about 100 calls of Put8x8Symbol (the engine's PutTileRun)
+    "res09": [("fn", "DrawWindowFrame", (PATCHDIR / "res09_windowframe.c").read_text())],
     "ovl30": [("fn", "SetupLine", (PATCHDIR / "ovl30_setupline.c").read_text()), ("fn", "StepLine", (PATCHDIR / "ovl30_stepline.c").read_text()),
               ("fn", "WalkLine", (PATCHDIR / "ovl30_walkline.c").read_text()), ("fn", "ScanTargets", (PATCHDIR / "ovl30_scantargets.c").read_text()),
               ("fn", "SortTable", (PATCHDIR / "ovl30_sorttable.c").read_text())],

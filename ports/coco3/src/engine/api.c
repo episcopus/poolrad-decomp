@@ -216,6 +216,29 @@ void api_DrawWallTiles(s16 col, s16 row, u8 w, u8 h, u8 flags, s16 ofs, const u8
         }
 }
 
+/* PutTileRun: n 8x8 symbols of one kind along a row (vert 0) or a column of cells from (col, row), to the screen (step 8.9f): the frames of the windows (DrawWindowFrame drew each of the
+ * 100 or so tiles of a frame with a Put8x8Symbol, a call through the gate for every one). The bank and the item of the symbol are Put8x8Symbol's, ShowPictureItem's checks are kept. */
+void api_PutTileRun(s16 col, s16 row, u8 n, u8 vert, u16 sym, const u16 *banks, const u16 *bases)
+{
+    u8 b, item;
+    const Pic *p;
+    if (sym == 0 || sym > 286)
+        return;
+    b = sym < 46 ? 0 : sym < 116 ? 1 : sym < 186 ? 2 : sym < 256 ? 3 : 4;
+    p = pic_of(banks[b]);
+    item = (u8)(sym - bases[b]);
+    if (p == 0 || item >= p->items)
+        return;
+    for (; n > 0; n--) {
+        if (col >= 0 && row >= 0)
+            gfx_item(p, item, (u8)col, (u8)row);
+        if (vert)
+            row++;
+        else
+            col++;
+    }
+}
+
 void api_DrawPictureItemClipped(s16 col, s16 row, u8 item, u8 flags, u32 src, u32 dst)
 {
     Pic *p = pic_of(src), *save = 0;
