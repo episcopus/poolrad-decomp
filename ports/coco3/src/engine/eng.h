@@ -15,6 +15,11 @@ u8 mmu_get(u8 slot);
 void win_set(u8 w, u8 block);             /* the engine's window w (0: $8000, 1: $A000), task 1 */
 void eng_enter(void);                     /* the CPU into the engine's address space (task 1), eng_leave back to the game's */
 void eng_leave(void);
+/* the engine's windows 0 and 1 are the task 1 slot registers $FFAC and $FFAD (mmu.asm win_set): written directly on the hot paths, the call costs more than the store */
+#define MMU_W0 (*(volatile u8 *)0xFFAC)
+#define MMU_W1 (*(volatile u8 *)0xFFAD)
+extern u16 rowa[200];                      /* y * 160, the screen's row addresses (gfx.c) */
+#define HI(x) (*(u8 *)&(x))               /* the high byte of a 16-bit variable (the CPU is big endian) */
 #define WIN0 ((u8 *)0x8000)
 #define WIN1 ((u8 *)0xA000)
 
@@ -86,6 +91,8 @@ u8 vol_lookup(const char *name8, u8 id, Vol **vp, DaxEntry *e);     /* over ever
 /* ---- kernels.asm: the inner loops. Nothing here maps a window; the pointers must be valid when called. */
 void k_copy(u8 *dst, const u8 *src, u8 n);                      /* n = 0 copies nothing */
 void k_fill(u8 *dst, u8 value, u16 n);
+u8 k_tilerun(const u8 *src, u8 col, u8 row, u8 n, u8 vert);       /* n 8x8 items from src (in window 1) along a row or a column of the screen's cells; returns how many are left (kernels.asm) */
+u8 k_rows(u8 yb, u8 x0, const u8 *src, const u8 *msk, u8 y, u8 n, u8 rows);   /* up to rows rows of n bytes into DrawBuf, all in one block of the picture and of DrawBuf; returns the rows drawn (kernels.asm) */
 void k_put(u8 *dst, const u8 *src, u8 n, u8 rows);                  /* rows rows of n bytes (a multiple of 4) to the screen's rows, 160 apart, both in mapped windows */
 void k_fillrect(u8 *dst, u8 value, u8 n, u8 rows);                 /* rows rows of n bytes (a multiple of 4), 160 bytes apart, in the mapped window */
 /* rows of a picture into DrawBuf with the trackers (kernels.asm; the parameters are set in bp first) */
@@ -97,8 +104,8 @@ extern BlitParams bp;
 void k_blit(void);
 u8 k_text(u8 col, u8 row, u8 color, u8 count, u8 glyph, u8 textset);   /* a run of one glyph on the screen; returns how many are left for gfx_glyph's C code */
 void k_flush(void);                       /* db_flush's row loop (kernels.asm) */
-void k_tile8(u8 yb, u8 x0, const u8 *src, const u8 *msk, u8 y);
-void k_icon(u8 yb, u8 x0, const u8 *src, const u8 *msk, u8 y, u8 mirror);   /* a 3 cell by 24 row item into DrawBuf (kernels.asm) */   /* an 8x8 item into DrawBuf, trackers included (kernels.asm; not in the engine tests) */
+
+void k_icon(u8 yb, u8 x0, const u8 *src, const u8 *msk, u8 y, u8 mirror);   /* a 3 cell by 24 row item into DrawBuf (kernels.asm) */
 void k_mask(u8 *d, u8 *m, u8 n, u8 key);                      /* UnpackPicturePixels: m[i] = the nibbles of d[i] equal to key as F or 0, d[i] without them */
 void k_mirror(u8 *b, u8 n);                                    /* a row reversed, the two pixels of each byte swapped */
 void k_glyph8(u8 *scr, const u8 *glyph, const u8 *tab);         /* 8 font rows to rows 160 bytes apart */

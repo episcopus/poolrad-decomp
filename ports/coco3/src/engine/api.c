@@ -73,7 +73,7 @@ void api_unimpl(void)
 
 /* ---- pictures */
 
-#define NPIC 96                    /* (the extent table holds 64 pictures: slots beyond 96 could never be used; it was 128 until step 8.9f, which needed 480 bytes of the engine's room) */
+#define NPIC 64                    /* (the extent table holds 64 pictures: slots beyond 64 could never be used; it was 128 until step 8.9f, which needed 480 bytes of the engine's room) */
 #define H_DRAWBUF 0x7F01u                 /* DrawBuf, the staging buffer of gfx.c: not a Pic */
 Pic pics[NPIC];
 u8 pic_live[NPIC];
@@ -229,6 +229,20 @@ void api_PutTileRun(s16 col, s16 row, u8 n, u8 vert, u16 sym, const u16 *banks, 
     item = (u8)(sym - bases[b]);
     if (p == 0 || item >= p->items)
         return;
+    /* an 8x8 item lying in one block of its picture: the tiles inside the screen's cells are drawn by k_tilerun with the source mapped once; what it leaves (a tile it cannot place) by gfx_item */
+    if (p->wcols == 1 && p->height == 8) {
+        u16 lin = (u16)(p->off + (u16)((u16)item << 5));
+        if ((u16)((lin & 0x1FFFu) + 32) <= 0x2000u) {
+            u8 left;
+            MMU_W1 = (u8)(p->blk + (u8)(HI(lin) >> 5));
+            left = k_tilerun(WIN1 + (lin & 0x1FFFu), (u8)col, (u8)row, n, vert);
+            if (vert)
+                row += (s16)(n - left);
+            else
+                col += (s16)(n - left);
+            n = left;
+        }
+    }
     for (; n > 0; n--) {
         if (col >= 0 && row >= 0)
             gfx_item(p, item, (u8)col, (u8)row);

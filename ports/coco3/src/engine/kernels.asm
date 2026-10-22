@@ -8,9 +8,10 @@
         EXPORT  _k_fill
         EXPORT  _k_fillrect
         EXPORT  _k_put
+        EXPORT  _k_tilerun
         EXPORT  _k_blit
         ifndef  ENG_TEST
-        EXPORT  _k_tile8
+        EXPORT  _k_rows
         EXPORT  _k_icon
         endc
         EXPORT  _k_mask
@@ -477,6 +478,77 @@ _k_text
         leas    10,s
         puls    u,y,pc
 
+* u8 k_tilerun(const u8 *src, u8 col, u8 row, u8 n, u8 vert): n copies of the 8x8 item at src (32 bytes, window 1) to the screen's cells from (col, row), along a row (vert 0) or a
+* column. A tile that is not inside the 40 by 25 cells, or whose eight rows are not in one screen block, ends the run: the number of tiles left (0 when all are drawn) goes back for
+* gfx_item. Step 8.9f: the frames of the windows (PutTileRun).
+_k_tilerun
+        pshs    u,y
+        leas    -4,s                    0 col  1 row  2 tiles left  3 the block window 0 shows
+        lda     13,s
+        sta     0,s
+        lda     15,s
+        sta     1,s
+        lda     17,s
+        sta     2,s
+        lda     #$FF
+        sta     3,s
+@t      lda     2,s
+        lbeq    @done
+        lda     0,s
+        cmpa    #39
+        lbhi    @bail
+        ldb     1,s
+        cmpb    #24
+        lbhi    @bail
+        lda     #5
+        mul                             row * 5 (the cell row is 1280 bytes: 5 * 256)
+        tfr     b,a
+        ldb     0,s
+        aslb
+        aslb                            D = row * 1280 + col * 4, the first byte of the tile
+        tfr     d,x
+        anda    #$1F
+        addd    #1123                   the last byte of its last row (7 * 160 + 3) must be in the same block
+        cmpa    #$20
+        lbhs    @bail
+        tfr     x,d
+        lsra
+        lsra
+        lsra
+        lsra
+        lsra
+        cmpa    3,s
+        beq     @w
+        sta     3,s
+        sta     $FFAC
+@w      tfr     x,d
+        anda    #$1F
+        ora     #$80
+        tfr     d,x
+        ldy     10,s
+        lda     #8
+        sta     <FC_D+1
+@r      ldd     ,y++
+        std     ,x
+        ldd     ,y++
+        std     2,x
+        leax    160,x
+        dec     <FC_D+1
+        bne     @r
+        tst     19,s
+        beq     @h
+        inc     1,s
+        bra     @n
+@h      inc     0,s
+@n      dec     2,s
+        lbra    @t
+@bail   ldb     2,s
+        bra     @ret
+@done   clrb
+@ret    clra
+        leas    4,s
+        puls    u,y,pc
+
 * void k_mask(u8 *d, u8 *m, u8 n, u8 key): the colour key of a masked picture becomes its mask (UnpackPicturePixels): for each byte of d the
 * mask byte is $F0 for a high nibble equal to the key and $0F for a low one; the byte loses those nibbles. n >= 1.
 _k_mask
@@ -658,11 +730,11 @@ _k_blit
         puls    u,y,pc
 
         ifndef  ENG_TEST
-* void k_tile8(u8 yb, u8 x0, const u8 *src, const u8 *msk, u8 y): an 8x8 item (eight rows of four bytes) into DrawBuf, the common case of k_blit without the per row
-* set up: yb the first row's number in the DrawBuf block that window 0 shows (rows 84 bytes apart), x0 the column byte, src and msk (0 = opaque) the item's 32 bytes where
-* they are (the picture's block in window 1), y the DrawBuf row of the first for the trackers, which follow as k_blit's do (db_dirty, db_lo, db_hi).
-* Step 8.9d: the 3D view draws about 200 of them a step.
-_k_tile8
+* u8 k_rows(u8 yb, u8 x0, const u8 *src, const u8 *msk, u8 y, u8 n, u8 rows): up to rows rows of n bytes (a multiple of 4, at most 84) into DrawBuf: the 8x8 items of the 3D view (4 by 8) and the pictures of
+* any size (this was k_tile8 for the first until step 8.9f): yb the first row in the block that window 0 shows (the rows must lie in it), x0 the column byte, src and msk (0 = opaque) the rows one after the other where they are
+* (window 1, one block: a row that would run past its end is not drawn and ends the run), y the DrawBuf row of the first for the trackers. Returns the rows drawn. Step 8.9f: the camp
+* and loot screens' pictures (44 bytes by 88 rows) went through the staging buffers five rows at a time.
+_k_rows
         pshs    u,y
         lda     7,s
         ldb     #84
@@ -673,50 +745,79 @@ _k_tile8
         abx
         ldy     10,s
         ldu     12,s
-        lda     #8
-        sta     <FC_D
+        lda     19,s
+        sta     <FC_X+1
+        ldb     17,s
+        negb
+        addb    #84
+        stb     <FC_Y+1
+        ldd     #$C000
+        subb    17,s
+        sbca    #0
+        std     6,s                     the last address a row may start at
         cmpu    #0
         beq     @opq
-@m      ldd     ,x
+@mr     cmpy    6,s
+        lbhi    @stop
+        cmpu    6,s
+        lbhi    @stop
+        lda     17,s
+        lsra
+        lsra
+        sta     <FC_D+1
+@mw     ldd     ,x
         anda    ,u+
         andb    ,u+
         ora     ,y+
         orb     ,y+
-        std     ,x
-        ldd     2,x
+        std     ,x++
+        ldd     ,x
         anda    ,u+
         andb    ,u+
         ora     ,y+
         orb     ,y+
-        std     2,x
-        leax    84,x
-        dec     <FC_D
-        bne     @m
+        std     ,x++
+        dec     <FC_D+1
+        bne     @mw
+        ldb     <FC_Y+1
+        abx
+        dec     <FC_X+1
+        bne     @mr
         bra     @trk
-@opq    ldd     ,y++
-        std     ,x
+@opq    cmpy    6,s
+        bhi     @stop
+        lda     17,s
+        lsra
+        lsra
+        sta     <FC_D+1
+@ow     ldd     ,y++
+        std     ,x++
         ldd     ,y++
-        std     2,x
-        leax    84,x
-        dec     <FC_D
+        std     ,x++
+        dec     <FC_D+1
+        bne     @ow
+        ldb     <FC_Y+1
+        abx
+        dec     <FC_X+1
         bne     @opq
+        bra     @trk
+@stop   lda     19,s
+        suba    <FC_X+1
+        sta     19,s
+        beq     @ret
 @trk    ldb     15,s
         ldx     #_db_dirty
         abx
+        ldb     19,s
         lda     #1
-        sta     ,x
-        sta     1,x
-        sta     2,x
-        sta     3,x
-        sta     4,x
-        sta     5,x
-        sta     6,x
-        sta     7,x
+@d      sta     ,x+
+        decb
+        bne     @d
         ldb     15,s
         ldx     #_db_lo
         abx
         lda     9,s
-        ldb     #8
+        ldb     19,s
 @lo     cmpa    ,x
         bhs     @nl
         sta     ,x
@@ -727,17 +828,20 @@ _k_tile8
         ldx     #_db_hi
         abx
         lda     9,s
-        adda    #3
-        ldb     #8
+        adda    17,s
+        deca
+        ldb     19,s
 @hi     cmpa    ,x
         bls     @nh
         sta     ,x
 @nh     leax    1,x
         decb
         bne     @hi
+@ret    ldb     19,s
+        clra
         puls    u,y,pc
 
-* void k_icon(u8 yb, u8 x0, const u8 *src, const u8 *msk, u8 y, u8 mirror): a 3 cell by 24 row item (12 bytes a row) into DrawBuf, k_tile8's case for the icons of the
+* void k_icon(u8 yb, u8 x0, const u8 *src, const u8 *msk, u8 y, u8 mirror): a 3 cell by 24 row item (12 bytes a row) into DrawBuf, k_rows' case for the icons of the
 * combat map: yb the first row in the block that window 0 shows, x0 the column byte, src and msk (0 = opaque) the item's 288 bytes where they are, y the DrawBuf row of
 * the first for the trackers, mirror 1 = drawn left for right (the bytes of a row in reverse order, the two pixels of each swapped, as k_blit's mirrored loop does).
 * Step 8.9e: the combat map draws two to four thousand of them in a big fight, each took 10 to 25 ms through k_blit and the staging buffers.

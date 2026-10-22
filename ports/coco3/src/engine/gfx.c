@@ -74,9 +74,6 @@ void gfx_pal_reg(u8 reg, u8 color)
 u16 rowa[200];                            /* (kernels.asm k_flush reads it) */
 extern u8 gbuf[256];                      /* (kernels.asm, at $7E00) */                      /* a picture's rows, copied out of their block in one go */
 extern u8 mbuf[256];                      /* (at $7F00) */
-/* the engine's windows 0 and 1 are the task 1 slot registers $FFAC and $FFAD (mmu.asm win_set): written directly on this path, the call costs more than the store */
-#define MMU_W0 (*(volatile u8 *)0xFFAC)
-#define MMU_W1 (*(volatile u8 *)0xFFAD)
 
 static void rowa_init(void)
 {
@@ -646,7 +643,7 @@ static void db_save_rows(const Pic *save, s16 y0, s16 r, u8 take, u8 n, u8 sl, u
  * bit 2. */
 /* An 8x8 item (the 3D view's wall tiles, about 200 a step: step 8.9d) or a 3 cell by 24 row item (the combat map's icons and terrain: about 2,700 draws in a 30 member fight:
  * step 8.9e) wholly inside DrawBuf, straight from the picture's block, which window 1 shows, into DrawBuf in window 0: no staging copy, no clipping, one kernel call
- * (k_tile8, or k_icon, which also mirrors). 0 when the item lies across a block border, or its rows across DrawBuf's two blocks, or its mask is in another block than its pixels
+ * (k_rows, or k_icon, which also mirrors). 0 when the item lies across a block border, or its rows across DrawBuf's two blocks, or its mask is in another block than its pixels
  * (a tile's mask is copied then; an icon's is not) and does not fit: the general path then does it. */
 static u8 db_blk(const Pic *p, u8 item, u8 col, u8 row, u8 flags, u8 mirror, u8 big)
 {
@@ -684,8 +681,37 @@ static u8 db_blk(const Pic *p, u8 item, u8 col, u8 row, u8 flags, u8 mirror, u8 
     if (big)
         k_icon(yb, x0, (const u8 *)(0xA000u + io), msk, y, mirror);
     else
-        k_tile8(yb, x0, (const u8 *)(0xA000u + io), msk, y);
+        k_rows(yb, x0, (const u8 *)(0xA000u + io), msk, y, 4, 8);
     return 1;
+}
+
+/* The rows r.. of an item, as many as lie in one block of the picture (and of its mask, which must be in the same block) and in one block of DrawBuf, by k_rows: the rows done, 0 when
+ * the first row lies across a border or the mask is in another block (the staging path then does them). The item must lie inside DrawBuf across (no cut at the left or right, not
+ * mirrored). Step 8.9f. */
+static u8 db_chunk(const Pic *p, u16 so, u8 masked, s16 y0, s16 r, s16 rend, u8 n, u8 x0)
+{
+    u8 y = (u8)(y0 + r), yb, blk, take = (u8)(rend - r), room;
+    u16 lin = (u16)(p->off + so + (u16)r * n), ml, mo = 0;
+    if (masked) {
+        ml = (u16)(lin + p->moff);
+        mo = (u16)(ml & 0x1FFFu);
+        if ((u8)(HI(ml) >> 5) != (u8)(HI(lin) >> 5))
+            return 0;
+    }
+    if (y < DB_SPLIT) {
+        blk = DB_BLK;
+        yb = y;
+        room = (u8)(DB_SPLIT - y);
+    } else {
+        blk = DB_BLK + 1;
+        yb = (u8)(y - DB_SPLIT);
+        room = (u8)(DB_ROWS - y);
+    }
+    if (take > room)
+        take = room;
+    MMU_W1 = (u8)(p->blk + (u8)(HI(lin) >> 5));
+    MMU_W0 = blk;
+    return k_rows(yb, x0, (const u8 *)(0xA000u + (lin & 0x1FFFu)), masked ? (const u8 *)(0xA000u + mo) : (const u8 *)0, y, n, take);
 }
 
 void db_item_clip(const Pic *p, u8 item, s16 col, s16 row, u8 flags, u8 mirror, const Pic *save)
@@ -709,6 +735,13 @@ void db_item_clip(const Pic *p, u8 item, s16 col, s16 row, u8 flags, u8 mirror, 
     if (y0 + rend > DB_ROWS)
         rend = (s16)(DB_ROWS - y0);
     while (r < rend) {
+        if (save == 0 && !mirror && sl == 0 && nb == n) {
+            take = db_chunk(p, so, masked, y0, r, rend, n, (u8)x0);
+            if (take) {
+                r = (s16)(r + take);
+                continue;
+            }
+        }
         take = rows_in_buf((u8)(rend - r), n);
         if (save)
             db_save_rows(save, y0, r, take, n, (u8)sl, (u8)nb, (u8)x0);
