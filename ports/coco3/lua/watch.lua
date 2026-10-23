@@ -113,6 +113,19 @@ if os.getenv("MB_WATCH") then      -- MB_WATCH=hexfrom-hexto: log the first writ
     end
   end)
 end
+if os.getenv("MB_SNAPAT") then      -- MB_SNAPAT=t1,t2,..: a screenshot (OUT-t<t>.png) when the machine's clock passes each of those emulated seconds (the boot splash: step 8.9i)
+  local snaps = {}
+  for t in string.gmatch(os.getenv("MB_SNAPAT"), "[%d.]+") do snaps[#snaps + 1] = {t = tonumber(t), name = t, done = false} end
+  snap_frame = emu.add_machine_frame_notifier(function()
+    local now = m.time:as_double()
+    for _, sn in ipairs(snaps) do
+      if not sn.done and now >= sn.t then
+        sn.done = true
+        pcall(function() m.screens[":screen"]:snapshot(out .. "-t" .. sn.name .. ".png") end)
+      end
+    end
+  end)
+end
 if os.getenv("MB_ITRACE") then      -- MB_ITRACE=t: from that emulated second, MAME's debugger writes every instruction to build/run/itrace.txt (needs MB_DEBUGGER=1)
   local t0, itrace_on = tonumber(os.getenv("MB_ITRACE")), false
   itrace_frame = emu.add_machine_frame_notifier(function()

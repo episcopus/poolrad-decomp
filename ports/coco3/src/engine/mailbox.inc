@@ -35,7 +35,7 @@ FC_TICK         EQU     $90     byte: a counter the far call trampoline advances
 FC_STAMP        EQU     $91     13 bytes: the tick of the last use of the bank in each pool block, indexed by the block number from BANK_POOL_FIRST (the seventh slot as block $24)
 
 BANKSTK_TOP     EQU     $2000   bank stack lives in $1F80..$1FFF
-SYSSTK_TOP      EQU     $1F80   system stack S, grows down from here
+SYSSTK_TOP      EQU     $1D80   system stack S, grows down from here (the shared code, $1D80..$1F6A, is above it since step 8.9i: it was at $0400, BASIC's text screen, which LOADM then showed as garbage)
 
 * the shadow of MMU slots 4..7 (task 0 registers $FFA4..$FFA7), restored after a DSKCON call
 MMU_SH          EQU     $8C

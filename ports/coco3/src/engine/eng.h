@@ -18,7 +18,9 @@ void eng_leave(void);
 /* the engine's windows 0 and 1 are the task 1 slot registers $FFAC and $FFAD (mmu.asm win_set): written directly on the hot paths, the call costs more than the store */
 #define MMU_W0 (*(volatile u8 *)0xFFAC)
 #define MMU_W1 (*(volatile u8 *)0xFFAD)
-extern u16 rowa[200];                      /* y * 160, the screen's row addresses (gfx.c) */
+void splash_adv(void);                    /* one sector read: the progress bar of the boot splash (boot.asm) */
+void splash_off(void);                    /* the game has its own screen: the splash is over */
+u16 k_row160(u8 y);                       /* y * 160: the address of pixel row y of the screen (kernels.asm) */
 #define HI(x) (*(u8 *)&(x))               /* the high byte of a 16-bit variable (the CPU is big endian) */
 #define WIN0 ((u8 *)0x8000)
 #define WIN1 ((u8 *)0xA000)

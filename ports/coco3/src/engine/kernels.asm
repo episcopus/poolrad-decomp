@@ -24,10 +24,10 @@
         EXPORT  _db_dirty
         EXPORT  _db_lo
         EXPORT  _db_hi
-        IMPORT  _rowa
         IMPORT  _font
         EXPORT  _k_text
         EXPORT  _k_flush
+        EXPORT  _k_row160
         ifdef   ENG_TEST
         EXPORT  _k_sum
         endc
@@ -177,6 +177,13 @@ _k_fillrect
         leas    3,s
         puls    u,y,pc
 
+* u16 k_row160(u8 y): y * 160, the address of pixel row y of the screen (the engine had a table of 200 of them)
+_k_row160
+        ldb     3,s
+        lda     #160
+        mul
+        rts
+
 * void k_flush(void): the dirty rows of DrawBuf to the screen, 8 pixels right and 8 rows down: for each row y with db_dirty[y] set, the bytes db_lo[y] to db_hi[y] go to the
 * screen at rowa[y + 8] + db_lo[y] + 4 (db_flush). Window 0 shows DrawBuf's block, window 1 the screen's, each mapped only when it changes; a span that crosses a block border
 * of the screen is copied in two parts. Step 8.9e: a flush took 27 ms for 49 rows of 42 bytes, most of it the C loop's work for each row.
@@ -197,13 +204,10 @@ _k_flush
         suba    168,u
         inca
         sta     <FC_Y                   n
-        ldb     2,s
-        clra
-        addd    #8
-        aslb
-        rola
-        ldx     #_rowa
-        ldd     d,x                     rowa[y + 8]
+        lda     2,s
+        adda    #8
+        ldb     #160
+        mul                             (y + 8) * 160, the screen's row address (the table of them was 400 bytes of the engine: step 8.9i)
         leay    d,y
         leay    4,y                     Y = the screen address of the span
         tfr     y,d
@@ -422,15 +426,12 @@ _k_text
         cmpb    #4
         blo     @hl
         ldy     6,s
-@addr   ldb     19,s
-        aslb
-        aslb
-        aslb
-        clra
-        aslb
-        rola
-        ldx     #_rowa
-        ldd     d,x
+@addr   lda     19,s
+        asla
+        asla
+        asla
+        ldb     #160
+        mul                             the pixel row 8 * row, times 160
         tfr     d,x
         ldb     17,s
         clra

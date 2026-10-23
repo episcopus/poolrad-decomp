@@ -32,11 +32,11 @@ void gfx_clear(u8 value)
     }
 }
 
-static void rowa_init(void);
-
 void gfx_init(void)
 {
-    rowa_init();
+#ifndef ENG_TEST
+    splash_off();                      /* the game's own screen from here (the splash of boot.asm is on the text screen) */
+#endif
     eng_init0 = 0x4C;              /* GIME: CoCo 3 mode, MMU on, $FE00 constant page (IRQ and FIRQ bits: irq_start) */
     *(u8 *)0xFF90 = eng_init0;
     *(u8 *)0xFF98 = 0x80;          /* graphics */
@@ -71,21 +71,10 @@ void gfx_pal_reg(u8 reg, u8 color)
 
 /* ---- the screen as rows of bytes. Pixel row y starts at byte y * 160 of the four screen blocks; a span can cross
  * from one block to the next (8192 is not a multiple of 160), so the general write (scr_putn) splits it; the fast
- * paths test that a span stays in a block. The source is always in core RAM (below the windows). rowa[y] = y * 160. */
+ * paths test that a span stays in a block. The source is always in core RAM (below the windows). The address of pixel row y is y * 160 (k_row160). */
 #define HI(x) (*(u8 *)&(x))               /* the high byte of a 16-bit variable (the CPU is big endian) */
-u16 rowa[200];                            /* (kernels.asm k_flush reads it) */
 extern u8 gbuf[256];                      /* (kernels.asm, at $7E00) */                      /* a picture's rows, copied out of their block in one go */
 extern u8 mbuf[256];                      /* (at $7F00) */
-
-static void rowa_init(void)
-{
-    u16 a = 0;
-    u8 y;
-    for (y = 0; y < 200; y++) {
-        rowa[y] = a;
-        a += 160;
-    }
-}
 
 /* a pointer to screen byte a, with the block holding it mapped into window 0 */
 static u8 *scr_at(u16 a)
@@ -497,7 +486,7 @@ void gfx_fill_cells(u8 l, u8 t, u8 r, u8 b, u8 color)
     y1 = (u8)(b * 8 + 7);
     y = (u8)(t * 8);
     while (y <= y1) {
-        a = rowa[y] + (u8)(l * 4);
+        a = k_row160(y) + (u8)(l * 4);
         if ((a & 0x1FFFu) + n <= 0x2000u) {   /* the rows that lie in this block are filled by one call (step 8.9e) */
             rows = (u8)((0x2000u - (a & 0x1FFFu) - n) / 160u + 1u);
             if (rows > (u8)(y1 - y + 1))
@@ -530,13 +519,13 @@ void gfx_item(const Pic *p, u8 item, u8 col, u8 row)
 {
     u8 n = (u8)(p->wcols * 4), h = p->height, take, r, y = (u8)(row * 8);
     u16 so = (u16)((u16)item * p->bytesize);
-    u16 a = rowa[y] + (u8)(col * 4);
+    u16 a = k_row160(y) + (u8)(col * 4);
     const u8 *src;
     /* the whole item in one block of the picture and its rows in one block of the screen (nearly always): straight from one window into the other, one kernel call (step 8.9f) */
     {
         u16 lin = (u16)(p->off + so), a2;
         if (y + h <= 200 && (u16)((lin & 0x1FFFu) + p->bytesize) <= 0x2000u) {
-            a2 = (u16)(rowa[y + h - 1] + (u8)(col * 4) + n - 1);
+            a2 = (u16)(k_row160((u8)(y + h - 1)) + (u8)(col * 4) + n - 1);
             if ((HI(a2) >> 5) == (HI(a) >> 5)) {
                 MMU_W1 = (u8)(p->blk + (u8)(HI(lin) >> 5));
                 MMU_W0 = (u8)(SCREEN_BLK + (HI(a) >> 5));

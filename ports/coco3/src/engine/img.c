@@ -29,6 +29,12 @@ u8 sec_io(u8 cmd, u32 lsn, u16 count, u8 blk, u16 off)
     r[8] = (u8)(off >> 8);
     r[9] = (u8)off;
     r[0] = cmd;                             /* the doorbell: the transfer is done when this store has been made */
+#ifndef ENG_TEST
+    if (cmd == SEC_READ) {                  /* the progress bar of the splash screen (boot.asm): a cell for every few sectors */
+        while (count--)
+            splash_adv();
+    }
+#endif
     return r[1];
 }
 
