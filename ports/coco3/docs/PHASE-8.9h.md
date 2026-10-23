@@ -37,7 +37,7 @@ Gains per session (busy seconds, 6809 to 6309 native, from the research runs): -
 * **A real 6809 and a real 6309.** The detection is the reference's (`TFR W,Y`); MAME's 6809 and 6309 agree with it, no hardware was tried. If W held `$FFFF` on a 6309 it would stay in compatible mode (safe).
 * **Loops that count cycles run about 8 % shorter** in native mode. `disk.asm`'s half second wait for the motor (nested counted loops, around 0.4 s instead of 0.45 s) is the one that matters; the game's delays count frames.
 * **The real disk path under native mode** is tested only through the engine tests on MAME's emulated controller; the DSKCON call runs in compatible mode, so the ROM sees what it always saw.
-* The shared data grew by one byte: the 28 bytes of room before the event log at `$0860` are 27 now; the engine ends at `$7C7F` of `$7C90` (17 bytes left, 37 before).
+* The shared data grew by one byte (`$0701`; the room before the event log at `$0860` was small at step 8.8, one byte less now); the engine ends at `$7C7F` of `$7C90` (17 bytes left, 37 before).
 
 ## 4. Next [E]
 
