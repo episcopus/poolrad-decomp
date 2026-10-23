@@ -27,6 +27,7 @@
         IMPORT  _font
         EXPORT  _k_text
         EXPORT  _k_flush
+        IMPORT  _cpu6309
         EXPORT  _k_row160
         ifdef   ENG_TEST
         EXPORT  _k_sum
@@ -273,7 +274,13 @@ _k_flush
         leas    5,s
         puls    u,y,pc
 * B bytes (1 to 160) from Y to X: the words left over after groups of four first, then the groups of four words unrolled (9 cycles a byte; a word a pass was 12.5: step 8.9g)
-@cpy    stb     <FC_D+1
+@cpy    tst     >_cpu6309               a 6309 (in native mode: boot.asm): the block move, 3 cycles a byte (step 8.9j)
+        beq     @c69
+        clra
+        fcb     $1F,$06                 TFR D,W
+        fcb     $11,$38,$21             TFM Y+,X+
+        rts
+@c69    stb     <FC_D+1
         lsrb
         beq     @odd
         stb     <FC_D
@@ -775,7 +782,7 @@ _k_rows
         sbca    #0
         std     6,s                     the last address a row may start at
         cmpu    #0
-        beq     @opq
+        lbeq    @opq0
 @mr     cmpy    6,s
         lbhi    @stop
         cmpu    6,s
@@ -803,6 +810,8 @@ _k_rows
         dec     <FC_X+1
         bne     @mr
         bra     @trk
+@opq0   tst     >_cpu6309
+        bne     @opqt
 @opq    cmpy    6,s
         bhi     @stop
         lda     17,s
@@ -819,6 +828,15 @@ _k_rows
         abx
         dec     <FC_X+1
         bne     @opq
+        bra     @trk
+@opqt   cmpy    6,s                     the rows of a 6309 (step 8.9j): LDW n, TFM Y+,X+
+        bhi     @stop
+        fcb     $10,$A6,$E8,16          LDW 16,S
+        fcb     $11,$38,$21             TFM Y+,X+
+        ldb     <FC_Y+1
+        abx
+        dec     <FC_X+1
+        bne     @opqt
         bra     @trk
 @stop   lda     19,s
         suba    <FC_X+1
@@ -878,9 +896,9 @@ _k_icon
         lda     #24
         sta     <FC_D
         tst     17,s
-        bne     @mir
+        lbne    @mir
         cmpu    #0
-        beq     @opq
+        beq     @opq0
 @m      ldd     ,x
         anda    ,u+
         andb    ,u+
@@ -920,7 +938,9 @@ _k_icon
         leax    72,x
         dec     <FC_D
         bne     @m
-        bra     @trk
+        lbra    @trk
+@opq0   tst     >_cpu6309
+        bne     @opqt
 @opq    ldd     ,y++
         std     ,x++
         ldd     ,y++
@@ -936,6 +956,12 @@ _k_icon
         leax    72,x
         dec     <FC_D
         bne     @opq
+        bra     @trk
+@opqt   fcb     $10,$86,$00,$0C         LDW #12 (a 6309: TFM Y+,X+ for a row)
+        fcb     $11,$38,$21
+        leax    72,x
+        dec     <FC_D
+        bne     @opqt
         bra     @trk
 @mir    leay    12,y                    the row's end: the bytes are read backwards
         cmpu    #0
