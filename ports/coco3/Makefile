@@ -220,11 +220,11 @@ game-view: game
 run-game:
 	@echo "make run-game: the game's storage is the harness' (D13): use 'make play' (a MAME window on the host) or 'make game-view S=create-character'" >&2; exit 2
 
-# step 8.8b: play the game in a MAME window (needs MAME on the host: brew install mame). make play [FAST=2] [FRESH=1]
+# step 8.8b: play the game in a MAME window (needs MAME on the host: brew install mame). make play [CPU=6309] [FAST=2] [FRESH=1]
 play: game
 	$(TC) python3 -I tools/mkgamedisk.py build/game build/gen/vm/DGROUP.IMG build/game/pool.dsk
 	$(TC) python3 -I tools/mkimage.py /repo/poolrad build/game build/gen/vm/DGROUP.IMG build/game/pool.img
-	scripts/play.sh $(if $(FAST),--fast $(FAST)) $(if $(FRESH),--fresh) $(if $(KEYLOG),--keylog)
+	scripts/play.sh $(if $(CPU),--cpu $(CPU)) $(if $(FAST),--fast $(FAST)) $(if $(FRESH),--fresh) $(if $(KEYLOG),--keylog)
 
 # The game on the emulated CoCo 3 (MAME, headless): S=session; the screens it shows against goldens/4bpp (tools/gamecheck.py)
 S ?= boot-title
