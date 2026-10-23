@@ -22,6 +22,8 @@ Date: 2026-10-23. Follows `docs/PHASE-8.9h.md`. Built on the branch `feat/boot-s
 * The 6309 machine shows `CPU: 6309 (HITACHI), NATIVE`; `-ramsize 128K` prints the message and leaves BASIC at its `OK` prompt (the splash is cleared, no garbage).
 * `make step-check` on the 6809 and on the 6309 machine, and the engine tests: see section 4.
 
+Screens: `docs/img/8.9i-loadm.png` (LOADM at work, half of the bar), `docs/img/8.9i-boot-6309.png` (the checks, a 6309), `docs/img/8.9i-fail-128k.png` (a machine with 128K).
+
 ## 4. Numbers and room
 
 | | 6809 machine (`coco3`) | 6309 machine (`coco3h`) |
