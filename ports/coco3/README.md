@@ -87,6 +87,8 @@ The firmware is copyrighted and is never committed (`roms/` is ignored by git). 
 
 `make doctor` says what is missing. The zip from the older `coco3-test` project works (it holds both ROMs).
 
+To run on MAME's Hitachi 6309 machine (`MB_MACHINE=coco3h make step-check`, the engine tests and the game runners read it; the default is `coco3`, a 6809), copy `coco3.rom` and `disk11.rom` into `roms/coco3h/` (MAME looks for a folder or a zip named after the machine).
+
 ## Layout
 
 | Path | What |

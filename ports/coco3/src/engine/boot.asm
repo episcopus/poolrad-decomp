@@ -11,6 +11,7 @@
         IMPORT  program_start
         IMPORT  _load_banks
         EXPORT  _eng_init0
+        EXPORT  _cpu6309
 
 boot
         orcc    #$50                    mask IRQ and FIRQ
@@ -59,6 +60,19 @@ boot
         leas    2,s
         lda     #$CC
         sta     >_eng_init0             (the shadow of $FF90: after the copy, the image holds zero)
+*       A Hitachi 6309 runs in native mode (step 8.9h): the same instruction set in fewer cycles (the inherent, direct and extended
+*       instructions, the calls and the pushes one cycle less each; 7 to 9 % of the busy time of every session, 13 % of a step in the 3D view),
+*       two bytes more of stack for an interrupt (E and F; the handlers only RTI), the FIRQ frame as before. The test is the reference's:
+*       TFR W,Y gives Y = W on a 6309 (W is 0 after a reset) and $FFFF on a 6809, which has no W; a 6309 whose W held $FFFF would stay in
+*       the compatible mode, which is safe. _cpu6309 says which it was (for the 6309 kernels to come).
+        ldy     #0
+        fcb     $1F,$62                 TFR W,Y
+        cmpy    #$FFFF
+        beq     @is6809
+        fcb     $11,$3D,$01             LDMD #1: native mode (NM = 1; FM stays 0)
+        lda     #1
+        sta     >_cpu6309
+@is6809
         ldx     #MB_BASE                clear the mailbox
         ldb     #MB_SIZE
 @clr    clr     ,x+
@@ -130,4 +144,5 @@ _mb_hold
 
         SECTION shared2
 _eng_init0      RMB     1               the value last written to GIME $FF90 (a write only register), for irq_start and gfx_init
+_cpu6309        RMB     1               1 when the CPU is a 6309 and boot put it in native mode, else 0 (set after the image of the shared data is copied)
         ENDSECTION

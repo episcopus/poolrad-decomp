@@ -16,7 +16,7 @@ unlink "$ROOT/$out.png" 2>/dev/null || true
 extra=(); n=2
 for f in ${MB_FLOPS:-}; do extra+=(-flop$n "/work/$f"); n=$((n + 1)); done
 run_toolchain env ${MB_DAC:+MB_DAC=1} ${MB_WTAP:+MB_WTAP=$MB_WTAP} MB_OUT="/work/$out" MB_CMD="LOADM\"$prog\":EXEC" ${MB_SCREENS:+MB_SCREENS=1} ${MB_KEYS:+"MB_KEYS=$MB_KEYS"} ${MB_KEYS_CP:+MB_KEYS_CP=$MB_KEYS_CP} MB_LIMIT="${MB_LIMIT:-90}" \
-  mame coco3 -rompath /work/roms -pluginspath /usr/local/share/mame/plugins \
+  mame ${MB_MACHINE:-coco3} -rompath /work/roms -pluginspath /usr/local/share/mame/plugins \
     -ramsize 512K -flop1 "/work/$dsk" ${extra[@]+"${extra[@]}"} -video soft -sound none -nothrottle \
     -skip_gameinfo -nvram_directory /tmp/nvram -cfg_directory /tmp/cfg \
     -snapshot_directory "/work/$(dirname "$out")" \

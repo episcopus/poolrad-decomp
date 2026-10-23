@@ -19,6 +19,7 @@ DC_STA          EQU     $F0
 DRGRAM          EQU     $0986           Disk BASIC's copy of the DSKREG latch
 
         SECTION code
+        IMPORT  _cpu6309
         EXPORT  _dsk_read
         EXPORT  _dsk_read_to
         EXPORT  _dsk_motor_off
@@ -69,7 +70,16 @@ dsk_again
         bne     @sv
         sta     $FFDE                   ROM mode
         sta     $FFD8                   0.89 MHz
-        jsr     [DSKCON_VEC]
+* Step 8.9h: back to the 6809's compatible mode for the ROM: DSKCON's NMI handler (the end of every sector transfer) throws away the 6809's
+* 12 byte interrupt frame, and a native mode one is 14 bytes.
+        tst     >_cpu6309
+        beq     @n1
+        fcb     $11,$3D,$00             LDMD #0
+@n1     jsr     [DSKCON_VEC]
+        tst     >_cpu6309
+        beq     @n2
+        fcb     $11,$3D,$01             LDMD #1
+@n2
         sta     $FFD9                   1.79 MHz
         ldx     #dsk_dp
         ldy     #$80
