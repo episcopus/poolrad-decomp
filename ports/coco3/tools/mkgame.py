@@ -961,8 +961,8 @@ def main(argv):
     return 0
 
 
-ENGINE_C = ["api", "gameboot", "vol", "img", "dax", "gfx", "rsdos", "mailbox"]
-ENGINE_ASM = ["boot", "mmu", "disk", "irq", "snd", "kernels", "rle", "engcall", "apitab", "nobanks"]
+ENGINE_C = ["api", "gameboot", "vol", "img", "dax", "gfx", "rsdos", "mailbox", "flop"]
+ENGINE_ASM = ["boot", "mmu", "disk", "irq", "snd", "kernels", "rle", "engcall", "apitab", "nobanks", "sdc"]
 
 
 def build_engine(out, here):

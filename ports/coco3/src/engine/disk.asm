@@ -22,24 +22,36 @@ DRGRAM          EQU     $0986           Disk BASIC's copy of the DSKREG latch
         IMPORT  _cpu6309
         EXPORT  _dsk_read
         EXPORT  _dsk_read_to
+        EXPORT  _dsk_write
         EXPORT  _dsk_motor_off
         EXPORT  _dsk_buf
 
 * u8 dsk_read(u8 drive, u8 track, u8 sector): reads one 256-byte sector into dsk_buf; returns DCSTA (0 = ok)
 _dsk_read
         pshs    cc,u,y                  the caller's interrupt mask comes back at the end
+        lda     #2                      DSKCON op 2: read sector
+        sta     >dsk_opc
+        ldd     #_dsk_buf
+        bra     dsk_go
+* u8 dsk_write(u8 drive, u8 track, u8 sector): writes dsk_buf to the sector (step 8.10: the save disk); returns DCSTA (0 = ok, 64 = write protected)
+_dsk_write
+        pshs    cc,u,y
+        lda     #3                      DSKCON op 3: write sector
+        sta     >dsk_opc
         ldd     #_dsk_buf
         bra     dsk_go
 * u8 dsk_read_to(u8 drive, u8 track, u8 sector, u8 *buf): the same into buf, which must be below $8000
 _dsk_read_to
         pshs    cc,u,y
+        lda     #2
+        sta     >dsk_opc
         ldd     13,s
 dsk_go  orcc    #$50
         std     DC_BUF
         lda     #3
         sta     >dsk_try
 dsk_again
-        lda     #2                      DSKCON op 2: read sector
+        lda     >dsk_opc
         sta     DC_OPC
         lda     8,s                     drive
         sta     DC_DRV
@@ -124,5 +136,6 @@ _dsk_motor_off
 _dsk_buf
         RMB     256
 dsk_try RMB     1
+dsk_opc RMB     1
 dsk_dp  RMB     32
         ENDSECTION

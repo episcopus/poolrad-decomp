@@ -18,7 +18,7 @@ LINKLIBS := -L$(CMOCLIB) -lcmoc-crt-void -lcmoc-std-void
 ENGINE_OBJ := build/obj/boot.o build/obj/mailbox.o
 P ?= byte-arith
 
-.PHONY: perf-run perf-all step-check bank-groups play snd-check snd-wav game-wav stress game help doctor toolchain eng-data eng-test eng-tests gfx-ref data data-verify vol-test vol-tests sizes heap-stats prof coco-host place-host golden4 golden4-record demo test-demo run-demo probe probes asm-probe bench test clean risk-scan baseline
+.PHONY: sdc sdc-run floppy-check floppy floppy-model floppy-traces floppy-layout floppy-run perf-run perf-all step-check bank-groups play snd-check snd-wav game-wav stress game help doctor toolchain eng-data eng-test eng-tests gfx-ref data data-verify vol-test vol-tests sizes heap-stats prof coco-host place-host golden4 golden4-record demo test-demo run-demo probe probes asm-probe bench test clean risk-scan baseline
 .DEFAULT_GOAL := help
 
 help:
@@ -52,6 +52,10 @@ help:
 	@echo "  make probes         run every probe"
 	@echo "  make bench          far-call cost against a resident call, measured in MAME"
 	@echo "  make asm-probe P=name   compile probes/asm/name.c to 6809 assembly and print it"
+	@echo "  make floppy         step 8.10: the game as a set of 35 track disks (build/floppy/disks/POOLnn.DSK), the entries laid out for the fewest swaps"
+	@echo "  make floppy-check   every session on the disks in MAME (the harness swaps the disks the engine asks for): screens, files written, swaps"
+	@echo "  make floppy-traces  record the sessions' storage reads again (then make floppy-profile keeps them as data/floppy_runs.json)"
+	@echo "  make sdc            step 8.10: the CoCo SDC's single file (build/sdc/POOL.DSK); make sdc-run S=boot-title plays one on the model of the SDC"
 	@echo "  make test           everything above that has a pass or fail"
 	@echo "  make clean"
 
@@ -225,6 +229,45 @@ play: game
 	$(TC) python3 -I tools/mkgamedisk.py build/game build/gen/vm/DGROUP.IMG build/game/pool.dsk
 	$(TC) python3 -I tools/mkimage.py /repo/poolrad build/game build/gen/vm/DGROUP.IMG build/game/pool.img
 	scripts/play.sh $(if $(CPU),--cpu $(CPU)) $(if $(FAST),--fast $(FAST)) $(if $(FRESH),--fresh) $(if $(KEYLOG),--keylog)
+
+# ---------------------------------------------------------------- the floppy set (step 8.10, docs/PHASE-8.10.md)
+# The image of `make game` cut into 35 track disks (build/floppy/disks/POOLnn.DSK, boot disk 01): which entry goes on which disk is a layout
+# (tools/mklayout.py) optimised for the swaps of the sessions' reads (data/floppy_runs.json, the profile). `make floppy` does all of it from the build of `make game`.
+# After a change of the game: `make floppy-traces` records every session again on an image without shared blocks (a few minutes) and `make floppy-profile` keeps it.
+floppy-model:
+	@mkdir -p build/trace build/floppy
+	@$(TC) python3 -I tools/mkimage.py /repo/poolrad build/game build/gen/vm/DGROUP.IMG build/trace/pool-nodedupe.img --nodedupe --model build/trace/model.json
+
+floppy-traces: floppy-model
+	@mkdir -p build/trace/runs; rm -f build/trace/runs/*.out
+	@scripts/floppy_traces.sh
+
+floppy-profile:
+	@python3 tools/mklayout.py profile --runs data/floppy_runs.json
+
+floppy-layout: floppy-model
+	@python3 tools/mklayout.py $(if $(NAIVE),naive,make) --out build/floppy/layout.json
+
+floppy: game floppy-layout
+	@rm -rf build/floppy/disks
+	@$(TC) python3 -I tools/mkimage.py /repo/poolrad build/game build/gen/vm/DGROUP.IMG build/floppy/pool.img --layout build/floppy/layout.json --floppies build/floppy/disks
+
+# every session on the disks, five at a time, then the screens, the files written and the swaps counted (docs/PHASE-8.10.md)
+floppy-check:
+	@scripts/floppy_all.sh
+
+# a session on the disks (MAME headless; lua/watch.lua mounts the disks the game asks for): make floppy-run S=boot-title
+floppy-run:
+	MB_SESSION=/repo/tests/sessions/$(S).keys MB_LIMIT=$(or $(LIMIT),300) scripts/floppy_run.sh build/run/floppy-$(S)
+
+# the CoCo SDC's single file (docs/PHASE-8.10.md): a 35 track disk with POOL.BIN in front of the game's image, read through the SDC's command mode
+sdc: game
+	@mkdir -p build/sdc
+	@$(TC) python3 -I tools/mkimage.py /repo/poolrad build/game build/gen/vm/DGROUP.IMG build/sdc/pool.img --sdc build/sdc/POOL.DSK
+
+# a session from it (MAME headless, lua/watch.lua's model of the SDC): make sdc-run S=boot-title
+sdc-run:
+	MB_SESSION=/repo/tests/sessions/$(S).keys MB_LIMIT=$(or $(LIMIT),300) scripts/sdc_run.sh build/run/sdc-$(S)
 
 # The game on the emulated CoCo 3 (MAME, headless): S=session; the screens it shows against goldens/4bpp (tools/gamecheck.py)
 S ?= boot-title

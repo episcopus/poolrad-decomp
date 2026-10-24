@@ -57,7 +57,9 @@ def seed_saves(data_dir):
     return bytes(area)
 
 
-def main(data_dir, gamedir, dgroup, out):
+def collect(data_dir, gamedir, dgroup):
+    """The entries of the image, not placed yet: (files, ents) with ents = [(file index, id, packed size, raw size, kind, payload)];
+    kind 1 is an object the engine reads raw (a sector boundary in front of it), kind 0 a DAX block or a coded block of DGROUP."""
     g = Path(gamedir)
     src = mkvolumes.load_sources(data_dir)                         # {NAME: [(id, packed, raw size)]}
     raw_obj = {}                                                   # name -> [(id, bytes, raw size)], stored without a code
@@ -78,7 +80,7 @@ def main(data_dir, gamedir, dgroup, out):
     raw_obj["DGROUP"] = [(0, hdr, None)]
     coded = {"DGROUP": [(1, blocks[0][0], blocks[0][1]), (2, blocks[1][0], blocks[1][1])]}
     files = sorted(set(src) | set(raw_obj))
-    ents, body_parts = [], []                                      # entries: (fi, id, packed, raw, kind, payload)
+    ents = []
     for fi, n in enumerate(files):
         for bid, packed, raw in src.get(n, []):
             ents.append((fi, bid, len(packed), raw, 0, packed))
@@ -86,48 +88,194 @@ def main(data_dir, gamedir, dgroup, out):
             ents.append((fi, bid, len(data), len(data), 1, data))
         for bid, packed, raw in coded.get(n, []):
             ents.append((fi, bid, len(packed), raw, 0, packed))
+    return files, ents
+
+
+def content_key(files, e):
+    """What makes two entries the same bytes to the game (the eight tileset files of a family hold identical blocks): the hash of the
+    unpacked block and its size; None for what is never shared (the raw objects and DGROUP)."""
+    fi, bid, packed, raw, kind, payload = e
+    if kind != 0 or files[fi] == "DGROUP":
+        return None
+    return hashlib.md5(dax.unrle(payload)).hexdigest() + ":" + str(raw)
+
+
+def pool_bin_sectors(gamedir):
+    """The sectors of POOL.BIN on disk 1 (whole granules: 9 sectors each)"""
+    n = -(-Path(gamedir, "POOL.BIN").stat().st_size // 256)
+    return -(-n // 9) * 9
+
+
+DISK_SECTORS = 612                                                 # the data granules of a 35 track disk: 68 of 9 sectors
+
+
+def build(data_dir, gamedir, dgroup, dedupe=True, layout=None):
+    """The image bytes, and the placement of every entry. Without a layout the entries follow each other in the order of `collect`
+    and identical blocks are stored once (`dedupe`); with one (tools/mklayout.py: {"disks": [{"keys": [[file, id], ...]}], "save": n})
+    every disk is filled in the order of its list and the sectors of the disks follow each other (the floppy medium: the header says
+    how many sectors each disk has), an identical block is stored once on a disk but once more on each disk that has another entry of it."""
+    files, ents = collect(data_dir, gamedir, dgroup)
     nent = len(ents)
-    files_off = 256
-    ents_off = -(-(files_off + 12 * len(files)) // 256) * 256
-    data_off = -(-(ents_off + 10 * nent) // 256) * 256
-    body = bytearray()
-    placed = []
-    shared = {}                                                    # unpacked content of a coded block -> (offset, packed size, raw size) of its one copy
-    saved = 0
-    for k, (fi, bid, packed, raw, kind, payload) in enumerate(ents):
-        if kind == 1 and len(body) % 256:
-            body += bytes(256 - len(body) % 256)
-        if kind == 0 and fi != files.index("DGROUP"):
-            # the eight tileset files of a family hold blocks identical to each other (PIC1..8, 8X8D1..8, ...): one copy serves every entry
-            key = hashlib.md5(dax.unrle(payload)).digest()
-            if key in shared and shared[key][2] == raw:
-                off, pk, _ = shared[key]
-                placed.append(off)
-                ents[k] = (fi, bid, pk, raw, kind, payload)
-                saved += len(payload)
-                continue
-            shared[key] = (data_off + len(body), len(payload), raw)
-        placed.append(data_off + len(body))
-        body += payload
-    if len(body) % 256:
-        body += bytes(256 - len(body) % 256)
-    save_lsn = (data_off + len(body)) // 256
-    first = {}
-    count = {}
+    first, count = {}, {}
     for i, e in enumerate(ents):
         first.setdefault(e[0], i)
         count[e[0]] = count.get(e[0], 0) + 1
+    files_off = 256
+    ents_off = -(-(files_off + 12 * len(files)) // 256) * 256
+    data_off = -(-(ents_off + 10 * nent) // 256) * 256
+    keys = [content_key(files, e) for e in ents]
+    placed = [0] * nent
+    psize = [e[2] for e in ents]                                   # the packed size at the place (a block that shares another's place has that one's)
+    saved = 0
+    disk_secs = None
+    if layout is None:
+        body = bytearray()
+        shared = {}                                                # content -> (offset, packed size) of its one copy
+        for k, e in enumerate(ents):
+            fi, bid, packed, raw, kind, payload = e
+            if kind == 1 and len(body) % 256:
+                body += bytes(256 - len(body) % 256)
+            if keys[k] is not None and dedupe and keys[k] in shared:
+                placed[k], psize[k] = shared[keys[k]]
+                saved += len(payload)
+                continue
+            if keys[k] is not None:
+                shared[keys[k]] = (data_off + len(body), len(payload))
+            placed[k] = data_off + len(body)
+            body += payload
+        if len(body) % 256:
+            body += bytes(256 - len(body) % 256)
+        save_lsn = (data_off + len(body)) // 256
+        out_body = bytes(body)
+        saves = seed_saves(data_dir)
+    else:
+        index_of = {(files[e[0]], e[1]): k for k, e in enumerate(ents)}
+        used = set()
+        parts, disk_secs = [], []
+        save_disk = layout.get("save")
+        base = 0                                                   # the first sector of the disk being laid out
+        save_lsn = None
+        for di, disk in enumerate(layout["disks"]):
+            body = bytearray()
+            if di == 0:
+                body += bytes(data_off)                            # the index is the first thing of disk 1
+            if di == save_disk:
+                save_lsn = base
+                body += seed_saves(data_dir)
+            shared = {}
+            for key in disk["keys"]:
+                k = index_of[(key[0], key[1])]
+                assert k not in used, "mkimage: %s/%d is in two places of the layout" % tuple(key)
+                used.add(k)
+                fi, bid, packed, raw, kind, payload = ents[k]
+                if kind == 1 and len(body) % 256:
+                    body += bytes(256 - len(body) % 256)
+                if keys[k] is not None and dedupe and keys[k] in shared:
+                    placed[k], psize[k] = shared[keys[k]]
+                    saved += len(payload)
+                    continue
+                if keys[k] is not None:
+                    shared[keys[k]] = (base * 256 + len(body), len(payload))
+                placed[k] = base * 256 + len(body)
+                body += payload
+            if len(body) % 256:
+                body += bytes(256 - len(body) % 256)
+            cap = DISK_SECTORS - (pool_bin_sectors(gamedir) if di == 0 else 0)
+            if len(body) // 256 > cap:
+                raise SystemExit("mkimage: disk %d holds %d sectors, a disk has %d" % (di + 1, len(body) // 256, cap))
+            parts.append(bytes(body))
+            disk_secs.append(len(body) // 256)
+            base += len(body) // 256
+        missing = [(files[ents[k][0]], ents[k][1]) for k in range(nent) if k not in used]
+        if missing:
+            raise SystemExit("mkimage: %d entries are in no disk of the layout, the first %s" % (len(missing), missing[:3]))
+        out_body = b"".join(parts)
+        saves = b""
+        if save_lsn is None:
+            raise SystemExit("mkimage: the layout has no save disk")
     img = bytearray(data_off)
     img[0:24] = b"PIM2" + struct.pack(">HHLLLH", len(files), nent, files_off, ents_off, save_lsn, SAVE_SECTORS) + bytes(2)
+    if disk_secs is not None:                                      # the floppy medium: byte 24 = 1, the number of disks, the sectors of each
+        assert len(disk_secs) <= 14
+        img[24:26] = bytes([1, len(disk_secs)])
+        for i, n in enumerate(disk_secs):
+            img[26 + 2 * i:28 + 2 * i] = struct.pack(">H", n)
     for fi, n in enumerate(files):
         img[files_off + 12 * fi:files_off + 12 * fi + 12] = name8(n) + struct.pack(">HH", first.get(fi, 0), count.get(fi, 0))
     for i, (e, off) in enumerate(zip(ents, placed)):
         fi, bid, packed, raw, kind, payload = e
-        img[ents_off + 10 * i:ents_off + 10 * i + 10] = struct.pack(">BBLHH", fi, bid, off, packed, raw)
-    img += body + seed_saves(data_dir)
-    Path(out).write_bytes(bytes(img))
-    print("mkimage: %d files, %d entries, %d sectors (%d KB), saves at sector %d; identical blocks stored once: %d bytes saved" % (len(files), nent, len(img) // 256, len(img) // 1024, save_lsn, saved))
+        img[ents_off + 10 * i:ents_off + 10 * i + 10] = struct.pack(">BBLHH", fi, bid, off, psize[i], raw)
+    if layout is None:
+        img += out_body + saves
+    else:
+        img = bytearray(img[:data_off]) + out_body[data_off:]
+    return bytes(img), dict(files=files, ents=ents, keys=keys, placed=placed, psize=psize, data_off=data_off, save_lsn=save_lsn, saved=saved, disk_secs=disk_secs)
+
+
+def write_floppies(img, info, gamedir, outdir):
+    """The disks of a floppy layout as RS-DOS images (tools/decbfs.py): POOLnn.DSK, each with its slice of the image as POOLDSKn.DAT, the
+    first also with POOL.BIN."""
+    import decbfs
+    outdir = Path(outdir)
+    outdir.mkdir(parents=True, exist_ok=True)
+    pos = 0
+    names = []
+    for i, n in enumerate(info["disk_secs"]):
+        d = decbfs.Disk()
+        d.add("POOLDSK" + ("%X" % (i + 1) if i + 1 >= 10 else str(i + 1)), "DAT", img[pos * 256:(pos + n) * 256], 1, 0)
+        if i == 0:
+            d.add("POOL", "BIN", Path(gamedir, "POOL.BIN").read_bytes(), 2, 0)
+        p = outdir / ("POOL%02d.DSK" % (i + 1))
+        p.write_bytes(d.image())
+        names.append(p.name)
+        pos += n
+    assert pos * 256 == len(img)
+    return names
+
+
+def write_sdc(img, gamedir, out):
+    """The single file of the CoCo SDC (step 8.10b): the first 630 sectors are a 35 track RS-DOS disk with POOL.BIN (and POOLSDC.DAT first, the marker the engine
+    looks for), so that Disk BASIC boots it from drive 0; the game's image follows, which the engine reads through the SDC's command mode (src/engine/sdc.asm)
+    at sector 630 + the image's. The file is a hard disk image to the SDC (above 2,880 sectors): Disk BASIC sees its first 630 sectors only."""
+    import decbfs
+    d = decbfs.Disk()
+    d.add("POOLSDC", "DAT", b"POOL OF RADIANCE: CoCo SDC image, the game's sectors follow the disk.\n", 1, 0)
+    d.add("POOL", "BIN", Path(gamedir, "POOL.BIN").read_bytes(), 2, 0)
+    boot = d.image()
+    assert len(boot) == 630 * 256
+    Path(out).write_bytes(boot + img)
+
+
+def main(argv):
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("data_dir")
+    ap.add_argument("gamedir")
+    ap.add_argument("dgroup")
+    ap.add_argument("out")
+    ap.add_argument("--nodedupe", action="store_true", help="every entry has its own copy (the traces of tools/mklayout.py need entries that the sector tells apart)")
+    ap.add_argument("--layout", help="a layout (tools/mklayout.py): the floppy medium")
+    ap.add_argument("--floppies", help="with --layout: write the disks (POOLnn.DSK) into this directory")
+    ap.add_argument("--sdc", help="also write the CoCo SDC's single file (a disk with POOL.BIN, then this image; without --layout)")
+    ap.add_argument("--model", help="write the entries (file, id, sizes, content key, place) as JSON")
+    a = ap.parse_args(argv)
+    layout = json.loads(Path(a.layout).read_text()) if a.layout else None
+    img, info = build(a.data_dir, a.gamedir, a.dgroup, not a.nodedupe, layout)
+    Path(a.out).write_bytes(img)
+    if a.model:
+        Path(a.model).write_text(json.dumps(dict(
+            files=info["files"], data_off=info["data_off"], save_sectors=SAVE_SECTORS, pool_bin_sectors=pool_bin_sectors(a.gamedir),
+            entries=[dict(file=info["files"][e[0]], id=e[1], size=e[2], raw=e[3], kind=e[4], key=k, off=o)
+                     for e, k, o in zip(info["ents"], info["keys"], info["placed"])]), indent=0))
+    if a.sdc:
+        write_sdc(img, a.gamedir, a.sdc)
+        print("mkimage: the SDC file %s: %d sectors" % (a.sdc, 630 + len(img) // 256))
+    if a.floppies:
+        names = write_floppies(img, info, a.gamedir, a.floppies)
+        print("mkimage: %d disks in %s: %s" % (len(names), a.floppies, " ".join(names)))
+    print("mkimage: %d files, %d entries, %d sectors (%d KB), saves at sector %d; identical blocks stored once: %d bytes saved" %
+          (len(info["files"]), len(info["ents"]), len(img) // 256, len(img) // 1024, info["save_lsn"], info["saved"]))
 
 
 if __name__ == "__main__":
-    main(*sys.argv[1:5])
+    main(sys.argv[1:])

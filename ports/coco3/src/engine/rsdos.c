@@ -4,6 +4,12 @@
  * the last sector read is cached so that a header read as nine-byte entries costs one DSKCON call per sector. */
 #include "eng.h"
 
+#ifndef ENG_TEST
+u8 rs_read(RsFile *f, u32 offset, u8 *dst, u16 n)      /* the game has no files of its own: everything is read from the image (the engine has no room for more) */
+{
+    return img_read(offset, dst, n);
+}
+#else
 static u8 fat[4][68];                     /* the FAT of each mounted drive */
 static u8 cache_drive = 0xFF, cache_track, cache_sector;
 
@@ -129,3 +135,4 @@ u8 rs_read(RsFile *f, u32 offset, u8 *dst, u16 n)
     }
     return 0;
 }
+#endif

@@ -7,7 +7,9 @@
 #define IDX_BLK 6                         /* physical blocks 6 and 7: drive d at block 6 + d / 2, offset 4096 * (d & 1) */
 #define IDX_MAX 4096
 
+#ifdef ENG_TEST
 Vol vols[4];
+#endif
 #ifndef ENG_TEST                            /* (the engine tests of 8.3 and 8.4 are built without the image and what only the game uses: their disks are small) */
 Vol img_vol;
 u32 img_save_lsn;
@@ -21,13 +23,14 @@ u16 img_save_sectors;
  * the entries from the image a chunk at a time: two requests of the medium for every bank loaded, step 8.9c). */
 u8 img_mount(void)
 {
-    u8 h[24];
+    u8 h[56];
     u16 n;
     u32 files_off, ents_off;
     img_vol.mounted = 0;
     img_vol.drive = IMG_DRIVE;
     img_vol.f.drive = IMG_DRIVE;
-    if (img_read(0, h, 24) != 0)
+    flop_detect();                              /* a set of floppy disks (step 8.10) or the harness' storage */
+    if (img_read(0, h, 56) != 0)
         return 1;
     if (h[0] != 'P' || h[1] != 'I' || h[2] != 'M' || h[3] != '2')
         return 2;
@@ -37,6 +40,8 @@ u8 img_mount(void)
     ents_off = ((u32)h[12] << 24) | ((u32)h[13] << 16) | ((u32)h[14] << 8) | h[15];
     img_save_lsn = ((u32)h[16] << 24) | ((u32)h[17] << 16) | ((u32)h[18] << 8) | h[19];
     img_save_sectors = (u16)(((u16)h[20] << 8) | h[21]);
+    if (medium && h[24] == 1)
+        flop_setup(h + 24);
     n = (u16)((u16)img_vol.nfiles * 12u);       /* (CMOC multiplies two bytes in 8 bits) */
     if (n > ENT_AT || (u16)(ENT_AT + (u16)img_vol.nent * 10u) > ENT_END)
         return 3;
@@ -93,6 +98,7 @@ u8 img_entry(const char *name8, u8 id, DaxEntry *e)
 }
 #endif
 
+#ifdef ENG_TEST                           /* (the floppy volumes of step 8.4: the engine tests' only; the game reads the image, and its engine has no room for them) */
 static u8 *idx_ptr(u8 drive)
 {
     win_set(0, (u8)(IDX_BLK + (drive >> 1)));
@@ -197,6 +203,8 @@ u8 vol_entry(const Vol *v, u16 i, u8 *file, u8 *id, DaxEntry *e)
     return 0;
 }
 
+#endif
+
 /* 1 when a mounted volume holds the file at all */
 u8 vol_has(const char *name8)
 {
@@ -206,9 +214,11 @@ u8 vol_has(const char *name8)
     if (img_vol.mounted && img_file(name8, &a, &b) != 0xFF)
         return 1;
 #endif
+#ifdef ENG_TEST
     for (d = 0; d < 4; d++)
         if (vols[d].mounted && file_index(&vols[d], name8, &base) != 0xFF)
             return 1;
+#endif
     return 0;
 }
 
@@ -226,6 +236,7 @@ u8 vol_lookup(const char *name8, u8 id, Vol **vp, DaxEntry *e)
             seen = 2;
     }
 #endif
+#ifdef ENG_TEST
     for (d = 0; d < 4; d++) {
         if (!vols[d].mounted)
             continue;
@@ -237,5 +248,6 @@ u8 vol_lookup(const char *name8, u8 id, Vol **vp, DaxEntry *e)
         if (st == 2)
             seen = 2;
     }
+#endif
     return seen ? 2 : 1;
 }

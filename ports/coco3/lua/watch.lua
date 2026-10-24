@@ -7,6 +7,7 @@
 --   MB_OUT     output prefix        MB_CMD   typed at BASIC (default LOADM"POOL":EXEC)
 --   MB_LIMIT   emulated seconds     MB_KEYS  "t:text" pairs separated by ';': type text at emulated second t (\n = Enter)
 --   MB_SWAP    "n:file" pairs separated by ';': when the screen count reaches n, mount file in drive 2 (the disk-swap prompts)
+--   MB_FLOP    the floppy set of step 8.10: a directory of POOLnn.DSK, mounted as the engine asks for them (below)
 local m = manager.machine
 local mem = m.devices[":maincpu"].spaces["program"]
 
@@ -95,6 +96,91 @@ if img_path and not os.getenv("MB_NOTAP") then
       ok = 2
     end
     mem:write_u8(0x0961, ok)
+  end)
+end
+-- MB_SDC=file: a model of the CoCo SDC's command mode (step 8.10b; there is no SDC in MAME: this is the engine's driver, src/engine/sdc.asm, against what NitrOS-9's
+-- driver and the SDC User Guide say of the registers, not against the card). $FF40 = $43 turns command mode on, 0 off; $FF49 and $FF4A:$FF4B the sector
+-- (bits 23..16 and 15..0); a command at $FF48 ($80 + drive reads, $A0 + drive writes) makes status bit 1 (ready) rise; then 256 bytes are read from or written to
+-- $FF4A/$FF4B one byte at a time in turn; status 0 when done. The file is the SDC image (tools/mkimage.py --sdc): sector 630 is the first of the game's image.
+-- Writes go to sec_over (the saves of the run, as with MB_IMG). The FDC under these addresses is told "force interrupt" ($D0) so that it ignores the commands.
+if os.getenv("MB_SDC") then
+  local f = assert(io.open(os.getenv("MB_SDC"), "rb"))
+  local sd = f:read("a")
+  f:close()
+  local cmdmode, p1, p2, p3, cmd, status = false, 0, 0, 0, 0, 0
+  local rbuf, wbuf, pos = nil, nil, 0
+  local function lsn() return (p1 << 16) | (p2 << 8) | p3 end
+  local function done() rbuf, wbuf, pos, status = nil, nil, 0, 0 end
+  sdc_wr40 = mem:install_write_tap(0xFF40, 0xFF40, "sdc40", function(offset, data, mask)
+    local v = data & 0xFF
+    if v == 0x43 then cmdmode = true; done()
+    elseif cmdmode and v == 0 then cmdmode = false end
+    return data
+  end)
+  sdc_wr = mem:install_write_tap(0xFF48, 0xFF4B, "sdc48", function(offset, data, mask)
+    if not cmdmode then return data end
+    local v = data & 0xFF
+    if offset == 0xFF48 then
+      cmd = v
+      local n = lsn()
+      last_io = m.time:as_double()
+      if (v & 0xE0) == 0x80 then
+        local s = sec_over[n - 630] or sd:sub(n * 256 + 1, n * 256 + 256)
+        if #s < 256 then status = 0x80 else rbuf, pos, status = s, 0, 0x02 end
+      elseif (v & 0xE0) == 0xA0 then
+        wbuf, pos, status = {}, 0, 0x02
+      end
+      return 0xD0
+    elseif offset == 0xFF49 then p1 = v
+    elseif wbuf then
+      wbuf[#wbuf + 1] = string.char(v)
+      if #wbuf == 256 then sec_over[lsn() - 630] = table.concat(wbuf); done() end
+    elseif offset == 0xFF4A then p2 = v
+    elseif offset == 0xFF4B then p3 = v end
+    return data
+  end)
+  sdc_rd = mem:install_read_tap(0xFF48, 0xFF4B, "sdcrd", function(offset, data, mask)
+    if not cmdmode then return data end
+    if offset == 0xFF48 then return status end
+    if offset == 0xFF49 then return p1 end
+    if rbuf then
+      local b = rbuf:byte(pos + 1)
+      pos = pos + 1
+      if pos == 256 then done() end
+      return b
+    end
+    return 0
+  end)
+end
+-- MB_FLOP=dir: the floppy set (step 8.10). The engine (src/engine/flop.c) asks for a disk by writing its number to $090C and the drive to $090D,
+-- then waits for ENTER or for $090F: the disk POOLnn.DSK of dir goes into that drive (a second after the old one is out: a person is slower), the
+-- prompt is answered. Every swap is printed ("swap t= disk= drive=").
+if os.getenv("MB_FLOP") then
+  local dir = os.getenv("MB_FLOP")
+  local drives = {[0] = m.images[":ext:fdc:wd17xx:0:525dd"], [1] = m.images[":ext:fdc:wd17xx:1:525dd"]}
+  local pending
+  if os.getenv("MB_DSKLOG") then      -- every DSKCON call (disk.asm writes the operation, drive, track and sector to $EA..$ED): "dsk t op drive track sector"
+    dsk_tap = mem:install_write_tap(0x00ED, 0x00ED, "dsklog", function(offset, data, mask)
+      print(string.format("dsk %.3f op=%d d=%d t=%d s=%d", m.time:as_double(), mem:read_u8(0xEA), mem:read_u8(0xEB), mem:read_u8(0xEC), data & 0xFF))
+      return data
+    end)
+  end
+  flop_frame = emu.add_machine_frame_notifier(function()
+    local now = m.time:as_double()
+    local req = mem:read_u8(0x090C)
+    if req ~= 0 and not pending and mem:read_u8(0x090F) == 0 then
+      pending = {disk = req, drive = mem:read_u8(0x090D), due = now + (tonumber(os.getenv("MB_SWAP_DELAY") or "1.0"))}
+      last_io = now
+      if drives[pending.drive] then pcall(function() drives[pending.drive]:unload() end) end
+    elseif pending and now >= pending.due then
+      local file = string.format("%s/POOL%02d.DSK", dir, pending.disk)
+      local ok = drives[pending.drive] and pcall(function() drives[pending.drive]:load(file) end)
+      print(string.format("swap t=%.2f disk=%d drive=%d %s", now, pending.disk, pending.drive, ok and "ok" or "FAILED"))
+      io.stdout:flush()
+      mem:write_u8(0x090F, 1)
+      pending = nil
+      last_io = now
+    end
   end)
 end
 if os.getenv("MB_WATCH") then      -- MB_WATCH=hexfrom-hexto: log the first writes into that range (pc, s, address, value)
@@ -233,20 +319,27 @@ local function kq_push(code)
   mem:write_u8(syms.kq_tail, (tail + 1) & 15)
 end
 local function core_phys(a) return 0x30 * 0x2000 + a - 0x2000 end
-local last_polls, poll_at = -1, 0
+local last_polls, poll_at, poll_since, last_inject = -1, 0, 0, -10
 local function drive(now, changed)
   if changed then still_since = now end
   local polls = mem:read_u16(0x090A)                 -- the game polls the keyboard: it is waiting for a key (or timing a delay)
-  if polls ~= last_polls then last_polls, poll_at = polls, now end
+  if polls ~= last_polls then
+    if now - poll_at > 0.3 then poll_since = now end   -- (polling again after a gap: a load, a long animation step)
+    last_polls, poll_at = polls, now
+  end
   if #inject > 0 then
+    if mem:read_u8(0x090C) ~= 0 then inject_at = now + KEYGAP; return end      -- (keys wait while a disk is asked for)
     if now >= inject_at then
+      last_inject = now
       kq_push(table.remove(inject, 1))
       inject_at = now + KEYGAP
       still_since = now
     end
     return
   end
+  if mem:read_u8(0x090C) ~= 0 then return end        -- the engine asks for a disk (step 8.10): a person does not type at that prompt
   if si > #script or now - poll_at > 0.3 or m.time:as_double() - last_io < 3.0 then return end   -- (a save or a load in progress)
+  if os.getenv("MB_FLOP") and (now - poll_since < 3.0 or now - last_inject < 4.0) then return end   -- (on the disks a load takes minutes and the game empties the keyboard when it has done: a key goes in when the game has waited for one for 3 s)
   if now - still_since < STILL and not script[si][3] then return end   -- (`press`: an animated screen never stays still)
   if script[si][3] and now - last_press < 2.0 then return end
   if seed_due then                                  -- the main menu after the wheel has settled: line the generator up
@@ -302,8 +395,14 @@ while m.time:as_double() - t0 < limit do
     log:write(string.format("t=%.0f pc=%04X s=%04X banks=%d\n", now, st["PC"].value, st["S"].value, mem:read_u16(0x0910 + 18)))
     log:flush()
   end
-  if os.getenv("MB_PEEK") and not peeked and now >= tonumber(os.getenv("MB_PEEK_T") or "0") then
+  if os.getenv("MB_PEEK") and not peeked and now >= tonumber((os.getenv("MB_PEEK_T") or "0"):match("[%d.]+")) then
+    peek_times = peek_times or {}
+    for tt in string.gmatch(os.getenv("MB_PEEK_T") or "0", "[%d.]+") do peek_times[#peek_times + 1] = tonumber(tt) end   -- MB_PEEK_T=t1,t2,..: the ranges are read at each of those emulated seconds
+    peek_next = 1
     peeked = true
+  end
+  if peek_times and peek_next <= #peek_times and now >= peek_times[peek_next] then
+    peek_next = peek_next + 1
     for lo, hi in string.gmatch(os.getenv("MB_PEEK"), "(%x+)-(%x+)") do
       local t = {}      -- 5 or more digits: a physical address of the 512 KB, else a logical one
       for a = tonumber(lo, 16), tonumber(hi, 16) do t[#t + 1] = string.format("%02X", #lo > 4 and ram:read(a) or mem:read_u8(a)) end

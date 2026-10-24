@@ -12,13 +12,23 @@
 #include "eng.h"
 
 #define REQ ((u8 *)0x0960)                 /* the request block: [0] doorbell/command, [1] status, [2..4] lsn, [5..6] count, [7] block, [8..9] offset */
-#define SCRATCH ((u8 *)0x0600)             /* one sector in slot 0 (both tasks see it; BASIC no longer needs it once the engine runs) */
-#define SCRATCH_BLK 0x38
-#define SCRATCH_OFF 0x0600
+#define SCRATCH dsk_buf                    /* one sector, in slot 3 (both tasks see it): the DSKCON buffer, so that a floppy read needs no copy (step 8.10; it was $0600, which Disk BASIC's disk variables use) */
+#define SCRATCH_BLK 0x3B
+#define SCRATCH_OFF 0x1C90                 /* dsk_buf is at $7C90 (core.link) */
 
 u8 sec_io(u8 cmd, u32 lsn, u16 count, u8 blk, u16 off)
 {
     u8 *r = REQ;
+#ifndef ENG_TEST
+    if (medium) {
+        u16 n = count;
+        u8 st = flop_io(cmd, lsn, count, blk, off);
+        if (cmd == SEC_READ)
+            while (n--)
+                splash_adv();
+        return st;
+    }
+#endif
     r[1] = 0xFF;
     r[2] = (u8)(lsn >> 16);
     r[3] = (u8)(lsn >> 8);

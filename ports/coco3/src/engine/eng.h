@@ -32,6 +32,7 @@ void snd_install(void);
 extern u8 dsk_buf[256];
 u8 dsk_read(u8 drive, u8 track, u8 sector);   /* 0 = ok; else Disk BASIC's status byte */
 u8 dsk_read_to(u8 drive, u8 track, u8 sector, u8 *buf);   /* the same, into buf (below $8000) instead of dsk_buf */
+u8 dsk_write(u8 drive, u8 track, u8 sector);                /* dsk_buf to the sector; 0 = ok, 64 = write protected */
 void dsk_motor_off(void);
 
 typedef struct RsFile {
@@ -59,6 +60,12 @@ u8 img_write_blocks(u32 offset, u16 nbytes, u8 first_blk);
 u8 img_mount(void);                                       /* read the header and the file table; 0 = ok */
 extern u32 img_save_lsn;                                  /* the saves area (sectors) */
 extern u16 img_save_sectors;
+
+/* ---- flop.c: the image on a set of floppy disks (step 8.10) */
+extern u8 medium;                                         /* 1 when the sectors come from the disks, 0 from the harness */
+u8 flop_detect(void);                                     /* 1 when drive 0 holds disk 1 of a set; sets medium */
+void flop_setup(const u8 *e);                             /* the header's part for the disks (from byte 24) */
+u8 flop_io(u8 cmd, u32 lsn, u16 count, u8 blk, u16 off);  /* sec_io on the disks, with the prompts for the disks that are not in a drive */
 
 /* ---- rle.asm and dax.c */
 typedef struct Rle {
