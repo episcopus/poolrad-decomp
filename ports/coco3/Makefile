@@ -248,9 +248,11 @@ floppy-profile:
 floppy-layout: floppy-model
 	@python3 tools/mklayout.py $(if $(NAIVE),naive,make) --out build/floppy/layout.json
 
+# the interleave of the data files on the disks (1 = none; 5 and 7 are the others that fit; see docs/PHASE-8.10.md section 8)
+IL ?= 1
 floppy: game floppy-layout
 	@rm -rf build/floppy/disks
-	@$(TC) python3 -I tools/mkimage.py /repo/poolrad build/game build/gen/vm/DGROUP.IMG build/floppy/pool.img --layout build/floppy/layout.json --floppies build/floppy/disks
+	@$(TC) python3 -I tools/mkimage.py /repo/poolrad build/game build/gen/vm/DGROUP.IMG build/floppy/pool.img --layout build/floppy/layout.json --floppies build/floppy/disks --interleave $(IL)
 
 # play the set in a window of XRoar (brew install xroar): four drives, disks 1 to 4 in them (XRoar numbers the drives 1 to 4, Disk BASIC 0 to 3), the rest asked for on the CoCo's
 # screen: eject the disk in the drive the game names (XRoar: File, Drive n, Insert disk...). The disks are copied first (the game saves into them): build/floppy/xroar/

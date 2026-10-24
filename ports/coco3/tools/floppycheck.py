@@ -17,13 +17,13 @@ sys.path.insert(0, str(HERE))
 import decbfs  # noqa: E402
 
 
-def disks_image(diskdir, n):
+def disks_image(diskdir, n, counts, il):
     out = bytearray()
     for i in range(n):
         raw = Path(diskdir, "POOL%02d.DSK" % (i + 1)).read_bytes()
         d = decbfs.read_dir(raw)
         first = [e for e in d if e[0].startswith("POOLDSK")][0][4]
-        out += decbfs.read_file(raw, first)
+        out += decbfs.read_file(raw, first, counts[i], il)
     return bytes(out)
 
 
@@ -45,7 +45,7 @@ def main():
     counts = [struct.unpack(">H", img[26 + 2 * i:28 + 2 * i])[0] for i in range(nd)]
     save_lsn = struct.unpack(">I", img[16:20])[0]
     save_sectors = struct.unpack(">H", img[20:22])[0]
-    got = disks_image(sys.argv[2], nd)
+    got = disks_image(sys.argv[2], nd, counts, img[55] or 1)
     bad = 0
     # a disk's data file is padded to whole granules in the FAT's sense only in the last sector count: the sizes must agree exactly
     if len(got) != len(img):

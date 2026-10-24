@@ -212,7 +212,7 @@ def build(data_dir, gamedir, dgroup, dedupe=True, layout=None):
     return bytes(img), dict(files=files, ents=ents, keys=keys, placed=placed, psize=psize, data_off=data_off, save_lsn=save_lsn, saved=saved, disk_secs=disk_secs)
 
 
-def write_floppies(img, info, gamedir, outdir):
+def write_floppies(img, info, gamedir, outdir, interleave=1):
     """The disks of a floppy layout as RS-DOS images (tools/decbfs.py): POOLnn.DSK, each with its slice of the image as POOLDSKn.DAT, the
     first also with POOL.BIN."""
     import decbfs
@@ -222,7 +222,7 @@ def write_floppies(img, info, gamedir, outdir):
     names = []
     for i, n in enumerate(info["disk_secs"]):
         d = decbfs.Disk()
-        d.add("POOLDSK" + ("%X" % (i + 1) if i + 1 >= 10 else str(i + 1)), "DAT", img[pos * 256:(pos + n) * 256], 1, 0)
+        d.add("POOLDSK" + ("%X" % (i + 1) if i + 1 >= 10 else str(i + 1)), "DAT", img[pos * 256:(pos + n) * 256], 1, 0, interleave)
         if i == 0:
             d.add("POOL", "BIN", Path(gamedir, "POOL.BIN").read_bytes(), 2, 0)
         p = outdir / ("POOL%02d.DSK" % (i + 1))
@@ -257,10 +257,13 @@ def main(argv):
     ap.add_argument("--layout", help="a layout (tools/mklayout.py): the floppy medium")
     ap.add_argument("--floppies", help="with --layout: write the disks (POOLnn.DSK) into this directory")
     ap.add_argument("--sdc", help="also write the CoCo SDC's single file (a disk with POOL.BIN, then this image; without --layout)")
+    ap.add_argument("--interleave", type=int, default=1, help="with --floppies: the sector interleave of the data files on the disks (1, 5 or 7: coprime with 18); the engine reads it from the header")
     ap.add_argument("--model", help="write the entries (file, id, sizes, content key, place) as JSON")
     a = ap.parse_args(argv)
     layout = json.loads(Path(a.layout).read_text()) if a.layout else None
     img, info = build(a.data_dir, a.gamedir, a.dgroup, not a.nodedupe, layout)
+    if layout is not None and a.interleave != 1:
+        img = img[:55] + bytes([a.interleave]) + img[56:]          # the header's byte 31 of the floppy part (flop_setup)
     Path(a.out).write_bytes(img)
     if a.model:
         Path(a.model).write_text(json.dumps(dict(
@@ -271,7 +274,7 @@ def main(argv):
         write_sdc(img, a.gamedir, a.sdc)
         print("mkimage: the SDC file %s: %d sectors" % (a.sdc, 630 + len(img) // 256))
     if a.floppies:
-        names = write_floppies(img, info, a.gamedir, a.floppies)
+        names = write_floppies(img, info, a.gamedir, a.floppies, a.interleave)
         print("mkimage: %d disks in %s: %s" % (len(names), a.floppies, " ".join(names)))
     print("mkimage: %d files, %d entries, %d sectors (%d KB), saves at sector %d; identical blocks stored once: %d bytes saved" %
           (len(info["files"]), len(info["ents"]), len(img) // 256, len(img) // 1024, info["save_lsn"], info["saved"]))

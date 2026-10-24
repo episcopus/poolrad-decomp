@@ -15,6 +15,19 @@ GRAN = 9
 NGRAN = 68
 
 
+def slots(interleave):
+    """slot of a track (0..17) the file's k-th sector of the track goes to: the next free slot at or after `interleave` slots from the last one
+    (the same loop is in src/engine/flop.c flop_setup)"""
+    used, out, pos = [False] * 18, [], 0
+    for _ in range(18):
+        while used[pos]:
+            pos = (pos + 1) % 18
+        used[pos] = True
+        out.append(pos)
+        pos = (pos + interleave) % 18
+    return out
+
+
 def gran_to_ts(g, k=0):
     """the track and the sector (1..18) of sector k (0..8) of granule g"""
     t = g >> 1
@@ -38,8 +51,10 @@ class Disk:
         o = (t * SECS + (s - 1)) * SSIZE
         self.img[o:o + len(data)] = data
 
-    def add(self, name, ext, data, ftype=1, ascii_flag=0):
-        """a file in the next free granules (consecutive); returns its first granule. The last sector is padded with zeros."""
+    def add(self, name, ext, data, ftype=1, ascii_flag=0, interleave=1):
+        """a file in the next free granules (consecutive); returns its first granule. The last sector is padded with zeros. With an interleave
+        other than 1 the file's sector k of a track (18 of them, the file starts on a track) goes to slot k * interleave mod 18 of the track:
+        the next sector of the file comes round `interleave` sectors later, the time Disk BASIC needs to ask for it (src/engine/flop.c)."""
         nsec = max(1, -(-len(data) // SSIZE))
         ng = -(-nsec // GRAN)
         if self.next_gran + ng > NGRAN:
@@ -50,7 +65,11 @@ class Disk:
             self.fat[g] = (g + 1) if i < ng - 1 else (0xC0 | (nsec - GRAN * (ng - 1)))
         padded = data + bytes(nsec * SSIZE - len(data))
         for k in range(nsec):
-            t, s = gran_to_ts(first + k // GRAN, k % GRAN)
+            if interleave == 1:
+                t, s = gran_to_ts(first + k // GRAN, k % GRAN)
+            else:
+                assert first % 2 == 0, "an interleaved file starts on a track"
+                t, s = gran_to_ts(first + 2 * (k // 18), 0)[0], 1 + slots(interleave)[k % 18]
             self._put(t, s, padded[k * SSIZE:(k + 1) * SSIZE])
         last = len(data) - (nsec - 1) * SSIZE if data else 0
         self.dir.append((name, ext, ftype, ascii_flag, first, last))
@@ -86,7 +105,7 @@ def read_dir(img):
     return out
 
 
-def read_file(img, first):
+def read_file(img, first, nsec=None, interleave=1):
     """the sectors of a file by its FAT chain, the last granule's unused sectors cut off (not the last sector's padding)"""
     fat = img[(17 * SECS + 1) * SSIZE:(17 * SECS + 1) * SSIZE + NGRAN]
     out = bytearray()
@@ -101,4 +120,13 @@ def read_file(img, first):
         if n >= 0xC0:
             break
         g = n
+    if interleave != 1:                              # the sectors in the order of the file, not of the track
+        out = bytes(out)
+        n = nsec if nsec is not None else len(out) // SSIZE
+        res = bytearray()
+        for k in range(n):
+            t, s = gran_to_ts(first + 2 * (k // 18), 0)[0], 1 + slots(interleave)[k % 18]
+            o = (t * SECS + s - 1) * SSIZE
+            res += img[o:o + SSIZE]
+        return bytes(res)
     return bytes(out)

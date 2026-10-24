@@ -22,6 +22,7 @@
 
 u8 medium;                                   /* 0: the development backend (the harness serves the sectors), 1: a set of floppy disks */
 static u8 nd, ndrv, stamp;
+static u8 il[18];                            /* the slot of a track the file's k-th sector of the track is in (the interleave: tools/decbfs.py) */
 static u32 dbase[MAXD + 1];                  /* the first sector of each disk, then the total */
 static u8 dr_disk[4], dr_gran[4], dr_use[4];  /* what each drive holds (1.., 0 = not known), its data file's first granule, when it was used last */
 
@@ -67,7 +68,6 @@ u8 flop_detect(void)
     medium = 0;
     if (dsk_read(0, 17, 3) == 0 && same7(dsk_buf, "POOLSDC")) {  /* the CoCo SDC's single image: its first 630 sectors are a disk with this marker, the game's image follows */
         medium = 2;
-        say(6, 2, "STORAGE: COCO SDC      ");
         return 1;
     }
     if (ident(0, dsk_buf) != 1)
@@ -79,11 +79,28 @@ u8 flop_detect(void)
             break;
         dr_disk[ndrv] = n;
     }
+    il_make(1);                               /* until the header says: the sectors of a track in order (the header is the first sector of disk 1, slot 0 either way) */
     nd = 1;                                   /* until the header says how large disk 1 is: every sector is on it */
     dbase[1] = 0x7FFFFFFFUL;
     medium = 1;
-    say(6, 2, "STORAGE: FLOPPY DISKS ");              /* the splash's line (boot.asm's said DEV) */
     return 1;
+}
+
+/* the slots of a track the file's sectors go to when each comes `step` slots after the one before (the next free one if that is taken): tools/decbfs.py slots() */
+static void il_make(u8 step)
+{
+    u8 used[18], i, pos = 0;
+    for (i = 0; i < 18; i++)
+        used[i] = 0;
+    for (i = 0; i < 18; i++) {
+        while (used[pos])
+            pos = (u8)(pos == 17 ? 0 : pos + 1);
+        used[pos] = 1;
+        il[i] = pos;
+        pos = (u8)(pos + step);
+        if (pos >= 18)
+            pos = (u8)(pos - 18);
+    }
 }
 
 /* the part of the image's header that tells the disks apart: from byte 24, the medium (1), the number of disks, a word of sectors for each */
@@ -91,6 +108,7 @@ void flop_setup(const u8 *e)
 {
     u8 i;
     nd = e[1];
+    il_make(e[31]);
     if (nd > MAXD)
         nd = MAXD;
     dbase[0] = 0;
@@ -248,7 +266,7 @@ u8 sdc_xfer(u8 cmd, u8 lsn_hi, u16 lsn_lo);     /* sdc.asm: one sector between t
 u8 flop_io(u8 cmd, u32 lsn, u16 count, u8 blk, u16 off)
 {
     u8 d, dr = 0, track = 0, sec = 0, st, tries;
-    u16 k, g;
+    u16 k;
     u32 card;
     while (count > 0) {
         if (medium == 1) {
@@ -257,11 +275,10 @@ u8 flop_io(u8 cmd, u32 lsn, u16 count, u8 blk, u16 off)
                 d++;
             k = (u16)(lsn - dbase[d]);
             dr = drive_for(d);
-            g = (u16)(dr_gran[dr] + k / 9);
-            track = (u8)(g >> 1);
+            track = (u8)((dr_gran[dr] >> 1) + k / 18);        /* the data file starts on a track; the directory track is skipped */
             if (track >= 17)
                 track++;
-            sec = (u8)((g & 1 ? 10 : 1) + k % 9);
+            sec = (u8)(il[k % 18] + 1);
         }
         if (cmd != SEC_READ)
             move(1, blk, off);

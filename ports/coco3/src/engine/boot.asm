@@ -238,7 +238,7 @@ l_6309  fdb     SPL+5*32+2
         fcb     0
         fdb     0
 l_dev   fdb     SPL+6*32+2
-        fcc     "STORAGE: DEV (MAME)"
+        fcc     "STORAGE: DISKS"
         fcb     0
         fdb     0
         endc
