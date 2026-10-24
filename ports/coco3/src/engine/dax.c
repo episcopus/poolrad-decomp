@@ -9,6 +9,7 @@ static u16 le16(const u8 *p)
     return (u16)(p[0] | ((u16)p[1] << 8));
 }
 
+#ifdef ENG_TEST                         /* (the engine tests find a block in an open file; the game has its index in RAM: vol.c) */
 /* Find block id of the open file: its place in the file and its sizes. 0 = found, 1 = no such block, else disk status. */
 u8 dax_find(RsFile *f, u8 id, DaxEntry *e)
 {
@@ -31,6 +32,8 @@ u8 dax_find(RsFile *f, u8 id, DaxEntry *e)
     }
     return 1;
 }
+
+#endif
 
 /* Unpack block e. The first hdr_n bytes of the result go to hdr (RAM); the rest goes either to ram_dst (RAM; first_blk
  * is 0xFF) or into physical blocks first_blk, first_blk+1 ... through window 0 (8 KB each), starting first_off

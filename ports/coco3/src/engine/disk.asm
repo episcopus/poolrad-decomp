@@ -108,9 +108,10 @@ dsk_again
         sty     ,x
         stu     2,x
         ldb     DC_STA
-        cmpb    #128                    not ready: the first read after the drive sat idle fails, because DSKCON's spin-up wait
-        bne     @done                   is timed by Disk BASIC's IRQ, which the engine has replaced; the next try finds the
-        dec     >dsk_try                drive turning
+        tstb                            not ready (128): the first read after the drive sat idle fails, because DSKCON's spin-up wait
+        beq     @done                   is timed by Disk BASIC's IRQ, which the engine has replaced; the next try finds the
+        dec     >dsk_try                drive turning. Any other error is tried again too (step 8.10: the first read after a disk was changed
+*                                       failed in MAME with another status and went through a second later)
         beq     @done
         ldy     #3                      wait about half a second (the motor is spinning up) with the CPU's interrupts as they are
 @w1     ldx     #0

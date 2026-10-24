@@ -95,7 +95,7 @@ def parse_trace(path, model, save_lsn):
 def simulate(disks_seq, ndrv=2, start=(1,)):
     """swaps of a run: disks_seq the disk number (0 = disk 1, the boot disk) of every access in order. Disk 0 stays in drive 0 when
     there are two drives or more. Returns the number of prompts."""
-    drives = [0] + [None] * (ndrv - 1) if ndrv > 1 else [None]
+    drives = [0] + [1] + [None] * (ndrv - 2) if ndrv > 1 else [0]     # the player starts with disks 1 and 2 in the first two drives (disk 1 is what the engine asks for first: index 0)
     use = [0] * ndrv
     swaps = 0
     t = 0
@@ -354,6 +354,18 @@ def optimise(model, runs, ndrv=2, iters=60000, area_weight=0.15, seed=1, verbose
             print("optimise: %6d  T %.2f  cost %.1f  best %.1f" % (it, temp, total, best))
     if verbose:
         print("optimise: %.1f -> %.1f" % (start, best))
+    # the disk the sessions ask for first goes second in the order: the player starts with disks 1 and 2 in the drives
+    firsts = collections.Counter()
+    for r in runs.values():
+        for x in r:
+            d = sd if x < 0 else best_disk[x]
+            if d != 0:
+                firsts[d] += 1
+                break
+    if firsts:
+        f = firsts.most_common(1)[0][0]
+        if f not in (1, sd):
+            best_disk = {i: (1 if d == f else f if d == 1 else d) for i, d in best_disk.items()}
     dsk = collections.defaultdict(list)
     for i in order:
         dsk[best_disk[i]].append(i)

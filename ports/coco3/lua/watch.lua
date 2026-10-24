@@ -168,16 +168,17 @@ if os.getenv("MB_FLOP") then
   flop_frame = emu.add_machine_frame_notifier(function()
     local now = m.time:as_double()
     local req = mem:read_u8(0x090C)
-    if req ~= 0 and not pending and mem:read_u8(0x090F) == 0 then
+    if req ~= 0 and not pending and mem:read_u8(0x090F) == 0 and now >= (keyed_until or 0) then
       pending = {disk = req, drive = mem:read_u8(0x090D), due = now + (tonumber(os.getenv("MB_SWAP_DELAY") or "1.0"))}
       last_io = now
       if drives[pending.drive] then pcall(function() drives[pending.drive]:unload() end) end
     elseif pending and now >= pending.due then
+      if os.getenv("MB_FLOP_WRONG") then pending.drive = pending.drive ~ 1 end     -- (a player who puts the disk in the other drive: the engine looks at every drive)
       local file = string.format("%s/POOL%02d.DSK", dir, pending.disk)
       local ok = drives[pending.drive] and pcall(function() drives[pending.drive]:load(file) end)
       print(string.format("swap t=%.2f disk=%d drive=%d %s", now, pending.disk, pending.drive, ok and "ok" or "FAILED"))
       io.stdout:flush()
-      mem:write_u8(0x090F, 1)
+      if os.getenv("MB_FLOP_KEY") then m.natkeyboard:post("\n"); keyed_until = now + 3 else mem:write_u8(0x090F, 1) end   -- MB_FLOP_KEY: answer the prompt with ENTER through the emulated keyboard (the engine's own scan), as a player does
       pending = nil
       last_io = now
     end

@@ -73,11 +73,11 @@ u8 flop_detect(void)
     if (ident(0, dsk_buf) != 1)
         return 0;
     dr_disk[0] = 1;
-    ndrv = 1;
-    n = ident(1, dsk_buf);
-    if (n != 0) {
-        dr_disk[1] = n;
-        ndrv = 2;
+    for (ndrv = 1; ndrv < 4; ndrv++) {          /* how many drives hold a disk of the set (the player puts disk 2 in the second one); the others are asked for */
+        n = ident(ndrv, dsk_buf);
+        if (n == 0)
+            break;
+        dr_disk[ndrv] = n;
     }
     nd = 1;                                   /* until the header says how large disk 1 is: every sector is on it */
     dbase[1] = 0x7FFFFFFFUL;
@@ -101,7 +101,7 @@ void flop_setup(const u8 *e)
 /* the prompt: the CoCo's text screen on, in a block of its own (the visible text area of MAME's GIME is taller than the 16 rows of 32: $0400 would show
  * what lies behind it), the palette as the text wants it (the foreground is an odd register, the background the even one before it), a wait for
  * ENTER (or the harness), then the game's screen again */
-static u8 prompt(u8 disk, u8 drive)
+static u8 prompt(u8 disk, u8 drive, u8 found)
 {
     u8 saved[16], i, k = 0, old;
     u16 c;
@@ -120,10 +120,20 @@ static u8 prompt(u8 disk, u8 drive)
         i = (u8)(i - 10);
     }
     *p = (u8)('0' + i);
-    say_at(WIN1, 7, 8, "IN DRIVE");
-    WIN1[7 * 32 + 17] = (u8)('0' + drive);
+    say_at(WIN1, 7, 6, "IN THE");
+    if (ndrv > 1)
+        say_at(WIN1, 7, 13, drive == 0 ? "FIRST" : drive == 1 ? "SECOND" : drive == 2 ? "THIRD" : "FOURTH");
+    say_at(WIN1, 7, 20, "DRIVE");
     say_at(WIN1, 10, 4, "THEN PRESS ENTER");
-    say_at(WIN1, 13, 4, "KEY 1 OR 2: THE DRIVES");
+    if (found != 0xFF) {                                       /* a second try: what the drives held */
+        if (found == 0)
+            say_at(WIN1, 12, 4, "NO DISK OF THE GAME THERE");
+        else {
+            say_at(WIN1, 12, 4, "THAT WAS DISK");
+            WIN1[12 * 32 + 18] = (u8)('0' + found % 10);
+        }
+    }
+    say_at(WIN1, 14, 2, "KEY 1 TO 4: HOW MANY DRIVES");
     MMU_W1 = old;
     for (i = 0; i < 16; i++)
         *(u8 *)(0xFFB0 + i) = (u8)(i & 1 ? 0x12 : 0);          /* the text: green on black */
@@ -143,7 +153,7 @@ static u8 prompt(u8 disk, u8 drive)
         c = kbd_get();
         if (SWP_ACK != 0 || (u8)c == 13)
             break;
-        if ((u8)c == '1' || (u8)c == '2') {
+        if ((u8)c >= '1' && (u8)c <= '4') {
             k = (u8)c;
             break;
         }
@@ -161,10 +171,11 @@ static u8 prompt(u8 disk, u8 drive)
     return k;
 }
 
-/* the drive that holds disk d (0 based) after this call, asking for it when no drive does */
+/* the drive that holds disk d (0 based) after this call, asking for it when no drive does. After ENTER every drive is looked at (the player may have
+ * used another than the one asked for); what the asked one held is said on the next prompt */
 static u8 drive_for(u8 d)
 {
-    u8 want = (u8)(d + 1), v, i, k;
+    u8 want = (u8)(d + 1), v, i, k, found = 0xFF, dd, lim;
     for (v = 0; v < ndrv; v++)
         if (dr_disk[v] == want) {
             dr_use[v] = ++stamp;
@@ -179,15 +190,28 @@ static u8 drive_for(u8 d)
                     v = i;
         }
         dr_disk[v] = 0;
-        k = prompt(want, v);
-        if (k == '1' || k == '2') {
+        k = prompt(want, v, found);
+        if (k != 0) {                                 /* a key 1 to 4: the player has that many drives */
             ndrv = (u8)(k - '0');
             continue;
         }
-        if (ident(v, TXT) == want) {
-            dr_disk[v] = want;
-            dr_use[v] = ++stamp;
-            return v;
+        for (i = 0; i < 2 && ident(v, TXT) == 0; i++)    /* the drive that was asked for gets a few tries: a disk that was just put in is not read at once */
+            ;
+        lim = found == 0xFF ? ndrv : 4;               /* the first ENTER looks at the drives there are; if that was not it, at all four */
+        for (i = 0; i < lim; i++) {
+            dd = (u8)(v + i);
+            if (dd >= lim)
+                dd = (u8)(dd - lim);
+            k = ident(dd, TXT);
+            dr_disk[dd] = k;                          /* what the drive holds now */
+            if (dd == v)
+                found = k;
+            if (k == want) {
+                if (dd >= ndrv)
+                    ndrv = (u8)(dd + 1);
+                dr_use[dd] = ++stamp;
+                return dd;
+            }
         }
     }
 }

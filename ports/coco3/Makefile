@@ -18,7 +18,7 @@ LINKLIBS := -L$(CMOCLIB) -lcmoc-crt-void -lcmoc-std-void
 ENGINE_OBJ := build/obj/boot.o build/obj/mailbox.o
 P ?= byte-arith
 
-.PHONY: sdc sdc-run floppy-check floppy floppy-model floppy-traces floppy-layout floppy-run perf-run perf-all step-check bank-groups play snd-check snd-wav game-wav stress game help doctor toolchain eng-data eng-test eng-tests gfx-ref data data-verify vol-test vol-tests sizes heap-stats prof coco-host place-host golden4 golden4-record demo test-demo run-demo probe probes asm-probe bench test clean risk-scan baseline
+.PHONY: floppy-xroar sdc sdc-run floppy-check floppy floppy-model floppy-traces floppy-layout floppy-run perf-run perf-all step-check bank-groups play snd-check snd-wav game-wav stress game help doctor toolchain eng-data eng-test eng-tests gfx-ref data data-verify vol-test vol-tests sizes heap-stats prof coco-host place-host golden4 golden4-record demo test-demo run-demo probe probes asm-probe bench test clean risk-scan baseline
 .DEFAULT_GOAL := help
 
 help:
@@ -251,6 +251,12 @@ floppy-layout: floppy-model
 floppy: game floppy-layout
 	@rm -rf build/floppy/disks
 	@$(TC) python3 -I tools/mkimage.py /repo/poolrad build/game build/gen/vm/DGROUP.IMG build/floppy/pool.img --layout build/floppy/layout.json --floppies build/floppy/disks
+
+# play the set in a window of XRoar (brew install xroar): four drives, disks 1 to 4 in them (XRoar numbers the drives 1 to 4, Disk BASIC 0 to 3), the rest asked for on the CoCo's
+# screen: eject the disk in the drive the game names (XRoar: File, Drive n, Insert disk...). The disks are copied first (the game saves into them): build/floppy/xroar/
+floppy-xroar: floppy
+	@rm -rf build/floppy/xroar; mkdir -p build/floppy/xroar; cp build/floppy/disks/*.DSK build/floppy/xroar/
+	xroar -m coco3 -rompath roms -ram 512 -ram-init clear -tv-input rgb -cart rsdos -load-fd0 build/floppy/xroar/POOL01.DSK -load-fd1 build/floppy/xroar/POOL02.DSK -load-fd2 build/floppy/xroar/POOL03.DSK -load-fd3 build/floppy/xroar/POOL04.DSK -type 'LOADM"POOL":EXEC\r'
 
 # every session on the disks, five at a time, then the screens, the files written and the swaps counted (docs/PHASE-8.10.md)
 floppy-check:

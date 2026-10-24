@@ -102,7 +102,7 @@ static void scr_putn(u16 a, const u8 *src, u8 n)
 u8 font[1416];                          /* 177 glyphs of 8 rows; a row's top bit is its leftmost pixel */
 static u8 font_ok;
 
-#if 1
+#ifdef ENG_TEST
 u8 gfx_font_load(RsFile *f)
 {
     DaxEntry e;
