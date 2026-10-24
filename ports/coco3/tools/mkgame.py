@@ -11,6 +11,7 @@ What it does:
   4. writes the far stubs (the resident entry for every routine of a bank that another bank or the core calls), the entry
      table at the head of every bank, and the bank table.
 The core and the banks are linked by the Makefile rules that follow (build/game/Makefile.inc), because they need the core's map."""
+import collections
 import json
 import os
 import re
@@ -371,6 +372,19 @@ def run(cmd, **kw):
 
 def compile_c(src, obj, incs):
     p = run(CMOC + ["-I" + i for i in incs] + ["-o", obj, src])
+    if p.returncode != 0 and ("free()" in p.stdout + p.stderr or "malloc" in p.stdout + p.stderr or p.returncode >= 128 or p.returncode < 0):
+        # cmoc corrupts its heap on some files, depending on the layout of the text and the length of the paths (a part made of routines
+        # picked by tools/rebank.py hit it): the same code is compiled under another file name, with blank lines in front
+        text = Path(src).read_text()
+        for k in range(1, 33):
+            tmp = Path(src).with_name("_cc%d_%s" % (k, Path(src).name))
+            tmp_o = Path(obj).with_name("_cc%d_%s" % (k, Path(obj).name))
+            tmp.write_text("\n" * (k % 5) + text)
+            p = run(CMOC + ["-I" + i for i in incs] + ["-o", str(tmp_o), str(tmp)])
+            tmp.unlink()
+            if p.returncode == 0 and tmp_o.exists():
+                tmp_o.replace(obj)
+                break
     if p.returncode != 0 or not os.path.exists(obj):
         errs = [l for l in (p.stdout + p.stderr).splitlines() if "error" in l.lower()] or (p.stdout + p.stderr).splitlines()[-3:]
         raise SystemExit("cmoc failed on %s: %s" % (src, "; ".join(errs[:3])))
@@ -654,6 +668,42 @@ def split_unit(name, text, funcs, parts_wanted):
     return [head + "\n" + "\n".join(it[3] for g in p for it in g) + "\n" for p in parts]
 
 
+def load_routine_banks():
+    """data/routine_banks.json (tools/rebank.py): {routine: bank label}. The banks are then made of routines chosen by what the sessions run,
+    not of units (step 8.11); REBANK=0 in the environment turns it off."""
+    f = Path(__file__).resolve().parent.parent / "data/routine_banks.json"
+    if os.environ.get("REBANK", "1") == "0" or not f.exists():
+        return None
+    return {r: label for label, rs in json.loads(f.read_text())["banks"].items() for r in rs}
+
+
+def partition_unit(text, assign, unit):
+    """-> {label: text}: the routines of a unit dealt out by `assign` (routine -> label); the non-routine items go to every part; a routine
+    nobody assigned (one the data file does not know) goes to the label rest_<unit>. A static helper is copied into every part whose routines
+    use it (one of them can be called by routines of several parts)."""
+    items = parse_items(text)
+    shared = [it[1] for it in items if it[0] == "other"]
+    statics = collections.OrderedDict((it[1], it[3]) for it in items if it[0] == "fn" and it[2])
+    words = lambda t: set(re.findall(r"[A-Za-z_]\w*", t))
+    uses = {n: words(t) & set(statics) - {n} for n, t in statics.items()}
+    parts = collections.OrderedDict()
+    for it in items:
+        if it[0] == "fn" and not it[2]:
+            parts.setdefault(assign.get(it[1]) or "rest_" + unit, []).append(it)
+    out = {}
+    for label, fns in parts.items():
+        need = set()
+        todo = [n for it in fns for n in words(it[3]) & set(statics)]
+        while todo:
+            n = todo.pop()
+            if n not in need:
+                need.add(n)
+                todo += uses[n]
+        body = [statics[n] for n in statics if n in need] + [it[3] for it in fns]
+        out[label] = "\n".join(shared) + "\n" + "\n".join(body) + "\n"
+    return out
+
+
 def main(argv):
     gen, out = Path(argv[1]).resolve(), Path(argv[2])
     inc = out / "inc"
@@ -723,6 +773,9 @@ def main(argv):
     for m in re.finditer(r'^#define (\w+) S\("(.*)"\)$', (gen / "game.h").read_text(), re.M):
         STRDEFS[m.group(1)] = m.group(2)
     core = []
+    RB = load_routine_banks()
+    rb_over = []
+    rb_parts = collections.OrderedDict()                    # label -> [(object name, object path, objinfo, unit)]
     for u in units:
         src = gen / (u + ".c")
         if u not in CORE_UNITS:
@@ -754,6 +807,15 @@ def main(argv):
             core.append(u)
             info[u] = inf
             continue
+        if RB:                                              # the banks are made of routines chosen by tools/rebank.py: one object per unit and label
+            split_text = copy_cross_literals(t, u, fn_unit, True)
+            for label, tx in partition_unit(split_text, RB, u).items():
+                nm = "%s__%s" % (u, label)
+                (out / "src" / (nm + ".c")).write_text(tx)
+                o2 = obj / (nm + ".o")
+                compile_c(str(out / "src" / (nm + ".c")), str(o2), incs)
+                rb_parts.setdefault(label, []).append((nm, str(o2), objinfo(str(o2)), u))
+            continue
         if size <= BANK_LIMIT:
             banks.append({"name": u, "objs": [str(o)], "size": size, "units": [u]})
             info[u] = inf
@@ -778,6 +840,25 @@ def main(argv):
             banks.append({"name": nm, "objs": [o2], "size": i2["code"] + i2["rodata"], "units": [u]})
             info[nm] = i2
         print("split %s (%d bytes) into %d parts: %s" % (u, size, len(names), ", ".join(str(i["code"] + i["rodata"]) for i in infs)))
+    for label, parts in rb_parts.items():
+        minfo = {"code": 0, "rodata": 0, "exports": set(), "imports": set(), "funcs": {}}
+        for nm, o2, i2, u in parts:
+            minfo["code"] += i2["code"]
+            minfo["rodata"] += i2["rodata"]
+            minfo["exports"] |= i2["exports"]
+            minfo["imports"] |= i2["imports"]
+            minfo["funcs"].update(i2["funcs"])
+        minfo["imports"] -= minfo["exports"]
+        size = minfo["code"] + minfo["rodata"]
+        print("  %-8s code %5d rodata %4d in %2d objects%s" % (label, minfo["code"], minfo["rodata"], len(parts), "  OVER %d" % BANK_LIMIT if size > BANK_LIMIT else ""))
+        if size > BANK_LIMIT:
+            rb_over.append(label)
+        banks.append({"name": label, "objs": [o2 for _, o2, _, _ in parts], "size": size, "units": sorted({u for *_, u in parts})})
+        info[label] = minfo
+    if rb_over:
+        raise SystemExit("banks over the limit %d: %s (run tools/rebank.py again, with a lower --limit)" % (BANK_LIMIT, " ".join(rb_over)))
+    if RB:
+        print("routine banks (data/routine_banks.json): %d banks from %d routines" % (len(rb_parts), len(RB)))
     # the runtime bank
     robjs = []
     rincs = [str(here / "shim"), str(inc), str(here / "src/engine")]
@@ -815,6 +896,16 @@ def main(argv):
         raise SystemExit("the sound bank is %d bytes, over the bank limit %d" % (sinfo["code"] + sinfo["rodata"], BANK_LIMIT))
     banks.append({"name": "snd", "objs": sobjs, "size": sinfo["code"] + sinfo["rodata"], "units": ["snd"]})
     info["snd"] = sinfo
+    if RB and os.environ.get("RTLSND", "1") != "0":
+        # the runtime and the sound driver are both used all the time (the driver three times a second): one bank, one slot of the pool, not two
+        # (step 8.11); together they just fit with their entry tables (tools/rebank.py counts the pool without them)
+        mi = {"code": rinfo["code"] + sinfo["code"], "rodata": rinfo["rodata"] + sinfo["rodata"], "exports": rinfo["exports"] | sinfo["exports"],
+              "imports": (rinfo["imports"] | sinfo["imports"]) - (rinfo["exports"] | sinfo["exports"]), "funcs": {}}
+        banks[:] = [b for b in banks if b["name"] not in ("rtl", "snd")]
+        banks.append({"name": "rtlsnd", "objs": robjs + sobjs, "size": mi["code"] + mi["rodata"], "units": ["rtl", "snd"]})
+        info.pop("rtl")
+        info.pop("snd")
+        info["rtlsnd"] = mi
     # the C files of src/game (the core: they are not units, so nothing above sees what they import) call these routines of banks
     info["corec"] = {"code": 0, "rodata": 0, "exports": set(), "imports": {"_snd_run"}, "funcs": {}}
     p2 = run(["lwasm", "--6809", "-fobj", "-o", str(obj / "proc_table.o"), str(out / "src/proc_table.asm")])
@@ -823,7 +914,7 @@ def main(argv):
     info["proc_table"] = objinfo(str(obj / "proc_table.o"))
     core.append("proc_table")
     # banks that are used together share one bank (step 8.9: data/bank_groups.json, made by tools/bankgroup.py from the bank logs of the sessions)
-    for grp in BANK_GROUPS:
+    for grp in ([] if RB else BANK_GROUPS):
         ms = [b for b in banks if b["name"] in grp]
         if len(ms) != len(grp):
             print("bank group %s: %s not found, skipped" % (grp, sorted(set(grp) - {b["name"] for b in ms})))

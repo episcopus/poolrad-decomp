@@ -1,0 +1,66 @@
+{
+ "battle-aftermath": {
+  "code_kb": 437,
+  "peak_kb": 132
+ },
+ "boot-title": {
+  "code_kb": 82,
+  "peak_kb": 73
+ },
+ "camp-cast": {
+  "code_kb": 138,
+  "peak_kb": 73
+ },
+ "camp-magic": {
+  "code_kb": 169,
+  "peak_kb": 73
+ },
+ "camp-rest-combat": {
+  "code_kb": 282,
+  "peak_kb": 107
+ },
+ "camp-save": {
+  "code_kb": 121,
+  "peak_kb": 73
+ },
+ "character-menu": {
+  "code_kb": 126,
+  "peak_kb": 73
+ },
+ "character-view": {
+  "code_kb": 192,
+  "peak_kb": 73
+ },
+ "combat-spells": {
+  "code_kb": 468,
+  "peak_kb": 132
+ },
+ "council-guards": {
+  "code_kb": 448,
+  "peak_kb": 123
+ },
+ "create-character": {
+  "code_kb": 148,
+  "peak_kb": 73
+ },
+ "parley-combat": {
+  "code_kb": 325,
+  "peak_kb": 132
+ },
+ "shop-buy": {
+  "code_kb": 204,
+  "peak_kb": 73
+ },
+ "temple-cast": {
+  "code_kb": 138,
+  "peak_kb": 73
+ },
+ "temple-heal": {
+  "code_kb": 436,
+  "peak_kb": 132
+ },
+ "walk-explore": {
+  "code_kb": 193,
+  "peak_kb": 73
+ }
+}

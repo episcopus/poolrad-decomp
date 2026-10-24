@@ -18,7 +18,7 @@ LINKLIBS := -L$(CMOCLIB) -lcmoc-crt-void -lcmoc-std-void
 ENGINE_OBJ := build/obj/boot.o build/obj/mailbox.o
 P ?= byte-arith
 
-.PHONY: floppy-xroar sdc sdc-run floppy-check floppy floppy-model floppy-traces floppy-layout floppy-run perf-run perf-all step-check bank-groups play snd-check snd-wav game-wav stress game help doctor toolchain eng-data eng-test eng-tests gfx-ref data data-verify vol-test vol-tests sizes heap-stats prof coco-host place-host golden4 golden4-record demo test-demo run-demo probe probes asm-probe bench test clean risk-scan baseline
+.PHONY: routine-profile code-profile rebank io-budget floppy-xroar sdc sdc-run floppy-check floppy floppy-model floppy-traces floppy-layout floppy-run perf-run perf-all step-check bank-groups play snd-check snd-wav game-wav stress game help doctor toolchain eng-data eng-test eng-tests gfx-ref data data-verify vol-test vol-tests sizes heap-stats prof coco-host place-host golden4 golden4-record demo test-demo run-demo probe probes asm-probe bench test clean risk-scan baseline
 .DEFAULT_GOAL := help
 
 help:
@@ -259,6 +259,22 @@ floppy: game floppy-layout
 floppy-xroar: floppy
 	@rm -rf build/floppy/xroar; mkdir -p build/floppy/xroar; cp build/floppy/disks/*.DSK build/floppy/xroar/
 	xroar -m coco3 -rompath roms -ram 512 -ram-init clear -tv-input rgb -cart rsdos -load-fd0 build/floppy/xroar/POOL01.DSK -load-fd1 build/floppy/xroar/POOL02.DSK -load-fd2 build/floppy/xroar/POOL03.DSK -load-fd3 build/floppy/xroar/POOL04.DSK -type 'LOADM"POOL":EXEC\r'
+
+# step 8.11: what the sessions ask of the storage (docs/PHASE-8.11.md): every session once with the storage log, then kilobytes by kind, bank loads, the worst 30 s of code
+# traffic and the seconds of reading on each medium, against data/io_budget.json. make io-budget [NORUN=1] [CHECK=1] [WRITE=1]
+io-budget: game
+	@$(if $(NORUN),:,scripts/io_runs.sh)
+	@python3 tools/iobudget.py $(if $(CHECK),--check) $(if $(WRITE),--write)
+
+# step 8.11, code residency: the routines each session runs in the original (oracle, build/profile/<session>.json and .seq), the routines of the banked
+# units with their sizes and the static call graph (build/profile/code.json, needs the last `make game`), and the banks chosen from both
+# (data/routine_banks.json, read by tools/mkgame.py). make rebank WRITE=1 [SLOTS=7] [LIMIT=15600]
+routine-profile:
+	cd ../.. && ls tests/sessions/*.keys | xargs -n1 basename | sed 's/\.keys$$//' | grep -v create-elf-mage | xargs -P 5 -n 1 .venv/bin/python ports/coco3/tools/routine_profile.py
+code-profile:
+	$(TC) python3 -I tools/codeprof.py
+rebank:
+	python3 tools/rebank.py $(if $(WRITE),--write) $(if $(SLOTS),--slots $(SLOTS)) $(if $(LIMIT),--limit $(LIMIT)) $(if $(SHOW),--show)
 
 # every session on the disks, five at a time, then the screens, the files written and the swaps counted (docs/PHASE-8.10.md)
 floppy-check:
