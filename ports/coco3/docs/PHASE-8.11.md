@@ -83,13 +83,16 @@ A combat session now reads 423 KB of code against the original's 384 KB (the ori
 
 **Does it hold for play the layout was not made from?** `rebank.py --holdout S` makes the layout from the other 15 sessions and runs S on it. For the first layout (before `BriefWait` and the margin) the held out sessions read, against the old banks: `battle-aftermath` 344 KB (2,957), `combat-spells` 941 KB (3,930), `walk-explore` 189 KB (857), `shop-buy` 225 KB (1,547): the layout does serve play it was not made from, but a held out combat costs 1.3 to 2.5 times what it costs in the sessions the layout was made from. A routine no session ran lives in a cold bank and costs a load when it runs.
 
+### 5.1 The floppy set and the SDC file on the new banks [V]
+
+`make floppy-traces floppy-profile floppy` made the layout again (the profile is by bank id, so the old one was void): 12 disks, and the swaps the simulation counts over the 16 sessions with two drives go from 1,044 to 274 (one drive 443, three 99, four 83). `make floppy-check` plays every session on the disks in MAME: **all 16 sessions equal on every labelled screen and every file the game wrote, in 8 minutes** (the combat sessions needed 4,500 emulated seconds, hours of wall time, before). The swaps the player would have made: battle-aftermath 18 (127), parley-combat 16 (123), combat-spells 17 (176), temple-heal 24 (133), council-guards 30 (175), walk-explore 15 (17), camp-save 14 (18), boot-title 7 (8); 276 in all against 952.
+
 ## 6. Not done, in the order of what it would buy [E]
 
-1. **The floppy disk layout** (`data/floppy_runs.json`, `make floppy-layout`) was made for the old banks: make it again from new runs (`make floppy-traces`), then `make floppy-check`.
-2. A pool in bytes, not in slots of 16 KB: banks of 14 KB in 16 KB slots waste 12 %; the small banks (0.5 to 4 KB) waste most.
-3. Preload the working set of a mode (fight, camp, shop) behind a "Loading" message, instead of 30 s of stalls spread over the first turns.
-4. More profiles (other spells, monsters, places) for the layout, and `--holdout` runs over all 16 sessions as a gate.
-5. Then the storage speed: a track at a time driver, an IDE backend, compressed banks.
+1. A pool in bytes, not in slots of 16 KB: banks of 14 KB in 16 KB slots waste 12 %; the small banks (0.5 to 4 KB) waste most.
+2. Preload the working set of a mode (fight, camp, shop) behind a "Loading" message, instead of 30 s of stalls spread over the first turns.
+3. More profiles (other spells, monsters, places) for the layout, and `--holdout` runs over all 16 sessions as a gate.
+4. Then the storage speed: a track at a time driver, an IDE backend, compressed banks.
 
 The profiles (`build/profile`, 25 MB) are not committed: `make routine-profile` makes them again (about 25 minutes, five sessions at a time), `make code-profile` the routine sizes, `make rebank WRITE=1` the layout. A build needs only the committed `data/routine_banks.json`; a routine it does not know goes to a bank `rest_<unit>` (and is over the limit if there are many: run `rebank` again).
 
