@@ -49,9 +49,13 @@ Back the card up first (the file is only 1.9 MB but a wrong offset would damage 
 diskutil list                               # find the CF card: say /dev/disk4
 diskutil unmountDisk /dev/disk4
 sudo dd if=/dev/rdisk4 of=superide-backup.img bs=1m
+sudo python3 tools/ide_card.py map /dev/rdisk4        # read only: which of the 256 drives hold something, and a free run to use
+make ide IDE_DRIVE=200                                # only if map shows 200 to 205 are not all free: the number it suggests
 sudo python3 tools/ide_card.py check /dev/rdisk4      # read only
 sudo python3 tools/ide_card.py write /dev/rdisk4 --yes
 ```
+
+**Where the game goes is decided in one place:** `IDE_DRIVE` (and `IDE_HDB_OFFSET`) of `make ide`. It is baked into `POOL.BIN` (the card sector the engine reads) and written to `build/ide/ide.env` next to the card file, which `ide_card.py` reads, so the tool writes exactly where the engine will look; if told another drive or offset it refuses. `map` reads all 256 drives (82 MB) and shows each as free (every sector all zeros or all `$FF`, which is what an empty or erased drive is) or in use, with the names in the directory of the ones that hold files; `check` and `write` look at the six drives of the file again and refuse unless they are free or already the game's.
 
 `check` prints the size of the card (it must be 500,700 sectors for the HDB-DOS offset the sheet gives, and the tool says so otherwise), proves the offset by reading the directory of virtual drive 4 (it must show the HDB-DOS disk's files), and says whether drives 200 to 205 are free (all zeros or all `$FF`). `write` refuses unless all three hold (`--force` overrides, the drives' data is lost) and reads everything back. If the card is another size, `--hdb-offset N` takes the number from its own sheet, and `make ide IDE_HDB_OFFSET=N` builds for it.
 

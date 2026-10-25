@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """ide_card.py: put the SuperIDE build (build/ide/POOLIDE.IMG, `make ide`) on a CompactFlash card from a card reader, without touching anything of the card that is in use.
 
+    ide_card.py map DEVICE              read only: which of the 256 HDB-DOS virtual drives hold something, and which run of free drives to give `make ide IDE_DRIVE=`
     ide_card.py check DEVICE            read only: is this the card, and is the place for the game free?
     ide_card.py write DEVICE [FILE]     the same checks, then write FILE (default build/ide/POOLIDE.IMG) and read it back; needs --yes
 
@@ -14,7 +15,11 @@ data, which only the game's own driver reads.
 What `check` looks at, and what `write` refuses without --force:
   * the size of the card, against offset + 256 * 630 (a card that is not that size has another HDB-DOS offset: say it with --hdb-offset);
   * a reference drive that the owner uses (default 4): its directory track must look like an RS-DOS disk, which proves that the offset is the right one;
-  * every card sector of the drives the game would take: all zeros, all $FF (what DSKINI writes) or what the file already has there; anything else is somebody's data."""
+  * every card sector of the drives the game would take: all zeros, all $FF (what DSKINI writes) or what the file already has there; anything else is somebody's data.
+
+Where the game goes is decided once, when it is built: `make ide IDE_DRIVE=n IDE_HDB_OFFSET=m` bakes the card sector the engine reads from into POOL.BIN and writes build/ide/ide.env next to the
+card file. This tool reads that file, so it writes where the engine will look; asked for another drive or offset (--drive, --hdb-offset) it refuses, because the game would not find itself. Use
+`map` first to see which drives are in use and to pick IDE_DRIVE, build, then `check`, then `write`."""
 import argparse
 import os
 import sys
@@ -73,18 +78,62 @@ def region_state(fd, lba0, secs, content=None):
     return "blank" if blank else "ours"
 
 
+def drive_map(fd, off, ndrives):
+    """For every HDB-DOS virtual drive 0..ndrives-1: the number of its 630 card sectors that are not all $00 or all $FF, and the names in its directory"""
+    out = []
+    for dr in range(ndrives):
+        used = 0
+        lba = off + dr * DRIVE_SECS
+        d = read(fd, lba, DRIVE_SECS)
+        if len(d) < DRIVE_SECS * SEC:
+            out.append((dr, None, []))
+            continue
+        for k in range(DRIVE_SECS):
+            s = d[k * SEC:(k + 1) * SEC]
+            if not (s.count(s[0]) == SEC and s[0] in (0x00, 0xFF)):
+                used += 1
+        out.append((dr, used, reference(fd, off, dr) if used else []))
+    return out
+
+
+def free_run(m, n, top):
+    """The highest run of n drives, all free, that ends below drive `top` (drive 255 is the NitrOS-9 boot disk on the SuperIDE sheet, and the owner adds drives upward from 0)"""
+    run = 0
+    for dr in range(top - 1, -1, -1):
+        run = run + 1 if m[dr][1] == 0 else 0
+        if run == n:
+            return dr
+    return None
+
+
+def load_env(path):
+    env = {}
+    if os.path.exists(path):
+        for line in open(path):
+            if "=" in line:
+                k, v = line.strip().split("=", 1)
+                env[k] = int(v)
+    return env
+
+
 def main(argv):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("cmd", choices=["check", "write"])
+    ap.add_argument("cmd", choices=["map", "check", "write"])
     ap.add_argument("device")
     ap.add_argument("file", nargs="?", default="build/ide/POOLIDE.IMG")
-    ap.add_argument("--hdb-offset", type=int, default=339420, help="the card's HDB-DOS offset in sectors (default $052DDC, the 256 MB card)")
-    ap.add_argument("--drive", type=int, default=200, help="the first HDB-DOS virtual drive the game takes (default 200; `make ide IDE_DRIVE=` says the same to the build)")
+    ap.add_argument("--hdb-offset", type=int, default=None, help="the card's HDB-DOS offset in sectors (default: the build's, in ide.env next to the file; $052DDC = 339420 is the 256 MB card's)")
+    ap.add_argument("--drive", type=int, default=None, help="the first HDB-DOS virtual drive the game takes (default: the build's, in ide.env; `make ide IDE_DRIVE=` sets it)")
     ap.add_argument("--drives", type=int, default=6, help="how many (the file says; default 6)")
     ap.add_argument("--ref-drive", type=int, default=4, help="a drive that the owner uses, to prove the offset (default 4: the HDB-DOS disk of the SuperIDE sheet)")
     ap.add_argument("--yes", action="store_true", help="write: really write")
     ap.add_argument("--force", action="store_true", help="write although a check says no (the data of the drives is lost)")
     a = ap.parse_args(argv)
+    env = load_env(os.path.join(os.path.dirname(os.path.abspath(a.file)), "ide.env"))
+    for opt, key, default in (("drive", "IDE_DRIVE", 200), ("hdb_offset", "IDE_HDB_OFFSET", 339420)):
+        given = getattr(a, opt)
+        if given is not None and key in env and given != env[key] and a.cmd != "map":
+            sys.exit("%s: the build in %s put the game's place at %s %d, not %d: the engine would not find the game there. Build again with `make ide %s=%d`, or drop the option." % (a.cmd, a.file, key, env[key], given, key, given))
+        setattr(a, opt, given if given is not None else env.get(key, default))
     content = None
     if a.cmd == "write" or os.path.exists(a.file):
         if os.path.exists(a.file):
@@ -94,6 +143,24 @@ def main(argv):
     if a.cmd == "write" and content is None:
         sys.exit("write: %s is not there (make ide)" % a.file)
     fd = os.open(a.device, os.O_RDONLY)
+    if a.cmd == "map":
+        total = size_of(fd)
+        nd = min(256, (total - a.hdb_offset) // DRIVE_SECS) if total else 256
+        m = drive_map(fd, a.hdb_offset, nd)
+        print("HDB-DOS offset %d: %d virtual drives. '.' free (all zeros or all $FF), '#' holds something:" % (a.hdb_offset, nd))
+        for r in range(0, nd, 32):
+            print("  %3d  %s" % (r, "".join("?" if x[1] is None else "." if x[1] == 0 else "#" for x in m[r:r + 32])))
+        for dr, used, names in m:
+            if used:
+                print("  drive %3d: %3d of %d sectors in use%s" % (dr, used, DRIVE_SECS, "; " + ", ".join(names[:6]) if names else ""))
+        want = a.drives
+        got = free_run(m, want, min(nd, 255))
+        if got is None:
+            print("no run of %d free drives below drive 255" % want)
+        else:
+            print("the highest free run of %d drives (below 255) starts at drive %d: `make ide IDE_DRIVE=%d IDE_HDB_OFFSET=%d`, then check and write" % (want, got, got, a.hdb_offset))
+        os.close(fd)
+        return 0
     lba0 = a.hdb_offset + a.drive * DRIVE_SECS
     secs = a.drives * DRIVE_SECS
     problems = []

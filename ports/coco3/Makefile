@@ -315,7 +315,7 @@ ide: game
 	@mkdir -p build/ide
 	$(TC) env IDE=1 IDE_LBA_BASE=$(IDE_LBA_BASE) IDE_ADDR=$(IDE_ADDR) IDE_SLOW=$(IDE_SLOW) python3 tools/mkgame.py --engine build/ide/engine build/game
 	$(TC) python3 -I tools/mkimage.py /repo/poolrad build/game build/gen/vm/DGROUP.IMG build/ide/pool.img --ide build/ide/POOLIDE.IMG --pool-bin build/ide/engine/POOL.BIN --ide-boot build/ide/POOLBOOT.DSK
-	@printf 'IDE_LBA0=%s\nIDE_LBA_BASE=%s\n' $(IDE_LBA0) $(IDE_LBA_BASE) > build/ide/ide.env
+	@printf 'IDE_LBA0=%s\nIDE_LBA_BASE=%s\nIDE_DRIVE=%s\nIDE_HDB_OFFSET=%s\n' $(IDE_LBA0) $(IDE_LBA_BASE) $(IDE_DRIVE) $(IDE_HDB_OFFSET) > build/ide/ide.env
 	@echo "ide: boot drive $(IDE_DRIVE) at card sector $(IDE_LBA0), the image from card sector $(IDE_LBA_BASE); build/ide/POOLIDE.IMG goes to the card (tools/ide_card.py, docs/PHASE-8.12.md)"
 
 # a session from the SuperIDE file on the model of the interface (MAME headless, lua/watch.lua MB_IDE): make ide-run S=boot-title
