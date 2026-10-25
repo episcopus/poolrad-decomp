@@ -325,6 +325,14 @@ ide: game
 ide-xroar-build:
 	$(MAKE) ide IDE_OUT=build/ide-xroar IDE_HDB_OFFSET=0 IDE_DRIVE=0
 
+# A folder to give to somebody who has XRoar: the card file, the engine, a double-click launcher and the instructions (build/pool-xroar, and the zip beside it). The CoCo 3 ROM is not in it.
+ide-xroar-pack: ide-xroar-build
+	@rm -rf build/pool-xroar; mkdir -p build/pool-xroar/roms
+	@cp build/ide-xroar/POOLIDE.IMG build/ide-xroar/engine/POOL.BIN tools/pack/README-xroar.txt build/pool-xroar/
+	@printf '%s\n' '#!/bin/sh' 'cd "$$(dirname "$$0")" || exit 1' 'exec xroar -m coco3 -ram-init clear -tv-input rgb -rompath "$$PWD/roms:$$HOME/.xroar/roms:/opt/homebrew/share/xroar/roms:/usr/local/share/xroar/roms" -cart ide -load-hd0 POOLIDE.IMG -run POOL.BIN "$$@"' > build/pool-xroar/Play.command
+	@chmod +x build/pool-xroar/Play.command; touch build/pool-xroar/roms/PUT-coco3.rom-HERE
+	@cd build && rm -f pool-xroar.zip && zip -q -r pool-xroar.zip pool-xroar && ls -l pool-xroar.zip
+
 ide-xroar: ide-xroar-build
 	cp build/ide-xroar/POOLIDE.IMG build/ide-xroar/run.img
 	xroar -m coco3 -rompath roms -ram 512 -ram-init clear -tv-input rgb -cart ide -load-hd0 build/ide-xroar/run.img -run build/ide-xroar/engine/POOL.BIN
