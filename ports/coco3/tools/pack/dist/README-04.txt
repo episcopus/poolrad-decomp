@@ -13,6 +13,9 @@ Putting it on the card (macOS/Linux, with a card reader)
   3. Write:   sudo python3 ide_card.py write /dev/rdiskN --yes     (it reads everything back)
      ide_card.py reads ide.env from this folder: it writes exactly where the game will look and refuses anything else.
 
+Updating the card with a newer build
+  Put the new POOLIDE.IMG and ide.env in this folder and run the same `write` command again. The tool sees the previous build of the game on the card (drive 200 holds POOL/BIN and the next drive starts with the image), replaces it without any --force, and KEEPS THE SAVED GAMES of the card (`--fresh-saves` takes the build's own seeded ones instead). Anything on the card that is not the game's is still refused.
+
 Playing it
   Put the card in the SuperIDE (the multi-pak slot switch on the SuperIDE; it must stay there while you play) and start HDB-DOS from it. Then:
       DIR 200                          (it should list POOL/BIN: that proves the drive)

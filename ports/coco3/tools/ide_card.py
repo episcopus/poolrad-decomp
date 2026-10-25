@@ -12,10 +12,14 @@ offset + n * 630 and keeps each 256 byte sector in the FIRST half of a card sect
 by default 200 to 205 (`make ide IDE_DRIVE=200`; the file says how many it takes). The first one is a disk that HDB-DOS can read (POOL.BIN), the others are the game's
 data, which only the game's own driver reads.
 
+A card that already has a previous build of the game at the place (drive 200 is a disk with POOL/BIN and the next drive starts with the image's "PIM2") is an UPDATE: `write` replaces
+the old build without --force, and **keeps the saved games of the card** (the 512 save sectors of the old image are copied into the new one; --fresh-saves takes the build's own
+seeded saves instead). Only a run of drives that starts at the old game's boot drive counts as the old game: a drive after a free one that holds something is somebody else's.
+
 What `check` looks at, and what `write` refuses without --force:
   * the size of the card, against offset + 256 * 630 (a card that is not that size has another HDB-DOS offset: say it with --hdb-offset);
   * a reference drive that the owner uses (default 4): its directory track must look like an RS-DOS disk, which proves that the offset is the right one;
-  * every card sector of the drives the game would take: all zeros, all $FF (what DSKINI writes) or what the file already has there; anything else is somebody's data.
+  * every card sector of the drives the game would take: all zeros, all $FF (what DSKINI writes), what the file already has there or a previous build of the game (above); anything else is somebody's data.
 
 Where the game goes is decided once, when it is built: `make ide IDE_DRIVE=n IDE_HDB_OFFSET=m` bakes the card sector the engine reads from into POOL.BIN and writes build/ide/ide.env next to the
 card file. This tool reads that file, so it writes where the engine will look; asked for another drive or offset (--drive, --hdb-offset) it refuses, because the game would not find itself. Use
@@ -94,15 +98,26 @@ def describe(info):
     return ", ".join("t%d s%d %s" % (k // 18, k % 18 + 1, info["data"][k * SEC:k * SEC + 8].hex()) for k in info["odd"][:4]) + (" ..." if len(info["odd"]) > 4 else "")
 
 
-def region_state(fd, lba0, drives, content=None, first=0):
-    """'free' (every drive blank, an empty formatted disk, or already what the file has) or the first drive that holds something"""
+def region_state(fd, lba0, drives, content=None, first=0, old=None):
+    """'free' (every drive blank, an empty formatted disk, or already what the file has), 'previous build' (a run of drives from the first that is the old game: `old`, the result of
+    previous_build) or the first drive that holds something"""
     seen = set()
+    run = old is not None                          # still inside the old game's run of drives
+    nprev = 0
     for i in range(drives):
         info = drive_info(fd, lba0 + i * DRIVE_SECS)
         st = drive_state(info, None if content is None else content[i * DRIVE_SECS * SEC:(i + 1) * DRIVE_SECS * SEC])
+        if st == "used" and run:
+            st = "previous"
+        elif st in ("blank", "empty"):
+            run = False                            # a free drive ends the old game: what follows it that holds something is somebody's
+        if st == "previous":
+            nprev += 1
         seen.add(st)
         if st in ("used", "short"):
             return "drive %d (card sector %d) is %s: %s" % (first + i, lba0 + i * DRIVE_SECS, "in use" if st == "used" else "beyond the card", describe(info) if info else "")
+    if "previous" in seen:
+        return "previous build of the game (%d of its drives are replaced)" % nprev
     return "ours" if seen == {"ours"} else "free (%s)" % ", ".join(sorted(seen))
 
 
@@ -113,6 +128,22 @@ def drive_map(fd, off, ndrives):
         info = drive_info(fd, off + dr * DRIVE_SECS)
         out.append((dr, drive_state(info) if info else "short", info, reference(fd, off, dr) if info and info["odd"] and not info["empty"] else []))
     return out
+
+
+def previous_build(fd, lba0):
+    """The header of the game that is on the card at lba0, or None: the first drive is a disk with POOL/BIN in its directory and the next drive's first card sector is the image's
+    (its two first sectors: "PIM2", then the counts of the image header). Returns (save_lsn, save_sectors) of that image."""
+    if "POOL/BIN" not in reference(fd, lba0, 0):
+        return None
+    h = read(fd, lba0 + DRIVE_SECS, 1)
+    if h[:4] != b"PIM2":
+        return None
+    return int.from_bytes(h[16:20], "big"), int.from_bytes(h[20:22], "big")
+
+
+def saves_at(lba_base, save_lsn):
+    """The first card sector of the saves of an image whose first sector is at card sector lba_base (src/engine/ide.c: one card sector for each save sector, from base + save_lsn / 2)"""
+    return lba_base + save_lsn // 2
 
 
 def free_run(m, n, top):
@@ -146,6 +177,7 @@ def main(argv):
     ap.add_argument("--ref-drive", type=int, default=4, help="a drive that the owner uses, to prove the offset (default 4: the HDB-DOS disk of the SuperIDE sheet)")
     ap.add_argument("--yes", action="store_true", help="write: really write")
     ap.add_argument("--force", action="store_true", help="write although a check says no (the data of the drives is lost)")
+    ap.add_argument("--fresh-saves", action="store_true", help="update: take the build's own saved games and not the ones of the card (they are lost)")
     a = ap.parse_args(argv)
     env = load_env(os.path.join(os.path.dirname(os.path.abspath(a.file)), "ide.env"))
     for opt, key, default in (("drive", "IDE_DRIVE", 200), ("hdb_offset", "IDE_HDB_OFFSET", 339420)):
@@ -205,10 +237,22 @@ def main(argv):
     print("reference drive %d (at card sector %d): directory %s" % (a.ref_drive, a.hdb_offset + a.ref_drive * DRIVE_SECS, ", ".join(names) if names else "nothing readable"))
     if not names:
         problems.append("virtual drive %d has no directory at the place HDB-DOS keeps it: the offset %d is probably not this card's" % (a.ref_drive, a.hdb_offset))
-    st = region_state(fd, lba0, a.drives, content, a.drive)
+    old = previous_build(fd, lba0)
+    st = region_state(fd, lba0, a.drives, content, a.drive, old)
     print("the game's drives %d to %d (card sectors %d to %d): %s" % (a.drive, a.drive + a.drives - 1, lba0, lba0 + secs - 1, st))
-    if not (st == "ours" or st.startswith("free")):
+    if not (st == "ours" or st.startswith("free") or st.startswith("previous")):
         problems.append("the game's drives are not free: %s" % st)
+    carry = None                                   # the saved games of the old build, to be put into the new one
+    if st.startswith("previous") and content is not None:
+        new_lsn, new_n = int.from_bytes(content[DRIVE_SECS * SEC + 16:DRIVE_SECS * SEC + 20], "big"), int.from_bytes(content[DRIVE_SECS * SEC + 20:DRIVE_SECS * SEC + 22], "big")
+        old_lsn, old_n = old
+        if a.fresh_saves:
+            print("UPDATE: the saved games of the card are replaced by the build's own (--fresh-saves)")
+        elif old_n == new_n and old_n > 0 and old_lsn % 2 == 0 and new_lsn % 2 == 0:
+            carry = (saves_at(lba0 + DRIVE_SECS, old_lsn), saves_at(DRIVE_SECS, new_lsn), old_n)
+            print("UPDATE: the previous build is replaced and the card's %d saved game sectors are kept (--fresh-saves does not)" % old_n)
+        else:
+            problems.append("the saved games of the old build (%d sectors at image sector %d) do not fit the new image (%d at %d): say --fresh-saves to lose them" % (old_n, old_lsn, new_n, new_lsn))
     os.close(fd)
     if a.cmd == "check":
         print("OK: nothing in the way" if not problems else "NOT OK:\n  " + "\n  ".join(problems))
@@ -216,6 +260,11 @@ def main(argv):
     if problems and not a.force:
         print("NOT writing:\n  " + "\n  ".join(problems))
         return 1
+    if carry:
+        src, dst, n = carry                        # dst is in the file (card sectors from its start): the old saves go there
+        old_saves = read(fd2 := os.open(a.device, os.O_RDONLY), src, n)
+        os.close(fd2)
+        content = content[:dst * SEC] + old_saves + content[(dst + n) * SEC:]
     if not a.yes:
         print("would write %s (%d sectors) at card sector %d of %s: say --yes" % (a.file, len(content) // SEC, lba0, a.device))
         return 2
