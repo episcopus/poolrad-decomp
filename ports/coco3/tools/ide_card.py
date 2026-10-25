@@ -56,51 +56,70 @@ def reference(fd, off, drive):
     return names
 
 
-def region_state(fd, lba0, secs, content=None):
-    """'blank' (every sector all $00 or all $FF), 'ours' (the sectors are the file's), or the first sector that is somebody's"""
-    ours = True
-    blank = True
-    chunk = 256
-    for i in range(0, secs, chunk):
-        n = min(chunk, secs - i)
-        d = read(fd, lba0 + i, n)
-        if len(d) < n * SEC:
-            return "short read at sector %d" % (lba0 + i)
-        for k in range(n):
-            s = d[k * SEC:(k + 1) * SEC]
-            if blank and not (s.count(s[0]) == SEC and s[0] in (0x00, 0xFF)):
-                blank = False
-                first, first_bytes = lba0 + i + k, s[:8].hex()
-            if ours and (content is None or s != content[(i + k) * SEC:(i + k + 1) * SEC]):
-                ours = False
-            if not blank and not ours:
-                return "sector %d is in use (first bytes %s)" % (first, first_bytes)
-    return "blank" if blank else "ours"
+FAT_SEC = 17 * 18 + 1            # track 17 sector 2 of a drive: the allocation table (68 granules, 0xFF = free)
+DIR_SECS = range(17 * 18 + 2, 17 * 18 + 11)    # track 17 sectors 3 to 11: the directory (8 entries of 32 bytes a sector)
+
+
+def uniform(s):
+    return s.count(s[0]) == SEC and s[0] in (0x00, 0xFF)
+
+
+def drive_info(fd, lba):
+    """What is on virtual drive at card sector lba: the sectors (numbers within the drive) that are not all $00 or all $FF, and whether it is an empty RS-DOS disk: the
+    allocation table says every granule is free and the directory has no file (an entry starts with $FF, never used, or $00, deleted). An empty disk that HDB-DOS has
+    formatted is not blank (it has a label sector and some bookkeeping), but there is nothing on it: its files, if there were any, are free space."""
+    d = read(fd, lba, DRIVE_SECS)
+    if len(d) < DRIVE_SECS * SEC:
+        return None
+    sec = lambda k: d[k * SEC:(k + 1) * SEC]
+    odd = [k for k in range(DRIVE_SECS) if not uniform(sec(k))]
+    fat_free = sec(FAT_SEC)[:68] == b"\xff" * 68
+    dir_clean = all(sec(k)[e * 32] in (0x00, 0xFF) for k in DIR_SECS for e in range(8))
+    return dict(odd=odd, empty=fat_free and dir_clean, data=d)
+
+
+def drive_state(info, content=None):
+    """'blank', 'empty' (a formatted disk with no files), 'ours' (the sectors are the file's) or 'used'"""
+    if info is None:
+        return "short"
+    if content is not None and info["data"] == content:
+        return "ours"
+    if not info["odd"]:
+        return "blank"
+    return "empty" if info["empty"] else "used"
+
+
+def describe(info):
+    """the sectors that are not uniform, as track/sector, with the first bytes of the first half"""
+    return ", ".join("t%d s%d %s" % (k // 18, k % 18 + 1, info["data"][k * SEC:k * SEC + 8].hex()) for k in info["odd"][:4]) + (" ..." if len(info["odd"]) > 4 else "")
+
+
+def region_state(fd, lba0, drives, content=None, first=0):
+    """'free' (every drive blank, an empty formatted disk, or already what the file has) or the first drive that holds something"""
+    seen = set()
+    for i in range(drives):
+        info = drive_info(fd, lba0 + i * DRIVE_SECS)
+        st = drive_state(info, None if content is None else content[i * DRIVE_SECS * SEC:(i + 1) * DRIVE_SECS * SEC])
+        seen.add(st)
+        if st in ("used", "short"):
+            return "drive %d (card sector %d) is %s: %s" % (first + i, lba0 + i * DRIVE_SECS, "in use" if st == "used" else "beyond the card", describe(info) if info else "")
+    return "ours" if seen == {"ours"} else "free (%s)" % ", ".join(sorted(seen))
 
 
 def drive_map(fd, off, ndrives):
-    """For every HDB-DOS virtual drive 0..ndrives-1: the number of its 630 card sectors that are not all $00 or all $FF, and the names in its directory"""
+    """For every HDB-DOS virtual drive: its state and what is odd on it"""
     out = []
     for dr in range(ndrives):
-        used = 0
-        lba = off + dr * DRIVE_SECS
-        d = read(fd, lba, DRIVE_SECS)
-        if len(d) < DRIVE_SECS * SEC:
-            out.append((dr, None, []))
-            continue
-        for k in range(DRIVE_SECS):
-            s = d[k * SEC:(k + 1) * SEC]
-            if not (s.count(s[0]) == SEC and s[0] in (0x00, 0xFF)):
-                used += 1
-        out.append((dr, used, reference(fd, off, dr) if used else []))
+        info = drive_info(fd, off + dr * DRIVE_SECS)
+        out.append((dr, drive_state(info) if info else "short", info, reference(fd, off, dr) if info and info["odd"] and not info["empty"] else []))
     return out
 
 
 def free_run(m, n, top):
-    """The highest run of n drives, all free, that ends below drive `top` (drive 255 is the NitrOS-9 boot disk on the SuperIDE sheet, and the owner adds drives upward from 0)"""
+    """The highest run of n drives, all free (blank or empty), that ends below drive `top` (drive 255 is the NitrOS-9 boot disk on the SuperIDE sheet, and the owner adds drives upward from 0)"""
     run = 0
     for dr in range(top - 1, -1, -1):
-        run = run + 1 if m[dr][1] == 0 else 0
+        run = run + 1 if m[dr][1] in ("blank", "empty") else 0
         if run == n:
             return dr
     return None
@@ -147,12 +166,20 @@ def main(argv):
         total = size_of(fd)
         nd = min(256, (total - a.hdb_offset) // DRIVE_SECS) if total else 256
         m = drive_map(fd, a.hdb_offset, nd)
-        print("HDB-DOS offset %d: %d virtual drives. '.' free (all zeros or all $FF), '#' holds something:" % (a.hdb_offset, nd))
+        sym = {"blank": ".", "empty": "e", "used": "#", "short": "?"}
+        print("HDB-DOS offset %d: %d virtual drives. '.' blank (all zeros or all $FF), 'e' a formatted disk with no files (HDB-DOS's label and bookkeeping only), '#' holds files or data:" % (a.hdb_offset, nd))
         for r in range(0, nd, 32):
-            print("  %3d  %s" % (r, "".join("?" if x[1] is None else "." if x[1] == 0 else "#" for x in m[r:r + 32])))
-        for dr, used, names in m:
-            if used:
-                print("  drive %3d: %3d of %d sectors in use%s" % (dr, used, DRIVE_SECS, "; " + ", ".join(names[:6]) if names else ""))
+            print("  %3d  %s" % (r, "".join(sym[x[1]] for x in m[r:r + 32])))
+        for dr, st, info, names in m:
+            if st == "used":
+                print("  drive %3d: %3d of %d sectors in use%s" % (dr, len(info["odd"]), DRIVE_SECS, "; " + ", ".join(names[:6]) if names else ""))
+        groups = {}
+        for dr, st, info, names in m:
+            if st == "empty":
+                groups.setdefault(tuple(info["odd"]), []).append(dr)
+        for odd, drs in groups.items():
+            info = m[drs[0]][2]
+            print("  %d empty formatted drives (%s) with only these sectors set: %s" % (len(drs), ", ".join(str(x) for x in drs[:6]) + (" ..." if len(drs) > 6 else ""), describe(info)))
         want = a.drives
         got = free_run(m, want, min(nd, 255))
         if got is None:
@@ -178,9 +205,9 @@ def main(argv):
     print("reference drive %d (at card sector %d): directory %s" % (a.ref_drive, a.hdb_offset + a.ref_drive * DRIVE_SECS, ", ".join(names) if names else "nothing readable"))
     if not names:
         problems.append("virtual drive %d has no directory at the place HDB-DOS keeps it: the offset %d is probably not this card's" % (a.ref_drive, a.hdb_offset))
-    st = region_state(fd, lba0, secs, content)
+    st = region_state(fd, lba0, a.drives, content, a.drive)
     print("the game's drives %d to %d (card sectors %d to %d): %s" % (a.drive, a.drive + a.drives - 1, lba0, lba0 + secs - 1, st))
-    if st not in ("blank", "ours"):
+    if not (st == "ours" or st.startswith("free")):
         problems.append("the game's drives are not free: %s" % st)
     os.close(fd)
     if a.cmd == "check":
