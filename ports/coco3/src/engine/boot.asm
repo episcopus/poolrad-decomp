@@ -91,7 +91,7 @@ boot
         sta     >_cpu6309
 @is6809
         ifndef  ENG_TEST
-        lbsr    spl_cpu                 the lines for the CPU, the storage and the progress bar
+        lbsr    spl_cpu                 the lines for the CPU (rows 5 and 6) and the progress bar; the storage's (rows 8 and 9) are in the first record of POOL.BIN (stripbin.py)
         endc
         ldx     #MB_BASE                clear the mailbox
         ldb     #MB_SIZE
@@ -124,7 +124,7 @@ boot
 
         ifndef  ENG_TEST
 SPL             EQU     $0400           the splash screen: BASIC's own 32 by 16 text screen (tools/stripbin.py draws it while LOADM loads)
-SPL_BAR         EQU     SPL+10*32+2     the 28 cells of the progress bar
+SPL_BAR         EQU     SPL+12*32+2     the 28 cells of the progress bar (rows 4 to 6: the machine, the CPU and its mode; rows 8 and 9: the storage and its details)
 SPL_STEP        EQU     10              sectors read for one more cell of the bar's second half (14 cells): the engine reads 148 sectors until the game's first screen
 
 * probe: X -> pairs (block, byte), B pairs. Each block is mapped into slot 4 and its byte written at $8000, then every block is
@@ -193,8 +193,6 @@ spl_cpu ldy     #l_6809
         beq     @p
         ldy     #l_6309
 @p      bsr     txt
-        ldy     #l_dev
-        bsr     txt
         lda     #14                     the first 14 cells of the bar were LOADM's (records of the file); the engine's reads are the other 14
         sta     >_spl_pos
         rts
@@ -234,11 +232,10 @@ l_6809  fdb     SPL+5*32+2
         fcb     0
         fdb     0
 l_6309  fdb     SPL+5*32+2
-        fcc     "CPU: 6309 (HITACHI), NATIVE"
+        fcc     "CPU: 6309 (HITACHI)"
         fcb     0
-        fdb     0
-l_dev   fdb     SPL+6*32+2
-        fcc     "STORAGE: DISKS"
+        fdb     SPL+6*32+2
+        fcc     "MODE: NATIVE"
         fcb     0
         fdb     0
         endc

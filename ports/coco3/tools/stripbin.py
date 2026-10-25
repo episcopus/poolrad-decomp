@@ -37,7 +37,7 @@ def strip_low_records(path, splash=False):
 
 
 SPL = 0x0400                    # the splash screen: BASIC's own 32 by 16 text screen, drawn by the first record of the file (boot.asm)
-SPL_BAR = SPL + 10 * 32 + 2     # the 28 cells of the progress bar
+SPL_BAR = SPL + 12 * 32 + 2     # the 28 cells of the progress bar (row 12: rows 4 to 6 are the machine's (boot.asm), rows 8 and 9 the storage's)
 BAR_CELLS_LOADM = 14            # the first half of the bar is LOADM's (records of this file), the second half the engine's (boot.asm)
 
 
@@ -58,10 +58,28 @@ def splash_records():
     def put(row, col, text):
         scr[row * 32 + col:row * 32 + col + len(text)] = vdg(text)
     put(1, 1, "POOL OF RADIANCE  COCO 3 PORT")
-    put(9, 2, "LOADING...")
-    put(10, 1, "[")
-    put(10, 30, "]")
+    put(11, 2, "LOADING...")
+    put(12, 1, "[")
+    put(12, 30, "]")
     return record(SPL, scr)
+
+
+STORAGE_ROW = 8                 # the splash's rows 8 and 9: what the game's storage is and how (rows 4 to 6 are the machine's, boot.asm)
+
+
+def with_storage(pool_bin, line1, line2=""):
+    """POOL.BIN (the game's, with the splash: strip_low_records(splash=True)) with two lines about its storage in the splash record, for the medium it is packed
+    for (tools/mkimage.py: the floppy set, the SDC file, the IDE card): LOADM shows them, the engine needs no code or text for them. The IDE driver adds what it
+    only knows when it runs (the device and the transfer width: src/engine/ide.c)."""
+    d = bytearray(pool_bin)
+    if bytes(d[:5]) != bytes([0, 2, 0, SPL >> 8, SPL & 255]):
+        raise SystemExit("stripbin: the first record of POOL.BIN is not the splash screen")
+    for row, text in ((STORAGE_ROW, line1), (STORAGE_ROW + 1, line2)):
+        if len(text) > 30:
+            raise SystemExit("stripbin: %r does not fit the splash's row" % text)
+        at = 5 + row * 32 + 2
+        d[at:at + 30] = vdg(text.ljust(30))
+    return bytes(d)
 
 
 def progress_records(body):

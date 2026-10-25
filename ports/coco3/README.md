@@ -32,6 +32,8 @@ the development backend is the harness' own, so there is no window to play in ye
 The engine (`src/engine`) boots the machine, runs the frame clock and the keyboard, unpacks DAX pictures, draws text, tiles and blits, and serves
 the game through a call gate between two MMU tasks; the game's 48 code banks load on demand.
 
+Step 8.13 (quality of life, `docs/PHASE-8.13.md`): the default game has no code wheel, names the port on the credits screen (`VERSION`), says BASIC where the PC said DOS and the loading screen says the CPU mode and the storage's mode; `make QOL=0 game` builds the PC's game, which the session goldens are (every target that plays a session does).
+
 ## Quick start
 
 ```sh

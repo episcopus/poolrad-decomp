@@ -36,6 +36,7 @@ help:
 	@echo "  make eng-tests      every engine test"
 	@echo "  make snd-check      8.8: the CoCo's sound driver on the host against the oracle's golden (clang, no emulator)"
 	@echo "  make snd-wav        8.8: the twenty tunes as WAV files, the host model's and the emulated CoCo's (needs MAME)"
+	@echo "  make QOL=0 game     8.13: the PC original's game (the code wheel, version line and DOS prompts); the default game has the quality of life changes (tools/qol.py)"
 	@echo "  make game-wav S=x   8.8: a session of the game with its sound as a WAV (build/run/game-x.wav)"
 	@echo "  make gfx-ref        rerun the Phase 7 C engine on the t_gfx script and compare with goldens/engine (WRITE=1 rewrites)"
 	@echo "  make sizes          compile every generated unit of ../../c/game with CMOC, tabulate the sizes (step 8.1)"
@@ -210,8 +211,13 @@ eng-test: eng-data data
 	@echo "--- $(T) screens"; python3 -I tools/engcheck.py $(T)
 
 # ---------------------------------------------------------------- the game (step 8.5)
+# step 8.13, the quality of life changes (tools/qol.py: no code wheel, the port's credits line, BASIC for DOS): on by default; QOL=0 builds the PC's game, which the sessions' goldens are
+# (they type the wheel's answer and compare the PC's screens). Every target that plays a session builds that one, unless QOL is given.
+QOL_OFF_GOALS := first-light combat exploration baseline game-run game-view game-wav game-state stress perf-run perf-all floppy-run floppy-check ide-run ide-check sdc-run io-budget
+QOL ?= $(if $(filter $(QOL_OFF_GOALS),$(MAKECMDGOALS)),0,1)
+export QOL
 game:
-	@$(TC) scripts/game_build.sh
+	@$(TC) env POOL_QOL=$(QOL) scripts/game_build.sh
 
 # Look at it. The game reads its storage through sec_io (decision D13); the development backend is the harness' own, a write tap
 # of MAME's Lua, so there is no window to play in until a backend XRoar or a real CoCo can serve (DriveWire, after 8.9).

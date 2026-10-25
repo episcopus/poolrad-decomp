@@ -22,6 +22,7 @@ from pathlib import Path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import hoist  # noqa: E402
 import narrow  # noqa: E402
+import qol  # noqa: E402
 
 BANK_BYTES = int(os.environ.get("BANK_BYTES", "0x4000"), 0)   # slots 4 and 5 (BANK_BYTES=0x2000 only to count the banks of an 8 KB window: docs/HEAP-STUDY.md)
 BANK_LIMIT = BANK_BYTES - 0x180          # room for the entry table (3 bytes an entry) and a margin
@@ -265,6 +266,11 @@ PATCHES = {
               ("all", "              } else {\n                fr.PartKey = fr.Key;\n                fr.State = EditCharacterIcon_StateStep;\n              }\n",
                "              } else if (fr.Key == 'H' || fr.Key == 'W') {\n                fr.PartKey = fr.Key;\n                fr.State = EditCharacterIcon_StateStep;\n              }\n")],
 }
+
+
+# step 8.13, the quality of life changes (tools/qol.py; POOL_QOL=0 leaves them out: the sessions' goldens are the PC's screens): the credits, the prompts that name DOS
+for _u, _ps in qol.patches().items():
+    PATCHES.setdefault(_u, []).extend(_ps)
 
 
 # POOL_STRESS=n (a test build, never the game): every group an ECL script adds to an encounter is n times as large, up to MaxEncounterMembers (63).
@@ -808,6 +814,7 @@ def main(argv):
             t = (gen / "pool.c").read_text()
             for n in sorted(trivial):
                 t = re.sub(r"^  %s\(\);\n" % n, "", t, flags=re.M)
+            t = qol.drop_wheel(t)                       # step 8.13: no code wheel
             src.write_text(narrow.lowword(NARROWING.unit(t))[0] if NARROWING is not None else t)
         elif u in CORE_UNITS and NARROWING is not None and not (u in ENGINE_ROUTINES or u in CORE_ROUTINES):
             src = out / "src" / (u + ".c")
@@ -1120,6 +1127,8 @@ def build_engine(out, here):
     if r.returncode:
         raise SystemExit("lwlink engine: " + (r.stderr + r.stdout)[:800])
     strip_low_records(out / "POOL.BIN", splash=True)
+    if IDE:                                               # the splash says what the storage is (the IDE driver adds the device and the width when it runs, ide.c)
+        (out / "POOL.BIN").write_bytes(with_storage((out / "POOL.BIN").read_bytes(), "STORAGE: IDE, COMPACTFLASH"))
     text = (out / "pool.map").read_text()
     sec = [(m.group(1), int(m.group(3), 16), int(m.group(4), 16)) for m in
            re.finditer(r"^Section: (\S+) \((.*?)\) load at ([0-9A-Fa-f]+), length ([0-9A-Fa-f]+)", text, re.M)]
@@ -1142,7 +1151,7 @@ def build_engine(out, here):
         raise SystemExit("lwasm engsyms: " + r.stderr[:400])
 
 
-from stripbin import strip_low_records  # noqa: E402
+from stripbin import strip_low_records, with_storage  # noqa: E402
 
 
 def obj_dir(out):

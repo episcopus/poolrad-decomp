@@ -26,6 +26,9 @@ import shutil
 import sys
 from pathlib import Path
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import qol  # noqa: E402
+
 try:
     import tomllib
 except ImportError:                                       # Python < 3.11
@@ -131,7 +134,7 @@ def write_image(out, gen, clusters, nat_end, npages):
         for at, w in skipped:
             sf.write("%04X %d\n" % (at, w))
     print("mkvm: DGROUP.IMG: %d multi-byte values put in the CoCo's byte order (%d lie in the real extent of a byte view: left alone)" % (nswap, nskip))
-    img = bytes(img)
+    img = qol.patch_image(bytes(img))                       # step 8.13: the training hall's menu entry says BASIC (POOL_QOL=0: as it is)
     nat = bytearray(nat_end - NAT_BASE)
     pages = [bytearray(PAGE) for _ in range(npages)]
     for lo, hi, names, lg, cls, nw in clusters:

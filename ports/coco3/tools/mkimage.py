@@ -25,6 +25,7 @@ sys.path.insert(0, os.path.join(os.environ.get("REPO", str(HERE.parent.parent.pa
 import dax  # noqa: E402  (tools/re)
 import mkvolumes  # noqa: E402
 from mkgamedisk import flatten  # noqa: E402
+from stripbin import with_storage  # noqa: E402
 
 SAVE_SECTORS = 512
 
@@ -221,20 +222,21 @@ def write_floppies(img, info, gamedir, outdir, interleave=1):
     outdir.mkdir(parents=True, exist_ok=True)
     pos = 0
     names = []
+    pool = with_storage(Path(gamedir, "POOL.BIN").read_bytes(), "STORAGE: FLOPPY DISKS", "%d TRACKS, %d DISKS" % (TRACKS, len(info["disk_secs"])))
     for i, n in enumerate(info["disk_secs"]):
         d = decbfs.Disk(tracks=TRACKS)
         name = "POOLDSK" + ("%X" % (i + 1) if i + 1 >= 10 else str(i + 1))
         if i == 0 and TRACKS > 35:
             # Disk BASIC knows 68 granules: POOL.BIN goes first, in the granules it can reach, and the data file (which the engine finds by its directory entry, the
             # first) after it, on a track boundary
-            d.add("POOL", "BIN", Path(gamedir, "POOL.BIN").read_bytes(), 2, 0)
+            d.add("POOL", "BIN", pool, 2, 0)
             d.next_gran += d.next_gran % 2
             d.add(name, "DAT", img[pos * 256:(pos + n) * 256], 1, 0, interleave)
             d.dir.insert(0, d.dir.pop())
         else:
             d.add(name, "DAT", img[pos * 256:(pos + n) * 256], 1, 0, interleave)
             if i == 0:
-                d.add("POOL", "BIN", Path(gamedir, "POOL.BIN").read_bytes(), 2, 0)
+                d.add("POOL", "BIN", pool, 2, 0)
         p = outdir / ("POOL%02d.DSK" % (i + 1))
         # a disk of more than 40 tracks is a JVC image with a two byte header (18 sectors a track, 1 side): XRoar takes a headerless file of that size for 40 tracks of two sides
         p.write_bytes((b"\x12\x01" if TRACKS > 40 else b"") + d.image())
@@ -251,7 +253,7 @@ def write_sdc(img, gamedir, out):
     import decbfs
     d = decbfs.Disk()
     d.add("POOLSDC", "DAT", b"POOL OF RADIANCE: CoCo SDC image, the game's sectors follow the disk.\n", 1, 0)
-    d.add("POOL", "BIN", Path(gamedir, "POOL.BIN").read_bytes(), 2, 0)
+    d.add("POOL", "BIN", with_storage(Path(gamedir, "POOL.BIN").read_bytes(), "STORAGE: COCO SDC", "ONE IMAGE FILE ON THE CARD"), 2, 0)
     boot = d.image()
     assert len(boot) == 630 * 256
     Path(out).write_bytes(boot + img)

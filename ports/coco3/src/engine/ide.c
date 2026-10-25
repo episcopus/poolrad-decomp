@@ -109,6 +109,15 @@ static void features(u8 f)
     ide_cmd(CMD_FEATURES, 0, 0, 0);
 }
 
+/* step 8.13: the splash's second storage line (row 9) (the first, STORAGE: IDE, COMPACTFLASH, is in POOL.BIN: tools/stripbin.py) says what only the run knows: which device
+ * answered and how its data register is read */
+static void found(void)
+{
+    medium = 3;
+    say_at(9, 2, ide_dev == 0xF0 ? "SLAVE," : "MASTER,");
+    say_at(9, (u8)(ide_dev == 0xF0 ? 9 : 10), ide_mode ? "8 BIT TRANSFERS" : "16 BIT TRANSFERS");
+}
+
 /* 1 when a card with the game on it is there; sets medium, the device and the way to read the data register */
 u8 flop_detect(void)
 {
@@ -126,13 +135,13 @@ u8 flop_detect(void)
         ide_mode = 1;                         /* bytes first: the fast way, and the one that needs no latch */
         features(1);
         if (try_header() == 0) {
-            medium = 3;
+            found();
             return 1;
         }
         features(0x81);
         ide_mode = 0;
         if (try_header() == 0) {
-            medium = 3;
+            found();
             return 1;
         }
     }
