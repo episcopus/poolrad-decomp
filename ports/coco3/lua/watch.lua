@@ -387,7 +387,31 @@ if os.getenv("MB_PCLOG") then      -- MB_PCLOG=t0-t1: the program counter at eve
   end)
 end
 emu.wait(2)
-m.natkeyboard:post(cmd .. "\n")
+local binp = os.getenv("MB_BIN")
+if binp then
+  -- MB_BIN=file: a DECB .BIN (the engine of the IDE build) put into memory and started at its EXEC address, for a machine with no Disk BASIC (MAME's Glenside IDE adapter
+  -- takes the slot of the disk controller: scripts/ide_mame_run.sh)
+  local f = assert(io.open(binp, "rb"))
+  local d = f:read("a")
+  f:close()
+  local cpu = m.devices[":maincpu"]
+  local sp = cpu.spaces["program"]
+  local pos = 1
+  while true do
+    local t, len, addr = d:byte(pos), (d:byte(pos + 1) << 8) | d:byte(pos + 2), (d:byte(pos + 3) << 8) | d:byte(pos + 4)
+    pos = pos + 5
+    if t == 0 then
+      for i = 0, len - 1 do sp:write_u8(addr + i, d:byte(pos + i)) end
+      pos = pos + len
+    else
+      cpu.state["CC"].value = cpu.state["CC"].value | 0x50
+      cpu.state["PC"].value = addr
+      break
+    end
+  end
+else
+  m.natkeyboard:post(cmd .. "\n")
+end
 
 
 -- the session driver (MB_SESSION = a tests/sessions/*.keys file, MB_SYMS = "name=hexaddr,..." of the engine's and the core's symbols):

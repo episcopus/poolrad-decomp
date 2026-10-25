@@ -333,6 +333,19 @@ ide-xroar-pack: ide-xroar-build
 	@chmod +x build/pool-xroar/Play.command; touch build/pool-xroar/roms/PUT-coco3.rom-HERE
 	@cd build && rm -f pool-xroar.zip && zip -q -r pool-xroar.zip pool-xroar && ls -l pool-xroar.zip
 
+# The same card file for MAME's own Glenside IDE adapter (`-ext ide`, which takes the disk controller's slot, so no Disk BASIC: tools/pack/mame-boot.lua puts the engine into
+# memory): a CHD of the card file (chdman, 770 KB), the engine, the Lua, a launcher and the instructions in build/pool-mame and the zip beside it. The ROMs are not in it.
+ide-mame-pack: ide-xroar-build
+	@rm -rf build/pool-mame; mkdir -p build/pool-mame
+	@$(TC) sh -c "chdman createhd -i build/ide-xroar/POOLIDE.IMG -o build/pool-mame/POOLIDE.chd -chs 60,1,63 -ss 512 > /dev/null 2>&1"
+	@cp build/ide-xroar/engine/POOL.BIN tools/pack/mame-boot.lua tools/pack/Play-MAME.command build/pool-mame/ && cp tools/pack/README-mame.txt build/pool-mame/
+	@cd build && rm -f pool-mame.zip && zip -q -r pool-mame.zip pool-mame && ls -l pool-mame.zip
+
+# The distribution folder (docs/DISTRIBUTION.md): every build of the CoCo 3 port in build/dist, each in its own folder with end-user instructions, and a README at the top. It builds them all
+# (about ten minutes). It holds the game's data: for testers, not for a public repository or release.
+dist: floppy floppy80 sdc ide ide-xroar-pack ide-mame-pack
+	@scripts/dist.sh
+
 ide-xroar: ide-xroar-build
 	cp build/ide-xroar/POOLIDE.IMG build/ide-xroar/run.img
 	xroar -m coco3 -rompath roms -ram 512 -ram-init clear -tv-input rgb -cart ide -load-hd0 build/ide-xroar/run.img -run build/ide-xroar/engine/POOL.BIN
