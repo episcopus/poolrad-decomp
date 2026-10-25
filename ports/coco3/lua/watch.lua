@@ -279,7 +279,8 @@ end
 -- prompt is answered. Every swap is printed ("swap t= disk= drive=").
 if os.getenv("MB_FLOP") then
   local dir = os.getenv("MB_FLOP")
-  local drives = {[0] = m.images[":ext:fdc:wd17xx:0:525dd"], [1] = m.images[":ext:fdc:wd17xx:1:525dd"]}
+  local ft = os.getenv("MB_FDTYPE") or "525dd"        -- the drive type (525qd: 80 track drives, scripts/floppy_run.sh)
+  local drives = {[0] = m.images[":ext:fdc:wd17xx:0:" .. ft], [1] = m.images[":ext:fdc:wd17xx:1:" .. ft]}
   local pending
   if os.getenv("MB_DSKLOG") then      -- every DSKCON call (disk.asm writes the operation, drive, track and sector to $EA..$ED): "dsk t op drive track sector"
     dsk_tap = mem:install_write_tap(0x00ED, 0x00ED, "dsklog", function(offset, data, mask)

@@ -311,12 +311,23 @@ IDE_DRIVE ?= 200
 IDE_ADDR ?= 65360
 IDE_LBA0 = $(shell expr $(IDE_HDB_OFFSET) + $(IDE_DRIVE) \* 630)
 IDE_LBA_BASE = $(shell expr $(IDE_HDB_OFFSET) + $(IDE_DRIVE) \* 630 + 630)
+IDE_OUT ?= build/ide
 ide: game
-	@mkdir -p build/ide
-	$(TC) env IDE=1 IDE_LBA_BASE=$(IDE_LBA_BASE) IDE_ADDR=$(IDE_ADDR) IDE_SLOW=$(IDE_SLOW) python3 tools/mkgame.py --engine build/ide/engine build/game
-	$(TC) python3 -I tools/mkimage.py /repo/poolrad build/game build/gen/vm/DGROUP.IMG build/ide/pool.img --ide build/ide/POOLIDE.IMG --pool-bin build/ide/engine/POOL.BIN --ide-boot build/ide/POOLBOOT.DSK
-	@printf 'IDE_LBA0=%s\nIDE_LBA_BASE=%s\nIDE_DRIVE=%s\nIDE_HDB_OFFSET=%s\n' $(IDE_LBA0) $(IDE_LBA_BASE) $(IDE_DRIVE) $(IDE_HDB_OFFSET) > build/ide/ide.env
-	@echo "ide: boot drive $(IDE_DRIVE) at card sector $(IDE_LBA0), the image from card sector $(IDE_LBA_BASE); build/ide/POOLIDE.IMG goes to the card (tools/ide_card.py, docs/PHASE-8.12.md)"
+	@mkdir -p $(IDE_OUT)
+	$(TC) env IDE=1 IDE_LBA_BASE=$(IDE_LBA_BASE) IDE_ADDR=$(IDE_ADDR) IDE_SLOW=$(IDE_SLOW) python3 tools/mkgame.py --engine $(IDE_OUT)/engine build/game
+	$(TC) python3 -I tools/mkimage.py /repo/poolrad build/game build/gen/vm/DGROUP.IMG $(IDE_OUT)/pool.img --ide $(IDE_OUT)/POOLIDE.IMG --pool-bin $(IDE_OUT)/engine/POOL.BIN --ide-boot $(IDE_OUT)/POOLBOOT.DSK
+	@printf 'IDE_LBA0=%s\nIDE_LBA_BASE=%s\nIDE_DRIVE=%s\nIDE_HDB_OFFSET=%s\n' $(IDE_LBA0) $(IDE_LBA_BASE) $(IDE_DRIVE) $(IDE_HDB_OFFSET) > $(IDE_OUT)/ide.env
+	@echo "ide: boot drive $(IDE_DRIVE) at card sector $(IDE_LBA0), the image from card sector $(IDE_LBA_BASE); $(IDE_OUT)/POOLIDE.IMG goes to the card (tools/ide_card.py, docs/PHASE-8.12.md)"
+
+# The same for XRoar's Glenside IDE cartridge (docs/PHASE-8.12.md section 7): the card file is the whole hard disk (offset 0, boot drive 0, the image from sector 630) in
+# build/ide-xroar, so that the build of the real card in build/ide is left as it is. One file, build/ide-xroar/POOLIDE.IMG (a raw image of 512 byte sectors), and the
+# engine, which XRoar runs without a DOS; the game saves into a copy of the file (build/ide-xroar/run.img).
+ide-xroar-build:
+	$(MAKE) ide IDE_OUT=build/ide-xroar IDE_HDB_OFFSET=0 IDE_DRIVE=0
+
+ide-xroar: ide-xroar-build
+	cp build/ide-xroar/POOLIDE.IMG build/ide-xroar/run.img
+	xroar -m coco3 -rompath roms -ram 512 -ram-init clear -tv-input rgb -cart ide -load-hd0 build/ide-xroar/run.img -run build/ide-xroar/engine/POOL.BIN
 
 # a session from the SuperIDE file on the model of the interface (MAME headless, lua/watch.lua MB_IDE): make ide-run S=boot-title
 ide-run:

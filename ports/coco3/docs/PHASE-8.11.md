@@ -104,12 +104,19 @@ A combat session now reads 423 KB of code against the original's 384 KB (the ori
 
 At best 24 % fewer bytes, from the pool that holds what the slots waste (banks of 14 KB in slots of 16 KB, small banks in a whole slot). Against that: the code of a bank is linked for the window at `$8000` (CMOC, `--no-relocate`), so a bank cannot sit at another address without relocation at load time (a table of every absolute address, with the code that applies it, in an engine that has 19 bytes left); the bank table has 64 entries (banks of 4 KB would need 90); each bank carries its constants and entry table (about 900 bytes, 20 % of an 8 KB bank). **Not worth it before the other things in section 7.**
 
+### 6.1 MAME and the 80 track set [V], VCC [?]
+
+MAME takes the images only with an 80 track drive type (`-ext:fdc:wd17xx:0 525qd`; its default drive is a 42 track 5.25" and refuses them: `Floppy disk has too many tracks for this drive`): `MB_FDTYPE=525qd scripts/floppy_run.sh` (and `lua/watch.lua`, which named the `525dd` drive for the disk swaps). **It does not play all of it.** `boot-title` and `camp-save` match every labelled screen, but `battle-aftermath` and `temple-heal` stop with "bank 14 cannot be read" (r29 = 1): DSKCON fails on track 63 sector 14 of disk 1 (the first sector of a bank) after a head move from track 16, 3 tries a time, for ever. The same 35 track set on the same 80 track drive type passes (`battle-aftermath`: 235 screens, status 0), and the 80 track set fails the same way on MAME's `35dd` drive; MAME's own loader returns the image byte for byte (`floptool flopconvert jvc jvc`), so the image is intact. Not found: whether MAME's FDC or Disk BASIC's DSKCON (a timeout in a long head move) is at fault. The failing read is a seek of 47 tracks, while MAME did a 52 track one a minute earlier. **Not proven in XRoar either**: the boot reads to track 45, a long session was not played. VCC's FD-502 takes JVC images of 35, 40 or 80 tracks, so the set should load there; not tried.
+
+## 6.2 One file for XRoar: the IDE build [V]
+
+XRoar 1.12 emulates the Glenside IDE cartridge (`-cart ide`, registers `$FF50` to `$FF58`, 512 byte sectors) with a hard disk image given by `-load-hd0`; an image named `.img` is raw sectors, without a header. The SuperIDE build of 8.12 (`make ide`: `ide.c`, `ide_xfer.asm`, the card file `POOLIDE.IMG`) talks to the registers itself, so it needs no DOS ROM: XRoar loads the engine's `POOL.BIN` straight into memory (`-run`) and the card file is the game. `make ide-xroar` builds it for a card file that starts at sector 0 (`IDE_HDB_OFFSET=0 IDE_DRIVE=0`, into `build/ide-xroar`, so that the build of the real card in `build/ide` is left as it is) and starts XRoar on a copy of the file (the game saves into `build/ide-xroar/run.img`). One image file of 1.9 MB, no disk to swap. [V] in XRoar: `main` after 2 s, the first screen set-up after 4 s, the sixth bank load after 8 s, the title screen on the display; XRoar's IDE accepts the driver's 8 bit mode or the fallback to words, which of the two was not looked at. Not played through, and the saves were not tried.
+
 ## 7. Not done, in the order of what it would buy [E]
 
-1. One file for XRoar: XRoar has no SDC; its IDE cartridge (`-cart ide -load-hd0`) needs an IDE driver in the engine and a way to start (`-load POOL.BIN`, or a floppy for `POOL.BIN` behind an MPI); not built.
-2. Preload the working set of a mode (fight, camp, shop) behind a "Loading" message, instead of 30 s of stalls spread over the first turns.
-3. More profiles (other spells, monsters, places) for the layout, and `--holdout` runs over all 16 sessions as a gate.
-4. Then the storage speed: a track at a time driver, an IDE backend, compressed banks.
+1. Preload the working set of a mode (fight, camp, shop) behind a "Loading" message, instead of 30 s of stalls spread over the first turns.
+2. More profiles (other spells, monsters, places) for the layout, and `--holdout` runs over all 16 sessions as a gate.
+3. Then the storage speed: a track at a time driver, an IDE backend, compressed banks.
 
 The profiles (`build/profile`, 25 MB) are not committed: `make routine-profile` makes them again (about 25 minutes, five sessions at a time), `make code-profile` the routine sizes, `make rebank WRITE=1` the layout. A build needs only the committed `data/routine_banks.json`; a routine it does not know goes to a bank `rest_<unit>` (and is over the limit if there are many: run `rebank` again).
 
