@@ -152,6 +152,128 @@ if os.getenv("MB_SDC") then
     return 0
   end)
 end
+-- MB_IDE=file: a model of an IDE interface at $FF50 (Cloud-9 SuperIDE, Glenside) with a CompactFlash card behind it (step 8.12; there is none in MAME: this is the engine's
+-- driver, src/engine/ide_xfer.asm and ide.c, against the SuperIDE manual's register list and the ATA PIO protocol, not against a card). The file is the card file of
+-- tools/mkimage.py --ide: MB_IDE_LBA0 the card sector it starts at, MB_IDE_BASE the card sector of the image's sector 0 (the file's sectors 630 on). The writes of the
+-- saves area go to sec_over, as with the other media. What it does: the status is busy for two reads after a command, then data request; READ ($20) and WRITE ($30)
+-- move 512 bytes a sector; SET FEATURES $01/$81 turn the 8 bit transfers on and off (MB_IDE_NO8: the card refuses them, status 51); in word mode a read of +0 gives
+-- the low byte and the next read of +8 the high byte; a write of the latch (+8) and then of +0 makes a word. MB_IDE_SLAVE: the card is the slave (device byte $F0), a read
+-- of the status with the master selected gives 0. Writes to $FF50..$FF57 are made harmless to the floppy controller's latch they are mirrored on, writes to $FF58 to its command register.
+if os.getenv("MB_IDE") then
+  local f = assert(io.open(os.getenv("MB_IDE"), "rb"))
+  local card = f:read("a")
+  f:close()
+  local lba0 = tonumber(os.getenv("MB_IDE_LBA0"))
+  local base = tonumber(os.getenv("MB_IDE_BASE"))
+  local slave = os.getenv("MB_IDE_SLAVE") ~= nil
+  local no8 = os.getenv("MB_IDE_NO8") ~= nil
+  local hoff = (base - lba0) * 512
+  local s0 = string.unpack(">I4", card, hoff + 17)
+  local ns = string.unpack(">I2", card, hoff + 21)
+  local feat, cnt, l0, l1, l2, head, err = 0, 1, 0, 0, 0, 0xA0, 0
+  local mode8, latch = false, 0
+  local rb, rpos, left, curlba = nil, 0, 0, 0
+  local wb, wleft, wlba = nil, 0, 0
+  local busy, status = 0, 0x50
+  local function present() return ((head & 0x10) ~= 0) == slave end
+  local function lba() return ((head & 0xF) << 24) | (l2 << 16) | (l1 << 8) | l0 end
+  local function secat(n)                                    -- the 512 bytes of card sector n: the saves are where the game wrote them
+    local rel = n - base
+    if rel >= (s0 >> 1) and rel < (s0 >> 1) + ns then
+      local o = sec_over[s0 + rel - (s0 >> 1)]
+      if o then return o .. string.rep("\0", 256) end
+    end
+    if n < lba0 or (n - lba0 + 1) * 512 > #card then return nil end
+    return card:sub((n - lba0) * 512 + 1, (n - lba0) * 512 + 512)
+  end
+  local function nextread()                                  -- the next sector of the command, or the end of it
+    if left > 0 then
+      rb = secat(curlba)
+      rpos, curlba, left, busy = 0, curlba + 1, left - 1, 1
+      if rb == nil then status, err, left = 0x51, 4, 0 end
+      if rb then status = 0x80 end
+    else
+      rb, status = nil, 0x50
+    end
+  end
+  ide_wr = mem:install_write_tap(0xFF50, 0xFF58, "idewr", function(offset, data, mask)
+    local v = data & 0xFF
+    local r = offset - 0xFF50
+    last_io = m.time:as_double()
+    if r == 0 then
+      if wb then
+        wb[#wb + 1] = string.char(v)
+        if not mode8 then wb[#wb + 1] = string.char(latch) end
+        if #wb >= 512 then
+          local rel = wlba - base
+          if rel >= (s0 >> 1) and rel < (s0 >> 1) + ns then sec_over[s0 + rel - (s0 >> 1)] = table.concat(wb):sub(1, 256) else status, err = 0x51, 4 end
+          wb = nil
+          wleft = wleft - 1
+          if wleft > 0 then wlba, wb, busy, status = wlba + 1, {}, 1, 0x80 else status = 0x50 end
+        end
+      end
+    elseif r == 1 then feat = v
+    elseif r == 2 then cnt = v
+    elseif r == 3 then l0 = v
+    elseif r == 4 then l1 = v
+    elseif r == 5 then l2 = v
+    elseif r == 6 then head = v
+    elseif r == 7 then
+      if not present() then return 0 end
+      err = 0
+      if v == 0x20 then
+        left, curlba = (cnt == 0) and 256 or cnt, lba()
+        wb = nil
+        nextread()
+        if busy < 2 then busy = 2 end
+      elseif v == 0x30 then
+        wleft, wlba, wb, busy, status = (cnt == 0) and 256 or cnt, lba(), {}, 2, 0x80
+        rb = nil
+      elseif v == 0xEF then
+        rb, wb = nil, nil
+        if feat == 0x01 and not no8 then mode8, status = true, 0x50
+        elseif feat == 0x81 then mode8, status = false, 0x50
+        else status, err = 0x51, 4 end
+      else
+        status, err = 0x51, 4
+      end
+      return 0
+    elseif r == 8 then latch = v end
+    if r == 8 then return 0xD0 end
+    return 0
+  end)
+  ide_rd = mem:install_read_tap(0xFF50, 0xFF58, "iderd", function(offset, data, mask)
+    local r = offset - 0xFF50
+    if not present() and r ~= 8 then return 0 end
+    if r == 0 then
+      if rb and rpos < 512 then
+        local b = rb:byte(rpos + 1)
+        if mode8 then rpos = rpos + 1 else latch = rb:byte(rpos + 2); rpos = rpos + 2 end
+        if rpos >= 512 then
+          if left > 0 then nextread() else rb, status = nil, 0x50 end
+        end
+        return b
+      end
+      return 0
+    elseif r == 1 then return err
+    elseif r == 2 then return cnt
+    elseif r == 3 then return l0
+    elseif r == 4 then return l1
+    elseif r == 5 then return l2
+    elseif r == 6 then return head
+    elseif r == 7 then
+      if busy > 0 then
+        busy = busy - 1
+        if busy == 0 then
+          if rb then status = 0x58 elseif wb then status = 0x58 end
+        end
+        if busy > 0 or status == 0x80 then return 0x80 end
+      end
+      return status
+    elseif r == 8 then return latch end
+    return 0
+  end)
+end
 -- MB_FLOP=dir: the floppy set (step 8.10). The engine (src/engine/flop.c) asks for a disk by writing its number to $090C and the drive to $090D,
 -- then waits for ENTER or for $090F: the disk POOLnn.DSK of dir goes into that drive (a second after the old one is out: a person is slower), the
 -- prompt is answered. Every swap is printed ("swap t= disk= drive=").

@@ -257,6 +257,53 @@ def write_sdc(img, gamedir, out):
     Path(out).write_bytes(boot + img)
 
 
+IDE_DRIVE_SECTORS = 630          # an HDB-DOS virtual drive: a 35 track disk, one 256 byte sector in the first half of each card sector
+
+
+def ide_layout(img):
+    """The image as the engine's IDE driver reads it (src/engine/ide.c): the header says where the saves are (always the end of the image); the sectors before
+    are kept two to a 512 byte card sector, the saves one to a card sector (the other half zero). The first saves sector must be even: a sector of zeros goes in front
+    of the saves when it is not (the saves are last, so nothing else moves), and the header's byte 24 says 3 (the IDE medium; a floppy set's is 1).
+    Returns (the image as it will be, the card sectors from the image's sector 0)."""
+    img = bytearray(img)
+    save_lsn, nsave = struct.unpack(">LH", bytes(img[16:22]))
+    assert len(img) % 256 == 0 and save_lsn + nsave == len(img) // 256, "mkimage --ide: the saves are not the last sectors of the image"
+    assert nsave % 2 == 0, "mkimage --ide: the saves area has an odd number of sectors"
+    if save_lsn % 2:
+        img[save_lsn * 256:save_lsn * 256] = bytes(256)
+        save_lsn += 1
+        img[16:20] = struct.pack(">L", save_lsn)
+    img[24] = 3
+    secs = len(img) // 256
+    card = bytearray()
+    for i in range(0, save_lsn, 2):
+        card += img[i * 256:(i + 2) * 256]
+    for i in range(save_lsn, secs):
+        card += img[i * 256:(i + 1) * 256] + bytes(256)
+    return bytes(img), bytes(card)
+
+
+def write_ide(img, pool_bin, out, boot_out):
+    """The card's file for the SuperIDE build (docs/PHASE-8.12.md): `out` is a run of 512 byte card sectors that go onto the CompactFlash card at the first sector
+    of a run of unused HDB-DOS virtual drives (630 card sectors each, from the HDB-DOS offset of the card): first one drive that is a 35 track disk with POOL.BIN
+    (HDB-DOS keeps a 256 byte disk sector in the first half of a card sector, so it is `LOADM"POOL:n":EXEC` from drive n), then the image, the whole drives filled up
+    with zeros. `boot_out` is the same disk as a plain 630 sector disk file for anything that is not HDB-DOS (an emulator, an SDC, DriveWire)."""
+    import decbfs
+    d = decbfs.Disk()
+    d.add("POOL", "BIN", Path(pool_bin).read_bytes(), 2, 0)
+    boot = d.image()
+    assert len(boot) == IDE_DRIVE_SECTORS * 256
+    img, card = ide_layout(img)
+    Path(boot_out).write_bytes(boot)
+    disk = b"".join(boot[i * 256:(i + 1) * 256] + bytes(256) for i in range(IDE_DRIVE_SECTORS))
+    body = disk + card
+    n = len(body) // 512
+    drives = (n + IDE_DRIVE_SECTORS - 1) // IDE_DRIVE_SECTORS
+    body += bytes(drives * IDE_DRIVE_SECTORS * 512 - len(body))
+    Path(out).write_bytes(body)
+    return img, drives
+
+
 def main(argv):
     import argparse
     ap = argparse.ArgumentParser()
@@ -268,6 +315,9 @@ def main(argv):
     ap.add_argument("--layout", help="a layout (tools/mklayout.py): the floppy medium")
     ap.add_argument("--floppies", help="with --layout: write the disks (POOLnn.DSK) into this directory")
     ap.add_argument("--sdc", help="also write the CoCo SDC's single file (a disk with POOL.BIN, then this image; without --layout)")
+    ap.add_argument("--ide", help="also write the SuperIDE build's card file (the boot drive of HDB-DOS, then the image: see write_ide; needs --pool-bin and --ide-boot)")
+    ap.add_argument("--pool-bin", help="with --ide: the POOL.BIN of the IDE build (make ide)")
+    ap.add_argument("--ide-boot", help="with --ide: also write the boot disk alone, as a plain 35 track disk file")
     ap.add_argument("--interleave", type=int, default=1, help="with --floppies: the sector interleave of the data files on the disks (1, 5 or 7: coprime with 18); the engine reads it from the header")
     ap.add_argument("--model", help="write the entries (file, id, sizes, content key, place) as JSON")
     a = ap.parse_args(argv)
@@ -284,6 +334,9 @@ def main(argv):
     if a.sdc:
         write_sdc(img, a.gamedir, a.sdc)
         print("mkimage: the SDC file %s: %d sectors" % (a.sdc, 630 + len(img) // 256))
+    if a.ide:
+        _, drives = write_ide(img, a.pool_bin, a.ide, a.ide_boot or a.ide + ".boot.dsk")
+        print("mkimage: the IDE card file %s: %d card sectors, %d virtual drives of %d" % (a.ide, drives * IDE_DRIVE_SECTORS, drives, IDE_DRIVE_SECTORS))
     if a.floppies:
         names = write_floppies(img, info, a.gamedir, a.floppies, a.interleave)
         print("mkimage: %d disks in %s: %s" % (len(names), a.floppies, " ".join(names)))

@@ -18,7 +18,7 @@ LINKLIBS := -L$(CMOCLIB) -lcmoc-crt-void -lcmoc-std-void
 ENGINE_OBJ := build/obj/boot.o build/obj/mailbox.o
 P ?= byte-arith
 
-.PHONY: floppy80 floppy-xroar80 routine-profile code-profile rebank io-budget floppy-xroar sdc sdc-run floppy-check floppy floppy-model floppy-traces floppy-layout floppy-run perf-run perf-all step-check bank-groups play snd-check snd-wav game-wav stress game help doctor toolchain eng-data eng-test eng-tests gfx-ref data data-verify vol-test vol-tests sizes heap-stats prof coco-host place-host golden4 golden4-record demo test-demo run-demo probe probes asm-probe bench test clean risk-scan baseline
+.PHONY: ide ide-run ide-check ide-card floppy80 floppy-xroar80 routine-profile code-profile rebank io-budget floppy-xroar sdc sdc-run floppy-check floppy floppy-model floppy-traces floppy-layout floppy-run perf-run perf-all step-check bank-groups play snd-check snd-wav game-wav stress game help doctor toolchain eng-data eng-test eng-tests gfx-ref data data-verify vol-test vol-tests sizes heap-stats prof coco-host place-host golden4 golden4-record demo test-demo run-demo probe probes asm-probe bench test clean risk-scan baseline
 .DEFAULT_GOAL := help
 
 help:
@@ -55,6 +55,7 @@ help:
 	@echo "  make floppy         step 8.10: the game as a set of 35 track disks (build/floppy/disks/POOLnn.DSK), the entries laid out for the fewest swaps"
 	@echo "  make floppy-check   every session on the disks in MAME (the harness swaps the disks the engine asks for): screens, files written, swaps"
 	@echo "  make floppy-traces  record the sessions' storage reads again (then make floppy-profile keeps them as data/floppy_runs.json)"
+	@echo "  make ide            step 8.12: the SuperIDE build (build/ide/POOLIDE.IMG for the card, build/ide/POOLBOOT.DSK); make ide-run S=boot-title plays one on the model of the card; make ide-check all 16"
 	@echo "  make sdc            step 8.10: the CoCo SDC's single file (build/sdc/POOL.DSK); make sdc-run S=boot-title plays one on the model of the SDC"
 	@echo "  make test           everything above that has a pass or fail"
 	@echo "  make clean"
@@ -300,6 +301,30 @@ floppy-run:
 sdc: game
 	@mkdir -p build/sdc
 	@$(TC) python3 -I tools/mkimage.py /repo/poolrad build/game build/gen/vm/DGROUP.IMG build/sdc/pool.img --sdc build/sdc/POOL.DSK
+
+# the SuperIDE build (docs/PHASE-8.12.md): the engine with the IDE driver in place of the disks' and the SDC's (POOL.BIN in build/ide/engine, the rest of the game is
+# `make game`'s), the game's image laid out for the card (two sectors in a card sector, tools/mkimage.py --ide), and the boot drive that HDB-DOS loads POOL.BIN from.
+# The card sector of the image's sector 0 is the first sector of HDB-DOS virtual drive IDE_DRIVE+1: HDB-DOS offset of the card + IDE_DRIVE * 630 + 630. The defaults are the
+# user's 256 MB card (HDB-DOS offset $052DDC = 339420). IDE_ADDR is the interface's base address ($FF50 = 65360).
+IDE_HDB_OFFSET ?= 339420
+IDE_DRIVE ?= 200
+IDE_ADDR ?= 65360
+IDE_LBA0 = $(shell expr $(IDE_HDB_OFFSET) + $(IDE_DRIVE) \* 630)
+IDE_LBA_BASE = $(shell expr $(IDE_HDB_OFFSET) + $(IDE_DRIVE) \* 630 + 630)
+ide: game
+	@mkdir -p build/ide
+	$(TC) env IDE=1 IDE_LBA_BASE=$(IDE_LBA_BASE) IDE_ADDR=$(IDE_ADDR) IDE_SLOW=$(IDE_SLOW) python3 tools/mkgame.py --engine build/ide/engine build/game
+	$(TC) python3 -I tools/mkimage.py /repo/poolrad build/game build/gen/vm/DGROUP.IMG build/ide/pool.img --ide build/ide/POOLIDE.IMG --pool-bin build/ide/engine/POOL.BIN --ide-boot build/ide/POOLBOOT.DSK
+	@printf 'IDE_LBA0=%s\nIDE_LBA_BASE=%s\n' $(IDE_LBA0) $(IDE_LBA_BASE) > build/ide/ide.env
+	@echo "ide: boot drive $(IDE_DRIVE) at card sector $(IDE_LBA0), the image from card sector $(IDE_LBA_BASE); build/ide/POOLIDE.IMG goes to the card (tools/ide_card.py, docs/PHASE-8.12.md)"
+
+# a session from the SuperIDE file on the model of the interface (MAME headless, lua/watch.lua MB_IDE): make ide-run S=boot-title
+ide-run:
+	MB_SESSION=/repo/tests/sessions/$(S).keys MB_LIMIT=$(or $(LIMIT),300) scripts/ide_run.sh build/run/ide-$(S)
+
+# every session on it, five at a time, against the goldens and the development run's saves
+ide-check:
+	@scripts/ide_all.sh
 
 # a session from it (MAME headless, lua/watch.lua's model of the SDC): make sdc-run S=boot-title
 sdc-run:
