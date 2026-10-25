@@ -13,6 +13,9 @@ import struct
 TRACKS, SECS, SSIZE = 35, 18, 256
 GRAN = 9
 NGRAN = 68
+# Disks of more tracks (an 80 track drive, or XRoar's image of one) have the same layout: granules 0..33 are tracks 0..16, the directory track 17
+# stays where Disk BASIC looks for it, the granules go on from track 18 (granule 34); the FAT of Disk BASIC knows only 68 granules, so a data file
+# beyond them is not a file to BASIC (it needs only POOL.BIN, at the front of disk 1), the engine reads it by track and sector.
 
 
 def slots(interleave):
@@ -37,15 +40,17 @@ def gran_to_ts(g, k=0):
 
 
 class Disk:
-    def __init__(self, fill=0xFF):
-        self.img = bytearray([fill]) * (TRACKS * SECS * SSIZE)
+    def __init__(self, fill=0xFF, tracks=TRACKS):
+        self.tracks = tracks
+        self.ngran = 2 * (tracks - 1)
+        self.img = bytearray([fill]) * (tracks * SECS * SSIZE)
         self.fat = bytearray([0xFF]) * 256        # the FAT sector: 68 granules, the rest 0xFF
         self.dir = []                              # (name, ext, type, ascii, first granule, bytes in the last sector)
         self.next_gran = 0
 
     @property
     def free_granules(self):
-        return NGRAN - self.next_gran
+        return self.ngran - self.next_gran
 
     def _put(self, t, s, data):
         o = (t * SECS + (s - 1)) * SSIZE
@@ -57,7 +62,7 @@ class Disk:
         the next sector of the file comes round `interleave` sectors later, the time Disk BASIC needs to ask for it (src/engine/flop.c)."""
         nsec = max(1, -(-len(data) // SSIZE))
         ng = -(-nsec // GRAN)
-        if self.next_gran + ng > NGRAN:
+        if self.next_gran + ng > self.ngran:
             raise ValueError("decbfs: %s.%s does not fit: %d granules wanted, %d free" % (name, ext, ng, self.free_granules))
         first = self.next_gran
         for i in range(ng):

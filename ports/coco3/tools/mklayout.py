@@ -21,7 +21,8 @@ import re
 import sys
 from pathlib import Path
 
-DISK_SECTORS = 612
+import os
+DISK_SECTORS = (int(os.environ.get("TRACKS", "35")) - 1) * 18        # 612 for a 35 track disk
 SAVE_SECTORS = 512
 IDX_SECTORS_PAD = 0
 

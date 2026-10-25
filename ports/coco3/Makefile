@@ -18,7 +18,7 @@ LINKLIBS := -L$(CMOCLIB) -lcmoc-crt-void -lcmoc-std-void
 ENGINE_OBJ := build/obj/boot.o build/obj/mailbox.o
 P ?= byte-arith
 
-.PHONY: routine-profile code-profile rebank io-budget floppy-xroar sdc sdc-run floppy-check floppy floppy-model floppy-traces floppy-layout floppy-run perf-run perf-all step-check bank-groups play snd-check snd-wav game-wav stress game help doctor toolchain eng-data eng-test eng-tests gfx-ref data data-verify vol-test vol-tests sizes heap-stats prof coco-host place-host golden4 golden4-record demo test-demo run-demo probe probes asm-probe bench test clean risk-scan baseline
+.PHONY: floppy80 floppy-xroar80 routine-profile code-profile rebank io-budget floppy-xroar sdc sdc-run floppy-check floppy floppy-model floppy-traces floppy-layout floppy-run perf-run perf-all step-check bank-groups play snd-check snd-wav game-wav stress game help doctor toolchain eng-data eng-test eng-tests gfx-ref data data-verify vol-test vol-tests sizes heap-stats prof coco-host place-host golden4 golden4-record demo test-demo run-demo probe probes asm-probe bench test clean risk-scan baseline
 .DEFAULT_GOAL := help
 
 help:
@@ -259,6 +259,18 @@ floppy: game floppy-layout
 floppy-xroar: floppy
 	@rm -rf build/floppy/xroar; mkdir -p build/floppy/xroar; cp build/floppy/disks/*.DSK build/floppy/xroar/
 	xroar -m coco3 -rompath roms -ram 512 -ram-init clear -tv-input rgb -cart rsdos -load-fd0 build/floppy/xroar/POOL01.DSK -load-fd1 build/floppy/xroar/POOL02.DSK -load-fd2 build/floppy/xroar/POOL03.DSK -load-fd3 build/floppy/xroar/POOL04.DSK -type 'LOADM"POOL":EXEC\r'
+
+# The same set on four disks of 80 tracks (XRoar and 80 track drives; docs/PHASE-8.11.md section 7): the game's data is 1.36 MB, an 80 track disk holds 364 KB, so four
+# disks, one in each of XRoar's four drives, never have to be swapped; the saves are a fifth disk, asked for when the game saves or loads.
+floppy80: game floppy-model
+	@mkdir -p build/floppy80
+	@TRACKS=80 python3 tools/mklayout.py make --drives 4 --extra 0 --out build/floppy80/layout.json
+	@rm -rf build/floppy80/disks
+	@$(TC) env TRACKS=80 python3 -I tools/mkimage.py /repo/poolrad build/game build/gen/vm/DGROUP.IMG build/floppy80/pool.img --layout build/floppy80/layout.json --floppies build/floppy80/disks
+
+floppy-xroar80: floppy80
+	@rm -rf build/floppy80/xroar; mkdir -p build/floppy80/xroar; cp build/floppy80/disks/*.DSK build/floppy80/xroar/
+	xroar -m coco3 -rompath roms -ram 512 -ram-init clear -tv-input rgb -cart rsdos -load-fd0 build/floppy80/xroar/POOL01.DSK -load-fd1 build/floppy80/xroar/POOL02.DSK -load-fd2 build/floppy80/xroar/POOL03.DSK -load-fd3 build/floppy80/xroar/POOL04.DSK -type 'LOADM"POOL":EXEC\r'
 
 # step 8.11: what the sessions ask of the storage (docs/PHASE-8.11.md): every session once with the storage log, then kilobytes by kind, bank loads, the worst 30 s of code
 # traffic and the seconds of reading on each medium, against data/io_budget.json. make io-budget [NORUN=1] [CHECK=1] [WRITE=1]

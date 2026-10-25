@@ -106,7 +106,8 @@ def pool_bin_sectors(gamedir):
     return -(-n // 9) * 9
 
 
-DISK_SECTORS = 612                                                 # the data granules of a 35 track disk: 68 of 9 sectors
+TRACKS = int(os.environ.get("TRACKS", "35"))                       # tracks of a floppy of the set: 35 (a standard disk), 80 for XRoar and 80 track drives (make floppy-xroar80)
+DISK_SECTORS = (TRACKS - 1) * 18                                   # the data sectors of a disk: 612 for 35 tracks (68 granules of 9 sectors)
 
 
 def build(data_dir, gamedir, dgroup, dedupe=True, layout=None):
@@ -221,12 +222,22 @@ def write_floppies(img, info, gamedir, outdir, interleave=1):
     pos = 0
     names = []
     for i, n in enumerate(info["disk_secs"]):
-        d = decbfs.Disk()
-        d.add("POOLDSK" + ("%X" % (i + 1) if i + 1 >= 10 else str(i + 1)), "DAT", img[pos * 256:(pos + n) * 256], 1, 0, interleave)
-        if i == 0:
+        d = decbfs.Disk(tracks=TRACKS)
+        name = "POOLDSK" + ("%X" % (i + 1) if i + 1 >= 10 else str(i + 1))
+        if i == 0 and TRACKS > 35:
+            # Disk BASIC knows 68 granules: POOL.BIN goes first, in the granules it can reach, and the data file (which the engine finds by its directory entry, the
+            # first) after it, on a track boundary
             d.add("POOL", "BIN", Path(gamedir, "POOL.BIN").read_bytes(), 2, 0)
+            d.next_gran += d.next_gran % 2
+            d.add(name, "DAT", img[pos * 256:(pos + n) * 256], 1, 0, interleave)
+            d.dir.insert(0, d.dir.pop())
+        else:
+            d.add(name, "DAT", img[pos * 256:(pos + n) * 256], 1, 0, interleave)
+            if i == 0:
+                d.add("POOL", "BIN", Path(gamedir, "POOL.BIN").read_bytes(), 2, 0)
         p = outdir / ("POOL%02d.DSK" % (i + 1))
-        p.write_bytes(d.image())
+        # a disk of more than 40 tracks is a JVC image with a two byte header (18 sectors a track, 1 side): XRoar takes a headerless file of that size for 40 tracks of two sides
+        p.write_bytes((b"\x12\x01" if TRACKS > 40 else b"") + d.image())
         names.append(p.name)
         pos += n
     assert pos * 256 == len(img)

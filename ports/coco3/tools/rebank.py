@@ -198,13 +198,15 @@ def pack(model, clusters, limit):
 class CSim:
     """tools/poolsim.c through ctypes: the same pool as simulate(), about 100 times faster"""
 
-    def __init__(self, model, slots, weights=None):
+    def __init__(self, model, slots, weights=None, pool_bytes=0):
+        self.pool_bytes = pool_bytes
         lib = PROF / "libpoolsim.so"
         src = HERE / "poolsim.c"
         if not lib.exists() or lib.stat().st_mtime < src.stat().st_mtime:
             subprocess.run(["cc", "-O2", "-shared", "-fPIC", "-o", str(lib), str(src)], check=True)
         self.lib = ctypes.CDLL(str(lib))
         self.lib.pool_sim.restype = ctypes.c_double
+        self.lib.pool_sim_bytes.restype = ctypes.c_double
         self.names = list(model.seqs)
         flat, off = [], [0]
         for s in self.names:
@@ -221,6 +223,8 @@ class CSim:
     def run(self, assign, bsize):
         a = (ctypes.c_int32 * len(assign))(*assign)
         b = (ctypes.c_int32 * len(bsize))(*bsize)
+        if self.pool_bytes:
+            return self.lib.pool_sim_bytes(self.n, self.off, self.seq, a, b, ctypes.c_int32(self.pool_bytes), self.w, self.bytes, self.loads)
         return self.lib.pool_sim(self.n, self.off, self.seq, a, b, self.slots, self.w, self.bytes, self.loads)
 
     def per_session(self):
@@ -231,9 +235,9 @@ OVERHEAD = 900            # a bank is read with its constants (0.4 to 1.6 KB mea
 
 
 def anneal(args):
-    model, slots, start, cap, iters, seed, weights, nb = args
+    model, slots, start, cap, iters, seed, weights, nb, pool_bytes = args
     rnd = random.Random(seed)
-    sim = CSim(model, slots, weights)
+    sim = CSim(model, slots, weights, pool_bytes)
     size = model.size
     ng = len(size)
     assign = list(start)
@@ -335,6 +339,8 @@ def main(argv=None):
     ap.add_argument("--limit", type=int, default=15000, help="bytes of code in a bank (the rest of the 16000: constants, the entry table)")
     ap.add_argument("--iters", type=int, default=6000, help="annealing steps per chain")
     ap.add_argument("--chains", type=int, default=12)
+    ap.add_argument("--pool-bytes", type=int, default=0, help="an experiment: a pool of this many bytes instead of slots (banks of any size, no fragmentation)")
+    ap.add_argument("--margin", type=int, default=14000, help="with --pool-bytes: the bytes the layout leaves free, as --slots does by one slot")
     ap.add_argument("--spare", type=int, default=4, help="empty banks the annealing may fill")
     ap.add_argument("--write", action="store_true")
     ap.add_argument("--sessions")
@@ -375,7 +381,7 @@ def main(argv=None):
     sim = CSim(model, a.slots, weights)
     sim.run(assign, [used.get(i, 0) + (OVERHEAD if i < nhot else 0) for i in range(nhot + 1)])
     print("start: %d hot banks, %d KB read by the sessions on average" % (nhot, sum(v[1] for v in sim.per_session().values()) // len(model.seqs) // 1024))
-    starts = [(model, a.slots, list(assign), a.limit, a.iters, 1000 + k, weights, nhot + 1) for k in range(a.chains)]
+    starts = [(model, a.slots, list(assign), a.limit, a.iters, 1000 + k, weights, nhot + 1, a.pool_bytes - a.margin if a.pool_bytes else 0) for k in range(a.chains)]
     with multiprocessing.Pool(min(a.chains, multiprocessing.cpu_count())) as pool:
         results = pool.map(anneal, starts)
     results.sort(key=lambda r: r[0])
@@ -392,10 +398,10 @@ def main(argv=None):
     for g in range(len(size)):
         used[final[g]] += size[g]
     sizes1 = [used.get(i, 0) + OVERHEAD for i in range(nb)] + [size[model.rtl]]
-    sim2 = CSim(model, a.slots)
+    sim2 = CSim(model, a.slots, None, a.pool_bytes - a.margin if a.pool_bytes else 0)
     sim2.run(final, sizes1)
     r1 = sim2.per_session()
-    sim3 = CSim(model, a.slots + 1)
+    sim3 = CSim(model, a.slots + 1, None, a.pool_bytes)
     sim3.run(final, sizes1)
     r2 = sim3.per_session()
     print("%d hot banks (%d bytes), %d cold banks (%d bytes)" % (nhot, sum(sizes1[:nhot]), nb - nhot, sum(sizes1[nhot:])))

@@ -87,9 +87,26 @@ A combat session now reads 423 KB of code against the original's 384 KB (the ori
 
 `make floppy-traces floppy-profile floppy` made the layout again (the profile is by bank id, so the old one was void): 12 disks, and the swaps the simulation counts over the 16 sessions with two drives go from 1,044 to 274 (one drive 443, three 99, four 83). `make floppy-check` plays every session on the disks in MAME: **all 16 sessions equal on every labelled screen and every file the game wrote, in 8 minutes** (the combat sessions needed 4,500 emulated seconds, hours of wall time, before). The swaps the player would have made: battle-aftermath 18 (127), parley-combat 16 (123), combat-spells 17 (176), temple-heal 24 (133), council-guards 30 (175), walk-explore 15 (17), camp-save 14 (18), boot-title 7 (8); 276 in all against 952.
 
-## 6. Not done, in the order of what it would buy [E]
+## 6. Four disks, no swaps: what fits, and what a byte pool is worth
 
-1. A pool in bytes, not in slots of 16 KB: banks of 14 KB in 16 KB slots waste 12 %; the small banks (0.5 to 4 KB) waste most.
+**Compression to fit four standard disks does not.** The game's data is 1,358 KB once identical blocks are stored once (the image is 1,486 KB with the 128 KB of saves). Four 35 track disks hold 4 x 152 KB = 608 KB. `tools/compexp.py` on the current image (no shared blocks, 1,620 KB as stored): ZX0 of the stored bytes 954 KB, ZX0 of the unpacked blocks 843 KB (2,951 KB unpacked), so about 0.52 of the stored size, about 710 KB with the shared blocks: 17 % more than four disks hold, a fifth disk for the data and a sixth for the saves. Four 40 track disks (720 KB) would just hold it, with the decoder, the packer and no margin: not done. ZX0 also costs time: 68 cycles an output byte (25 KB/s of output) is 0.6 s for a 16 KB bank, 4 times the SDC's read.
+
+**What fits without compression: four disks of 80 tracks** (364 KB each, 1,456 KB; the engine reads any track, `flop.c` has no limit of 35). `make floppy-xroar80` (`make floppy80` builds the set): `TRACKS=80` in `tools/mkimage.py`, `tools/mklayout.py` (disks of 1,422 sectors, `--drives 4`) and `tools/decbfs.py` (`Disk(tracks=)`): four data disks 95/83/98/89 % full and a fifth with the saves, asked for when the game loads or saves. With four drives the simulation counts **16 swaps over the 16 sessions** (one a session, the save disk) against 274 on the 35 track set with two drives. Two things XRoar needed: a two byte JVC header (`12 01`: 18 sectors, 1 side; a headerless 368,640 byte file is taken for 40 tracks of two sides), and `POOL.BIN` before the data file on disk 1 (Disk BASIC's FAT knows 68 granules; the data file reaches 155). [V] in XRoar headless: `LOADM"POOL":EXEC` reaches the engine's `main` in 9 s, as on the 35 track set, and the game goes on to read tracks 35 to 45. Not played through in XRoar, and MAME was not tried with these images. Real 80 track drives are rare on a CoCo.
+
+**A byte granular pool is worth 15 to 25 %, not more.** `tools/poolsim.c` has a pool in bytes (no fragmentation, banks of any size, LRU until the bank fits); `rebank.py --pool-bytes 114688` anneals for it. Mean code read per session, the model (the slots layout of section 4: 187 KB in the real pool of 7 slots):
+
+| bank size limit | hot banks | mean KB (made for the pool less 14 KB / in the whole pool) |
+|---|---|---|
+| 14,100 | 31 | 164 / 157 |
+| 8,000 | 42 | 150 / **142** |
+| 4,000 | 67 | 153 / 144 |
+| 2,000 | 116 | 182 / 168 |
+
+At best 24 % fewer bytes, from the pool that holds what the slots waste (banks of 14 KB in slots of 16 KB, small banks in a whole slot). Against that: the code of a bank is linked for the window at `$8000` (CMOC, `--no-relocate`), so a bank cannot sit at another address without relocation at load time (a table of every absolute address, with the code that applies it, in an engine that has 19 bytes left); the bank table has 64 entries (banks of 4 KB would need 90); each bank carries its constants and entry table (about 900 bytes, 20 % of an 8 KB bank). **Not worth it before the other things in section 7.**
+
+## 7. Not done, in the order of what it would buy [E]
+
+1. One file for XRoar: XRoar has no SDC; its IDE cartridge (`-cart ide -load-hd0`) needs an IDE driver in the engine and a way to start (`-load POOL.BIN`, or a floppy for `POOL.BIN` behind an MPI); not built.
 2. Preload the working set of a mode (fight, camp, shop) behind a "Loading" message, instead of 30 s of stalls spread over the first turns.
 3. More profiles (other spells, monsters, places) for the layout, and `--holdout` runs over all 16 sessions as a gate.
 4. Then the storage speed: a track at a time driver, an IDE backend, compressed banks.
