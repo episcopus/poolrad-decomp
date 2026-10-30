@@ -5,9 +5,10 @@ Pascal source, with two kinds of change:
 
 - The game no longer asks for a code word from the translation wheel. The
   title screens play, then the character menu comes up.
-- On Tandy video (POOL.CFG video T) the drawing is faster: text, the 3D
-  view, sprites, pictures, window clears, loading, and the line-of-sight work
-  of combat. An emulated 8088 at 7.16 MHz needs about half the time or less
+- The game is faster. On Tandy video (POOL.CFG video T) the drawing: text,
+  the 3D view, sprites, pictures, window clears. On every machine: loading
+  and the line-of-sight work of combat. An emulated 8088 at 7.16 MHz with
+  Tandy video needs about half the time or less
   for a step in the 3D view, a third for a combat turn, a fifth for a menu
   key. The game plays exactly as before: same screens, same dice, same saved
   games (checked on every key of 12 recorded sessions).
