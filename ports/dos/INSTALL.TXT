@@ -1,0 +1,38 @@
+POOL OF RADIANCE (PC), REBUILT FROM ITS DECOMPILED SOURCE: NO CODE WHEEL
+
+This is the PC game (version 1.3) linked again from its decompiled Turbo
+Pascal source, with one change: the game no longer asks for a code word from
+the translation wheel. The title screens play, then the character menu comes
+up. Everything else is the original program: same graphics modes (EGA, CGA,
+Tandy), same sound devices, same saved games.
+
+FILES
+
+  START.EXE   the game program (replaces the original START.EXE)
+  GAME.OVR    its overlay file (replaces the original GAME.OVR)
+
+The two files belong together. Never mix this START.EXE with the original
+GAME.OVR, or the original START.EXE with this GAME.OVR: the game would crash
+the first time it loads an overlay.
+
+INSTALL
+
+1. Install the original game as usual (its own install program or copy), and
+   run it once to check that POOL.CFG says what you want (video T and sound T
+   on a Tandy 1000).
+2. Keep a copy of the original START.EXE and GAME.OVR, for example:
+     COPY START.EXE START.ORG
+     COPY GAME.OVR GAME.ORG
+3. Copy START.EXE and GAME.OVR from this folder over the originals.
+4. Start the game the usual way: START
+
+To go back, copy START.ORG to START.EXE and GAME.ORG to GAME.OVR.
+
+Saved games, POOL.CFG and every data file are unchanged and shared with the
+original program.
+
+SIZES
+
+START.EXE is not compressed (the original is packed with EXEPACK), so it is
+about 5.5 KB larger on disk; GAME.OVR is about 0.9 KB smaller. The memory the
+game needs to run is the same. SHA256.TXT lists the checksums of both files.

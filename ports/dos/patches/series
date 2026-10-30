@@ -1,0 +1,3 @@
+# ports/dos/patches/series: the patches applied to a copy of src/, in this order (tools/build.py).
+# `make FAITHFUL=1` applies none and must link the original program.
+no-code-wheel.patch   # no code wheel question (ovl02 CheckCodeWheel); the random draw of its first question is kept

@@ -1,0 +1,54 @@
+--- a/OVL02.PAS
++++ b/OVL02.PAS
+@@ -17,44 +17,16 @@
+   LightRed = 12;             { EGA colour: the path pattern line }
+   Yellow = 14;               { EGA colour: the failure message }
+ 
+-{ ovl02:00FD. The code wheel check. Up to MaxAttempts times it picks a wheel record at random,
+-  clears the question window (DrawWindow), writes the instructions (DrawTextAt), draws the
+-  record runes as font characters (DrawGlyph: the two runes to match and the third, plus the
+-  fourth only when the record has one), shows the path pattern as five spaces and the record path
+-  (DrawTextAt), flushes the keyboard and asks for the code word (ReadInputLine, the line reader
+-  of res06). A matching answer (the record CodeWord) leaves the routine at once; a wrong one shows
+-  the failure message (FlashMessageLine), and the third wrong answer ends the program through
+-  QuitGame. Reads: CodeWheelRecords (the wheel records), Random. Globals: none besides those. Side effect:
+-  the screen; on the third failure the program halts. }
++{ ovl02:00FD. The code wheel check, removed by the DOS port (ports/dos, patch no-code-wheel): the game goes
++  from the title screens to the character menu without asking for a code word. The routine still draws the
++  one random number the original's first question draws (Random(WheelEntryCount)), so the random stream
++  after it is the one the original has after a right first answer: a session recorded on the original
++  replays on this program (ports/dos/tools/sessions.py). Globals: none. }
+ procedure CheckCodeWheel;
+ var
+-  Answer: string[40];     { the code word the player typed, truncated to 40 characters }
+-  Question: Byte;         { the wheel record Random picked: 0 to 12 }
+-  Attempt: Byte;          { 1, 2, 3: the answer the program is waiting for }
++  Question: Byte;         { the wheel record the original would have asked about: drawn, not used }
+ begin
+-  for Attempt := 1 to MaxAttempts do
+-  begin
+-    Question := Random(WheelEntryCount);
+-    DrawWindow(1, 1, $26, $16, 0, 0, '');
+-    DrawTextAt(1, 1, LightGreen, 'USE THE TRANSLATION WHEEL TO DECIPHER');
+-    DrawTextAt(1, 2, LightGreen, 'THE CODE WORD.');
+-    DrawTextAt(1, 5, LightGreen, 'MATCH THE ESPRUAR RUNE (OUTER RING)');
+-    DrawGlyph(8, 6, $0C, 1, CodeWheelRecords[Question].OuterRune + RuneCharBase, 0);
+-    DrawGlyph(9, 6, $0C, 1, CodeWheelRecords[Question].InnerRune + RuneCharBase, 0);
+-    DrawTextAt(1, 8, LightGreen, 'WITH THE DETHEK RUNE (INNER RING)');
+-    DrawGlyph(8, 9, $0C, 1, CodeWheelRecords[Question].ThirdRune + RuneCharBase, 0);
+-    if CodeWheelRecords[Question].FourthRune <> NoFourthRune then
+-      DrawGlyph(9, 9, $0C, 1, CodeWheelRecords[Question].FourthRune + RuneCharBase, 0);
+-    DrawTextAt(1, $0B, LightGreen, 'AND READ THE CODE WORD UNDER THE PATH:');
+-    DrawTextAt(1, $0D, LightRed, '     ' + CodeWheelRecords[Question].Path);
+-    DrawTextAt(1, $0E, LightGreen, 'READ FROM THE INSIDE TO THE OUTSIDE.');
+-    FlushKeyboard;
+-    Answer := ReadInputLine('INPUT THE CODE WORD: ', 13, 6);
+-    if Answer = CodeWheelRecords[Question].CodeWord then
+-      Exit;
+-    FlashMessageLine('Sorry, that''s incorrect.', Yellow);
+-  end;
+-  QuitGame;
++  Question := Random(WheelEntryCount);
+ end;
+ 
+ { Initialisation (ovl02:0359): empty (55 89 E5 5D CB). }
