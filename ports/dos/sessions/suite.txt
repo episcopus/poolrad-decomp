@@ -1,0 +1,16 @@
+# The port's functional suite (tools/func.py, tools/prof.py): sessions played in Tandy video and sound with the program's
+# clock. A name is looked up in ports/dos/sessions first, then tests/sessions. The scripts of tests/sessions were written for
+# EGA, whose title screen draws about 33,000 random numbers (the palette flicker) where Tandy's draws one, so their dice
+# differ here; the ones below still reach what they were written for, or close (func.py --shots, tools/sheet.py).
+boot-title          # the title screens, text
+create-character    # menus, the character generator
+create-elf-mage
+character-menu      # the character menu: train, modify, drop
+character-view      # camp, a character sheet, items, money
+camp-cast           # camp menus, casting
+camp-magic          # camp magic, memorise, party order
+camp-save           # camp, save
+shop-buy            # a shop
+temple-cast         # the temple's menu, camp magic
+council-guards      # the 3D view, a scripted battle with quick combat until the party falls
+maze-battle         # the 3D view walking the city, an ambush, a won battle, treasure, a character sheet, flee

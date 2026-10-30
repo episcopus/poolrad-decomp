@@ -1,0 +1,185 @@
+--- a/RES06.PAS
++++ b/RES06.PAS
+@@ -24,6 +24,7 @@
+ procedure ClearFullScreen;
+ procedure FlashMessageLine(Text: String40; Color: Byte);
+ procedure DelayByGameSpeed;
++procedure TandyClearRows(TopCode, BottomCode, LeftCode, Width: Word);
+ procedure ClearRect(Left, Top, Right, Bottom: ShortInt);
+ implementation
+ uses Crt, Dos, POOLVARS, RES04, RES05;
+@@ -581,7 +582,44 @@
+ procedure DelayByGameSpeed;
+ begin
+   Delay(GameSpeed * 225);
++end;
++{ ports/dos speed patch (tandy-fill): the Tandy clear of ClearRect and ClearWindow (res09), in the built-in
++  assembler. For each graphics row TopCode..BottomCode (a Word loop: none when TopCode is above BottomCode), Width
++  bytes from byte column LeftCode of that row (Row * 160 + LeftCode) are set to 0 in each of the four banks $B800,
++  $BA00, $BC00, $BE00. The Pascal called FillChar four times a row, which stores one byte at a time; here the same
++  bytes are stored a word at a time. The direction flag is left clear, as FillChar leaves it. }
++procedure TandyClearRows(TopCode, BottomCode, LeftCode, Width: Word); assembler;
++asm
++  cld
++  mov   si, TopCode
++  cmp   si, BottomCode
++  ja    @Done
++@Row:
++  mov   ax, si
++  mov   bx, 160
++  mul   bx
++  add   ax, LeftCode
++  mov   dx, ax                 { the row's first byte in each bank }
++  mov   bx, $B800
++@Bank:
++  mov   es, bx
++  mov   di, dx
++  mov   cx, Width
++  xor   ax, ax
++  shr   cx, 1
++  rep   stosw
++  adc   cx, cx
++  rep   stosb
++  add   bx, $200
++  cmp   bx, $C000
++  jb    @Bank
++  cmp   si, BottomCode
++  je    @Done
++  inc   si
++  jmp   @Row
++@Done:
+ end;
++
+ { 0709:0DD3. Clears the Left..Right by Top..Bottom rectangle to 0 by video adapter (the
+   VideoAdapter global), the Byte-coordinate twin of ClearWindow: 0 fills the text-scanline
+   rows Top*4..Bottom*4+3 on both text banks, 1 draws the rectangle through FillPlaneRect on
+@@ -626,13 +664,7 @@
+         BottomCode := Bottom * GraphRowsPerTextRow + LastGraphRow;
+         LeftCode := Left * BytesPerGraphColumn;
+         Width := (Right - Left + 1) * BytesPerGraphColumn;
+-        for Row := TopCode to BottomCode do
+-        begin
+-          FillChar(GraphPlane0[Row, LeftCode], Width, 0);
+-          FillChar(GraphPlane1[Row, LeftCode], Width, 0);
+-          FillChar(GraphPlane2[Row, LeftCode], Width, 0);
+-          FillChar(GraphPlane3[Row, LeftCode], Width, 0);
+-        end;
++        TandyClearRows(TopCode, BottomCode, LeftCode, Width);
+       end;
+   end;
+ end;
+--- a/RES07.PAS
++++ b/RES07.PAS
+@@ -62,6 +62,8 @@
+ procedure TandyMirrorRows(Source, Dest: Pointer; Rows, RowBytes: Word);
+ procedure MirrorPicture(Source, Dest: Pointer);
+ procedure ShowPicture(PicCol, PicRow: Integer; Buf: Pointer);
++procedure FastFill(var X; Count: Word; Value: Byte);
++procedure TandyFlushRows;
+ procedure FlushPictureChanges;
+ procedure RemapPictureColors(FromMap, ToMap: Pointer; FirstItem: Integer; Flicker: Byte; Pic: Pointer);
+ procedure AllocatePicture(Height, WidthCols: Word; ItemCount, AllocFlags: Byte; var Pic);
+@@ -1236,6 +1238,57 @@
+     end;
+   end;
+ end;
++{ ports/dos speed patch (tandy-fill): FillChar with word stores. The same bytes, the direction flag left clear;
++  FillChar of the Turbo Pascal 6.0 runtime stores one byte at a time (0AF8:16B7 REP STOSB). }
++procedure FastFill(var X; Count: Word; Value: Byte); assembler;
++asm
++  cld
++  les   di, X
++  mov   cx, Count
++  mov   al, Value
++  mov   ah, al
++  shr   cx, 1
++  rep   stosw
++  adc   cx, cx
++  rep   stosb
++end;
++{ ports/dos speed patch (tandy-fill): FlushPictureChanges' Tandy branch in the built-in assembler. For each of the
++  168 rows marked in RowDirtyFlags, the bytes RowFirstChangedOfs[Row]..RowLastChangedOfs[Row] of DrawBuf^.Data
++  go to TandyScanlineSegments[Row + 8] at byte column RowFirstChangedCol[Row] + 4 (the Pascal's Move, which
++  copies a byte at a time and runs backwards when the source offset is the lower; DrawBuf is on the heap and the
++  screen is not, so a forward copy by words writes the same bytes). }
++procedure TandyFlushRows; assembler;
++asm
++  cld
++  xor   bx, bx                 { Row }
++@Row:
++  cmp   byte ptr RowDirtyFlags[bx], 0
++  je    @Next
++  push  bx
++  shl   bx, 1
++  mov   si, word ptr RowFirstChangedOfs[bx]
++  mov   cx, word ptr RowLastChangedOfs[bx]
++  sub   cx, si
++  inc   cx
++  mov   di, word ptr RowFirstChangedCol[bx]
++  add   di, 4
++  mov   es, word ptr TandyScanlineSegments[bx+16]
++  push  ds
++  lds   ax, DrawBuf
++  add   si, ax
++  add   si, $17
++  shr   cx, 1
++  rep   movsw
++  adc   cx, cx
++  rep   movsb
++  pop   ds
++  pop   bx
++@Next:
++  inc   bx
++  cmp   bx, $A7
++  jbe   @Row
++end;
++
+ { 0464:1B52: presents the changed regions the blitters marked in RowDirtyFlags (the
+   per-row changed flag) and the tracker arrays, one branch per video adapter. Per
+   changed row the staging buffer DrawBuf holds the changed bytes at
+@@ -1318,15 +1371,11 @@
+         Port[GcData] := WriteMode0;
+       end;
+     AdapterTandy:
+-      for Row := 0 to $A7 do
+-        if RowDirtyFlags[Row] <> 0 then
+-          Move(PPicture(DrawBuf)^.Data[RowFirstChangedOfs[Row]],
+-            Mem[TandyScanlineSegments[Row + 8]:RowFirstChangedCol[Row] + 4],
+-            RowLastChangedOfs[Row] - RowFirstChangedOfs[Row] + 1);
++      TandyFlushRows;
+   end;
+-  FillChar(RowDirtyFlags, $A8, 0);
+-  FillChar(RowFirstChangedOfs, $150, $FF);
+-  FillChar(RowLastChangedOfs, $150, 0);
++  FastFill(RowDirtyFlags, $A8, 0);
++  FastFill(RowFirstChangedOfs, $150, $FF);
++  FastFill(RowLastChangedOfs, $150, 0);
+ end;
+ { 0464:1E5C: recolours item FirstItem of picture Pic (item 0 when FirstItem is
+   negative). For every colour index I whose FromMap and ToMap entries differ, each pixel
+@@ -1487,7 +1536,7 @@
+   if VideoAdapter <> AdapterCga then ItemBytes := ItemBytes shl 1;
+   BlockBytes := ItemCount * ItemBytes;
+   GetMem(PPicture(Pointer(Pic)), BlockBytes + $17);
+-  FillChar(PPicture(Pointer(Pic))^, BlockBytes + $17, 0);
++  FastFill(PPicture(Pointer(Pic))^, BlockBytes + $17, 0);   { ports/dos speed patch (tandy-fill) }
+   PPicture(Pointer(Pic))^.Height := Height;
+   PPicture(Pointer(Pic))^.WidthCols := WidthCols;
+   PPicture(Pointer(Pic))^.ByteSize := ItemBytes;
+--- a/RES09.PAS
++++ b/RES09.PAS
+@@ -109,13 +109,7 @@
+         BottomCode := BottomRow * GraphRowsPerTextRow + LastGraphRow;
+         LeftCode := LeftCol * BytesPerGraphColumn;
+         Width := (RightCol - LeftCol + 1) * BytesPerGraphColumn;
+-        for Row := TopCode to BottomCode do
+-        begin
+-          FillChar(VideoGrf0[Row, LeftCode], Width, 0);
+-          FillChar(VideoGrf1[Row, LeftCode], Width, 0);
+-          FillChar(VideoGrf2[Row, LeftCode], Width, 0);
+-          FillChar(VideoGrf3[Row, LeftCode], Width, 0);
+-        end;
++        TandyClearRows(TopCode, BottomCode, LeftCode, Width);   { ports/dos speed patch (tandy-fill): res06 }
+       end;
+   end;
+ end;

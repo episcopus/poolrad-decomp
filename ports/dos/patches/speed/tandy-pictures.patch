@@ -1,0 +1,146 @@
+--- a/RES07.PAS
++++ b/RES07.PAS
+@@ -50,6 +50,7 @@
+ procedure SetVideoMode(Mode: Byte);
+ procedure RestoreVideoMode;
+ procedure LoadPicture(Text: string; BlockId, AllocFlags, Color: Byte; var Target);
++procedure TandyColorMask(Data, Pixels: Pointer; Count: Word; Color: Byte);
+ procedure UnpackPicturePixels(Source: Pointer; Offset: Word; AllocFlags, Color: Byte; Data: Pointer);
+ procedure TandyRows(FirstRow, Rows, SrcOfs, DestOfs, SaveOfs, LeftCut, LeftCol, VisibleBytes, RightCut, RightRoom,
+   LeftBytes: Word; HasMask, SaveBackground: Boolean; Source, Dest: Pointer);
+@@ -58,6 +59,7 @@
+ function MirrorByte(Value: Byte): Byte;
+ function MirrorWord(Value: Word): Word;
+ function SwapNibbles(Value: Byte): Byte;
++procedure TandyMirrorRows(Source, Dest: Pointer; Rows, RowBytes: Word);
+ procedure MirrorPicture(Source, Dest: Pointer);
+ procedure ShowPicture(PicCol, PicRow: Integer; Buf: Pointer);
+ procedure FlushPictureChanges;
+@@ -171,7 +173,46 @@
+     FreeMem(Block, Size);
+     FlushKeyboard;
+   end;
++end;
++{ ports/dos speed patch (tandy-pictures): the Tandy branch of UnpackPicturePixels for one item, in the built-in
++  assembler: for each of Count bytes of Data (two 4-bit pixels) the mask byte at Pixels becomes $F0 where the left
++  pixel is Color and gains $0F where the right one is, and the data byte loses the masked bits (the Pascal's three
++  statements in order, reading the data byte before it is changed). The caller keeps the Pascal loop for an empty
++  item or one that would wrap the offset. }
++procedure TandyColorMask(Data, Pixels: Pointer; Count: Word; Color: Byte); assembler;
++asm
++  push  ds
++  les   di, Pixels
++  lds   si, Data
++  mov   cx, Count
++  mov   bl, Color
++@Byte:
++  mov   al, [si]
++  mov   ah, al
++  shr   ah, 1
++  shr   ah, 1
++  shr   ah, 1
++  shr   ah, 1
++  cmp   ah, bl
++  jne   @Right
++  mov   byte ptr es:[di], $F0
++@Right:
++  mov   ah, al
++  and   ah, $0F
++  cmp   ah, bl
++  jne   @Clear
++  add   byte ptr es:[di], $0F
++@Clear:
++  mov   ah, es:[di]
++  not   ah
++  and   al, ah
++  mov   [si], al
++  inc   si
++  inc   di
++  loop  @Byte
++  pop   ds
+ end;
++
+ { 0464:02A5: unpacks the pixel data of the DAX block Source (its pixels start at Offset,
+   $11) into Data, the picture LoadPicture allocated, one item and one cell (four source
+   bytes, eight pixels) at a time. Per VideoAdapter: 0 writes two bytes per cell, the
+@@ -283,6 +324,9 @@
+       begin
+         Move(PByteArray(Source)^[Offset], Data[OutOfs], ByteSize);
+         if Pixels <> nil then
++          if (ByteSize > 0) and (OutOfs + ByteSize - 1 >= OutOfs) then
++            TandyColorMask(@Data[OutOfs], @Pixels^[OutOfs], ByteSize, Color)
++          else
+           for Col := OutOfs to OutOfs + ByteSize - 1 do
+           begin
+             if (Data[Col] shr 4) = Color then Pixels^[Col] := $F0;
+@@ -1000,6 +1044,44 @@
+   Inc(Swapped, (Value and $F0) shr 4);
+   SwapNibbles := Swapped;
+ end;
++{ ports/dos speed patch (tandy-pictures): MirrorPicture's Tandy branch for one buffer, in the built-in assembler:
++  Rows rows of RowBytes bytes, each row reversed and each byte's two pixels swapped (SwapNibbles, a rotate by 4).
++  Byte by byte from the start of Dest, the order the Pascal wrote them, so a picture mirrored onto itself comes out
++  the same too. The Pascal did the data and the pixel mask in one loop, a byte of each in turn; they are separate
++  blocks, so mirroring the data and then the mask writes the same bytes. }
++procedure TandyMirrorRows(Source, Dest: Pointer; Rows, RowBytes: Word); assembler;
++asm
++  cld                          { (the game does not always leave the direction flag clear) }
++  push  ds
++  lds   si, Source
++  les   di, Dest
++  mov   bx, si                 { the source row }
++  mov   dx, Rows
++  or    dx, dx
++  jz    @Done
++@Row:
++  mov   cx, RowBytes
++  jcxz  @NextRow
++  mov   si, bx
++  add   si, cx
++  dec   si                     { the row's last byte }
++@Byte:
++  mov   al, [si]
++  dec   si
++  rol   al, 1
++  rol   al, 1
++  rol   al, 1
++  rol   al, 1
++  stosb
++  loop  @Byte
++@NextRow:
++  add   bx, RowBytes
++  dec   dx
++  jnz   @Row
++@Done:
++  pop   ds
++end;
++
+ { 0464:15C7: copies the picture Source into Dest mirrored: the palette is copied
+   as is, then the pixel data of every row is reversed (each 16-bit unit through
+   MirrorWord for adapter 0, each byte through MirrorByte in 4-byte groups for
+@@ -1075,22 +1157,9 @@
+       AdapterTandy:
+         begin
+           RowBytes := WidthCols * 4;
+-          SrcLastOfs := RowBytes - 1;
+-          DestOfs := 0;
+-          for Row := 1 to Height do
+-          begin
+-            RowOfs := DestOfs;
+-            for Col := 1 to RowBytes do
+-            begin
+-              PPicture(Dest)^.Data[DestOfs] :=
+-                SwapNibbles(Data[SrcLastOfs - DestOfs + RowOfs]);
+-              if Pixels <> nil then
+-                PPicture(Dest)^.Pixels^[DestOfs] :=
+-                  SwapNibbles(Pixels^[SrcLastOfs - DestOfs + RowOfs]);
+-              Inc(DestOfs);
+-            end;
+-            Inc(SrcLastOfs, RowBytes);
+-          end;
++          TandyMirrorRows(@Data, @PPicture(Dest)^.Data, Height, RowBytes);
++          if Pixels <> nil then
++            TandyMirrorRows(Pixels, PPicture(Dest)^.Pixels, Height, RowBytes);
+         end;
+     end;
+   end;

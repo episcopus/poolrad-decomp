@@ -1,0 +1,323 @@
+--- a/RES07.PAS
++++ b/RES07.PAS
+@@ -51,6 +51,8 @@
+ procedure RestoreVideoMode;
+ procedure LoadPicture(Text: string; BlockId, AllocFlags, Color: Byte; var Target);
+ procedure UnpackPicturePixels(Source: Pointer; Offset: Word; AllocFlags, Color: Byte; Data: Pointer);
++procedure TandyRows(FirstRow, Rows, SrcOfs, DestOfs, SaveOfs, LeftCut, LeftCol, VisibleBytes, RightCut, RightRoom,
++  LeftBytes: Word; HasMask, SaveBackground: Boolean; Source, Dest: Pointer);
+ procedure DrawPictureItem(Col, Row: Integer; PicIndex, Flags: Byte; Source, Dest: Pointer);
+ procedure DrawPictureItemClipped(Col, Row: Integer; PicIndex, Flags: Byte; Source, Dest: Pointer);
+ function MirrorByte(Value: Byte): Byte;
+@@ -294,6 +296,288 @@
+   end;
+   end;
+ end;
++{ ports/dos speed patch (tandy-blit): the row loop that DrawPictureItem and DrawPictureItemClipped run for the
++  Tandy adapter, in the built-in assembler. What the Pascal does per pixel row: mark the row in RowDirtyFlags, move
++  SrcOfs and SaveOfs past LeftCut and DestOfs past LeftCol, lower RowFirstChangedOfs (with RowFirstChangedCol) when
++  DestOfs is below it, copy the bytes about to be overwritten to IconBackgroundBuffer (SaveBackground), copy the row
++  from Source^.Data to Dest^.Data (a plain copy of VisibleBytes, or with HasMask the destination ANDed with
++  Source^.Pixels^ and ORed with the data), raise RowLastChangedOfs, then step past RightCut and RightRoom. The masked
++  copy keeps the original's count: its control variable is the ShortInt SharedLoopIndex, so the Word limit is cut
++  to a signed byte (0464:0A3B, 0464:11A9): VisibleBytes and $FF bytes when that is 1..127, else none, and
++  SharedLoopIndex keeps the last value. Rows is SrcLastRow + 1 (0 is 65536 rows, as the Pascal's Word loop).
++  When the rows do not overlap in Dest (LeftCol + RightRoom is not negative) and Source, Dest and
++  IconBackgroundBuffer are different blocks, which is every call the game makes, the same bytes are produced in
++  passes over all the rows: the trackers (registers only), the save-under, then the copy (the AND pass, then the
++  OR pass), with nothing but pointer steps between rows. Otherwise the steps run row by row (@Slow), in the
++  Pascal's order. The Pascal reloaded both pointers for every byte and called Move for every 4-byte row of a 3D
++  view tile. }
++procedure TandyRows(FirstRow, Rows, SrcOfs, DestOfs, SaveOfs, LeftCut, LeftCol, VisibleBytes, RightCut, RightRoom,
++  LeftBytes: Word; HasMask, SaveBackground: Boolean; Source, Dest: Pointer); assembler;
++var
++  Count: Word;      { bytes copied per row: VisibleBytes, or the masked count }
++  DestSkip: Word;   { LeftCol + RightRoom: Dest bytes between two rows' runs }
++  SrcSkip: Word;    { LeftCut + RightCut: the same for Source and the save buffer }
++asm
++  cld
++  mov   ax, LeftCol
++  add   ax, RightRoom
++  mov   DestSkip, ax
++  js    @Slow                  { rows overlap: row by row }
++  mov   ax, LeftCut
++  add   ax, RightCut
++  mov   SrcSkip, ax
++  mov   ax, word ptr Source
++  cmp   ax, word ptr Dest
++  jne   @NotSame
++  mov   ax, word ptr Source+2
++  cmp   ax, word ptr Dest+2
++  je    @Slow
++@NotSame:
++  cmp   SaveBackground, 0
++  je    @CountRow
++  mov   ax, word ptr IconBackgroundBuffer
++  cmp   ax, word ptr Dest
++  jne   @CountRow
++  mov   ax, word ptr IconBackgroundBuffer+2
++  cmp   ax, word ptr Dest+2
++  je    @Slow
++@CountRow:
++  mov   ax, VisibleBytes
++  cmp   HasMask, 0
++  je    @Counted
++  xor   ah, ah
++  cmp   al, 1
++  jge   @Counted
++  xor   al, al                 { the ShortInt limit is below 1: no byte }
++@Counted:
++  mov   Count, ax
++  { the trackers, row by row as the Pascal: AX is DestOfs }
++  mov   si, FirstRow
++  mov   bx, si
++  shl   bx, 1
++  mov   cx, Rows
++  mov   dx, LeftBytes
++  mov   ax, DestOfs
++@Track:
++  mov   byte ptr RowDirtyFlags[si], 1
++  add   ax, LeftCol
++  cmp   ax, word ptr RowFirstChangedOfs[bx]
++  jae   @TrackFirst
++  mov   word ptr RowFirstChangedCol[bx], dx
++  mov   word ptr RowFirstChangedOfs[bx], ax
++@TrackFirst:
++  add   ax, Count
++  dec   ax                     { the row's last byte }
++  cmp   ax, word ptr RowLastChangedOfs[bx]
++  jbe   @TrackLast
++  mov   word ptr RowLastChangedOfs[bx], ax
++@TrackLast:
++  inc   ax
++  add   ax, RightRoom
++  inc   si
++  inc   bx
++  inc   bx
++  loop  @Track
++  cmp   HasMask, 0
++  je    @SaveRows
++  cmp   Count, 0
++  je    @SaveRows
++  mov   al, byte ptr Count
++  mov   byte ptr SharedLoopIndex, al
++@SaveRows:
++  push  ds
++  cmp   SaveBackground, 0
++  je    @Copy
++  les   di, IconBackgroundBuffer
++  add   di, $17
++  add   di, SaveOfs
++  add   di, LeftCut
++  lds   si, Dest
++  add   si, $17
++  add   si, DestOfs
++  add   si, LeftCol
++  mov   dx, Rows
++@SaveRow:
++  mov   cx, VisibleBytes
++  shr   cx, 1
++  rep   movsw
++  adc   cx, cx
++  rep   movsb
++  mov   cx, Count
++  sub   cx, VisibleBytes
++  add   si, cx                 { the save reads VisibleBytes, the Dest row advances by Count }
++  add   si, DestSkip
++  add   di, SrcSkip
++  dec   dx
++  jnz   @SaveRow
++@Copy:
++  les   di, Dest
++  add   di, $17
++  add   di, DestOfs
++  add   di, LeftCol
++  mov   bx, di                 { the first row in Dest, for the second masked pass }
++  cmp   HasMask, 0
++  jne   @Masked
++  lds   si, Source
++  add   si, $17
++  add   si, SrcOfs
++  add   si, LeftCut
++  mov   dx, Rows
++@CopyRow:
++  mov   cx, Count
++  shr   cx, 1
++  rep   movsw
++  adc   cx, cx
++  rep   movsb
++  add   si, SrcSkip
++  add   di, DestSkip
++  dec   dx
++  jnz   @CopyRow
++  pop   ds
++  jmp   @Done
++@Masked:
++  cmp   Count, 0
++  je    @MaskedDone
++  lds   si, Source
++  lds   si, [si+$13]           { Source^.Pixels }
++  add   si, SrcOfs
++  add   si, LeftCut
++  mov   dx, Rows
++@AndRow:
++  mov   cx, Count
++@AndByte:
++  lodsb
++  and   al, es:[di]
++  stosb
++  loop  @AndByte
++  add   si, SrcSkip
++  add   di, DestSkip
++  dec   dx
++  jnz   @AndRow
++  mov   di, bx
++  lds   si, Source
++  add   si, $17
++  add   si, SrcOfs
++  add   si, LeftCut
++  mov   dx, Rows
++@OrRow:
++  mov   cx, Count
++@OrByte:
++  lodsb
++  or    al, es:[di]
++  stosb
++  loop  @OrByte
++  add   si, SrcSkip
++  add   di, DestSkip
++  dec   dx
++  jnz   @OrRow
++@MaskedDone:
++  pop   ds
++  jmp   @Done
++
++@Slow:
++  mov   bx, FirstRow
++  mov   byte ptr RowDirtyFlags[bx], 1
++  mov   ax, LeftCut
++  add   SrcOfs, ax
++  add   SaveOfs, ax
++  mov   ax, DestOfs
++  add   ax, LeftCol
++  mov   DestOfs, ax
++  shl   bx, 1
++  cmp   ax, word ptr RowFirstChangedOfs[bx]
++  jae   @NoFirst
++  mov   dx, LeftBytes
++  mov   word ptr RowFirstChangedCol[bx], dx
++  mov   word ptr RowFirstChangedOfs[bx], ax
++@NoFirst:
++  cmp   SaveBackground, 0
++  je    @NoSave
++  les   di, IconBackgroundBuffer
++  add   di, $17
++  add   di, SaveOfs
++  push  ds
++  lds   si, Dest
++  add   si, $17
++  add   si, DestOfs
++  mov   cx, VisibleBytes
++  shr   cx, 1
++  rep   movsw
++  adc   cx, cx
++  rep   movsb
++  pop   ds
++@NoSave:
++  mov   ax, VisibleBytes
++  add   SaveOfs, ax
++  cmp   HasMask, 0
++  jne   @SlowMasked
++  push  ds
++  les   di, Dest
++  add   di, $17
++  add   di, DestOfs
++  lds   si, Source
++  add   si, $17
++  add   si, SrcOfs
++  mov   cx, ax
++  shr   cx, 1
++  rep   movsw
++  adc   cx, cx
++  rep   movsb
++  pop   ds
++  add   SrcOfs, ax
++  add   DestOfs, ax
++  jmp   @Last
++@SlowMasked:
++  cmp   al, 1
++  jl    @Last                  { the ShortInt limit is below 1: no byte }
++  mov   byte ptr SharedLoopIndex, al
++  xor   ah, ah
++  mov   cx, ax
++  mov   dx, ax
++  push  ds
++  les   di, Dest
++  add   di, $17
++  add   di, DestOfs
++  lds   si, Source
++  lds   si, [si+$13]           { Source^.Pixels }
++  add   si, SrcOfs
++  push  di
++@KeepBits:
++  lodsb
++  and   al, es:[di]
++  stosb
++  loop  @KeepBits
++  pop   di
++  lds   si, Source
++  add   si, $17
++  add   si, SrcOfs
++  mov   cx, dx
++@SetBits:
++  lodsb
++  or    al, es:[di]
++  stosb
++  loop  @SetBits
++  pop   ds
++  add   SrcOfs, dx
++  add   DestOfs, dx
++@Last:
++  mov   ax, DestOfs
++  dec   ax
++  cmp   ax, word ptr RowLastChangedOfs[bx]
++  jbe   @NoLast
++  mov   word ptr RowLastChangedOfs[bx], ax
++@NoLast:
++  mov   ax, RightCut
++  add   SrcOfs, ax
++  add   SaveOfs, ax
++  mov   ax, RightRoom
++  add   DestOfs, ax
++  inc   FirstRow
++  dec   Rows
++  jnz   @Slow
++@Done:
++end;
++
+ { 0464:08D4: copies picture Source (item PicIndex of it) into Dest at cell column Col and
+   pixel row Row * 8, one source row of bytes at a time, and marks the rows it changed in the
+   trackers (RowDirtyFlags, RowFirstChangedOfs, RowFirstChangedCol, RowLastChangedOfs). With bit 0 of Flags and a pixel
+@@ -338,7 +622,10 @@
+         ItemOfs := PicIndex * PPicture(Source)^.ByteSize;
+         DestOfs := DestOfs * 4;
+       end;
+-      if HasMask then
++      if VideoAdapter = AdapterTandy then
++        TandyRows(FirstRow, SrcLastRow + 1, ItemOfs, DestOfs, 0, 0, LeftCol, SrcRowBytes, 0, RightRoom, LeftBytes,
++          HasMask, False, Source, Dest)
++      else if HasMask then
+         for SrcRow := 0 to SrcLastRow do
+         begin
+           RowDirtyFlags[FirstRow] := 1;
+@@ -561,6 +848,10 @@
+         SrcOfs := SrcOfs + PicIndex * PPicture(Source)^.ByteSize;
+         DestOfs := DestOfs * 4;
+       end;
++      if VideoAdapter = AdapterTandy then
++        TandyRows(FirstRow, SrcLastRow + 1, SrcOfs, DestOfs, SaveOfs, LeftCut, LeftCol, VisibleBytes, RightCut,
++          RightRoom, LeftBytes, HasMask, SaveBackground, Source, Dest)
++      else
+       for SrcRow := 0 to SrcLastRow do
+       begin
+         RowDirtyFlags[FirstRow] := 1;

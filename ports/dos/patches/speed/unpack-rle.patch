@@ -1,0 +1,84 @@
+--- a/RES05.PAS
++++ b/RES05.PAS
+@@ -217,32 +217,55 @@
+   code byte 0..$7E is followed by code + 1 literal bytes; a code -127..-1 is followed by one byte
+   that is repeated -code times (whitepaper 4.1). UnpackedSize is not read. QUIRK 0802:0574: the
+   codes $7F and -128 ($80) match neither arm and InPos does not move, so the loop never ends; the
+-  1,245 blocks of the shipped DAX files contain neither code (a scan with tools/re/dax.py). }
+-procedure UnpackRle(var Source, Dest: Pointer; var PackedSize, UnpackedSize: Word);
+-var
+-  InPos, OutPos: Word;
+-  Code: ShortInt;
+-begin
+-  InPos := 0;
+-  OutPos := 0;
+-  repeat
+-    Code := ShortInt(PByteArray(Source)^[InPos]);
+-    case Code of
+-      0..$7E:
+-        begin
+-          Move(PByteArray(Source)^[InPos + 1], PByteArray(Dest)^[OutPos], Code + 1);
+-          Inc(InPos, Code + 2);
+-          Inc(OutPos, Code + 1);
+-        end;
+-      -$7F..-1:
+-        begin
+-          Code := -Code;
+-          FillChar(PByteArray(Dest)^[OutPos], Code, PByteArray(Source)^[InPos + 1]);
+-          Inc(InPos, 2);
+-          Inc(OutPos, Code);
+-        end;
+-    end;
+-  until InPos >= PackedSize;
++  1,245 blocks of the shipped DAX files contain neither code (a scan with tools/re/dax.py).
++  ports/dos speed patch (unpack-rle): the same loop in the built-in assembler. A literal run is one
++  REP MOVSW (and a MOVSB for an odd byte), a repeat run one REP STOSB, where the Pascal called
++  Move and FillChar for every run and reached Source and Dest through their var parameters for
++  every byte index. Everything the game loads from a DAX file passes through here. The quirk is
++  kept: $7F and $80 still hang. }
++procedure UnpackRle(var Source, Dest: Pointer; var PackedSize, UnpackedSize: Word); assembler;
++asm
++  les   di, PackedSize
++  mov   dx, es:[di]            { PackedSize }
++  les   di, Source
++  mov   ax, es:[di]
++  mov   bx, es:[di+2]          { Source^ in BX:AX }
++  les   di, Dest
++  les   di, es:[di]            { ES:DI = Dest^ }
++  push  ds
++  mov   ds, bx
++  mov   si, ax
++  mov   bx, ax                 { start of the packed data: InPos = SI - BX }
++  cld
++@Next:
++  lodsb                        { the code byte }
++  cmp   al, $7F
++  jb    @Literal               { 0..$7E: Code + 1 literal bytes }
++  cmp   al, $81
++  jae   @Repeat                { -127..-1: one byte, -Code times }
++@Hang:
++  jmp   @Hang                  { $7F, $80: the original never moves InPos (QUIRK 0802:0574) }
++@Literal:
++  mov   cl, al
++  xor   ch, ch
++  inc   cx
++  shr   cx, 1
++  rep   movsw
++  adc   cx, cx
++  rep   movsb
++  jmp   @Check
++@Repeat:
++  neg   al
++  mov   cl, al
++  xor   ch, ch
++  lodsb
++  rep   stosb
++@Check:
++  mov   ax, si
++  sub   ax, bx
++  cmp   ax, dx
++  jb    @Next                  { until InPos >= PackedSize }
++  pop   ds
+ end;
+ 
+ { 0802:05CD. Opens the DAX file Name + Ext twice: as DataFile through OpenGameFile (prompting

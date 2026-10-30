@@ -6,16 +6,19 @@
 ROOT := ../..
 PY := $(if $(wildcard $(ROOT)/.venv/bin/python),$(ROOT)/.venv/bin/python,python3)
 
-.PHONY: help game faithful sessions tandy test play dist clean
+.PHONY: help game faithful ref func prof sessions tandy test play dist clean
 .DEFAULT_GOAL := help
 
 help:
 	@echo "ports/dos: the PC game from the decompiled Pascal, with this port's patches (README.md)"
 	@echo "  make game          build/game/START.EXE and GAME.OVR (the patches of patches/series; ONLY=name.patch for one)"
 	@echo "  make faithful      the same build with no patch: must link the original program byte for byte"
-	@echo "  make sessions      replay every session of tests/sessions on the port against the original in the oracle (SESSION=name, SOUND=T|P|S); the gate for speed patches, about 15 min"
+	@echo "  make ref           build/ref: the series without its speed patches (patches/speed/), the behaviour they must keep"
+	@echo "  make func          the gate for speed patches: the suite (sessions/suite.txt) on ref and game in Tandy video and sound, compared (SESSION=name), about 2 min"
+	@echo "  make prof          the 8088 profile of the game, and its gain over ref, per session (SESSION=name, ACTIONS=1 for what each key costs)"
+	@echo "  make sessions      replay every session of tests/sessions on ref against the original in the oracle (SESSION=name, SOUND=T|P|S): the behaviour patches, about 15 min"
 	@echo "  make tandy         Tandy 1000 check in DOSBox-X, headless: titles, then the menu, never the wheel"
-	@echo "  make test          faithful, game and tandy (about 90 s): enough while the patches change single routines"
+	@echo "  make test          faithful, game, ref, func and tandy (about 4 min)"
 	@echo "  make play          the port's game in a DOSBox-X window (Tandy machine, about 1000 EX speed); opens a window"
 	@echo "  make dist          build/dist: the two files to copy onto the machine, with INSTALL.TXT"
 	@echo "  make clean"
@@ -26,15 +29,28 @@ game:
 faithful:
 	$(PY) tools/build.py --faithful
 
-sessions:
+ref:
+	$(PY) tools/build.py --ref
+
+func: game ref
+	$(PY) tools/func.py $(if $(SESSION),--session $(SESSION))
+
+prof: game ref
+	$(PY) tools/prof.py --build ref $(if $(SESSION),--session $(SESSION))
+	$(PY) tools/prof.py --build game $(if $(SESSION),--session $(SESSION))
+	$(PY) tools/prof.py --diff ref game $(if $(SESSION),--session $(SESSION))
+	$(if $(ACTIONS),$(PY) tools/prof.py --build game --actions --in-order --detail 5 $(if $(SESSION),--session $(SESSION)))
+
+sessions: ref
 	$(PY) tools/sessions.py $(if $(SESSION),--session $(SESSION)) $(if $(SOUND),--sound $(SOUND))
 
 tandy:
 	$(PY) tools/tandy.py
 
-# the faithful build first (it proves the pipeline), then the game and its behaviour on the Tandy machine.
-# `make sessions` is not part of it: it is the gate for patches whose code can no longer be compared byte for byte
-test: faithful game tandy
+# the faithful build first (it proves the pipeline), then the game, the speed patches' behaviour against the
+# reference (func), and the game on the Tandy machine. `make sessions` (the reference against the original, 15 min)
+# is for changes to the behaviour patches.
+test: faithful game ref func tandy
 
 play:
 	$(PY) tools/tandy.py --play

@@ -15,6 +15,9 @@ with `{$O}`, res03's sound driver assembled from its .ASM). Out:
 
 --faithful applies no patch: the result must be the original program (same load image, relocations and
 overlay file as poolrad/start-unpack.exe and GAME.OVR), which proves this pipeline before any patch is trusted.
+
+--ref links the series without its speed patches (those under patches/speed/) into build/ref (staged in
+build/ref-stage), and publishes nothing: the game whose behaviour the speed patches must keep (tools/func.py).
 Exit status 0 when built (and, with --faithful, identical), 1 otherwise.
 """
 from __future__ import annotations
@@ -58,6 +61,16 @@ def series() -> list[str]:
         if line:
             names.append(line)
     return names
+
+
+def use_dirs(stage_dir: Path, link_dir: Path) -> None:
+    global STAGE, LINK
+    STAGE, LINK = stage_dir, link_dir
+
+
+def is_speed(name: str) -> bool:
+    """A speed patch: it must not change what the game does, only how fast (tools/func.py checks it)."""
+    return name.startswith("speed/")
 
 
 def stage(patches: list[str]) -> None:
@@ -179,8 +192,19 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--faithful", action="store_true", help="no patch: must link the original program")
     ap.add_argument("--only", action="append", metavar="NAME", help="apply only these patches of the series")
+    ap.add_argument("--ref", action="store_true", help="the series without speed patches, into build/ref only")
     a = ap.parse_args(argv)
     patches = [] if a.faithful else series()
+    if a.ref:
+        use_dirs(BUILD / "ref-stage", BUILD / "ref")
+        try:
+            stage([p for p in patches if not is_speed(p)])
+            link()
+        except BuildError as e:
+            print("build: %s" % e)
+            return 1
+        print("build: reference (no speed patch) in %s" % LINK.relative_to(ROOT))
+        return 0
     if a.only:
         unknown = set(a.only) - set(patches)
         if unknown:

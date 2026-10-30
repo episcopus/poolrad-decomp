@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""sessions.py: show, in the oracle, that the port plays the same game as the original on every session of
-tests/sessions, apart from what its patches change on purpose.
+"""sessions.py: show, in the oracle, that the port's reference build (the series without speed patches,
+`build.py --ref`, build/ref) plays the same game as the original on every session of tests/sessions, apart from what
+its patches change on purpose. The speed patches are compared with that reference by func.py.
 
   .venv/bin/python ports/dos/tools/sessions.py [--session NAME ...] [--sound T|P|S]
   make -C ports/dos sessions [SESSION=name] [SOUND=P]
@@ -63,7 +64,7 @@ from oracle.keys import KeyScript  # noqa: E402
 from oracle.run import run_session  # noqa: E402
 import tp_toolchain as tp  # noqa: E402
 
-LINK = PORT / "build/link"
+LINK = PORT / "build/ref"           # the reference: behaviour patches only (func.py checks the speed patches against it)
 SESSIONS = ROOT / "tests/sessions"
 WHEEL_UNIT = "ovl02"            # the code wheel routine's overlay (CheckCodeWheel)
 OWN_FILES = ("\\POOLRAD\\GAME.OVR",)
@@ -294,7 +295,7 @@ def main(argv=None) -> int:
         port = layout.rebuilt(LINK)
         MASKED = overlay_vars()
     except (FileNotFoundError, ValueError, KeyError, TypeError) as e:
-        print("sessions: no usable port build in %s (%s): make -C ports/dos game" % (LINK, e))
+        print("sessions: no usable reference build in %s (%s): make -C ports/dos ref" % (LINK, e))
         return 1
     port.name = "ports/dos"
     names = a.session or sorted(p.stem for p in SESSIONS.glob("*.keys"))
