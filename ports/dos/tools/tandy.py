@@ -25,6 +25,13 @@ chip of 18 sessions, and build.py shows the sound driver (res03) is the original
 The emulated CPU runs at full host speed (cycles=max): this is a behaviour check, not a timing measurement.
 Exit status 0 when every check passes, 77 when DOSBox-X or ffmpeg is missing. Frames: build/tandy/<run>/frames.
 
+--deep plays further, on the reference build (build/ref) and the game: saved game A is loaded (the saved games of
+poolrad/SAVE are copied in), the 3D view turns, a character sheet and the area map are shown, typed by DOSBox-X's
+AUTOTYPE a few seconds apart. Nothing in it draws a random number (no step, no fight), so the two builds must show
+the same screens however fast each one is: every screen the reference holds for 2 s (the game waiting for a key)
+must appear in the game's video, pixel for pixel. This puts the speed patches on a real Tandy BIOS, DOS
+and video emulation, past the title screens.
+
 --play opens a DOSBox-X window instead (for a person, never for a test): the same Tandy machine running the
 port's game at about a Tandy 1000 EX's speed (an 8088 at 7.16 MHz is roughly `cycles=fixed PLAY_CYCLES`; DOSBox
 does not model 8088 timing, so this is a feel, not a measurement). Saved games stay in build/play between runs.
@@ -47,6 +54,12 @@ PLAY_CYCLES = 400                             # DOSBox-X cycles for the feel of 
 TANDY_CFG = b"T\r\nT\r\nC:\\POOLRAD\\\r\nC:\\POOLRAD\\SAVE\\\r\nF\r\n"   # video, sound, game path, save path, (as shipped)
 
 
+DEEP_KEYS = "l a left left right right right v esc a esc"   # load game A, turn, a character sheet, the area map
+DEEP_WAIT, DEEP_PACE = 60, 6                               # seconds before the first key (the titles), between keys
+DEEP_STEADY = 8                                            # frames (2 s) a reference screen is held to count: a faster
+                                                           # game passes through drawing screens sooner
+
+
 def game_dir(c: Path, exe: Path, ovr: Path, keep_saves: bool = False) -> None:
     """C:\\POOLRAD with the pinned game data (symlinks), the program under test and a Tandy POOL.CFG."""
     pool = c / "POOLRAD"
@@ -64,7 +77,7 @@ def game_dir(c: Path, exe: Path, ovr: Path, keep_saves: bool = False) -> None:
     (pool / "POOL.CFG").write_bytes(TANDY_CFG)
 
 
-def conf(run: Path, c: Path, args: str, cycles: str) -> str:
+def conf(run: Path, c: Path, args: str, cycles: str, typed: str = "") -> str:
     return f"""[dosbox]
 machine=tandy
 memsize=640
@@ -84,19 +97,24 @@ tandy=on
 mount c "{c}"
 c:
 cd \\poolrad
-dx-capture /v start.exe {args}
+{typed}dx-capture /v start.exe {args}
 exit
 """
 
 
-def record(name: str, exe: Path, ovr: Path, args: str, seconds: int) -> Path:
+def record(name: str, exe: Path, ovr: Path, args: str, seconds: int, keys: str = "") -> Path:
     run = OUT / name
     if run.exists():
         shutil.rmtree(run)
     (run / "cap").mkdir(parents=True)
     game_dir(run / "c", exe, ovr)
+    typed = ""
+    if keys:
+        for p in sorted((ROOT / "poolrad/SAVE").iterdir()):
+            shutil.copy(p, run / "c/POOLRAD/SAVE" / p.name)
+        typed = "autotype -w %d -p %d %s\n" % (DEEP_WAIT, DEEP_PACE, keys)
     cf = run / "dosbox.conf"
-    cf.write_text(conf(run, run / "c", args, "max"))
+    cf.write_text(conf(run, run / "c", args, "max", typed))
     env = dict(os.environ, SDL_VIDEODRIVER="dummy", SDL_AUDIODRIVER="dummy")
     subprocess.run(["dosbox-x", "-conf", str(cf), "-nopromptfolder", "-nogui", "-fastlaunch", "-silent",
                     "-time-limit", str(seconds)], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
@@ -141,6 +159,41 @@ def pixels(p: Path) -> tuple:
     return im.size, im.tobytes()
 
 
+def deep(seconds: int) -> int:
+    """--deep: the reference and the game, the same keys; the reference's steady screens must all be the game's."""
+    ref_exe, ref_ovr = PORT / "build/ref/POOL.EXE", PORT / "build/ref/POOL.OVR"
+    game_exe, game_ovr = PORT / "build/game/START.EXE", PORT / "build/game/GAME.OVR"
+    if not ref_exe.exists() or not game_exe.exists():
+        print("tandy: --deep needs build/ref and build/game (make -C ports/dos game ref)")
+        return 1
+    print("tandy: two DOSBox-X runs (reference, game), %d s each, keys: %s ..." % (seconds, DEEP_KEYS), flush=True)
+    with ThreadPoolExecutor(2) as ex:
+        done = {n: ex.submit(record, "deep-" + n, e, o, "", seconds, DEEP_KEYS)
+                for n, (e, o) in (("ref", (ref_exe, ref_ovr)), ("game", (game_exe, game_ovr)))}
+        dirs = {n: f.result() for n, f in done.items()}
+    steady, every = {}, {}
+    for n, d in dirs.items():
+        frames(d)                                   # every frame at 4 per second
+        allf = sorted((d / "frames").glob("*.png"))
+        px = [pixels(f) for f in allf]
+        every[n] = set(px)
+        steady[n] = [(f, p) for i, (f, p) in enumerate(zip(allf, px))
+                     if i >= DEEP_STEADY and all(px[i - k] == p for k in range(1, DEEP_STEADY + 1))]
+    game_set = every["game"]
+    distinct, seen = [], set()
+    for f, p in steady["ref"]:
+        if p not in seen:
+            seen.add(p)
+            distinct.append((f, p))
+    missing = [f for f, p in distinct if p not in game_set]
+    ok = len(distinct) >= 4 and not missing
+    print("  %-4s the game shows all %d steady screens of the reference pixel for pixel%s" % (
+        "ok" if ok else "FAIL", len(distinct), "" if not missing else " (missing: %s)" % ", ".join(
+            str(f.relative_to(ROOT)) for f in missing[:5])))
+    print("tandy: %s" % ("PASS" if ok else "FAIL"))
+    return 0 if ok else 1
+
+
 def available() -> bool:
     return shutil.which("dosbox-x") is not None and shutil.which("ffmpeg") is not None
 
@@ -149,6 +202,7 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--seconds", type=int, default=75, help="wall-clock time each run gets (the titles take about 45)")
     ap.add_argument("--play", action="store_true", help="open a DOSBox-X window to play the port's game")
+    ap.add_argument("--deep", action="store_true", help="reference against game past the titles (saved game, 3D view)")
     a = ap.parse_args(argv)
     if a.play:
         if not (PORT / "build/game/START.EXE").exists():
@@ -158,6 +212,8 @@ def main(argv=None) -> int:
     if not available():
         print("tandy: dosbox-x and ffmpeg are required (brew install dosbox-x ffmpeg)")
         return 77
+    if a.deep:
+        return deep(max(a.seconds, DEEP_WAIT + DEEP_PACE * (len(DEEP_KEYS.split()) + 2)))
     port_exe, port_ovr = PORT / "build/game/START.EXE", PORT / "build/game/GAME.OVR"
     if not port_exe.exists():
         print("tandy: no port build (make -C ports/dos game)")

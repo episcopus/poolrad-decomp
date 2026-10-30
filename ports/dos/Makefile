@@ -6,7 +6,7 @@
 ROOT := ../..
 PY := $(if $(wildcard $(ROOT)/.venv/bin/python),$(ROOT)/.venv/bin/python,python3)
 
-.PHONY: help game faithful ref func prof sessions tandy test play dist clean
+.PHONY: help game faithful ref func prof sessions tandy tandy-deep test play dist clean
 .DEFAULT_GOAL := help
 
 help:
@@ -18,6 +18,7 @@ help:
 	@echo "  make prof          the 8088 profile of the game, and its gain over ref, per session (SESSION=name, ACTIONS=1 for what each key costs)"
 	@echo "  make sessions      replay every session of tests/sessions on ref against the original in the oracle (SESSION=name, SOUND=T|P|S): the behaviour patches, about 15 min"
 	@echo "  make tandy         Tandy 1000 check in DOSBox-X, headless: titles, then the menu, never the wheel"
+	@echo "  make tandy-deep    DOSBox-X again, ref against game past the titles: a saved game, the 3D view, a character sheet, the area map (2.5 min)"
 	@echo "  make test          faithful, game, ref, func and tandy (about 4 min)"
 	@echo "  make play          the port's game in a DOSBox-X window (Tandy machine, about 1000 EX speed); opens a window"
 	@echo "  make dist          build/dist: the two files to copy onto the machine, with INSTALL.TXT"
@@ -46,6 +47,9 @@ sessions: ref
 
 tandy:
 	$(PY) tools/tandy.py
+
+tandy-deep: game ref
+	$(PY) tools/tandy.py --deep
 
 # the faithful build first (it proves the pipeline), then the game, the speed patches' behaviour against the
 # reference (func), and the game on the Tandy machine. `make sessions` (the reference against the original, 15 min)

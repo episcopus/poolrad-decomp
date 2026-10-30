@@ -234,7 +234,6 @@ class Costs:
         return name, cyc
 
 
-
 def profile(build: str, session: str) -> dict:
     from unicorn import UC_HOOK_BLOCK
     from oracle.machine import Stop
