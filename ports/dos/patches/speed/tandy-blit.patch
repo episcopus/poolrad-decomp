@@ -9,7 +9,7 @@
  procedure DrawPictureItem(Col, Row: Integer; PicIndex, Flags: Byte; Source, Dest: Pointer);
  procedure DrawPictureItemClipped(Col, Row: Integer; PicIndex, Flags: Byte; Source, Dest: Pointer);
  function MirrorByte(Value: Byte): Byte;
-@@ -294,6 +296,288 @@
+@@ -294,6 +296,360 @@
    end;
    end;
  end;
@@ -25,7 +25,7 @@
 +  When the rows do not overlap in Dest (LeftCol + RightRoom is not negative) and Source, Dest and
 +  IconBackgroundBuffer are different blocks, which is every call the game makes, the same bytes are produced in
 +  passes over all the rows: the trackers (registers only), the save-under, then the copy (the AND pass, then the
-+  OR pass), with nothing but pointer steps between rows. Otherwise the steps run row by row (@Slow), in the
++  OR pass, by words), with nothing but pointer steps between rows. Otherwise the steps run row by row (@Slow), in the
 +  Pascal's order. The Pascal reloaded both pointers for every byte and called Move for every 4-byte row of a 3D
 +  view tile. }
 +procedure TandyRows(FirstRow, Rows, SrcOfs, DestOfs, SaveOfs, LeftCut, LeftCol, VisibleBytes, RightCut, RightRoom,
@@ -139,6 +139,8 @@
 +  add   si, $17
 +  add   si, SrcOfs
 +  add   si, LeftCut
++  cmp   Count, 4
++  je    @Copy4
 +  mov   dx, Rows
 +@CopyRow:
 +  mov   cx, Count
@@ -152,9 +154,23 @@
 +  jnz   @CopyRow
 +  pop   ds
 +  jmp   @Done
++@Copy4:
++  mov   dx, SrcSkip
++  mov   bx, DestSkip
++  mov   cx, Rows
++@CopyRow4:
++  movsw
++  movsw
++  add   si, dx
++  add   di, bx
++  loop  @CopyRow4
++  pop   ds
++  jmp   @Done
 +@Masked:
 +  cmp   Count, 0
 +  je    @MaskedDone
++  cmp   Count, 4
++  je    @Masked4
 +  lds   si, Source
 +  lds   si, [si+$13]           { Source^.Pixels }
 +  add   si, SrcOfs
@@ -162,11 +178,20 @@
 +  mov   dx, Rows
 +@AndRow:
 +  mov   cx, Count
-+@AndByte:
++  shr   cx, 1
++  jcxz  @AndOdd
++@AndWord:
++  lodsw
++  and   ax, es:[di]
++  stosw
++  loop  @AndWord
++@AndOdd:
++  test  byte ptr Count, 1
++  jz    @AndNext
 +  lodsb
 +  and   al, es:[di]
 +  stosb
-+  loop  @AndByte
++@AndNext:
 +  add   si, SrcSkip
 +  add   di, DestSkip
 +  dec   dx
@@ -179,16 +204,63 @@
 +  mov   dx, Rows
 +@OrRow:
 +  mov   cx, Count
-+@OrByte:
++  shr   cx, 1
++  jcxz  @OrOdd
++@OrWord:
++  lodsw
++  or    ax, es:[di]
++  stosw
++  loop  @OrWord
++@OrOdd:
++  test  byte ptr Count, 1
++  jz    @OrNext
 +  lodsb
 +  or    al, es:[di]
 +  stosb
-+  loop  @OrByte
++@OrNext:
 +  add   si, SrcSkip
 +  add   di, DestSkip
 +  dec   dx
 +  jnz   @OrRow
 +@MaskedDone:
++  pop   ds
++  jmp   @Done
++@Masked4:                      { one cell wide (the 3D view's tiles, 8x8 symbols): two words a row, skips in registers }
++  lds   si, Source
++  lds   si, [si+$13]           { Source^.Pixels }
++  add   si, SrcOfs
++  add   si, LeftCut
++  mov   dx, SrcSkip
++  mov   ax, DestSkip
++  mov   cx, Rows
++  push  bx
++  mov   bx, ax
++@AndRow4:
++  lodsw
++  and   ax, es:[di]
++  stosw
++  lodsw
++  and   ax, es:[di]
++  stosw
++  add   si, dx
++  add   di, bx
++  loop  @AndRow4
++  pop   di
++  lds   si, Source
++  add   si, $17
++  add   si, SrcOfs
++  add   si, LeftCut
++  mov   cx, Rows
++@OrRow4:
++  lodsw
++  or    ax, es:[di]
++  stosw
++  lodsw
++  or    ax, es:[di]
++  stosw
++  add   si, dx
++  add   di, bx
++  loop  @OrRow4
 +  pop   ds
 +  jmp   @Done
 +
@@ -298,7 +370,7 @@
  { 0464:08D4: copies picture Source (item PicIndex of it) into Dest at cell column Col and
    pixel row Row * 8, one source row of bytes at a time, and marks the rows it changed in the
    trackers (RowDirtyFlags, RowFirstChangedOfs, RowFirstChangedCol, RowLastChangedOfs). With bit 0 of Flags and a pixel
-@@ -338,7 +622,10 @@
+@@ -338,7 +694,10 @@
          ItemOfs := PicIndex * PPicture(Source)^.ByteSize;
          DestOfs := DestOfs * 4;
        end;
@@ -310,7 +382,7 @@
          for SrcRow := 0 to SrcLastRow do
          begin
            RowDirtyFlags[FirstRow] := 1;
-@@ -561,6 +848,10 @@
+@@ -561,6 +920,10 @@
          SrcOfs := SrcOfs + PicIndex * PPicture(Source)^.ByteSize;
          DestOfs := DestOfs * 4;
        end;

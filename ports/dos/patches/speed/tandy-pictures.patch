@@ -73,7 +73,7 @@
            for Col := OutOfs to OutOfs + ByteSize - 1 do
            begin
              if (Data[Col] shr 4) = Color then Pixels^[Col] := $F0;
-@@ -1000,6 +1044,44 @@
+@@ -1072,6 +1116,44 @@
    Inc(Swapped, (Value and $F0) shr 4);
    SwapNibbles := Swapped;
  end;
@@ -118,7 +118,7 @@
  { 0464:15C7: copies the picture Source into Dest mirrored: the palette is copied
    as is, then the pixel data of every row is reversed (each 16-bit unit through
    MirrorWord for adapter 0, each byte through MirrorByte in 4-byte groups for
-@@ -1075,22 +1157,9 @@
+@@ -1147,22 +1229,9 @@
        AdapterTandy:
          begin
            RowBytes := WidthCols * 4;

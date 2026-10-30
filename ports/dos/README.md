@@ -48,6 +48,9 @@ add the name to `patches/series`. A speed patch lives in `patches/speed/` and mu
 | `speed/tandy-blit.patch` | the Tandy row loop of `DrawPictureItem` and `DrawPictureItemClipped` (res07): the 3D view's tiles, sprites, icons. `TandyRows` does the trackers, the save-under and the copy (the masked one in an AND pass and an OR pass) each over all rows, with the original's quirks (the masked loop's `ShortInt` count, `SharedLoopIndex`), and falls back to the exact row-by-row order when rows could overlap | res07 |
 | `speed/tandy-pictures.patch` | the Tandy branches of `MirrorPicture` (sprites facing left: `TandyMirrorRows`) and of `UnpackPicturePixels` (the transparent colour's mask of every picture loaded: `TandyColorMask`) | res07 |
 | `speed/tandy-fill.patch` | window clears (`ClearRect`, res06; `ClearWindow`, res09), the screen flush (`FlushPictureChanges`' Tandy branch and its tracker resets) and new pictures (`AllocatePicture`) by words: TP 6's `FillChar` and `Move` go a byte at a time (`0AF8:16B7`, `0AF8:16A1`) | res06, res07, res09 |
+| `speed/tandy-show.patch` | `ShowPicture`'s Tandy branch (res07), pictures straight to the screen: `TandyShowRows` copies the rows by words | res07 |
+| `speed/walk-line.patch` | `WalkLine` (ovl30), the line-of-sight walk of combat targeting and the AI, in assembler: the `Bound` line it stepped beside the real one never moves in Y (its D1 starts at -N and D3 is 0), so its height is the start tile's for the whole walk; the walked line is `SetupLine`'s and `StepLine`'s arithmetic inline | ovl30 |
+| `speed/sort-table.patch` | `SortTable` (ovl30), the exchange sort of every target scan, in assembler, same order and same test | ovl30 |
 
 The speed patches change resident code, so every segment after res05 moves (the build lists every unit as different:
 their far calls point elsewhere). DGROUP's layout does not change: no patch adds a global or a typed constant.
@@ -143,21 +146,25 @@ tile, about 250 tiles a step) and the status text; a combat turn the text panels
 
 | Action | Reference | Game | |
 |---|---|---|---|
-| start-up to the menu | 10.0 s | 3.8 s | 2.7x |
-| load a saved game | 8.2 s | 4.5 s | 1.8x |
-| step forward in the 3D view | 1.2 s | 0.6 s | 2.0x |
-| turn | 0.7 to 1.0 s | 0.3 to 0.5 s | 2.2x |
-| combat, a quick turn (with the monsters' moves) | 2.5 to 6.3 s | 0.9 to 2.3 s | 2.6 to 3.0x |
-| character sheet | 1.6 s | 0.5 s | 3.5x |
-| a menu key (median, `character-menu`) | 0.56 s | 0.11 s | 5x |
+| start-up to the menu | 10.0 s | 3.6 s | 2.8x |
+| load a saved game | 8.2 s | 4.2 s | 1.9x |
+| step forward in the 3D view | 1.2 s | 0.55 s | 2.2x |
+| turn | 0.7 to 1.0 s | 0.27 to 0.39 s | 2.6x |
+| the first round of a battle (`maze-battle`, goblins) | 21.2 s | 8.6 s | 2.5x |
+| combat, a quick turn (with the monsters' moves) | 2.5 to 10.3 s | 0.8 to 3.7 s | 2.8 to 3.2x |
+| the City Hall guards' battle (`council-guards`: the key that starts it, all their turns) | 95.9 s | 34.5 s | 2.8x |
+| character sheet | 1.6 s | 0.4 s | 3.9x |
+| a menu key (median: `character-menu`, `create-character`) | 0.5 s | 0.11 s | 5x |
+| a key in the shop, the temple (median) | 0.9 to 1.0 s | 0.4 s | 2.4x |
 
-Over whole sessions the work falls by 45 to 68 % (`make prof`). The rest of a screen that animates while it waits
+Over whole sessions the work falls by 52 to 70 % (`make prof`). The rest of a screen that animates while it waits
 (the camp fire, a portrait, the treasure) is redrawn on every pass of its wait loop; that is faster too, which makes
 the animation smoother and the key reach the game sooner, but it is not time the player waits for.
 
-**Next candidates** (from the current profile): the per-call overhead of the 3D view's tile path (`DrawCellPicture`
-and `DrawPictureItem`'s Pascal set-up, 250 calls a step), the combat start (window clears, `ovl30`'s line walks for
-the targets), `ShowPicture`, string copies around the text. MAME's `t1000hx` (same CPU, clock and video as the EX;
+**Next candidates** (from the current profile): in combat, `ScanTargets` and `InDirArc` (ovl30) and `FootprintCell`
+(ovl31), the window clears and text panels (already at bus speed: fewer of them would mean changing what is drawn
+in between, which the game shows); in the 3D view, the per-call overhead of the tile path (`DrawCellPicture` and
+`DrawPictureItem`'s Pascal set-up, about 250 calls a step) and the string copies of the status text; loading. MAME's `t1000hx` (same CPU, clock and video as the EX;
 needs a ROM dump of the HX) would give real timings headless, the way the CoCo port's tests drive MAME.
 
 **Disk and memory.** The rebuilt `START.EXE` is not EXEPACK packed (about 5.5 KB larger on disk). A packer (the

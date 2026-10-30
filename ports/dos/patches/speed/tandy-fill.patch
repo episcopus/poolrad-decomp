@@ -8,11 +8,10 @@
  procedure ClearRect(Left, Top, Right, Bottom: ShortInt);
  implementation
  uses Crt, Dos, POOLVARS, RES04, RES05;
-@@ -581,7 +582,44 @@
- procedure DelayByGameSpeed;
+@@ -582,6 +583,44 @@
  begin
    Delay(GameSpeed * 225);
-+end;
+ end;
 +{ ports/dos speed patch (tandy-fill): the Tandy clear of ClearRect and ClearWindow (res09), in the built-in
 +  assembler. For each graphics row TopCode..BottomCode (a Word loop: none when TopCode is above BottomCode), Width
 +  bytes from byte column LeftCode of that row (Row * 160 + LeftCode) are set to 0 in each of the four banks $B800,
@@ -24,12 +23,12 @@
 +  mov   si, TopCode
 +  cmp   si, BottomCode
 +  ja    @Done
-+@Row:
 +  mov   ax, si
 +  mov   bx, 160
 +  mul   bx
 +  add   ax, LeftCode
-+  mov   dx, ax                 { the row's first byte in each bank }
++  mov   dx, ax                 { the row's first byte in each bank: Row * 160 + LeftCode, by 160 a row }
++@Row:
 +  mov   bx, $B800
 +@Bank:
 +  mov   es, bx
@@ -46,14 +45,15 @@
 +  cmp   si, BottomCode
 +  je    @Done
 +  inc   si
++  add   dx, 160
 +  jmp   @Row
 +@Done:
- end;
++end;
 +
  { 0709:0DD3. Clears the Left..Right by Top..Bottom rectangle to 0 by video adapter (the
    VideoAdapter global), the Byte-coordinate twin of ClearWindow: 0 fills the text-scanline
    rows Top*4..Bottom*4+3 on both text banks, 1 draws the rectangle through FillPlaneRect on
-@@ -626,13 +664,7 @@
+@@ -626,13 +665,7 @@
          BottomCode := Bottom * GraphRowsPerTextRow + LastGraphRow;
          LeftCode := Left * BytesPerGraphColumn;
          Width := (Right - Left + 1) * BytesPerGraphColumn;
@@ -79,7 +79,7 @@
  procedure FlushPictureChanges;
  procedure RemapPictureColors(FromMap, ToMap: Pointer; FirstItem: Integer; Flicker: Byte; Pic: Pointer);
  procedure AllocatePicture(Height, WidthCols: Word; ItemCount, AllocFlags: Byte; var Pic);
-@@ -1236,6 +1238,57 @@
+@@ -1308,6 +1310,57 @@
      end;
    end;
  end;
@@ -137,7 +137,7 @@
  { 0464:1B52: presents the changed regions the blitters marked in RowDirtyFlags (the
    per-row changed flag) and the tracker arrays, one branch per video adapter. Per
    changed row the staging buffer DrawBuf holds the changed bytes at
-@@ -1318,15 +1371,11 @@
+@@ -1390,15 +1443,11 @@
          Port[GcData] := WriteMode0;
        end;
      AdapterTandy:
@@ -157,7 +157,7 @@
  end;
  { 0464:1E5C: recolours item FirstItem of picture Pic (item 0 when FirstItem is
    negative). For every colour index I whose FromMap and ToMap entries differ, each pixel
-@@ -1487,7 +1536,7 @@
+@@ -1559,7 +1608,7 @@
    if VideoAdapter <> AdapterCga then ItemBytes := ItemBytes shl 1;
    BlockBytes := ItemCount * ItemBytes;
    GetMem(PPicture(Pointer(Pic)), BlockBytes + $17);

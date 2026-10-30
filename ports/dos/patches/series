@@ -7,3 +7,6 @@ speed/tandy-glyph.patch   # res06 DrawGlyph's Tandy branch in assembler: all tex
 speed/tandy-blit.patch    # res07 the Tandy row loop of DrawPictureItem and DrawPictureItemClipped: 3D view tiles, sprites
 speed/tandy-pictures.patch # res07 MirrorPicture and UnpackPicturePixels, Tandy branches: sprites facing left, every picture loaded
 speed/tandy-fill.patch    # res06/res07/res09 window clears, the screen flush and new pictures by words (TP 6's FillChar and Move go a byte at a time)
+speed/tandy-show.patch    # res07 ShowPicture's Tandy branch: pictures straight to the screen (portraits, title, symbols)
+speed/walk-line.patch     # ovl30 WalkLine in assembler: the line of sight walks of combat targeting and the AI
+speed/sort-table.patch    # ovl30 SortTable in assembler: the target list of every combat scan

@@ -1,0 +1,232 @@
+--- a/OVL30.PAS
++++ b/OVL30.PAS
+@@ -154,44 +154,192 @@
+   StepCount carry the end point and the steps used. Called by AiTurn, GazeCharmsTarget,
+   RunAimCursor and ScanTargets. }
+ function WalkLine(X1, Y1: ShortInt; var Ex, Ey: ShortInt; var StepCount: Word;
+-  Map: PMapRows): Boolean;
++  Map: PMapRows): Boolean; assembler;
++{ ports/dos speed patch (walk-line): the same walk in the built-in assembler, with one line set up and stepped inline.
++  The Pascal's Bound line runs from (0, B) to (N, B), B the start tile's BoundY and N >= 0: its D1 starts at -N and
++  never grows (D3 is 0), so it never steps in Y and Bound.Y is B for the whole walk; the gate compares with B. The
++  walked line is SetupLine's and StepLine's arithmetic as it stands (Integer D1, D2, D3; the Byte First wrapping by
++  2 or 3; X or Y major on DX > DY), so Ex, Ey, StepCount and the result are the Pascal's. Line, Bound and the
++  Pattern byte were locals of WalkLine: nothing outside it saw them. }
+ var
+-  Line, Bound: TLineState;        { the walked line and the horizontal tile bound }
+-  Flag: Boolean;                  { True once the line stepped }
+-  StepDone: Boolean;              { the Bound step result, never read (QUIRK ovl30:0544) }
+-  Limit: Word;                    { 2 * StepCount + 1: the First cutoff }
+-begin
+-  Limit := StepCount * 2 + 1;
+-  Line.X1 := X1;
+-  Line.Y1 := Y1;
+-  Line.X2 := Ex;
+-  Line.Y2 := Ey;
+-  SetupLine(@Line);
+-  Bound.X1 := 0;
+-  Bound.Y1 := WalkTileTable[Map^[Y1].Cells[X1]].BoundY;
+-  if Line.DX > Line.DY then
+-    Bound.X2 := Line.DX
+-  else
+-    Bound.X2 := Line.DY;
+-  Bound.Y2 := WalkTileTable[Map^[Y1].Cells[X1]].BoundY;
+-  SetupLine(@Bound);
+-  Flag := False;
+-  repeat
+-    if ((Map^[0].Head[6] = 0) and
+-        (WalkTileTable[Map^[Line.Y].Cells[Line.X]].BlockY > Bound.Y)) or
+-       (Line.First > Limit) then
+-    begin
+-      Ex := Line.X;
+-      Ey := Line.Y;
+-      StepCount := Line.First;
+-      WalkLine := False;
+-      Exit;
+-    end;
+-    StepDone := StepLine(@Bound);
+-    Flag := not StepLine(@Line);
+-  until Flag;
+-  StepCount := Line.First;
+-  WalkLine := True;
++  X, Y, X2, Y2, LDX, LDY, D1, D2, D3, SX, SY, Limit, B, MapOfs: Integer;
++  First, Gate: Byte;
++asm
++  les   di, StepCount
++  mov   ax, es:[di]
++  shl   ax, 1
++  inc   ax
++  mov   Limit, ax              { StepCount * 2 + 1 }
++  mov   al, X1
++  cbw
++  mov   X, ax
++  mov   al, Y1
++  cbw
++  mov   Y, ax
++  les   di, Ex
++  mov   al, es:[di]
++  cbw
++  mov   X2, ax
++  les   di, Ey
++  mov   al, es:[di]
++  cbw
++  mov   Y2, ax
++  { SetupLine: DX, SX from X2 - X1; DY, SY from Y2 - Y1 }
++  mov   ax, X2
++  sub   ax, X
++  mov   cx, 1
++  jg    @XPos
++  mov   cx, 0
++  je    @XPos
++  mov   cx, -1
++  neg   ax
++@XPos:
++  mov   LDX, ax
++  mov   SX, cx
++  mov   ax, Y2
++  sub   ax, Y
++  mov   cx, 1
++  jg    @YPos
++  mov   cx, 0
++  je    @YPos
++  mov   cx, -1
++  neg   ax
++@YPos:
++  mov   LDY, ax
++  mov   SY, cx
++  mov   First, 0
++  mov   ax, LDX
++  mov   dx, LDY
++  cmp   ax, dx
++  jle   @YMajorSetup
++  shl   dx, 1                  { DY * 2 }
++  mov   D3, dx
++  mov   cx, dx
++  sub   cx, ax
++  mov   D1, cx                 { DY * 2 - DX }
++  mov   cx, LDY
++  sub   cx, ax
++  shl   cx, 1
++  mov   D2, cx                 { (DY - DX) * 2 }
++  jmp   @SetupDone
++@YMajorSetup:
++  shl   ax, 1                  { DX * 2 }
++  mov   D3, ax
++  mov   cx, ax
++  sub   cx, dx
++  mov   D1, cx                 { DX * 2 - DY }
++  mov   cx, LDX
++  sub   cx, dx
++  shl   cx, 1
++  mov   D2, cx                 { (DX - DY) * 2 }
++@SetupDone:
++  { the map: the gate byte and B from the start tile }
++  les   bx, Map
++  mov   MapOfs, bx
++  mov   al, es:[bx+6]
++  mov   Gate, al               { Map^[0].Head[6] }
++  mov   ax, Y
++  mov   cx, 50
++  imul  cx
++  add   ax, X
++  add   ax, 7
++  add   ax, MapOfs
++  mov   si, ax
++  mov   al, es:[si]            { Map^[Y1].Cells[X1] }
++  xor   ah, ah
++  shl   ax, 1
++  shl   ax, 1
++  mov   si, ax
++  mov   al, byte ptr WalkTileTable[si]
++  xor   ah, ah
++  mov   B, ax                  { its BoundY }
++@Walk:
++  cmp   Gate, 0
++  jne   @NoGate
++  mov   ax, Y
++  mov   cx, 50
++  imul  cx
++  add   ax, X
++  add   ax, 7
++  add   ax, MapOfs
++  mov   si, ax
++  mov   al, es:[si]            { Map^[Line.Y].Cells[Line.X] }
++  xor   ah, ah
++  shl   ax, 1
++  shl   ax, 1
++  mov   si, ax
++  mov   al, byte ptr WalkTileTable[si+1]
++  xor   ah, ah
++  cmp   ax, B
++  jg    @Stopped               { BlockY > Bound.Y }
++@NoGate:
++  mov   al, First
++  xor   ah, ah
++  cmp   ax, Limit
++  ja    @Stopped               { Line.First > Limit }
++  { StepLine(@Line) }
++  mov   ax, LDX
++  cmp   ax, LDY
++  jle   @YMajor
++  mov   ax, X
++  cmp   ax, X2
++  je    @Arrived
++  cmp   D1, 0
++  jl    @XMinor
++  mov   ax, SY
++  add   Y, ax
++  mov   ax, D2
++  add   D1, ax
++  add   First, 3
++  jmp   @XStep
++@XMinor:
++  mov   ax, D3
++  add   D1, ax
++  add   First, 2
++@XStep:
++  mov   ax, SX
++  add   X, ax
++  jmp   @Walk
++@YMajor:
++  mov   ax, Y
++  cmp   ax, Y2
++  je    @Arrived
++  cmp   D1, 0
++  jl    @YMinor
++  mov   ax, SX
++  add   X, ax
++  mov   ax, D2
++  add   D1, ax
++  add   First, 3
++  jmp   @YStep
++@YMinor:
++  mov   ax, D3
++  add   D1, ax
++  add   First, 2
++@YStep:
++  mov   ax, SY
++  add   Y, ax
++  jmp   @Walk
++@Stopped:
++  les   di, Ex
++  mov   al, byte ptr X
++  mov   es:[di], al
++  les   di, Ey
++  mov   al, byte ptr Y
++  mov   es:[di], al
++  les   di, StepCount
++  mov   al, First
++  xor   ah, ah
++  mov   es:[di], ax
++  xor   al, al                 { False }
++  jmp   @Done
++@Arrived:
++  les   di, StepCount
++  mov   al, First
++  xor   ah, ah
++  mov   es:[di], ax
++  mov   al, 1                  { True }
++@Done:
+ end;
+ { ovl30:057B. Tests whether the point (ToX, ToY) lies in the 90-degree arc facing compass
+   direction Dir from (FromX, FromY): 0 is north then clockwise to 7 (north-west), 8 (and the

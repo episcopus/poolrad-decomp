@@ -1,0 +1,57 @@
+--- a/RES07.PAS
++++ b/RES07.PAS
+@@ -61,6 +61,7 @@
+ function SwapNibbles(Value: Byte): Byte;
+ procedure TandyMirrorRows(Source, Dest: Pointer; Rows, RowBytes: Word);
+ procedure MirrorPicture(Source, Dest: Pointer);
++procedure TandyShowRows(Source: Pointer; FirstRow, Rows, FirstCol, RowBytes: Word);
+ procedure ShowPicture(PicCol, PicRow: Integer; Buf: Pointer);
+ procedure FastFill(var X; Count: Word; Value: Byte);
+ procedure TandyFlushRows;
+@@ -1237,6 +1238,36 @@
+         end;
+     end;
+   end;
++end;
++
++{ ports/dos speed patch (tandy-show): ShowPicture's Tandy branch in the built-in assembler: Rows rows of RowBytes
++  bytes from Source (the picture's data, row after row) to the screen, row FirstRow + I at byte column FirstCol of
++  the segment TandyScanlineSegments[FirstRow + I]. The Pascal called Move for each row (a byte at a time); the
++  picture is on the heap and the screen is not, so a forward copy by words writes the same bytes. ShowPicture
++  keeps its Pascal loop for an empty picture and for rows past 32767 (its loop variable is an Integer). }
++procedure TandyShowRows(Source: Pointer; FirstRow, Rows, FirstCol, RowBytes: Word); assembler;
++asm
++  cld
++  mov   bx, FirstRow
++  shl   bx, 1                  { TandyScanlineSegments index }
++  mov   dx, Rows
++  push  ds                     { DGROUP, on the stack while DS is the picture's }
++  lds   si, Source
++@Row:
++  pop   es
++  push  es
++  mov   es, word ptr es:TandyScanlineSegments[bx]
++  mov   di, FirstCol
++  mov   cx, RowBytes
++  shr   cx, 1
++  rep   movsw
++  adc   cx, cx
++  rep   movsb
++  inc   bx
++  inc   bx
++  dec   dx
++  jnz   @Row
++  pop   ds
+ end;
+ 
+ { 0464:1951: shows a picture at (PicCol, PicRow) by copying its packed pixel data
+@@ -1301,6 +1332,9 @@
+           FirstRow := PicRow * 8;
+           LastRow := FirstRow + Height - 1;
+           FirstCol := PicCol * 4;
++          if (Height > 0) and (FirstRow <= LastRow) and (LastRow <= $7FFF) then
++            TandyShowRows(@PPicture(Buf)^.Data, FirstRow, Height, FirstCol, RowBytes)
++          else
+           for Row := FirstRow to LastRow do
+           begin
+             Move(PPicture(Buf)^.Data[SourceOfs], Mem[TandyScanlineSegments[Row]:FirstCol], RowBytes);

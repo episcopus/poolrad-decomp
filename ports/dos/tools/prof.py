@@ -278,7 +278,7 @@ def profile(build: str, session: str) -> dict:
     def close(label):
         settle()
         work = state["cyc"] - mark["cyc"] - (state["wait"] - mark["wait"])
-        top = dict(sorted(act.items(), key=lambda kv: -kv[1])[:12])
+        top = dict(sorted(act.items(), key=lambda kv: -kv[1])[:40])
         actions.append((mark["label"], work, state["wait"] - mark["wait"], top))
         act.clear()
         mark.update(cyc=state["cyc"], wait=state["wait"], label=label)

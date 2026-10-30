@@ -1,0 +1,88 @@
+--- a/OVL30.PAS
++++ b/OVL30.PAS
+@@ -31,31 +31,60 @@
+ { ovl30:002E. Sorts the table DS:6718 in place (element 0 holds the count in Val): for every pair
+   I < J it swaps the two 3-byte records when Key[J] < Key[I], or when the keys are equal and Val[J]
+   < Val[I] and Val[J] mod 2 <= Val[I] mod 2. Called by ScanTargets. }
+-procedure SortTable;
+-var
+-  I: Byte;                        { the outer index, 1 to Count - 1 }
+-  J: Byte;                        { the inner index, I + 1 to Count }
+-  ValJ: Byte;                     { Val of record J }
+-  ValI: Byte;                     { Val of record I }
+-  Swap: TSortRec;                 { the swap buffer }
+-begin
+-  if SortEntries[0].Val <= 1 then
+-    Exit;
+-  for I := 1 to SortEntries[0].Val - 1 do
+-  begin
+-    for J := I + 1 to SortEntries[0].Val do
+-    begin
+-      ValI := SortEntries[I].Val;
+-      ValJ := SortEntries[J].Val;
+-      if (SortEntries[J].Key < SortEntries[I].Key) or
+-         ((SortEntries[J].Key = SortEntries[I].Key) and (ValJ < ValI) and ((ValJ mod 2) <= (ValI mod 2))) then
+-      begin
+-        Swap := SortEntries[I];
+-        SortEntries[I] := SortEntries[J];
+-        SortEntries[J] := Swap;
+-      end;
+-    end;
+-  end;
++procedure SortTable; assembler;
++{ ports/dos speed patch (sort-table): the same exchange sort in the built-in assembler, records swapped in place in
++  the same order (I from 1 to Count - 1, J from I + 1 to Count; Count read once, as the for loops do), with the
++  same test: Key[J] < Key[I], or equal keys with Val[J] < Val[I] and Val[J] mod 2 <= Val[I] mod 2. The loop
++  variables and the swap buffer were locals. }
++asm
++  mov   cl, byte ptr SortEntries[2]   { entry 0's Val: the count }
++  cmp   cl, 1
++  jbe   @Done
++  mov   dl, 1                  { I }
++  mov   bx, 3                  { the offset of entry I }
++@Outer:
++  mov   dh, dl
++  inc   dh                     { J }
++  mov   si, bx
++  add   si, 3                  { the offset of entry J }
++@Inner:
++  mov   al, byte ptr SortEntries[si+1]
++  mov   ah, byte ptr SortEntries[bx+1]
++  cmp   al, ah
++  jb    @Swap                  { Key[J] < Key[I] }
++  jne   @NoSwap
++  mov   al, byte ptr SortEntries[si+2]
++  mov   ah, byte ptr SortEntries[bx+2]
++  cmp   al, ah
++  jae   @NoSwap                { Val[J] < Val[I] }
++  and   al, 1
++  and   ah, 1
++  cmp   al, ah
++  ja    @NoSwap                { Val[J] mod 2 <= Val[I] mod 2 }
++@Swap:
++  mov   ax, word ptr SortEntries[bx]
++  mov   di, word ptr SortEntries[si]
++  mov   word ptr SortEntries[bx], di
++  mov   word ptr SortEntries[si], ax
++  mov   al, byte ptr SortEntries[bx+2]
++  mov   ah, byte ptr SortEntries[si+2]
++  mov   byte ptr SortEntries[bx+2], ah
++  mov   byte ptr SortEntries[si+2], al
++@NoSwap:
++  cmp   dh, cl
++  je    @NextI
++  inc   dh
++  add   si, 3
++  jmp   @Inner
++@NextI:
++  mov   al, cl
++  dec   al
++  cmp   dl, al
++  je    @Done
++  inc   dl
++  add   bx, 3
++  jmp   @Outer
++@Done:
+ end;
+ { ovl30:01A0. Sets up the line drawing state Line from its two endpoints: it clears the stepped
+   flag, computes DX = |X2 - X1| and DY = |Y2 - Y1|, the x and y step directions through SignOf, the
