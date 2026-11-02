@@ -1,10 +1,14 @@
 POOL OF RADIANCE (PC), REBUILT FROM ITS DECOMPILED SOURCE: NO CODE WHEEL, FASTER
 
 This is the PC game (version 1.3) linked again from its decompiled Turbo
-Pascal source, with two kinds of change:
+Pascal source, with these changes:
 
 - The game no longer asks for a code word from the translation wheel. The
   title screens play, then the character menu comes up.
+- A hang of the original is fixed: in combat, a character on Quick whose
+  readied weapon is darts could freeze the game when an enemy stood next to
+  it (the character's panel redrawn over and over, no key answered). Such a
+  character now throws its darts and the battle goes on.
 - The game is faster. On Tandy video (POOL.CFG video T) the drawing: text,
   the 3D view, sprites, pictures, window clears. On every machine: loading
   and the line-of-sight work of combat. An emulated 8088 at 7.16 MHz with
