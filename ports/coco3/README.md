@@ -34,6 +34,8 @@ the game through a call gate between two MMU tasks; the game's 48 code banks loa
 
 Step 8.13 (quality of life, `docs/PHASE-8.13.md`): the default game has no code wheel, names the port on the credits screen (`VERSION`), says BASIC where the PC said DOS and the loading screen says the CPU mode and the storage's mode; `make QOL=0 game` builds the PC's game, which the session goldens are (every target that plays a session does).
 
+The fixes of the original's bugs (`fixes/README.md` at the repository root: the quick-combat hang with darts) are in the default game too; `QOL=0` leaves them out with the other changes (`scripts/game_build.sh` passes `--faithful` to the translator); `FIXES=1` keeps them in a `QOL=0` game, so the sessions play on a fixed game (`make combat FIXES=1`).
+
 ## Quick start
 
 ```sh

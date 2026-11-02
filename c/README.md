@@ -35,7 +35,7 @@ Enter, Esc, letters.
 
 | Directory | Contents |
 |---|---|
-| `game/` | **generated** by `make c-translate`: one `.c` per Pascal unit, `game.h` (types, constants, DGROUP globals as macros, prototypes), `image.c` (the typed constants' bytes), `proc_table.c` (procedure pointers) |
+| `game/` | **generated** by `make c-translate` from `src/` with the fixes of the original's bugs applied (`fixes/README.md`; `pas2c.py --faithful` leaves them out): one `.c` per Pascal unit, `game.h` (types, constants, DGROUP globals as macros, prototypes), `image.c` (the typed constants' bytes), `proc_table.c` (procedure pointers) |
 | `driver/` | `res03_driver.c`: the sound driver, ported by hand from `src/RES03.ASM` |
 | `rtl/` | Turbo Pascal's runtime: strings, sets, files over DOS names, the heap, the EGA model (`ega.c`), Crt/Dos/Overlay |
 | `platform/` | `sdl_host.c` (the game you play), `psg.c` (the speaker and Tandy synthesiser), `replay.c` (headless, for tests), `null.c` (sound tests) |

@@ -4,7 +4,8 @@
   .venv/bin/python ports/dos/tools/build.py [--faithful] [--only NAME ...]
   make -C ports/dos game [FAITHFUL=1]
 
-src/ is never edited: its units are copied to build/stage, the patches named in patches/series are applied there
+src/ is never edited: its units are copied to build/stage, the fixes of the original that every port takes
+(fixes/series at the repository root, named `fixes/<name>` here) and then the patches named in patches/series are applied there
 (`patch -p1 --fuzz=0`: a patch that no longer applies exactly fails the build, so a change of src/ under it is
 seen), and the pinned Turbo Pascal 6.0 links the stage the way tools/match/rebuild.py links src/ (overlay units
 with `{$O}`, res03's sound driver assembled from its .ASM). Out:
@@ -36,7 +37,9 @@ PORT = Path(__file__).resolve().parents[1]
 ROOT = PORT.parents[1]
 sys.path.insert(0, str(ROOT / "tools/match"))
 sys.path.insert(0, str(ROOT / "tools/re"))
+sys.path.insert(0, str(ROOT / "fixes"))
 
+import apply as fixes  # noqa: E402
 import asm86  # noqa: E402
 import match  # noqa: E402
 import rebuild  # noqa: E402
@@ -54,8 +57,8 @@ class BuildError(Exception):
 
 
 def series() -> list[str]:
-    """The patch names of patches/series, in order (`#` starts a comment)."""
-    names = []
+    """The fixes of fixes/series (`fixes/<name>`), then the patch names of patches/series, in order (`#` starts a comment)."""
+    names = ["fixes/" + f.name for f in fixes.series()]
     for line in SERIES.read_text().splitlines():
         line = line.split("#", 1)[0].strip()
         if line:
@@ -82,7 +85,7 @@ def stage(patches: list[str]) -> None:
         if p.suffix.upper() in (".PAS", ".ASM"):
             shutil.copy(p, STAGE / p.name)
     for name in patches:
-        f = PORT / "patches" / name
+        f = ROOT / name if name.startswith("fixes/") else PORT / "patches" / name
         if not f.exists():
             raise BuildError("patches/series names %s, which is not in patches/" % name)
         r = subprocess.run(["patch", "-p1", "--fuzz=0", "--no-backup-if-mismatch", "--batch", "-d", str(STAGE),

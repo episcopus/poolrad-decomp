@@ -216,8 +216,10 @@ eng-test: eng-data data
 QOL_OFF_GOALS := first-light combat exploration baseline game-run game-view game-wav game-state stress perf-run perf-all floppy-run floppy-check ide-run ide-check sdc-run io-budget
 QOL ?= $(if $(filter $(QOL_OFF_GOALS),$(MAKECMDGOALS)),0,1)
 export QOL
+# the fixes of the original's bugs (fixes/README.md at the repository root): with the quality of life changes by default; FIXES=1 with QOL=0 plays the sessions on a fixed game
+FIXES ?= $(QOL)
 game:
-	@$(TC) env POOL_QOL=$(QOL) scripts/game_build.sh
+	@$(TC) env POOL_QOL=$(QOL) POOL_FIXES=$(FIXES) scripts/game_build.sh
 
 # Look at it. The game reads its storage through sec_io (decision D13); the development backend is the harness' own, a write tap
 # of MAME's Lua, so there is no window to play in until a backend XRoar or a real CoCo can serve (DriveWire, after 8.9).

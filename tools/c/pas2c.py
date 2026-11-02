@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """pas2c.py: translate the matched Pascal of src/ into C (SPEC 7.4, Phase 7).
 
-  .venv/bin/python tools/c/pas2c.py [--out c/game] [UNIT ...]
+  .venv/bin/python tools/c/pas2c.py [--out c/game] [--faithful] [UNIT ...]
+
+The Pascal translated is src/ with the fixes of the original's bugs applied (fixes/series, fixes/README.md), which every
+port takes; --faithful translates src/ as it is, the original program.
 
 One C file per unit plus `game.h` (types, constants, DGROUP globals as macros, prototypes), the typed-constant
 image of DGROUP and the table behind procedure pointers. The generated C keeps the Pascal's names, comments and
@@ -936,9 +939,20 @@ def main(argv=None) -> int:
     ap.add_argument("--placement", help="a TOML file placing pointer types: mapped (a native 16-bit address), banked (an accessor), "
                     "engine (default: the PC heap); only with --profile coco (ports/coco3/placement.toml)")
     ap.add_argument("--peek-pointers", action="store_true", help="the CoCo build: a pointer that is a field of a banked block is read through PEEKP (ports/coco3/src/game/pool.h)")
+    ap.add_argument("--faithful", action="store_true", help="translate src/ as it is, without the fixes of fixes/series")
     ap.add_argument("units", nargs="*", help="unit ids to translate (default: all)")
     a = ap.parse_args(argv)
-    files = sorted((ROOT / "src").glob("*.PAS"))
+    if a.faithful:
+        files = sorted((ROOT / "src").glob("*.PAS"))
+    else:                                                    # the fixes of the original (fixes/README.md) on a copy of src/
+        import atexit
+        import shutil
+        import tempfile
+        sys.path.insert(0, str(ROOT / "fixes"))
+        import apply as fixes
+        tmp = Path(tempfile.mkdtemp(prefix="pas2c-src-"))
+        atexit.register(shutil.rmtree, tmp, True)
+        files = sorted(fixes.stage(tmp / "src").glob("*.PAS"))
     g = Gen()
     g.coco = a.profile == "coco"
     g.peek = a.peek_pointers

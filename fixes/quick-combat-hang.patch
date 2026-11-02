@@ -4,7 +4,7 @@
    { The four affects that let a combatant step onto a CloudTile cell (ovl09:0744..07A4); which
      spells leave them is not known. }
    AiTurnLimit = 20;             { AiTurn gives up after this many passes of its loop (ovl09:0B3C) }
-+  QuickTurnPassLimit = 50;      { DOS port: QuickTurn ends the turn after this many AiTurn passes }
++  QuickTurnPassLimit = 50;      { fix (fixes/): QuickTurn ends the turn after this many AiTurn passes }
    HookTurnStart = $0E;          { the affect hook kind AiTurn runs first, at the start of the turn [I] }
    RangeWrapped = $FF;           { a Range of 0 minus one wraps to this byte (AiTurn) }
    HandThreshold = 2;            { hands in use: above it UseBestItem readies the slot-1 item or the pick }
@@ -14,7 +14,7 @@
    ChooseCombatTarget(Who, $FF, 1, 0): an initiative above 0 runs AiTurn, else the turn ends through
 -  EndOrGuardTurn. Globals: none. QUIRK: CastChosenSpell's var result is overwritten at once. }
 +  EndOrGuardTurn. Globals: none. QUIRK: CastChosenSpell's var result is overwritten at once.
-+  DOS port (patch quick-combat-hang): the original loops for as long as AiTurn returns 0, so an AiTurn that
++  Fix of the original (fixes/quick-combat-hang.patch): the original loops for as long as AiTurn returns 0, so an AiTurn that
 +  never ends the turn hung the game (a quick character with darts next to an enemy, AiTurn below). After
 +  QuickTurnPassLimit passes the turn now ends through EndOrGuardTurn; a normal turn takes one or two. }
  procedure QuickTurn(Who: PCharacter);
@@ -46,7 +46,7 @@
          UseBestItem(Who);
 -        Done := 1;
 -        goto Attack;
-+        { DOS port (patch quick-combat-hang): the original always took this exit, so QuickTurn ran AiTurn
++        { Fix of the original (fixes/quick-combat-hang.patch): the original always took this exit, so QuickTurn ran AiTurn
 +          again. When UseBestItem leaves a missile-only weapon readied (darts: ItemTable row 9 has
 +          FlagSlotItem without FlagAttack, so UseBestItem picks them again as its melee choice), every
 +          pass came back here and the game hung. Now that case goes on below and attacks Target with

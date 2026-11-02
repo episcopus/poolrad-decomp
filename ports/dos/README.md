@@ -20,8 +20,9 @@ without changing what it does (below).
 
 ## How it is built
 
-`src/` is never edited. `tools/build.py` copies `src/*.PAS` and `*.ASM` to `build/stage`, applies the patches
-of `patches/series` in order (`patch --fuzz=0`: when `src/` changes under a patch, the build fails and says
+`src/` is never edited. `tools/build.py` copies `src/*.PAS` and `*.ASM` to `build/stage`, applies the fixes of
+the original's bugs that every port takes (`fixes/series` at the repository root), then the patches of
+`patches/series` in order (`patch --fuzz=0`: when `src/` changes under a patch, the build fails and says
 which patch to refresh), and links the stage with `tools/match/rebuild.py`'s recipe.
 
 | Path | What |
@@ -43,7 +44,7 @@ add the name to `patches/series`. A speed patch lives in `patches/speed/` and mu
 | Patch | Change | Code that differs |
 |---|---|---|
 | `no-code-wheel.patch` | `CheckCodeWheel` (ovl02) asks nothing: the title screens go straight to the character menu. It still draws the one `Random(13)` the original's first question draws, so the random stream after it is the original's (and a session recorded on the original replays on the port). | ovl02 only |
-| `quick-combat-hang.patch` | A bug of the original: a computer-run (quick) character whose readied weapon is missile-only (darts) hangs the game when an enemy stands next to it and the target it remembers is out of reach. `AiTurn` (ovl09) asks `UseBestItem` for a melee weapon and gives the pass back to `QuickTurn`; darts carry `FlagSlotItem` without `FlagAttack` (ITEMS row 9), so `UseBestItem` picks them again as its melee choice, nothing changes, and `QuickTurn` calls `AiTurn` forever (redrawing the character panel, reading no key). Now, when the readied weapon is still missile-only after `UseBestItem`, `AiTurn` goes on and attacks its target with it, as it does when no enemy is adjacent; and `QuickTurn` ends the turn (`EndOrGuardTurn`) after 50 `AiTurn` passes, where a normal turn takes one or two. The game changes only where the original would hang | ovl09 |
+| `fixes/quick-combat-hang.patch` (repository root) | A bug of the original that every port fixes (`fixes/README.md`; `tools/build.py` applies `fixes/series` before this series): a quick character whose readied weapon is darts hung the game when an enemy stood next to it and its remembered target was out of reach. Now it throws the darts, and a computer turn ends after 50 `AiTurn` passes. The game changes only where the original would hang | ovl09 |
 | `speed/unpack-rle.patch` | `UnpackRle` (res05), through which every DAX block passes, in assembler: a literal run is one `REP MOVSW`, a repeat run one `REP STOSB` | res05 |
 | `speed/tandy-glyph.patch` | `DrawGlyph`'s Tandy branch (res06), all text: a new `DrawTandyGlyph` shifts each font row out two bits at a time into the four banks, where the Pascal tested every bit with the font pointer reloaded | res06 |
 | `speed/tandy-blit.patch` | the Tandy row loop of `DrawPictureItem` and `DrawPictureItemClipped` (res07): the 3D view's tiles, sprites, icons. `TandyRows` does the trackers, the save-under and the copy (the masked one in an AND pass and an OR pass) each over all rows, with the original's quirks (the masked loop's `ShortInt` count, `SharedLoopIndex`), and falls back to the exact row-by-row order when rows could overlap | res07 |

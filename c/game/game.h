@@ -3224,6 +3224,7 @@ enum { DiagonalCost = 3 };  /* a diagonal step (odd direction) three times (ovl0
 /* The four affects that let a combatant step onto a CloudTile cell (ovl09:0744..07A4); which
        spells leave them is not known. */
 enum { AiTurnLimit = 20 };  /* AiTurn gives up after this many passes of its loop (ovl09:0B3C) */
+enum { QuickTurnPassLimit = 50 };  /* fix (fixes/): QuickTurn ends the turn after this many AiTurn passes */
 enum { HookTurnStart = 0xE };  /* the affect hook kind AiTurn runs first, at the start of the turn [I] */
 enum { RangeWrapped = 0xFF };  /* a Range of 0 minus one wraps to this byte (AiTurn) */
 enum { HandThreshold = 2 };  /* hands in use: above it UseBestItem readies the slot-1 item or the pick */

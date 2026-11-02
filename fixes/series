@@ -1,0 +1,3 @@
+# fixes/series: fixes of bugs of the original program, as patches against src/, applied in this order by every port
+# (fixes/README.md). src/ itself stays the original: make match and make rebuild never see these.
+quick-combat-hang.patch   # ovl09 AiTurn/QuickTurn: a quick character with darts next to an enemy hung the game

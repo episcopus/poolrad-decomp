@@ -1,7 +1,7 @@
-# ports/dos/patches/series: the patches applied to a copy of src/, in this order (tools/build.py).
+# ports/dos/patches/series: the patches applied to a copy of src/, in this order (tools/build.py), after the fixes of the
+# original that every port takes (fixes/series at the repository root).
 # `make FAITHFUL=1` applies none and must link the original program.
 no-code-wheel.patch   # no code wheel question (ovl02 CheckCodeWheel); the random draw of its first question is kept
-quick-combat-hang.patch # ovl09 AiTurn/QuickTurn: a quick character with darts next to an enemy no longer hangs the game
 # speed patches (patches/speed/): the same game, faster on an 8088; tools/func.py shows the behaviour is the reference's
 speed/unpack-rle.patch    # res05 UnpackRle in assembler: every DAX block the game loads
 speed/tandy-glyph.patch   # res06 DrawGlyph's Tandy branch in assembler: all text

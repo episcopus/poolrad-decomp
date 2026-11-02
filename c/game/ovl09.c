@@ -12,12 +12,16 @@
      Turn Undead for a cleric, end of turn), cast a memorized spell (CastMemorizedSpell, Done := 1), use
      the best item (UseBestItem) and read keys again (HandleCombatKey); with Done clear it loops on
      ChooseCombatTarget(Who, $FF, 1, 0): an initiative above 0 runs AiTurn, else the turn ends through
-     EndOrGuardTurn. Globals: none. QUIRK: CastChosenSpell's var result is overwritten at once. */
+     EndOrGuardTurn. Globals: none. QUIRK: CastChosenSpell's var result is overwritten at once.
+     Fix of the original (fixes/quick-combat-hang.patch): the original loops for as long as AiTurn returns 0, so an AiTurn that
+     never ends the turn hung the game (a quick character with darts next to an enemy, AiTurn below). After
+     QuickTurnPassLimit passes the turn now ends through EndOrGuardTurn; a normal turn takes one or two. */
 void QuickTurn(PCharacter Who)
 {
   POOL_TRACE("QuickTurn");
   u8 Pattern = 0;
   u8 Done = 0;
+  u8 Passes = 0;
   Done = HandleCombatKey(Who);
   ClearPromptLine();
   ClearCharacterMessage();
@@ -62,8 +66,12 @@ void QuickTurn(PCharacter Who)
   }
   UseBestItem(Who);
   Done = HandleCombatKey(Who);
+  Passes = 0;
   while (Done == 0) {
-    if (ChooseCombatTarget(Who, 0xFF, 1, 0) && (((*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).Initiative > 0))) {
+    Passes++;
+    if (Passes > QuickTurnPassLimit) {
+      Done = EndOrGuardTurn(Who);
+    } else if (ChooseCombatTarget(Who, 0xFF, 1, 0) && (((*FPD(TCombatant (*), (*FPD(TCharacter (*), Who)).Combat)).Initiative > 0))) {
       Done = AiTurn(Who);
     } else {
       Done = EndOrGuardTurn(Who);
@@ -630,8 +638,15 @@ L_Loop:
     if (!RangedWeaponCanMelee(Who)) {
       if (CollectEnemiesInRange(Who, 1) > 0) {
         UseBestItem(Who);
-        Done = 1;
-        goto L_Attack;
+        /* Fix of the original (fixes/quick-combat-hang.patch): the original always took this exit, so QuickTurn ran AiTurn
+           again. When UseBestItem leaves a missile-only weapon readied (darts: ItemTable row 9 has
+           FlagSlotItem without FlagAttack, so UseBestItem picks them again as its melee choice), every
+           pass came back here and the game hung. Now that case goes on below and attacks Target with
+           the readied weapon, as it does when no enemy is adjacent. */
+        if (!IsRangedWeapon(Who) || RangedWeaponCanMelee(Who)) {
+          Done = 1;
+          goto L_Attack;
+        }
       }
     }
   }
