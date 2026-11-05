@@ -11,7 +11,7 @@ AUTOBEAT = -@$(PY) tools/agent/heartbeat.py --auto
 # Keep operator notes literal (including Pascal $ directives), never interpolate them as shell code.
 q = '$(subst ','\'',$(1))'
 
-.PHONY: help setup doctor inputs unexepack overlays map dax smoke status next ghidra p1-check \
+.PHONY: help setup doctor inputs unexepack overlays map dax maps smoke status next ghidra p1-check \
         tp-install tp-probe tp-compare tp-pin tpc emu2 \
         packet claim lock locks unlock handoff handoffs handoff-done integrate start-run stop-run run-add run-status heartbeat agents watch-agents worker inbox \
         agent-control agent-step safety-check merge-check hooks match-gate merge-driver \
@@ -236,6 +236,9 @@ oracle-run:       ## run the original in the oracle: SCRIPT=tests/sessions/x.key
 
 oracle-dosbox:    ## compare the oracle's title screens with DOSBox-X frames pixel for pixel (needs dosbox-x, ffmpeg)
 	$(PY) tools/oracle/dosbox_ref.py
+maps:             ## one-page player maps of Sokal Keep, New Phlan and the slums into docs/maps/ (needs uv for reportlab)
+	uv run --with reportlab python tools/maps/build.py
+
 timing-scan:      ## find routines that wait on time or input (static; SESSIONS="boot-title create-character" adds the dynamic pass)
 	$(PY) tools/re/timing_scan.py $(foreach s,$(SESSIONS),--dynamic $(s))
 
