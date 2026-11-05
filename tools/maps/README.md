@@ -6,9 +6,13 @@ They are player aids made from the original game files, not part of the decompil
 
 | Map | Source blocks | Spec |
 |---|---|---|
-| `docs/maps/sokal-keep.pdf` | `GEO4` block 21, `ECL4` block 21 | `sokal_keep.py` |
-| `docs/maps/phlan.pdf` (New Phlan, the starting town) | `GEO3` block 0, `ECL3` block 0 | `phlan.py` |
-| `docs/maps/slums.pdf` | `GEO2` block 20, `ECL2` block 20 | `slums.py` |
+One spec per area in `tools/maps/areas/`; the table of every area and its source blocks is the `SOURCE` line printed on each page.
+
+| Map | Source blocks | Spec |
+|---|---|---|
+| `docs/maps/sokal-keep.pdf` | `GEO4` block 21, `ECL4` block 21 | `areas/sokal_keep.py` |
+| `docs/maps/phlan.pdf` (New Phlan, the starting town) | `GEO3` block 0, `ECL3` block 0 | `areas/phlan.py` |
+| `docs/maps/slums.pdf` | `GEO2` block 20, `ECL2` block 20 | `areas/slums.py` |
 
 ```
 uv run --with reportlab python tools/maps/build.py            # all (make maps does this)
@@ -26,7 +30,7 @@ python3 tools/maps/ecldis.py ECL4 21                          # the area script 
   `*Command`) and `src/OVL07.PAS` (`DecodeOperands`, `DecodeString`: strings are 6-bit packed). Code base is `$9900`
   and the block body after the leading `5000` word maps to `$9900 + offset`.
 - `mapkit.py`: draws a page from a spec (see its docstring for the keys). Text is fitted by shrinking the body font.
-- `sokal_keep.py`, `phlan.py`, `slums.py`: the content of each page.
+- `areas/*.py`: the content of each page (one `SPEC` per file; `build.py` discovers them).
 
 ## How the content was read (so it can be re-checked)
 
@@ -44,6 +48,23 @@ python3 tools/maps/ecldis.py ECL4 21                          # the area script 
 - Phlan "locked after dark": the step entry locks a door when the party stands on a cell with event E facing a
   wall id W for the pairs `(0, 9)`, `(4, 7)`, `(26, 11)` while the sky variable is the dark value. That the
   variable means night is an inference from the 8 or 11 palette choice, not proven.
+
+## Reading an ECL script (cheat sheet)
+
+- Entry points (five GOTOs at the top, `ecldis.py` prints them): step, search, pre-camp, camp-interrupted, initial.
+  On arrival the initial entry runs; after every step the step entry then the search entry run. The search entry
+  usually reads the event byte of the party's cell (`AND 127,[C04F],[6E82]`) and dispatches with `ONGOTO`: the
+  cell's event id is the index into that table (id 0 is the first address). Cells with an id beyond the table do nothing.
+- Special script addresses: `[C04B]` party column, `[C04C]` row, `[C04D]` facing (0 north, 1 east, 2 south, 3 west),
+  `[C04E]` wall id ahead, `[C04F]` event byte (bit 7 is the interior flag); `[6DD5]` is set when the party walks off a
+  map edge; `[6DCA]` bit 0 is search mode (the S key); `[6E12]` is the tile set the next `NEWECL` loads from
+  (`ECL<n>.DAX`, `GEO<n>.DAX`, `MON<n>CHA.DAX`, `ITEM<n>.DAX`).
+- `[4A00]..[4A1F]` reset on every (re)load of the area script, so they mean "this visit"; `[4A20]` and up persist.
+- `ENCACTION` is the encounter menu (combat, wait, flee, advance or parlay: parlay is offered only when the distance
+  is 0); `ATTITUDE` then `INSTR n` asks for a typed word of at most n letters (passwords are `CMP`ed with a literal);
+  `ADDMON kind, count, picture` adds monsters; `COMBAT` fights them; `LOOT` pays out; `GETTABLE table, index, dest`
+  reads one byte; `IF=`, `IF<` and so on guard only the next command; `GOSUB`/`RETURN` and `ONGOSUB` call routines.
+- A `CMP2 a, b, c, d` is true when both pairs are equal (used for "event E facing wall W" door locks).
 
 ## Known gaps
 
