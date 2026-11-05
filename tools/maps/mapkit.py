@@ -11,11 +11,17 @@ Spec keys (all optional unless marked):
   exits               list of (row, col, side) edges drawn with a green arrow,
   hatch_events        {event id: fill hex} cells shaded for a roaming encounter,
   illusion_ids        wall ids that are walls yet passable: drawn as an illusionary wall,
+  grey_rects          [(row0, col0, row1, col1)] unused map space drawn grey even when it is reachable,
+  illusion_edges      [(row, col, side)] single door edges drawn as an illusionary / secret wall (either side's cell),
+  extra_starts        [(row, col)] more cells the reachability shading starts from (teleport destinations),
+  arrivals            [(row, col)] further arrival cells: drawn like the start and also seed the reachability shading,
+  wrap                true when the party wraps around the map edge (reachability then wraps too),
+  hedge_ids           wall ids drawn as green hedge walls (legend word 'hedge:<text>'),
   locked_rules        {(event, wall id)}: a door the script locks when you stand on that event cell facing it (red),
   rooms               [(text, row, col, size, color hex or None, bold)],
   markers             [(text, row, col, kind, {dx, dy, rad})], kind in fight/hint/loot/secret/place
   diamonds            [(text, row, col, kind, {dx, dy})]   search spots
-  legend              extra legend words: 'door', 'illusion', 'hatch:<text>', 'grey', 'search', 'arrival', 'exit'
+  legend              extra legend words: 'door', 'illusion' (or 'illusion:<text>'), 'hatch:<text>', 'grey', 'search', 'arrival', 'exit' (or 'exit:<text>')
   glance*             html text of the box at the top of the right column
   entries*            [(chip text, kind, title, html body)]
   table               {'rows': [[...]], 'widths': [...], 'caption': text}
@@ -78,7 +84,7 @@ def tag(kind, text):
     return '<font color="%s"><b>%s</b></font>' % (TYPEHEX[kind], text)
 
 
-def reachable(cells, start):
+def reachable(cells, start, wrap=False):
     def can(r, c, d):
         x = cells[(r, c)]
         return x[d] == 0 or x['d' + d] != 0
@@ -90,6 +96,8 @@ def reachable(cells, start):
             if not can(r, c, d):
                 continue
             rr, cc = r + dr, c + dc
+            if wrap:  # the party wraps around the map edge (spec key 'wrap')
+                rr, cc = rr % N, cc % N
             if 0 <= rr < N and 0 <= cc < N and (rr, cc) not in seen:
                 seen.add((rr, cc))
                 q.append((rr, cc))
@@ -103,7 +111,11 @@ class Overflow(Exception):
 def render(spec, out, fs):
     """draw the page with body font size fs; raises Overflow when the right column or boxes do not fit"""
     cells = geoq.load(*spec['geo'])
-    REACH = reachable(cells, tuple(spec['start']))
+    REACH = reachable(cells, tuple(spec['start']), spec.get('wrap', False))
+    for _s in spec.get('arrivals', ()):  # further arrival cells, drawn like the start (spec key 'arrivals')
+        REACH |= reachable(cells, tuple(_s), spec.get('wrap', False))
+    for extra in spec.get('extra_starts', ()):  # more seeds (teleport destinations) for the reachability shading
+        REACH |= reachable(cells, tuple(extra))
     W, H = landscape(letter)
     c = canvas.Canvas(out, pagesize=(W, H))
     c.setTitle('%s - annotated map (Pool of Radiance)' % spec['title'].title())
@@ -124,7 +136,7 @@ def render(spec, out, fs):
 
     # header
     c.setFillColor(INK)
-    tsize = 25 if len(spec['title']) <= 12 else 21
+    tsize = 25 if len(spec['title']) <= 12 else (21 if len(spec['title']) <= 16 else 16)
     c.setFont(FONTB, tsize)
     c.drawString(M, H - M - 20, spec['title'])
     tw = stringWidth(spec['title'], FONTB, tsize)
@@ -144,8 +156,8 @@ def render(spec, out, fs):
     # cells
     hatch = spec.get('hatch_events', {})
     for (r, col), x in cells.items():
-        if (r, col) not in REACH:
-            fill = GREY
+        if (r, col) not in REACH or any(a <= r <= b and cc0 <= col <= cc1 for a, cc0, b, cc1 in spec.get('grey_rects', ())):
+            fill = GREY  # spec key 'grey_rects': [(row0, col0, row1, col1)] unused map space forced grey
         elif x['interior']:
             fill = PARCH
         else:
@@ -177,6 +189,7 @@ def render(spec, out, fs):
     # walls and doors
     illusion_ids = set(spec.get('illusion_ids', ()))
     locked_rules = set(spec.get('locked_rules', ()))
+    hedge_ids = set(spec.get('hedge_ids', ()))
     edges = []
 
     def side(r, col, d):
@@ -206,6 +219,12 @@ def render(spec, out, fs):
             ids = {i for i, k in ((a_id, a_k), (b_id, b_k)) if i and k}
             if ids and ids <= illusion_ids:
                 ill = True
+        if door and spec.get('illusion_edges'):  # [(row, col, side)]: single edges drawn as secret / illusionary walls
+            _opp = {'N': 'S', 'S': 'N', 'E': 'W', 'W': 'E'}[d]
+            _mine = (r, col, d)
+            _theirs = (other[0], other[1], _opp) if other is not None else None
+            if any(tuple(e) in (_mine, _theirs) for e in spec['illusion_edges']):
+                ill = True
         if d == 'N':
             seg = (cx(col), cy(r), cx(col + 1), cy(r))
         elif d == 'S':
@@ -214,7 +233,12 @@ def render(spec, out, fs):
             seg = (cx(col), cy(r), cx(col), cy(r + 1))
         else:
             seg = (cx(col + 1), cy(r), cx(col + 1), cy(r + 1))
-        edges.append(('ill' if ill else ('lock2' if hard else ('lock' if locked else ('door' if door else 'wall'))),) + seg)
+        wallkind = 'wall'
+        if hedge_ids and not door:  # a plain wall whose ids are all hedge ids (spec key 'hedge_ids')
+            hids = {i for i in (a_id, b_id) if i}
+            if hids and hids <= hedge_ids:
+                wallkind = 'hedge'
+        edges.append(('ill' if ill else ('lock2' if hard else ('lock' if locked else ('door' if door else wallkind))),) + seg)
 
     for r in range(N):
         for col in range(N):
@@ -229,6 +253,10 @@ def render(spec, out, fs):
         if kind == 'wall':
             c.setLineWidth(1.7)
             c.setStrokeColor(WALL)
+            c.line(x0, y0, x1, y1)
+        elif kind == 'hedge':  # spec key 'hedge_ids': a green wall
+            c.setLineWidth(1.7)
+            c.setStrokeColor(HexColor('#3f7f3a'))
             c.line(x0, y0, x1, y1)
     for kind, x0, y0, x1, y1 in edges:
         if kind == 'door':
@@ -321,6 +349,14 @@ def render(spec, out, fs):
     c.setFillColor(white)
     c.setFont(FONTB, 7.4)
     c.drawCentredString(sx, sy - 2.6, 'S')
+    for (er_, ec_) in spec.get('arrivals', ()):
+        c.setFillColor(GREEN)
+        c.setStrokeColor(white)
+        c.setLineWidth(1.2)
+        c.rect(cx(ec_ + 0.5) - 7, cy(er_ + 0.5) - 7, 14, 14, fill=1, stroke=1)
+        c.setFillColor(white)
+        c.setFont(FONTB, 7.4)
+        c.drawCentredString(cx(ec_ + 0.5), cy(er_ + 0.5) - 2.6, 'S')
     for (er, ec, es) in spec.get('exits', []):
         # arrow on the outside of the edge, pointing away from the map
         ex = cx(ec + 0.5) if es in 'NS' else (cx(ec) if es == 'W' else cx(ec + 1))
@@ -374,6 +410,11 @@ def render(spec, out, fs):
         c.setFillColor(INK)
         c.drawString(x + 11, ly, 'arrival')
         x = lgap('arrival', x)
+    etext = 'exit'
+    for w in want:
+        if w.startswith('exit:'):  # the arrow with the area's own words (for example 'passage wraps to the far edge')
+            etext = w[5:]
+            want = want | {'exit'}
     if 'exit' in want:
         c.setStrokeColor(GREEN)
         c.setFillColor(GREEN)
@@ -386,8 +427,8 @@ def render(spec, out, fs):
         pp.close()
         c.drawPath(pp, fill=1, stroke=0)
         c.setFillColor(INK)
-        c.drawString(x + 11, ly, 'exit')
-        x = lgap('exit', x)
+        c.drawString(x + 11, ly, etext)
+        x = lgap(etext, x)
     if 'search' in want:
         c.setFillColor(AMBER)
         p = c.beginPath()
@@ -410,15 +451,20 @@ def render(spec, out, fs):
         c.setFont(FONT, 6.6)
         c.drawString(x + 16, ly2, 'door')
         x += 16 + stringWidth('door', FONT, 6.6) + 10
-    if 'illusion' in want:
+    itext = 'illusionary wall' if 'illusion' in want else None
+    for w in sorted(want):
+        if w.startswith('illusion:'):  # same dashed line with the area's own words (for example 'secret door')
+            itext = w[9:]
+    if itext:
         c.setStrokeColor(PURPLE)
         c.setLineWidth(2.2)
         c.setDash(3, 2)
         c.line(x, ly2 + 2.4, x + 12, ly2 + 2.4)
         c.setDash()
         c.setFillColor(INK)
-        c.drawString(x + 16, ly2, 'illusionary wall')
-        x += 16 + stringWidth('illusionary wall', FONT, 6.6) + 10
+        c.setFont(FONT, 6.6)
+        c.drawString(x + 16, ly2, itext)
+        x += 16 + stringWidth(itext, FONT, 6.6) + 10
     for w in sorted(want):
         if w.startswith('lock2:'):
             text = w[6:]
@@ -451,6 +497,16 @@ def render(spec, out, fs):
             c.setStrokeColor(HexColor(tint[1]))
             c.setLineWidth(0.8)
             c.rect(x, ly2 - 1, 12, 8, fill=1, stroke=1)
+            c.setFillColor(INK)
+            c.setFont(FONT, 6.6)
+            c.drawString(x + 16, ly2, text)
+            x += 16 + stringWidth(text, FONT, 6.6) + 10
+    for w in sorted(want):
+        if w.startswith('hedge:'):  # legend sample of the hedge wall colour
+            text = w[6:]
+            c.setStrokeColor(HexColor('#3f7f3a'))
+            c.setLineWidth(2.2)
+            c.line(x, ly2 + 2.4, x + 12, ly2 + 2.4)
             c.setFillColor(INK)
             c.setFont(FONT, 6.6)
             c.drawString(x + 16, ly2, text)
