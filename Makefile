@@ -236,7 +236,7 @@ oracle-run:       ## run the original in the oracle: SCRIPT=tests/sessions/x.key
 
 oracle-dosbox:    ## compare the oracle's title screens with DOSBox-X frames pixel for pixel (needs dosbox-x, ffmpeg)
 	$(PY) tools/oracle/dosbox_ref.py
-maps:             ## one-page player maps of Sokal Keep, New Phlan and the slums into docs/maps/ (needs uv for reportlab)
+maps:             ## one-page player maps of every area into docs/maps/ (needs uv for reportlab)
 	uv run --with reportlab python tools/maps/build.py
 
 timing-scan:      ## find routines that wait on time or input (static; SESSIONS="boot-title create-character" adds the dynamic pass)
