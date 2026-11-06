@@ -1620,15 +1620,22 @@ end;
 { ovl22:295B. The line-beam helper of the line spells: it draws the beam of the Lightning Bolt handler
   CastLightningBolt and of the monster beams (CastMonsterBeam, the dragon breath MonsterBreath) and damages every combatant it
   passes. It starts at the aim cell SpellAimX/SpellAimY (playing the zap animation DrawCombatIcon($13)) and
-  walks a line away from the caster for Range * 2 steps (a TLineState filled by SetupLine and advanced
-  by StepLine); it draws each step through WalkCombatLine and deals Damage (electrical, SavingThrow kind
+  walks a line away from the caster with a budget of Range * 2 (a TLineState filled by SetupLine and
+  advanced by StepLine, whose First counter grows by 2 for a straight step and 3 for a diagonal one, so
+  the budget is in half squares); it draws each step through WalkCombatLine and deals Damage (electrical, SavingThrow kind
   SaveKind) through DamageTargetInCell. The walk stops at the end of the line, when the line leaves the
   map (Tile 0), at a tile whose CombatTiles cost is above MaxPassableCost, or when the occupant of the
   cell changes (a fresh combatant, so the beam does not pass through bodies). When Blocked (the tile
-  refused the beam) and Bounce is set, it moves the aim cell to the bounce point and walks a second
-  line back to the caster, turning the beam around once (DirSign flips and Bounce clears). Sets SpellAppliedToArea.
-  Parameters: Range the spell's reach (the line walks Range * 2 cells); Damage the damage dealt per
-  cell; SaveKind the SavingThrow kind; Bounce nonzero lets the beam reflect off a wall once. Globals:
+  refused the beam), it moves the aim cell to the wall and turns the beam around (DirSign flips): this
+  happens at every wall, whatever Bounce says. Bounce only matters at the first wall: when it is set
+  and that wall is close to the caster (a line from the wall back to the caster ends with First at most
+  8), the beam loses 8 half squares of its budget (Inc(Line.First, 8)); then Bounce clears. The budget
+  also loses Line.First after every stop, and First counts from the start of the line, so a stop on a
+  body charges the distance walked so far again. Sets SpellAppliedToArea.
+  Parameters: Range the spell's reach (a budget of Range * 2 half squares); Damage the damage dealt per
+  cell; SaveKind the SavingThrow kind; Bounce nonzero shortens the beam when the first wall it meets is
+  near the caster. Earlier notes read this flag as "bounce once"; the turn (ovl22:2B71) is outside
+  its test. Globals:
   SpellAimX/SpellAimY (the aim cell, moved to the bounce point), SpellAppliedToArea, SelectedCharacter and CombatTiles.
   Called by CastLightningBolt (Lightning Bolt), CastMonsterBeam and MonsterBreath (the dragon breath). }
 procedure CastLineBeam(Range, Damage, SaveKind, Bounce: Byte);
@@ -1637,7 +1644,7 @@ const
   LineWidth = $32;                { WalkCombatLine's width for the beam line }
   MaxPassableCost = 1;            { a tile the beam passes through has a CombatTiles cost at most this }
   BounceFirstLimit = 8;           { the bounce line's First step counter must be at most this to count }
-  BounceExtraSteps = 8;           { steps the beam gains when it reflects (Line.First is advanced by 8) }
+  BounceExtraSteps = 8;           { half squares the beam loses at a near first wall (Line.First is advanced by 8) }
   ZapAnimation = $13;             { DrawCombatIcon's argument that plays the zap animation (as DamageTargetInCell) }
 var
   Line, Line2: TLineState;        { the walked beam line and the line back to the caster at a bounce }
@@ -1645,7 +1652,7 @@ var
   StartX, StartY: Byte;           { the cell the current step of the beam starts from, for WalkCombatLine }
   DirSign: ShortInt;              { +1 or -1: whether the beam goes away from the caster or back to it }
   Blocked, StepDone: Boolean;     { the cell refused the beam; StepLine advanced the line }
-  Bouncing: Byte;                 { remaining bounces: 0 after the beam has reflected once }
+  Bouncing: Byte;                 { the Bounce flag, cleared at the first wall (the beam turns at every wall) }
   PrevOccupant: Byte;             { the occupant of the previous cell, to stop at a fresh combatant }
   Occupant, Tile: Byte;           { GetMapCell's out values for the current cell }
   Length: Byte;                   { the remaining beam steps, Range * 2 at the start }
@@ -1716,20 +1723,21 @@ end;
 { ovl22:2BB7 (e50). Cast handler of spell 51, Lightning Bolt: it rolls one d6 per caster level
   (SpellCasterLevel(CastingSpell), RollDice) as the damage, deals it to the combatant on the aim cell
   SpellAimX/SpellAimY (DamageTargetInCell, electrical, save kind 4) and then runs the beam CastLineBeam
-  with reach 8, the same damage and save kind and the bounce flag 1, so the bolt reflects off a wall
-  once. Reads CastingSpell. Called through SpellHandlers[51] (InitSpellHandlers). }
+  with reach 8, the same damage and save kind and the bounce flag 1. The beam turns around at every
+  wall; the flag only shortens it when the first wall is near the caster (see CastLineBeam). Reads
+  CastingSpell. Called through SpellHandlers[51] (InitSpellHandlers). }
 procedure CastLightningBolt;
 const
   LevelDiceSides = 6;             { one d6 per caster level (the AD&D Lightning Bolt) }
-  BeamReach = 8;                  { CastLineBeam's reach: the beam walks 16 cells }
-  BounceOnce = 1;                 { the bolt reflects off a wall once }
+  BeamReach = 8;                  { CastLineBeam's reach: a budget of 16 half squares }
+  BounceFlag = 1;                 { CastLineBeam's Bounce: shortens the beam at a near first wall }
 var
   Damage: Byte;                   { the rolled damage (caster level d6) }
   Blocked: Boolean;               { whether the aim cell's tile refuses the beam (not read) }
 begin
   Damage := RollDice(SpellCasterLevel(CastingSpell), LevelDiceSides);
   DamageTargetInCell(SpellAimX, SpellAimY, Damage, SaveKindSpell, Blocked);
-  CastLineBeam(BeamReach, Damage, SaveKindSpell, BounceOnce);
+  CastLineBeam(BeamReach, Damage, SaveKindSpell, BounceFlag);
 end;
 { ovl22:2C09 (e51). Cast handler of spell 55, Slow: hands the opposite side of the selected character
   (OpposingSide) and the haste affect $27 (SpellTable[48].AffectId) to ApplySpellToSideUpToLevel,
@@ -1867,8 +1875,8 @@ end;
 { ovl22:2F4D. Cast handler of spell 60, a monster-only spell: SpellNames[60] is empty, and the
   InitSpellHandlers table points element 60 of SpellHandlers at this stub. It strikes the combatant on the aim
   cell SpellAimX/SpellAimY for 1d6 + 20 points (DamageTargetInCell: the spell's saving throw kind 4, half
-  damage on a save, and the zap animation) and then runs a short beam CastLineBeam(3, 20, 4, 0): six
-  cells of 20 points away from the caster, no bounce. }
+  damage on a save, and the zap animation) and then runs a short beam CastLineBeam(3, 20, 4, 0): a budget
+  of six half squares at 20 points, away from the caster; with the flag 0 a wall still turns it around. }
 procedure CastMonsterBeam;
 const
   { The strike on the aim cell and the beam's per-cell damage: a flat 20, the direct hit rolls 1d6
@@ -1876,9 +1884,9 @@ const
   StrikeDiceCount = 1;
   StrikeDiceSides = 6;
   StrikeBase = 20;
-  BeamReach = 3;                  { CastLineBeam walks Range * 2 cells }
+  BeamReach = 3;                  { CastLineBeam's budget is Range * 2 half squares }
   BeamDamage = 20;
-  NoBounce = 0;                   { the beam does not reflect off a wall }
+  NoBounce = 0;                   { Bounce 0: a wall turns the beam, but never shortens it }
 var
   Blocked: Boolean;               { DamageTargetInCell's out flag: the aim cell's tile refuses the beam (not read) }
 begin
@@ -1971,7 +1979,7 @@ const
   BeamStep = 4;                   { WalkCombatLine's step for the breath line }
   BeamWidth = $32;                { WalkCombatLine's width for the breath line }
   BeamReach = $A;                 { CastLineBeam's reach: the breath walks this many cells each way }
-  NoBounce = 0;                   { the breath line does not reflect off a wall }
+  NoBounce = 0;                   { Bounce 0: a wall turns the breath line, but never shortens it }
   BreathAffect = $58;             { the affect removed once its data byte is spent }
   BreathDataLimit = $FD;          { while the affect's data is above this it is only decremented }
 var

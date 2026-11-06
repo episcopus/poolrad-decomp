@@ -699,11 +699,12 @@ end;
   div HpMax; HpCurrent is the current hit points) or is zero. Then MoraleScratch takes SecondMoraleByte, the hook runs
   again, and the second test holds when it is below 100 minus GameVars2^[Var2Morale] (word 710 of the
   second game word block, $6B00..$6EFF, not GameVars; the morale source of ovl10), or is zero, or Who
-  is on the party side (Side 0). Only when both tests hold is there a roll: FastestEnemyMovement at or below half
-  of ComputeMovement's value sets Panic and removes affects $4A and $4B (the character panics and the turn
-  goes on); a higher roll with Intelligence above 5 surrenders (DropCombatant(Who, 4, 'Surrenders'),
-  result EndCombatTurn(Who)); otherwise nothing happens. QUIRK ovl09:1141: the B84 gate is an inverted
-  test with an empty then-branch. QUIRK ovl09:11AD: Saved6825 is saved from MoraleScratch and never used.
+  is on the party side (Side 0). Only when both tests hold is there an outcome, and no die is rolled: it
+  compares speeds. FastestEnemyMovement at or below half of ComputeMovement's value sets Panic and removes
+  affects $4A and $4B (the character panics and the turn goes on); a faster enemy with Intelligence above
+  5 surrenders (DropCombatant(Who, 4, 'Surrenders'), result EndCombatTurn(Who)); otherwise nothing
+  happens. QUIRK ovl09:1141: the B84 gate is an inverted test with an empty then-branch. QUIRK ovl09:11AD:
+  Saved6825 is saved from MoraleScratch and never used.
   Globals: MoraleScratch, SecondMoraleByte, GameVars2 (word Var2Morale). }
 function CheckMorale(Who: PCharacter): Byte;
 var

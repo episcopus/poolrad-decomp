@@ -1,10 +1,17 @@
 #!/usr/bin/env python3
-"""pic.py: decode Pool of Radiance EGA pictures from .DAX blocks (whitepaper 4.2.3).
+"""pic.py: decode Pool of Radiance pictures from .DAX blocks (whitepaper 4.2.3).
 
   python3 tools/re/pic.py verify poolrad/                 # every picture-like block
   python3 tools/re/pic.py list poolrad/PIC1.DAX           # block ids, dims, frames
   python3 tools/re/pic.py dump poolrad/TITLE.DAX 1 out.png
   python3 tools/re/pic.py dump poolrad/PIC1.DAX 1 out/    # directory: one PNG per frame
+  python3 tools/re/pic.py dump --cga poolrad/TITLE.DAX 1 out.png   # through the CGA colour map
+
+A dump paints each 4-bit pixel through the EGA default 16-colour palette, as the game's EGA
+and Tandy paths draw it (the raw nibble; the game sets no palette register from the picture).
+--cga paints it as the CGA path does: the nibble goes through the record's 16-to-4 colour map
+and the result through the BIOS mode 4 default colours (black, cyan, magenta, light grey; the
+game never selects a CGA palette, so these are the default [I]).
 
 On-disk picture record (coab Classes/DaxFiles/DaxBlock.cs; Load24x24Set reads
 height/width/item_count/bpp the same way at ovl32:008C):
@@ -14,7 +21,7 @@ height/width/item_count/bpp the same way at ovl32:008C):
   u16 x_pos
   u16 y_pos
   u8  item_count          ; frames or tiles in this record
-  u8  palette[8]          ; 16 EGA indices as packed nibbles
+  u8  palette[8]          ; 16-to-4 CGA colour map as packed nibbles (read only on CGA)
   u8  pixels[item_count * height * width_cols * 4]   ; two 4-bit pixels per byte
 
 PIC/SPRIT/FINAL animations wrap several records:
@@ -54,7 +61,7 @@ FONT_BLOCK_ID = 201
 FONT_GLYPHS = 177
 FONT_BYTES = FONT_GLYPHS * 8
 
-# Globs that hold EGA picture records (or the one font exception).
+# Globs that hold picture records (or the one font exception).
 PIC_GLOBS = (
     "TITLE.DAX", "FINAL5.DAX",
     "PIC*.DAX", "CPIC*.DAX", "SPRIT*.DAX",
@@ -63,8 +70,15 @@ PIC_GLOBS = (
 )
 
 
+# CGA mode 4 BIOS default: palette 1, low intensity, black background [I].
+CGA = [(0x00, 0x00, 0x00), (0x00, 0xAA, 0xAA), (0xAA, 0x00, 0xAA), (0xAA, 0xAA, 0xAA)]
+
+
 def _palette_map(pal8: bytes) -> list[int]:
-    """8 bytes -> 16 EGA colour indices (high nibble first per byte)."""
+    """8 bytes -> the 16-entry CGA colour map (values 0..3, high nibble first per byte).
+
+    Only the game's CGA path reads it (UnpackPicturePixels, src/RES07.PAS:217..242); in every
+    shipped record every entry is 0..3 (whitepaper 4.2.3)."""
     out = []
     for b in pal8:
         out.append((b >> 4) & 0xF)
@@ -72,8 +86,12 @@ def _palette_map(pal8: bytes) -> list[int]:
     return out
 
 
-def _ega_rgb(index: int, pmap: list[int]) -> tuple[int, int, int]:
-    return EGA[pmap[index & 0xF] & 0xF]
+def _ega_rgb(index: int) -> tuple[int, int, int]:
+    return EGA[index & 0xF]
+
+
+def _cga_rgb(index: int, pmap: list[int]) -> tuple[int, int, int]:
+    return CGA[pmap[index & 0xF] & 3]
 
 
 def picture_bytes(height: int, width_cols: int, items: int) -> int:
@@ -168,7 +186,9 @@ def decode_pixels(meta: dict, item: int = 0) -> list[list[int]]:
     return rows
 
 
-def to_image(meta: dict, item: int = 0):
+def to_image(meta: dict, item: int = 0, cga: bool = False):
+    """The picture as an RGB image: EGA colours of the raw nibbles, or with cga=True the CGA
+    colours through the record's colour map."""
     if Image is None:
         raise RuntimeError("Pillow required for PNG output")
     pmap = _palette_map(bytes(meta["palette"]))
@@ -177,7 +197,7 @@ def to_image(meta: dict, item: int = 0):
     px = img.load()
     for y, row in enumerate(rows):
         for x, c in enumerate(row):
-            px[x, y] = _ega_rgb(c, pmap)
+            px[x, y] = _cga_rgb(c, pmap) if cga else _ega_rgb(c)
     return img
 
 
@@ -271,6 +291,8 @@ def verify_tree(root: str) -> int:
 
 
 def main(argv: list[str]) -> int:
+    cga = "--cga" in argv
+    argv = [a for a in argv if a != "--cga"]
     if len(argv) < 3 or argv[1] not in ("verify", "list", "dump"):
         print(__doc__)
         return 2
@@ -312,7 +334,7 @@ def main(argv: list[str]) -> int:
         images = []
         for fi, fr in enumerate(frames):
             for it in range(fr["items"]):
-                images.append((fi, it, to_image(fr, it)))
+                images.append((fi, it, to_image(fr, it, cga)))
         if len(images) == 1:
             images[0][2].save(out)
             print("wrote %s" % out)

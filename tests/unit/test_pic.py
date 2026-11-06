@@ -75,6 +75,22 @@ def test_png_dump_title(tmp_path):
     assert im.size == (320, 200)
 
 
+def test_png_dump_title_colours(tmp_path):
+    """EGA paints the raw nibbles (the title uses ten colours); --cga goes through the
+    record's 16-to-4 colour map (whitepaper 4.2.3), so at most four colours."""
+    pytest.importorskip("PIL")
+    from PIL import Image
+    ega, cga = tmp_path / "ega.png", tmp_path / "cga.png"
+    assert pic.main(["pic", "dump", str(POOL / "TITLE.DAX"), "1", str(ega)]) == 0
+    assert pic.main(["pic", "dump", "--cga", str(POOL / "TITLE.DAX"), "1", str(cga)]) == 0
+    ega_colours = {c for _, c in Image.open(ega).getcolors(256)}
+    cga_colours = {c for _, c in Image.open(cga).getcolors(256)}
+    assert len(ega_colours) == 10
+    assert ega_colours <= set(pic.EGA)
+    assert 1 < len(cga_colours) <= 4
+    assert cga_colours <= set(pic.CGA)
+
+
 def test_font_block_201():
     raw = dax.unrle(next(b for b in dax.read_dax(str(POOL / "8X8D1.DAX")) if b["id"] == 201)["data"])
     dec = pic.decode_block(raw, "8X8D1.DAX", 201)

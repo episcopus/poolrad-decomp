@@ -35,9 +35,10 @@ sys.path.insert(0, str(HERE))
 import routine_profile as rp          # noqa: E402
 
 PROF = ROOT / "build/profile"
-# Routines the port runs that the oracle never calls (the original's sound driver is an external object, so its routines are not in the
-# symbol map): they run right after the routine that calls them. Found by comparing the entries the port's bank logs show with the profiles
-# (step 8.11: BriefWait, 376 calls over the 16 sessions; a layout that left it out filled the pool exactly and thrashed the moment it ran).
+# Routines the port runs that the oracle never calls (helpers the port added, such as BriefWait, which mkgame.py adds to PlaySound in step
+# 8.9d, commit 4b589657): they run right after the routine that calls them. Found by comparing the entries the port's bank logs show with
+# the profiles (step 8.11: BriefWait, 376 calls over the 16 sessions; a layout that left it out filled the pool exactly and thrashed the
+# moment it ran).
 FOLLOWERS = {"PlaySound": ["BriefWait"]}
 SND_EVERY = 333_000      # instructions of the oracle (1 MHz clock model) between two runs of the sound driver: 3 a second, as in the port's logs
 
