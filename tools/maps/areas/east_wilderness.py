@@ -8,7 +8,7 @@ SPEC = dict(
     title='EAST WILDERNESS',
     subtitle=('East boat from Phlan; plan = the random "small, dark cave"', 'Pool of Radiance (DOS)  |  area map  |  SPOILERS'),
     source_note=('Game files: GEO8 block 27 (the cave), ECL8 block 27 (wilderness + cave), MON8CHA.',
-                 'Grid: columns A-P, rows 1-16, north up. World coordinates below are script (col, row), from 0.'),
+                 'Grid: (column,row) from 0, top left, north up. World coordinates below are script (col, row), from 0.'),
     geo=('GEO8', 27),
     start=(15, 6),
     arrivals=[(3, 0), (15, 12), (0, 11)],
@@ -26,10 +26,10 @@ SPEC = dict(
             '<b>RANDOM</b> 1 step in 20 meets a pack; 1 in 21 of those is a "small, dark cave" (this plan). '
             'The cave is four sealed 8x8 quarters; you enter one of the four S cells at random and leave by the same S cell.'),
     entries=[
-        ('B', 'place', 'Boat (9, 29)', '"A boat docked here will return you to the civilized section of Phlan." TAKE BOAT lands you at Phlan\'s east pier (P2).'),
+        ('B', 'place', 'Boat (9, 29)', '"A boat docked here will return you to the civilized section of Phlan." TAKE BOAT lands you at Phlan\'s east pier (15,1).'),
         ('C', 'place', 'Ruined castle (11, 8)', '"A ruined castle surrounded by quicksand. An old worn drawbridge is the only safe way across." ENTER goes to the ruined castle.'),
         ('K', 'fight', 'Two caves (6, 15)',
-         'First visit: kobolds are seen slipping into the small cave. LARGE (to the kobold caves at K16, no random fights there until the wyvern is dead), SMALL (hidden, at G16) or EXIT. '
+         'First visit: kobolds are seen slipping into the small cave. LARGE (to the kobold caves at (10,15), no random fights there until the wyvern is dead), SMALL (hidden, at (6,15)) or EXIT. '
          'While the kobold king lives, stepping on the six cells around the caves ((6,14) (7,14) (5,15) (7,15) (6,16) (7,16)) starts '
          + tag('fight', '25 Kobolds + 5 Kobold Leaders') + ' (once per visit).'),
         ('R', 'fight', 'Random packs (1 step in 20)',
@@ -37,17 +37,17 @@ SPEC = dict(
          'Choices: flee, fight, parley (not with Giant Lizards, Hippogriffs, Wyverns, Phase Spiders). Parley: attitude + d30 + modifiers: 120+ they wander off, 100-119 they let you pass, less they attack. '
          'Resting in the open can be interrupted by the same encounter.'),
         ('D', 'place', 'Small, dark cave (this plan)',
-         '"Will you enter?" Then you are put at A4 (NW), G16 (SW), M16 (SE) or L1 (NE) at random. Each quarter has its own fights; in every cell marked S, '
+         '"Will you enter?" Then you are put at (0,3) (NW), (6,15) (SW), (12,15) (SE) or (11,0) (NE) at random. Each quarter has its own fights; in every cell marked S, '
          '"You find a passageway going out": LEAVE returns you to the wilderness. Fleeing a fight returns you to your entry cell. Flags reset on each entry.'),
-        ('2', 'loot', 'NW quarter (entry A4): wyvern lair',
-         tag('loot', 'A3: wyvern\'s treasure') + ': 5000 cp, 6000 sp, 2000 ep, 1000 gp, 3 gems, 3 jewelry and 1 treasure roll (take it with no fight). '
-         '3 (G3, G4, G6) and 4 (E2): a Wyvern each (L9, AC3, HP42), once each. 1 (C3): half-eaten halfling, nothing.'),
-        ('5', 'fight', 'SW quarter (entry G16): lizard den',
-         '5 (F13): 4 Giant Lizards. 7 (A10): 4 Giant Lizards + 2 Minotaurs (L7, AC6, HP33). 9 (B16): 2 Giant Lizards guard the chamber. 6 (H10): human bones. '
-         + tag('loot', '8 (C12): 6000 cp, 4000 sp, 3000 ep and 1 treasure roll') + '.'),
-        ('13', 'fight', 'SE quarter (entry M16): gnolls and trolls',
-         '13 (J15) and 14 (O8): 12 Gnolls + 4 Trolls (L7, AC4, HP36), once for both. Hatched cells: 1 in 8 per step a pack of 4 to 34 Gnolls. 12 (P11): remains of elves.'),
-        ('K', 'fight', 'NE quarter (entry L1): mad kobolds',
+        ('2', 'loot', 'NW quarter (entry (0,3)): wyvern lair',
+         tag('loot', '(0,2): wyvern\'s treasure') + ': 5000 cp, 6000 sp, 2000 ep, 1000 gp, 3 gems, 3 jewelry and 1 treasure roll (take it with no fight). '
+         '3 (6,2), (6,3), (6,5) and 4 (4,1): a Wyvern each ((11,8), AC3, HP42), once each. 1 (2,2): half-eaten halfling, nothing.'),
+        ('5', 'fight', 'SW quarter (entry (6,15)): lizard den',
+         '5 (5,12): 4 Giant Lizards. 7 (0,9): 4 Giant Lizards + 2 Minotaurs ((11,6), AC6, HP33). 9 (1,15): 2 Giant Lizards guard the chamber. 6 (7,9): human bones. '
+         + tag('loot', '8 (2,11): 6000 cp, 4000 sp, 3000 ep and 1 treasure roll') + '.'),
+        ('13', 'fight', 'SE quarter (entry (12,15)): gnolls and trolls',
+         '13 (9,14) and 14 (14,7): 12 Gnolls + 4 Trolls ((11,6), AC4, HP36), once for both. Hatched cells: 1 in 8 per step a pack of 4 to 34 Gnolls. 12 (15,10): remains of elves.'),
+        ('K', 'fight', 'NE quarter (entry (11,0)): mad kobolds',
          'Only hatched cells: 1 in 8 per step a pack of 10 to 50 Kobolds (3 Kobold Leaders too from 40). No treasure.'),
         ('W', 'hint', 'West edge', 'At column 2 (on terrain codes 6 and 7, and 5 except row 31) the script hands you to ECL7 block 26, arriving at column 14: the zone the Phlan WEST and BAY boats land in.'),
     ],

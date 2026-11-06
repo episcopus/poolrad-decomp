@@ -4,6 +4,9 @@
 locked doors, event cells) with numbered markers and notes on its encounters, hints, events and secrets.
 They are player aids made from the original game files, not part of the decompilation proof.
 
+Coordinates are the game's own: a cell is written `(column,row)`, both counted 0 to 15 from the top left, the same
+values the scripts keep in `[C04B]` (column) and `[C04C]` (row). The axes of every plan carry those numbers.
+
 One spec per area in `tools/maps/areas/`, 29 in all: every GEO block of the game. Titles come from the script's own text or
 from the City Hall clerk's text where it names the place; the others are descriptive and marked as inferred on the page.
 

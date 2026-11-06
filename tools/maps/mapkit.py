@@ -55,7 +55,6 @@ except Exception:  # not on macOS: the built-in Helvetica (not embedded)
     FONT, FONTB, FONTI = 'Helvetica', 'Helvetica-Bold', 'Helvetica-Oblique'
 
 N = 16
-COLS = 'ABCDEFGHIJKLMNOP'
 D = {'N': (-1, 0), 'E': (0, 1), 'S': (1, 0), 'W': (0, -1)}
 
 INK = HexColor('#2b2118')
@@ -76,8 +75,8 @@ TYPEHEX = {'fight': '#b3261e', 'hint': '#1f5fa8', 'loot': '#b7791f', 'secret': '
 
 
 def lab(r, c):
-    """grid label of a cell: column letter and row number, north is row 1"""
-    return '%s%d' % (COLS[c], r + 1)
+    """grid label of a cell in the game's coordinates: (column,row), both from 0, row 0 at the top"""
+    return '(%d,%d)' % (c, r)
 
 
 def tag(kind, text):
@@ -149,6 +148,10 @@ def render(spec, out, fs):
     note = spec.get('source_note', ('', ''))
     c.drawRightString(W - M, H - M - 8, note[0])
     c.drawRightString(W - M, H - M - 17, note[1])
+    left = M + tw + 14 + max(stringWidth(sub[0], FONT, 9), stringWidth(sub[1], FONT, 9))
+    for ln in note:  # the right-aligned source note must not run into the subtitle
+        if W - M - stringWidth(ln, FONTI, 6.6) < left + 6:
+            print('  warning: %s: source note overlaps the subtitle: %s' % (spec['name'], ln[:50]))
     c.setStrokeColor(INK)
     c.setLineWidth(1.2)
     c.line(M, H - M - 28, W - M, H - M - 28)
@@ -299,10 +302,10 @@ def render(spec, out, fs):
     c.setFillColor(MUTED)
     c.setFont(FONT, 6.4)
     for k in range(N):
-        c.drawCentredString(cx(k + 0.5), MAPTOP + 3, COLS[k])
-        c.drawCentredString(cx(k + 0.5), MAPY - 8, COLS[k])
-        c.drawRightString(MAPX - 3, cy(k + 0.5) - 2.2, str(k + 1))
-        c.drawString(MAPX + MAPW + 3, cy(k + 0.5) - 2.2, str(k + 1))
+        c.drawCentredString(cx(k + 0.5), MAPTOP + 3, str(k))
+        c.drawCentredString(cx(k + 0.5), MAPY - 8, str(k))
+        c.drawRightString(MAPX - 3, cy(k + 0.5) - 2.2, str(k))
+        c.drawString(MAPX + MAPW + 3, cy(k + 0.5) - 2.2, str(k))
 
     # room labels
     for item in spec.get('rooms', []):

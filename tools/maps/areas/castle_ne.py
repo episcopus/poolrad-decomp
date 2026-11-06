@@ -8,7 +8,7 @@ SPEC = dict(
     title='CASTLE NE',
     subtitle=('Barracks, kitchen, records and scribes of the giants', 'Pool of Radiance (SSI, DOS)  |  annotated area map  |  SPOILERS'),
     source_note=('Read from the game files: area map GEO5 block 4, event script ECL5 block 4 (and 5 where noted),',
-                 'monsters MON5CHA, loot ITEM5. Grid: columns A-P, rows 1-16, north is up.'),
+                 'monsters MON5CHA, loot ITEM5. Grid: (column,row) from 0, top left, north up.'),
     geo=('GEO5', 4),
     start=(3, 0),
     extra_starts=[(4, 0), (11, 0), (15, 4), (15, 11), (15, 12)],
@@ -26,7 +26,7 @@ SPEC = dict(
         ('5', 6, 14.5, 'hint', dict(dy=2)), ('6', 9, 14.5, 'hint'), ('7', 14, 14.5, 'fight', dict(dy=-1)), ('P', 3, 2, 'fight'),
     ],
     diamonds=[('a', 0, 8, 'loot'), ('b', 15, 14.5, 'loot', dict(dy=-1))],
-    glance=('<b>ARRIVE</b> at A4, A5 or A12 from the NW quarter (ECL5 block 3), or at E16, L16 or M16 from the SE quarter. <b>EXITS</b> are those six door gaps '
+    glance=('<b>ARRIVE</b> at (0,3), (0,4) or (0,11) from the NW quarter (ECL5 block 3), or at (4,15), (11,15) or (12,15) from the SE quarter. <b>EXITS</b> are those six door gaps '
             '(west to the NW quarter, south to the SE quarter); the north and east edges are solid. This script (ECL5/4) runs only this map. '
             'It is where you learn the guards\' password <b>HARASH</b> and the gate word <b>RHODIA</b> (3, 5) and where City Hall\'s case against '
             '<b>Cadorna</b> is found (7). Nothing roams until an <b>alarm</b> rings (P).'),
@@ -36,25 +36,25 @@ SPEC = dict(
          '(1 in 3 searching) meets <b>1 Fighter + 5 Hill Giants</b> (quiet cells halve that, safe cells never). In disguise: ' + tag('hint', 'HAUGHTY or ABUSIVE') +
          ' = "on whose authority?" (<b>TYRANTHRAXUS</b>), ' + tag('hint', 'MEEK') + ' = "today\'s password?" (<b>HARASH</b>), SLY or NICE = they attack. '
          'Undisguised or after robbing the SW temple: they attack at once; the disguise is dropped if you robbed it.'),
-        ('1', 'fight', 'Street door (F3-F4)  ' + tag('fight', 'FIGHT'),
+        ('1', 'fight', 'Street door (5,2)-(5,3)  ' + tag('fight', 'FIGHT'),
          'Persistent: it fires until the fight has happened once, ever. Alarm up or no disguise: the door slams, the alarm rings, then <b>4 Fire Giants</b> charge out '
          '(fight or flee). In disguise a fighter steps out and parleys (SLY or NICE: he flees yelling, alarm, giants); a failed bluff gives STAY AND FIGHT: '
          '<b>1 Fighter + 4 Fire Giants</b> at once, then a patrol rounds the corner. No loot.'),
-        ('2', 'fight', 'Guardroom (F2)', '"An armed man immediately attacks": 1 Fighter, alarm. Once, and it shares the flag with 1 (fight here and the street door is quiet).'),
-        ('3', 'fight', 'Barracks (J2)  ' + tag('hint', 'PASSWORDS'),
+        ('2', 'fight', 'Guardroom (5,1)', '"An armed man immediately attacks": 1 Fighter, alarm. Once, and it shares the flag with 1 (fight here and the street door is quiet).'),
+        ('3', 'fight', 'Barracks (9,1)  ' + tag('hint', 'PASSWORDS'),
          '"A pigsty": 4 Fire Giants, until you have the papers or they are dead. ADVANCE to PARLEY: ' + tag('hint', 'HAUGHTY or SLY') + ' and they hand over "the paper with the passwords" '
          '(free: <b>HARASH</b> and the gate word <b>RHODIA</b>); NICE or MEEK: "get lost, wimp" (STAY = fight, or LEAVE); ABUSIVE = fight. Undisguised with the alarm up they attack. No loot.'),
-        ('a', 'loot', 'Barracks floor (I1)', tag('loot', 'SEARCH') + ' (S key) once the four giants are dead and you lack the papers: "a piece of paper": the same two passwords.'),
-        ('4', 'loot', 'Armory (O3-P4)', 'Locked (Bash or Knock; it cannot be picked). Safe room. ' + tag('loot', 'Take anything:') +
+        ('a', 'loot', 'Barracks floor (8,0)', tag('loot', 'SEARCH') + ' (S key) once the four giants are dead and you lack the papers: "a piece of paper": the same two passwords.'),
+        ('4', 'loot', 'Armory (14,2)-(15,3)', 'Locked (Bash or Knock; it cannot be picked). Safe room. ' + tag('loot', 'Take anything:') +
          ' 58 plain items (shield, plate to leather armor, bows, crossbows, swords, axes, polearms, ammunition); the prompt repeats until you say no.'),
-        ('5', 'hint', 'Kitchen (O6-P8)',
+        ('5', 'hint', 'Kitchen (14,5)-(15,7)',
          'Slaves and a gnoll overseer. <b>KILL THE OVERSEER AND FREE THE SLAVES</b> (no combat): a slave gives you the paper with the <b>gate password</b> and says '
          '"the maze is deadly" (once for good). TALK: a threat, then boiling oil (2d6, one member) on every repeat. GO BACK OUTSIDE: you are pushed back (alarm if undisguised).'),
-        ('6', 'hint', 'Records (O10-P11)',
+        ('6', 'hint', 'Records (14,9)-(15,10)',
          'READ THE RECORDS: one session shows three pieces in a row: the Red Wizards of Thay are allied to Tyranthraxus; his plan to conquer "all lands south of the Moonsea"; '
          'then "clear the area first". Each page read risks an interruption: alarm up, 1 in 2 a patrol; before hour 18, 3 in 20 a scribe walks in (RUN, or AMBUSH him, no alarm; '
          'if he sees you first he flees and the alarm rings).'),
-        ('7', 'fight', 'Scribes\' office (O13-P16, N15-N16)  ' + tag('hint', 'EVIDENCE'),
+        ('7', 'fight', 'Scribes\' office (14,12)-(15,15), (13,14)-(13,15)  ' + tag('hint', 'EVIDENCE'),
          'Hour 18 or later, or the alarm up: empty. Otherwise 6 scribes and 2 officers (2 Envoys). Disguised parley as in P; any other outcome is a fight (alarm 1 in 5). '
          'Once the officers are dead: ' + tag('loot', 'b: SEARCH') + ' the office (S key): each step 1 in 10 each of "hard evidence that Cadorna has been using you and seeks the Pool for himself" '
          '(the flag City Hall reads), a Raven Clan report, and Tyranthraxus\' "flaming aura" note.'),
@@ -68,8 +68,8 @@ SPEC = dict(
     boxes=[
         '<b>PASSWORDS</b> Barracks (3) or its floor paper (a) give both rune papers; the kitchen slave (5) only the gate word. They match HARASH and RHODIA in length and letter pattern (inferred). '
         'Cadorna (SE quarter) also hands over the gate slip once freed.',
-        '<b>GREY</b> H6 and the 4x4 block A13-D16 have no way in on foot and no events. <b>BEWARE</b> Persistent flags (the street fight, passwords, records stage, evidence) stay for the whole game; "once per visit" ones reset when you re-enter. '
-        'Inside the maze script (ECL5/5) the same ids mean something else (F3-F4 a mage, J2 three Hill Giants, I1 stairs up when facing east); '
-        '<b>G11</b> is a teleport pad there but, under this script, runs the kitchen scene.',
+        '<b>GREY</b> (7,5) and the 4x4 block (0,12)-(3,15) have no way in on foot and no events. <b>BEWARE</b> Persistent flags (the street fight, passwords, records stage, evidence) stay for the whole game; "once per visit" ones reset when you re-enter. '
+        'Inside the maze script (ECL5/5) the same ids mean something else ((5,2)-(5,3) a mage, (9,1) three Hill Giants, (8,0) stairs up when facing east); '
+        '<b>(6,10)</b> is a teleport pad there but, under this script, runs the kitchen scene.',
     ],
 )
