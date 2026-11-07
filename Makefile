@@ -305,3 +305,6 @@ c-golden:          ## Phase 7: play the sessions on the C translation and compar
 c-sound:           ## Phase 7: the C sound driver's hardware trace against the oracle's (after `make host`)
 	$(PY) tools/c/sound_check.py
 coco3:       ; $(call todo,Phase 8,11)
+
+# Publishing to the public repository (private side only: publish/ is not published, so this is a no-op there).
+-include publish/publish.mk
