@@ -3,6 +3,7 @@
 
   uv run --with reportlab python tools/maps/build.py            # every area in tools/maps/areas/
   uv run --with reportlab python tools/maps/build.py slums      # one, by its SPEC name
+  uv run --with reportlab python tools/maps/build.py world      # only the world map (world.py), docs/maps/world-map.pdf
 
 Each tools/maps/areas/<file>.py defines SPEC (see mapkit.py). Reads poolrad/*.DAX (pinned originals);
 writes docs/maps/<SPEC name>.pdf."""
@@ -29,10 +30,14 @@ def specs():
 
 def main(argv):
     import mapkit
+    import world
     allspecs = specs()
-    names = argv[1:] or list(allspecs)
+    names = argv[1:] or list(allspecs) + ['world']
     OUT.mkdir(parents=True, exist_ok=True)
     for n in names:
+        if n == 'world':  # the one-page world map: how the areas connect (tools/maps/world.py)
+            print('world: %s' % Path(world.build(OUT / 'world-map.pdf')).relative_to(HERE.parents[1]))
+            continue
         if n not in allspecs:
             print('no area named %s (have: %s)' % (n, ', '.join(allspecs)))
             return 2

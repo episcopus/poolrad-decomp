@@ -7,7 +7,7 @@ They are player aids made from the original game files, not part of the decompil
 Coordinates are the game's own: a cell is written `(column,row)`, both counted 0 to 15 from the top left, the same
 values the scripts keep in `[C04B]` (column) and `[C04C]` (row). The axes of every plan carry those numbers.
 
-One spec per area in `tools/maps/areas/`, 29 in all: every GEO block of the game. Titles come from the script's own text or
+One spec per area in `tools/maps/areas/`, 29 in all (the world map above is not an area and has none): every GEO block of the game. Titles come from the script's own text or
 from the City Hall clerk's text where it names the place; the others are descriptive and marked as inferred on the page.
 
 | Map | Title | Source map | Spec |
@@ -42,6 +42,23 @@ from the City Hall clerk's text where it names the place; the others are descrip
 | `docs/maps/lizardman-tunnels.pdf` | LIZARD MAN TUNNELS | `GEO8` block 30 | `areas/lizardman_tunnels.py` |
 | `docs/maps/hidden-catacombs.pdf` | HIDDEN CATACOMBS | `GEO8` block 32 | `areas/hidden_catacombs.py` |
 
+## The world map
+
+`docs/maps/world-map.pdf` is one more US Letter landscape page, written by `tools/maps/world.py` (`make maps` runs it, or
+`uv run --with reportlab python tools/maps/build.py world`): how the 29 area maps connect. It shows New Phlan and the old
+city as a grid of district thumbnails, the North Shore world map as a hub with everything that hangs off it, and the west
+and east wilderness strips with their entrances and world squares. Thumbnails are the real 16x16 plans (from `geoq.py`,
+with each area spec's arrival cells for the reachable shading) and each box links to its area page when the PDFs sit
+together. The layout is a schematic: only the drawn lines are connections.
+
+Every link comes from an area script's `NEWECL` (opcode 32): the operand is the next script block, `[6E12]` the tile set,
+and the script stores the arrival cell (`[C04B]`, `[C04C]`, `[C04D]`) or the world square (`[49C3]` column, `[49C4]` row)
+first. `python3 tools/maps/ecldis.py ECL<n> <block>` prints them; the docstring of `world.py` lists the exit table of each
+script that was read. Three results worth knowing: Stojanow Gate's north edge goes to the castle yard and its south edge to
+Podal Plaza; the Temple of Bane and the Orc Mansion are two maps of one script (`ECL1/24`, picked by `[49C5]`); the three
+wilderness strips are `ECL6/25` (west), `ECL7/26` (North Shore) and `ECL8/27` (east), joined at their x = 2 and x = 15 edges.
+From the Adventurer's Journal (not from the script, which picks the map from `[49C5]`, whose writer is not read): the Orc Mansion lies south of Kovel Mansion and the Temple of Bane west of the Orc Mansion. Not traced: the conditions behind a few edge rows of the strips.
+
 Three script blocks have no map data and so no page: the City Hall interior (`ECL3` block 8), the Training Hall
 interior (`ECL3` block 11) and Diogenes' cave (`ECL6` block 19) run as menu scenes. Some GEO blocks are not the area
 their name suggests (for example `GEO6` block 25 and `GEO8` block 27 are the small random caves, and the world maps of
@@ -62,6 +79,7 @@ python3 tools/maps/ecldis.py ECL4 21                          # the area script 
 - `ecldis.py`: an ECL disassembler. Operand counts and types follow `src/OVL03.PAS` (`DispatchCommand` and each
   `*Command`) and `src/OVL07.PAS` (`DecodeOperands`, `DecodeString`: strings are 6-bit packed). Code base is `$9900`
   and the block body after the leading `5000` word maps to `$9900 + offset`.
+- `world.py`: the world map page: node and link tables, thumbnails, layout (reuses `mapkit.py`'s fonts, colours and `reachable`).
 - `mapkit.py`: draws a page from a spec (see its docstring for the keys). Text is fitted by shrinking the body font.
 - `areas/*.py`: the content of each page (one `SPEC` per file; `build.py` discovers them). The spec keys, including
   the later additions (`arrivals`, `wrap`, `extra_starts`, `hedge_ids`, `illusion_edges`, `grey_rects`), are in `mapkit.py`.
