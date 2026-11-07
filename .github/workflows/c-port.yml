@@ -13,7 +13,7 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Linux packages for SDL3's build
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev libpulse-dev libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxss-dev libwayland-dev libxkbcommon-dev libdrm-dev libgbm-dev libgl1-mesa-dev libegl1-mesa-dev
@@ -21,8 +21,11 @@ jobs:
         run: cmake -S . -B build/cmake -DCMAKE_BUILD_TYPE=Release -DPOOLRAD_FETCH_SDL3=ON
       - name: Build
         run: cmake --build build/cmake --config Release -j 4
+      - uses: actions/setup-python@v7
+        if: runner.os != 'Windows'
+        with: { python-version: "3.12" }
       - name: The sound driver against the oracle's trace
         if: runner.os != 'Windows'
         run: |
-          python3 -m pip install unicorn
-          python3 tools/c/sound_check.py
+          python -m pip install unicorn
+          python tools/c/sound_check.py
