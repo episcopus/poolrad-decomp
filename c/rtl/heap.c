@@ -11,7 +11,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #if defined(__APPLE__) || defined(__GLIBC__)
 #include <execinfo.h>
 #endif
@@ -471,6 +470,7 @@ void *pool_fpm(farptr p)
 
 #ifdef POOL_PLACEMENT
 #include <signal.h>
+#include <unistd.h> /* _exit; this crash handler is POSIX only (POOL_PLACEMENT builds run on macOS and Linux) */
 /* a crash prints the routines of the game on the stack (the placement model makes the game touch memory in new ways) */
 static void on_segv(int sig)
 {
