@@ -1,0 +1,380 @@
+<title>Pool of Radiance Tandy Sounds</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one column of sound cards, each a three-way listening bench (original, noise fixed, designed) over one time scale. */
+:root {
+  --bg: #f4f5f8; --surface: #ffffff; --ink: #1a1e26; --muted: #5b6473; --line: #dde1e8; --soft: #eceff4;
+  --orig: #4a6fa5; --fix: #2b8574; --des: #b8730f; --warn: #a8432f;
+  --display: "Space Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --body: "Inter", -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #11141a; --surface: #191d25; --ink: #e6e9ef; --muted: #9aa3b2; --line: #2a303b; --soft: #20252e;
+  --orig: #82a4db; --fix: #4cc0a9; --des: #f0a640; --warn: #f08a72; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #11141a; --surface: #191d25; --ink: #e6e9ef; --muted: #9aa3b2; --line: #2a303b; --soft: #20252e;
+  --orig: #82a4db; --fix: #4cc0a9; --des: #f0a640; --warn: #f08a72; color-scheme: dark }
+
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 40px 80px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 40px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; letter-spacing: -0.01em; }
+h1 { font-size: clamp(28px, 4.2vw, 42px); line-height: 1.1; }
+h2 { font-size: 22px; }
+h3 { font-size: 19px; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+code, .mono { font-family: var(--mono); font-size: 0.88em; }
+header { display: flex; flex-direction: column; gap: 14px; }
+.lede { font-size: 17px; color: var(--ink); }
+.muted { color: var(--muted); }
+
+.legend { display: flex; flex-wrap: wrap; gap: 10px 22px; font-size: 14px; }
+.legend span { display: inline-flex; align-items: center; gap: 8px; }
+.sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.sw.orig { background: var(--orig); } .sw.fix { background: var(--fix); } .sw.des { background: var(--des); }
+
+.findings { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.finding { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px;
+  display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.finding b { font-family: var(--display); font-size: 16px; font-weight: 600; }
+.finding p { font-size: 14px; color: var(--muted); }
+
+section.block { display: flex; flex-direction: column; gap: 14px; }
+.lessons { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; max-width: 80ch; }
+
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+button { font: inherit; font-size: 14px; color: var(--ink); background: var(--surface); border: 1px solid var(--line);
+  border-radius: 8px; padding: 7px 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+button:hover { border-color: var(--muted); }
+button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--des); outline-offset: 2px; }
+button.play { font-weight: 500; }
+button.play .tri { width: 0; height: 0; border-left: 8px solid currentColor; border-top: 5px solid transparent; border-bottom: 5px solid transparent; }
+button.play.on .tri { width: 8px; height: 10px; border: 0; border-left: 3px solid currentColor; border-right: 3px solid currentColor; box-sizing: border-box; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 22px;
+  display: flex; flex-direction: column; gap: 18px; }
+.card-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 16px; }
+.ids { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.facts { display: grid; grid-template-columns: 9.5em 1fr; gap: 6px 16px; font-size: 14px; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; }
+.bench { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.lane { border: 1px solid var(--line); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 10px;
+  background: var(--soft); min-width: 0; }
+.lane.picked { border-color: currentColor; box-shadow: inset 0 0 0 1px currentColor; }
+.lane.orig { color: var(--orig); } .lane.fix { color: var(--fix); } .lane.des { color: var(--des); }
+.lane .lt { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.lane .ln { font-family: var(--display); font-weight: 600; font-size: 15px; }
+.lane p, .lane .stats { color: var(--ink); font-size: 13.5px; }
+.lane .stats { font-family: var(--mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.lane button.play { color: inherit; }
+canvas.spec { width: 100%; height: 92px; display: block; background: var(--surface); border-radius: 6px; border: 1px solid var(--line); }
+.same { font-size: 13px; color: var(--muted); }
+.extra { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; font-size: 13.5px; color: var(--muted); }
+.flag { color: var(--warn); font-weight: 500; }
+
+.pick { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; font-size: 14px; border-top: 1px solid var(--line); padding-top: 14px; }
+.pick label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+.pick input[type=text] { flex: 1 1 220px; min-width: 0; font: inherit; font-size: 14px; color: var(--ink); background: var(--bg);
+  border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; }
+
+.unused { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.unused .u { border: 1px solid var(--line); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; gap: 6px;
+  background: var(--surface); color: var(--orig); font-size: 13px; }
+.unused .u span { color: var(--muted); font-family: var(--mono); font-size: 12px; }
+
+table.port { border-collapse: collapse; font-size: 14px; min-width: 560px; }
+.tablewrap { overflow-x: auto; }
+table.port th, table.port td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.port th { font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 500; }
+textarea { width: 100%; box-sizing: border-box; min-height: 120px; font-family: var(--mono); font-size: 12px; color: var(--ink);
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+
+@media (max-width: 820px) { .bench { grid-template-columns: minmax(0, 1fr); } .facts { grid-template-columns: 1fr; } .facts dt { margin-top: 6px; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Pool of Radiance · DOS port · Tandy 1000 sound</div>
+    <h1>The game's eleven sounds, redesigned for the Tandy chip</h1>
+    <p class="lede">Every sound Pool of Radiance plays, as its own Tandy driver plays it, beside the same tune with one driver fault fixed and a new sound designed from what it is for. All three go through the same emulation of the SN76489 at the same scale, so a louder clip is louder on the chip too.</p>
+    <div class="legend">
+      <span><i class="sw orig"></i>Original: the game's own driver, as the game plays it</span>
+      <span><i class="sw fix"></i>Noise fixed: the same tune, noise register written only when it changes</span>
+      <span><i class="sw des"></i>Designed: a new script for the chip</span>
+    </div>
+    <div class="toolbar">
+      <button type="button" id="stop-all">Stop</button>
+      <span class="muted" style="font-size:13px">Spectrograms: 60 Hz to 12 kHz, log scale, one level scale for every clip.</span>
+    </div>
+  </header>
+
+  <section class="block" aria-labelledby="h-find">
+    <h2 id="h-find">What the capture showed</h2>
+    <div class="findings" id="findings"></div>
+  </section>
+
+  <section class="block" aria-labelledby="h-eob">
+    <h2 id="h-eob">What carried over from Eye of the Beholder</h2>
+    <ul class="lessons">
+      <li>Design from use, not from the original's sound. The EOB listening passes kept 110 designed sounds of 117; mapping the AdLib's registers to the chip won only the two pieces of music.</li>
+      <li>Write the chip state once a tick as a script, and write only what changed. EOB's designs stay under about 360 bytes a second; these stay under 700.</li>
+      <li>The same building blocks: one tick of noise for an attack, periodic noise clocked by tone 2 for thumps under the chip's 109 Hz floor, noise swept with tone 2 for whooshes, vibrato after the attack, a delayed second tone for an echo.</li>
+      <li>Fit the time the game gives a sound. EOB's mixer let effects ring; here a third of the sounds get a tenth of a second, so those designs say everything in 80 to 95 ms.</li>
+      <li>Listen in passes. Each card has a pick and a note; the box at the end collects them as JSON for the next pass, as EOB's picker did.</li>
+    </ul>
+  </section>
+
+  <section class="block" aria-labelledby="h-sounds">
+    <h2 id="h-sounds">The sounds, most heard first</h2>
+    <div id="cards" style="display:flex;flex-direction:column;gap:18px"></div>
+  </section>
+
+  <section class="block" aria-labelledby="h-unused">
+    <h2 id="h-unused">Tunes nothing plays</h2>
+    <p class="muted">The driver's tables hold 20 tunes. The game calls PlaySound only with 2 to 12 (tunes 1 to 11), so tunes 12 to 20 are never heard. Tune 20 is silent on the Tandy chip. They are here for completeness and get no design.</p>
+    <div class="unused" id="unused"></div>
+  </section>
+
+  <section class="block" aria-labelledby="h-port">
+    <h2 id="h-port">Toward the DOS port</h2>
+    <div class="tablewrap"><table class="port">
+      <thead><tr><th>Change</th><th>What it takes</th><th>What it gives</th></tr></thead>
+      <tbody>
+        <tr><td>Noise write fix</td><td>TandyStep (src/RES03.ASM) keeps the last noise byte and skips the write when it has not changed: a few bytes in the resident driver, every tune unchanged.</td><td>The middle column. Fireball, the step and the hit get their noise back; the 237 Hz buzz goes.</td></tr>
+        <tr><td>Designed sounds</td><td>A small player for register scripts at 118.3 Hz (every second tick of the driver's timer), and the 11 scripts: <span id="bytes"></span> bytes of chip writes before packing. Most of the designs are sweeps, envelopes and vibrato, which the driver's own stream language also has, so a compiler to its streams is the smaller alternative.</td><td>The right column.</td></tr>
+        <tr><td>Let short sounds finish</td><td>Optional. The idle driver silences a sound after WaitHundredths(10); running the timer for good would let the missile strike be heard and would end the 0.1 s pause the game takes at every step.</td><td>A game-timing change, so a port decision of its own: the designs fit the 0.1 s either way.</td></tr>
+      </tbody>
+    </table></div>
+    <p class="muted">Not yet heard on a real Tandy 1000 EX. The noise fault follows the chip model MAME and DOSBox use (a write of the noise register resets its shift register), which is also the one the EOB study used; its periodic noise on the EX's own chip is still the open question from that study.</p>
+  </section>
+
+  <section class="block" aria-labelledby="h-picks">
+    <h2 id="h-picks">Your picks</h2>
+    <p class="muted">Updated as you choose. Copy it into the repository as the listening pass's choices file.</p>
+    <div class="toolbar"><button type="button" id="copy">Copy picks</button><span id="copied" class="muted" style="font-size:13px"></span></div>
+    <textarea id="picks" readonly aria-label="Picks as JSON"></textarea>
+  </section>
+</div>
+
+<script>
+const DATA = /*DATA*/null;
+const LANES = [["now", "orig", "Original"], ["fixed", "fix", "Noise fixed"], ["designed", "des", "Designed"]];
+const store = {
+  get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+};
+const picks = store.get("por-tandy-picks-1") || {};
+const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+
+/* ---- audio ---- */
+let actx = null, playing = null;
+const buffers = new Map();
+function b64ToBuf(uri) {
+  const s = atob(uri.slice(uri.indexOf(",") + 1)); const a = new Uint8Array(s.length);
+  for (let i = 0; i < s.length; i++) a[i] = s.charCodeAt(i);
+  return a.buffer;
+}
+const decoder = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(1, 44100, 44100);
+function decode(uri) {
+  if (!buffers.has(uri)) buffers.set(uri, decoder.decodeAudioData(b64ToBuf(uri)));
+  return buffers.get(uri);
+}
+function stop() {
+  if (!playing) return;
+  try { playing.node.stop(); } catch (e) {}
+  playing.btn && playing.btn.classList.remove("on");
+  playing.done && playing.done();
+  playing = null;
+}
+async function play(uri, btn, onTime) {
+  const again = playing && playing.btn === btn;
+  stop();
+  if (again) return;
+  if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+  if (actx.state === "suspended") await actx.resume();
+  const buf = await decode(uri);
+  const node = actx.createBufferSource(); node.buffer = buf; node.connect(actx.destination);
+  const t0 = actx.currentTime + 0.02; node.start(t0);
+  const me = { node, btn, done: () => onTime && onTime(-1) };
+  playing = me; btn && btn.classList.add("on");
+  node.onended = () => { if (playing === me) { btn && btn.classList.remove("on"); onTime && onTime(-1); playing = null; } };
+  const step = () => { if (playing !== me) return; onTime && onTime(actx.currentTime - t0); requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+  return new Promise(r => { const prev = node.onended; node.onended = () => { prev(); r(); }; });
+}
+document.getElementById("stop-all").onclick = stop;
+
+/* ---- spectrogram ---- */
+function fft(re, im) {
+  const n = re.length;
+  for (let i = 1, j = 0; i < n; i++) { let b = n >> 1; for (; j & b; b >>= 1) j ^= b; j ^= b;
+    if (i < j) { [re[i], re[j]] = [re[j], re[i]]; [im[i], im[j]] = [im[j], im[i]]; } }
+  for (let len = 2; len <= n; len <<= 1) {
+    const ang = -2 * Math.PI / len, wr = Math.cos(ang), wi = Math.sin(ang);
+    for (let i = 0; i < n; i += len) { let cr = 1, ci = 0;
+      for (let k = 0; k < len / 2; k++) {
+        const a = i + k, b = a + len / 2, tr = re[b] * cr - im[b] * ci, ti = re[b] * ci + im[b] * cr;
+        re[b] = re[a] - tr; im[b] = im[a] - ti; re[a] += tr; im[a] += ti;
+        const nr = cr * wr - ci * wi; ci = cr * wi + ci * wr; cr = nr; } } }
+}
+const N = 1024, HOP = 220, FMIN = 60, FMAX = 12000;
+const win = Float32Array.from({length: N}, (_, i) => 0.5 - 0.5 * Math.cos(2 * Math.PI * i / N));
+function cssColor(node) { return getComputedStyle(node).color; }
+async function drawSpec(canvas, uri, seconds) {
+  const buf = await decode(uri); const x = buf.getChannelData(0);
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const W = Math.max(50, Math.round(canvas.clientWidth * dpr)), H = Math.round(canvas.clientHeight * dpr);
+  canvas.width = W; canvas.height = H;
+  const g = canvas.getContext("2d"); g.clearRect(0, 0, W, H);
+  const col = cssColor(canvas.parentElement).match(/\d+(\.\d+)?/g).slice(0, 3).join(",");
+  const frames = Math.floor((x.length - N) / HOP) + 1;
+  const pxPerSec = W / seconds;
+  const re = new Float32Array(N), im = new Float32Array(N);
+  const rowBin = []; for (let r = 0; r < H; r++) { const f = FMIN * Math.pow(FMAX / FMIN, 1 - r / (H - 1)); rowBin.push(Math.round(f * N / 44100)); }
+  for (let fi = 0; fi < frames; fi++) {
+    const off = fi * HOP;
+    for (let i = 0; i < N; i++) { re[i] = (x[off + i] || 0) * win[i]; im[i] = 0; }
+    fft(re, im);
+    const px = (off + N / 2) / 44100 * pxPerSec, w = Math.max(1, HOP / 44100 * pxPerSec + 0.6);
+    for (let r = 0; r < H; r++) {
+      const b = rowBin[r]; const m = Math.hypot(re[b], im[b]) / (N / 4);
+      const db = 20 * Math.log10(m + 1e-9); const a = Math.max(0, Math.min(1, (db + 72) / 66));
+      if (a > 0.02) { g.fillStyle = `rgba(${col},${a.toFixed(3)})`; g.fillRect(px, r, w, 1); }
+    }
+  }
+  return {W, H, pxPerSec, base: g.getImageData(0, 0, W, H)};
+}
+function playhead(canvas, spec) {
+  return t => { if (!spec) return; const g = canvas.getContext("2d"); g.putImageData(spec.base, 0, 0);
+    if (t >= 0) { g.fillStyle = cssColor(document.body); g.fillRect(Math.round(t * spec.pxPerSec), 0, 2, spec.H); } };
+}
+
+/* ---- page ---- */
+function fmtDb(v) { return v <= -99 ? "silent" : v.toFixed(1) + " dB"; }
+function findings() {
+  const box = document.getElementById("findings");
+  const fb = DATA.sounds.find(s => s.sound === 11);
+  const items = [
+    ["The noise register is rewritten every tick",
+     `The driver writes all four channels 236.7 times a second, the noise control included, and each write resets the chip's shift register. Fast noise turns into a 237 Hz buzz (the hit-flash noise carries a line ${DATA.buzz[3]} dB over its neighbours, the miss ${DATA.buzz[9]} dB); slow noise never leaves its reset state, so the step and the blow are only clicks and Fireball is near silence (${fmtDb(fb.now.loud)} at its loudest, ${fmtDb(fb.fixed.loud)} with the fix).`],
+    ["A third of the sounds get a tenth of a second",
+     "Outside an animation the driver is idle: PlaySound starts the timer, waits WaitHundredths(10), silences both devices and stops it. The step, the blow and the miss play only that long, and the game waits for them. The miss tune runs 0.26 s, so the end of it is never heard."],
+    ["The missile strike is never heard",
+     "SoundAttackArrives starts, and the next line, SetSoundDriverIdle(10), stops the timer and quiets the chip at once (src/OVL13.PAS:1496 to 1497). At most one tick of it can sound."],
+    ["SoundNoAction is the hit sound",
+     "Its registry name came from the wilderness case (a move refused), but ResolveCombatantAttacks plays it for every attack roll that hits and for a helpless target (src/OVL13.PAS:826, 880). After the step it is the sound a player hears most."],
+  ];
+  for (const [b, p] of items) { const f = el("div", "finding"); f.append(el("b", null, esc(b)), el("p", null, p)); box.append(f); }
+}
+
+function laneText(s, key) {
+  if (key === "now") return esc(s.current) + (s.idle && s.full_length > 0.105 ? ` <span class="muted">(full tune ${s.full_length} s)</span>` : "");
+  if (key === "fixed") return s.noise ? "The same tune, with the noise register written only when its value changes." : "";
+  return esc(s.what[0].toUpperCase() + s.what.slice(1)) + ".";
+}
+
+function card(s) {
+  const c = el("article", "card"); c.id = "sound-" + s.sound;
+  const head = el("div", "card-head");
+  head.append(el("h3", null, esc(s.title)), el("span", "ids", `PlaySound(${s.sound}) · tune ${s.tune} · ${esc(s.name.split(" ")[0])}`));
+  const facts = el("dl", "facts");
+  facts.append(el("dt", null, "Played for"), el("dd", null, esc(s.use)), el("dt", null, "Time it gets"), el("dd", null, esc(s.budget)));
+  const bench = el("div", "bench");
+  const lanes = {};
+  const seconds = Math.max(s.now.length, s.designed.length) + 0.15;
+  const specs = [];
+  for (const [key, cls, label] of LANES) {
+    const d = s[key];
+    const lane = el("div", "lane " + cls); lanes[key] = lane;
+    const top = el("div", "lt"); top.append(el("span", "ln", label));
+    if (key === "fixed" && !s.noise) {
+      lane.append(top, el("p", "same", "This tune uses no noise, so the fix does not change it."));
+      bench.append(lane); continue;
+    }
+    const btn = el("button", "play", '<span class="tri"></span>Play'); btn.type = "button";
+    btn.setAttribute("aria-label", `Play ${label.toLowerCase()}: ${s.title}`);
+    top.append(btn);
+    const cv = el("canvas", "spec"); cv.setAttribute("role", "img"); cv.setAttribute("aria-label", `Spectrogram, ${label.toLowerCase()}`);
+    const txt = el("p", null, laneText(s, key));
+    const stats = el("div", "stats", `${d.length.toFixed(2)} s · ${d.writes} chip writes · loudest ${fmtDb(d.loud)}`);
+    lane.append(top, cv, txt, stats);
+    bench.append(lane);
+    const sp = {cv, uri: d.src, spec: null};
+    specs.push(sp);
+    btn.onclick = () => play(d.src, btn, t => playhead(cv, sp.spec)(t));
+    sp.btn = btn;
+  }
+  const extra = el("div", "extra");
+  const all = el("button", null, "Play the three in turn"); all.type = "button";
+  all.onclick = async () => { for (const sp of specs) { await play(sp.uri, sp.btn, t => playhead(sp.cv, sp.spec)(t)); await new Promise(r => setTimeout(r, 250)); } };
+  const spk = el("button", "play", '<span class="tri"></span>PC speaker original'); spk.type = "button";
+  spk.onclick = () => play(s.speaker.src, spk);
+  extra.append(all, spk);
+  if (s.sound === 12) extra.append(el("span", "flag", "Silenced at once in the original game; heard only if the port lets it finish."));
+  if (s.idle) extra.append(el("span", null, "Played as the game plays it: cut after 0.1 s."));
+  const pick = el("div", "pick");
+  pick.append(el("span", "muted", "Keep:"));
+  const cur = picks[s.sound] || {};
+  for (const [v, label] of [["now", "Original"], ["fixed", "Noise fixed"], ["designed", "Designed"], ["none", "None good"]]) {
+    if (v === "fixed" && !s.noise) continue;
+    const id = `pick-${s.sound}-${v}`;
+    const lab = el("label"); lab.htmlFor = id;
+    const r = el("input"); r.type = "radio"; r.name = "pick-" + s.sound; r.id = id; r.value = v; r.checked = cur.pick === v;
+    r.onchange = () => { picks[s.sound] = {...(picks[s.sound] || {}), pick: v}; mark(); save(); };
+    lab.append(r, document.createTextNode(label)); pick.append(lab);
+  }
+  const note = el("input"); note.type = "text"; note.id = "note-" + s.sound; note.placeholder = "Note for the next pass"; note.value = cur.note || "";
+  note.oninput = () => { picks[s.sound] = {...(picks[s.sound] || {}), note: note.value}; save(); };
+  pick.append(note);
+  function mark() { for (const k in lanes) lanes[k].classList.toggle("picked", (picks[s.sound] || {}).pick === k); }
+  mark();
+  c.append(head, facts, bench, extra, pick);
+  c._specs = specs; c._seconds = seconds;
+  return c;
+}
+
+function save() {
+  store.set("por-tandy-picks-1", picks);
+  const out = {pass: "por-tandy-1", sounds: {}};
+  for (const s of DATA.sounds) out.sounds[s.sound] = {name: s.name, pick: (picks[s.sound] || {}).pick || null, note: (picks[s.sound] || {}).note || ""};
+  document.getElementById("picks").value = JSON.stringify(out, null, 1);
+}
+document.getElementById("copy").onclick = () => {
+  const t = document.getElementById("picks"), msg = document.getElementById("copied");
+  const ok = () => { msg.textContent = "Copied."; }, fallback = () => { t.focus(); t.select(); msg.textContent = "Selected: press Copy on your keyboard."; };
+  try { navigator.clipboard.writeText(t.value).then(ok, fallback); } catch (e) { fallback(); }
+};
+
+async function drawAll() {
+  for (const c of document.querySelectorAll(".card")) {
+    for (const sp of c._specs) { try { sp.spec = await drawSpec(sp.cv, sp.uri, c._seconds); } catch (e) {} }
+  }
+}
+
+function init() {
+  findings();
+  document.getElementById("bytes").textContent = DATA.design_bytes.toLocaleString("en-US");
+  const cards = document.getElementById("cards");
+  for (const s of DATA.sounds) cards.append(card(s));
+  const un = document.getElementById("unused");
+  for (const u of DATA.unused) {
+    const d = el("div", "u");
+    if (u.src) { const b = el("button", "play", `<span class="tri"></span>Tune ${u.tune}`); b.type = "button"; b.style.color = "inherit"; b.onclick = () => play(u.src, b); d.append(b, el("span", null, `${u.length.toFixed(2)} s`)); }
+    else d.append(el("b", null, `Tune ${u.tune}`), el("span", null, "silent on the chip"));
+    un.append(d);
+  }
+  save();
+  drawAll();
+  let rt; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(drawAll, 250); });
+  matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", drawAll);
+}
+init();
+</script>
