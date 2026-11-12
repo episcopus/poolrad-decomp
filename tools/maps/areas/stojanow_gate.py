@@ -6,8 +6,6 @@ SPEC = dict(
     name='stojanow-gate',
     title='STOJANOW GATE',
     subtitle=('Old Phlan gatehouse: wall, two towers, bugbear guards', 'Pool of Radiance (SSI, DOS)  |  annotated area map  |  SPOILERS'),
-    source_note=('Read from the game files: area map GEO2 block 9, scripts ECL2 block 9 and ECL3 block 8,',
-                 'monsters MON2CHA. Grid: (column,row) from 0, top left, north up.'),
     geo=('GEO2', 9),
     start=(15, 4),
     exits=[(15, 4, 'S'), (15, 11, 'S'), (0, 4, 'N'), (0, 11, 'N')],
@@ -26,20 +24,20 @@ SPEC = dict(
         ('7', 7, 4, 'fight'), ('8', 7, 11, 'fight'), ('B', 5, 4, 'fight'), ('B', 5, 11, 'fight'),
         ('9', 7, 8, 'fight'), ('9', 6, 7, 'fight'), ('P', 3, 8, 'fight'),
     ],
-    glance=('<b>ARRIVE</b> on the south edge (4,15) or (11,15) from the plaza map (ECL1 block 18), or on the north edge (4,0) or (11,0) from the '
-            'old town (ECL5 block 6: smithy, Bane temple, washerwomen). Walk off the same four edge doors to leave. '
-            '<b>JOB</b> (City Hall, ECL3 block 8): "secure Stojanow Gate... a small band must slip inside and hold until relieved." '
-            'Done when the garrisons and the outside guards are beaten (9): flag [4AB9] = 254 and the clerk\'s reward table row 19 pays <b>10 jewelry</b>. '
-            '<b>NO</b> loot or shops: scripted fights, a wagon and an alarm. The grey wall and towers cannot be walked into; only the stairs and gate doors cross them.'),
+    glance=('<b>ARRIVE</b> on the south edge (4,15) or (11,15) from Podal Plaza, or on the north edge (4,0) or (11,0) from the '
+            'Castle Yard (smithy, Bane temple, washerwomen). Walk off the same four edge doors to leave. '
+            '<b>JOB</b> (City Hall): "secure Stojanow Gate... a small band must slip inside and hold until relieved." '
+            'Done when the garrisons and the outside guards are beaten (9): the City Hall clerk pays <b>10 jewelry</b>. '
+            '<b>NO</b> loot or shops: set-piece fights, a wagon and an alarm. The grey wall and towers cannot be walked into; only the stairs and gate doors cross them.'),
     entries=[
         ('1', 'hint', 'Viewpoints (2,12), (4,12), (12,12), (7,13)',
          'First step on any of them, once ever: "BEFORE YOU IS STOJANOW GATE... BUILT ACROSS THE BEND OF THE RIVER, THUS ISOLATING THE OLD TOWN AND THE CASTLE"; '
-         'wall 30 ft, towers 50 ft, bugbears at the entrance. ' + tag('secret', 'SEARCH (S key) facing north') + ' here while the clock hour digit is below 5 and the bugbears live: '
+         'wall 30 ft, towers 50 ft, bugbears at the entrance. ' + tag('secret', 'SEARCH (S key) facing north') + ' here while the game clock\'s hour is below 5 and the bugbears live: '
          'a man with a wagon hands something to two bugbears and the gates open (the hint to 2 and 4).'),
         ('2', 'hint', 'Wagon trader (4,14), (11,14)',
-         'Once per visit while the clock hour digit is below 14 and you have no wagon: a man drives a wagon of food and equipment north. '
+         'Once per visit while the game clock\'s hour is below 14 and you have no wagon: a man drives a wagon of food and equipment north. '
          + tag('hint', 'PARLAY') + ': it costs <b>250 gp</b> (pooled coin; NO gets "take it or leave it"; too poor, he leaves) and he warns that the bugbears hate gate duty and fear '
-         'the ettin, so give them no back talk. ' + tag('fight', 'COMBAT') + ': you kill him and take it free. The wagon is only a flag (merchant cover for 4).'),
+         'the ettin, so give them no back talk. ' + tag('fight', 'COMBAT') + ': you kill him and take it free. The wagon is just your merchant cover for 4.'),
         ('3', 'fight', 'Wall strip (red hatch)',
          'Until both towers are taken. Warning 1: "STAY AWAY FROM THE WALL." Next step: the bugbears come over and swing: ' + tag('fight', 'ATTACK') + ' (16 Bugbears) or '
          'TAKE THE PUNCH (1d3 to one member, "NOW BEAT IT"); had you stood on a viewpoint (1) in between you get "...THAT INCLUDES THE TOWER" instead. After that every step here is the demand at 5. '
@@ -52,21 +50,21 @@ SPEC = dict(
          'Every step while the outside bugbears live: "THROW DOWN YOUR WEAPONS!" ' + tag('fight', 'ATTACK') + ': 16 Bugbears, alarm rings, they stay dead. '
          'SURRENDER: all your coin and about 1 item in 5 go ("STRIP YOU OF ANYTHING REMOTELY VALUABLE"), then you are set down at (4,14) or (11,14). FLEE: same, nothing lost.'),
         ('6', 'hint', 'Gate passage ((7,6)-(8,9), hard-locked doors)',
-         'Going <b>south</b> through the passage is always free, and walking it facing south opens both doors for good (flags 1 and 2). Going north through (7,9)/(8,9) or (7,7)/(8,7) needs that, or the '
+         'Going <b>south</b> through the passage is always free, and walking it facing south opens both doors for good. Going north through (7,9)/(8,9) or (7,7)/(8,7) needs that, or the '
          'gate taken (9); otherwise: "FROM THE TOP OF THE GATE COMES A VOLLEY OF ROCKS", 16 hits of 1d6 on random members. (The toll walk at 4 skips the doors.)'),
         ('7', 'fight', 'West tower ((4,5) stair door, guard room (4,7))',
          'On (4,5) facing south: "DO YOU WANT TO GO UPSTAIRS?" takes you to (4,7); (4,7) facing north comes back down to (4,5). '
          'Guard room: "TABLES, CHAIRS, AND BEDS... ALL BUT TWO OF THE BEDS ARE 14 FEET LONG!"; "TWO HUMANS AND THREE ETTIN". You overhear a mage: "...BEFORE ASSAULTING PHLAN. I AM EAGER TO BECOME A BARON." COMBAT or PARLAY fights '
-         '(alarm rings): <b>5th lvl MU + Aide + 3 Ettins</b>; FLEE goes back down. Win: garrison done for good (flag 4).'),
+         '(alarm rings): <b>5th lvl MU + Aide + 3 Ettins</b>; FLEE goes back down. Win: garrison done for good.'),
         ('8', 'fight', 'East tower ((11,5) stair door, guard room (11,7))',
-         'Same at (11,5) and (11,7): "THE LAST GUY WHO GAVE THE BOSS LIP WAS THROWN THROUGH THE TRAPDOOR TO THE MEDUSA!" Fight: <b>Level 6 MU + Aide + 3 Ettins</b>. Win: garrison done (flag 8).'),
+         'Same at (11,5) and (11,7): "THE LAST GUY WHO GAVE THE BOSS LIP WAS THROWN THROUGH THE TRAPDOOR TO THE MEDUSA!" Fight: <b>Level 6 MU + Aide + 3 Ettins</b>. Win: garrison done.'),
         ('B', 'fight', 'Alarm ambush at the tower bases (4,5), (11,5)',
          'Only while the alarm rings: stepping on (4,5) or (11,5) sends down each garrison still alive ("MONSTERS THUNDER DOWN THE STEPS", "CHARGING TOWARD YOU FROM THE FAR TOWER"; both if both): '
          'MU + Aide + 3 Ettins each. Winning counts <b>both</b> garrisons slain, even unvisited; if the bugbears still live: "NOW SLAY THE OUTSIDE GUARDS QUICKLY BEFORE THE ENEMY ARRIVES." '
-         'Flee: you are sent to (4,15) of the old-town map (the script does not reset the tile set first: looks unfinished).'),
+         'Flee: you are sent to (4,15) of the Castle Yard map (looks like a glitch: the map graphics are not reloaded).'),
         ('9', 'fight', 'Taking the gate (7,7)-(8,7); (7,6)-(8,6)',
          'Both garrisons dead, bugbears alive, step on (7,7) or (8,7): "BUGBEARS WERE WAITING ON THE OTHER SIDE OF THE GATE", 16 Bugbears; win: "YOU HAVE TAKEN THE GATE! ... 20 HUMAN AND DEMI-HUMAN GUARDS TAKE POSSESSION OF THE GUARD TOWERS." '
-         'Both doors open for good, [4AB9] = 254; flee sends you to (4,15) of the old-town map as in B. Bugbears dead, one garrison alive: on (7,6) or (8,6), "A GROUP OF MONSTERS IS WAITING ON THE OTHER SIDE OF THE WALL": <b>2 Level 6 MU + 2 Aides + 6 Ettins</b>; win = gate taken too; flee: set down at (4,14) or (11,14).'),
+         'Both doors open for good and the gate counts as taken; flee sends you to (4,15) of the Castle Yard map as in B. Bugbears dead, one garrison alive: on (7,6) or (8,6), "A GROUP OF MONSTERS IS WAITING ON THE OTHER SIDE OF THE WALL": <b>2 Level 6 MU + 2 Aides + 6 Ettins</b>; win = gate taken too; flee: set down at (4,14) or (11,14).'),
         ('P', 'fight', 'Giant patrol (open ground, rows 0-6) and the disguise',
          'Only while the alarm rings: about 1 step in 21 (1 in 3 when searching; rarer inside the buildings), and a rest here can be interrupted by it too: '
          '<b>6th lvl Fighter + 5 Hill Giants</b>. ' + tag('hint', 'With the old-town disguise') + ' (the washerwomen\'s clothes) you may PARLAY: the leader asks "WHAT ARE YOU DOING HERE?"; '
@@ -78,14 +76,14 @@ SPEC = dict(
               ['Bugbear', '4', '5', '16', 'Hill Giant', '9', '4', '41'], ['Ettin', '10', '3', '50', '6th lvl Fighter', '6', '2', '45'],
               ['5th lvl MU', '5', '9', '20', 'Level 6 MU', '6', '9', '23'], ['Aide', '3', '8', '18', '', '', '', '']],
         widths=[58, 18, 18, 18, 62, 18, 18, 0],
-        caption='Lvl, AC (descending), HP as stored in the game files (MON2CHA).'),
+        caption='Lvl, AC (descending), HP as listed in the game.'),
     boxes=[
         '<b>PASSWORDS</b> HARASH (meek), TYRANTHRAXUS (haughty or abusive), to the giant patrol only, and only in the disguise. '
         '<b>PRICES</b> wagon 250 gp, gate toll 15 gp. <b>ALARM</b> starts when you fight a tower garrison or the gate bugbears, or flee a patrol or ambush; "AN ALARM IS SOUNDING" shows on about 1 step in 10; '
-        'walking off the south edge ends it (its own timeout reads an untraced scratch variable: looks like a script slip). <b>CAMPING</b> is safe, except on the open ground north (rows 0-6) '
+        'walking off the south edge ends it (its own timeout looks broken). <b>CAMPING</b> is safe, except on the open ground north (rows 0-6) '
         'while the alarm rings: a 17% check every 5 minutes of rest, then the giant patrol.',
         '<b>STAYS</b> after you leave: tower garrisons dead, bugbears dead, the wagon, the gate taken, the warning level. <b>RESETS</b> each visit: the trader, the guard-room texts, the arrows. '
         '<b>LOOKS LIKE the intended route:</b> wagon (2), toll (4), old-town disguise, both towers (7, 8) or the alarm ambush (B), then (7,7) (9).',
-        '<b>TEXT ONLY</b> every building (rows 0-3 and 9-15): no script, locked doors (red), nothing inside. The outer doors (4,0), (11,0), (4,15), (11,15) are the map edges.',
+        '<b>TEXT ONLY</b> every building (rows 0-3 and 9-15): locked doors (red), nothing inside. The outer doors (4,0), (11,0), (4,15), (11,15) are the map edges.',
     ],
 )

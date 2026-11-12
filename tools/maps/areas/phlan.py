@@ -6,8 +6,6 @@ SPEC = dict(
     name='phlan',
     title='NEW PHLAN',
     subtitle=('The starting town: harbor, temples, shops, City Hall', 'Pool of Radiance (SSI, DOS)  |  annotated area map  |  SPOILERS'),
-    source_note=('Read from the game files: area map GEO3 block 0, event script ECL3 block 0,',
-                 'monsters MON3CHA. Grid: (column,row) from 0, top left, north up.'),
     geo=('GEO3', 0),
     start=(1, 15),
     exits=[(4, 0, 'W')],
@@ -28,7 +26,7 @@ SPEC = dict(
     glance=('<b>START:</b> the passenger dock at (15,1), facing west. On your first visit guide <b>Rolf</b> walks you on a 34-step tour '
             '(Tyr temple, training halls, City Hall, Sune temple, west gate) and then leaves you on your own. '
             '<b>FIRST STOPS:</b> the City Hall clerk (7) for commissions, the Training Hall (6) to level up, an inn (9) to rest. '
-            '<b>LEAVING:</b> the west gate (8, (0,4)) leads out to the slums; boats leave from (15,1).'),
+            '<b>LEAVING:</b> the west gate (8, (0,4)) leads out to The Slums; boats leave from (15,1).'),
     entries=[
         ('2', 'hint', 'Harbor master (11,1) and the boat (15,1)',
          'Face north at (11,1). Passage is 1 platinum for the round trip (one member pays); then board at the dock end, (15,1). '
@@ -40,13 +38,13 @@ SPEC = dict(
         ('4', 'place', 'Temple of Sune (1,1), (3,1), (1,3)', 'Priestess Joy of Sune heals for a fee.'),
         ('5', 'place', 'Temple of Tempus (0,12), (2,12)',
          'Heals. If the watch is angry with you the Tempus guards attack instead: 12 clerics + 20 fighters + 20 fighters. Avoid.'),
-        ('6', 'place', 'Training Hall ((5,0)-(9,2); doors (6,1)-(6,2) and (9,0))', 'Both doors lead to the training school (separate script): level up, classes split by wing.'),
+        ('6', 'place', 'Training Hall ((5,0)-(9,2); doors (6,1)-(6,2) and (9,0))', 'Both doors lead to the training school (a menu screen, no map): level up, classes split by wing.'),
         ('7', 'place', 'City Hall (4,4) and the proclamations (4,3), (3,4), (5,4)',
-         'The clerk pays rewards and hands out commissions: slums, Sokal Keep (reward 250 platinum + 3 jewelry), Podal Plaza and more. '
+         'The clerk pays rewards and hands out commissions: The Slums, Sokal Keep (reward 250 platinum + 3 jewelry), Podal Plaza and more. '
          'Outside, the proclamations add numbered entries to your journal as you progress. '
          + tag('hint', 'Skullcrusher') + ' (freed in Cadorna Textile House) leaves your party at (4,3)-(5,4): "I must go to my master now".'),
         ('8', 'hint', 'West gate (0,4)',
-         'Gateway to the unsettled areas (the slums). Carrying Cadorna\'s treasure, the watch takes it here (and at (11,2)): the reward waits with the clerk.'),
+         'Gateway to the unsettled areas (The Slums). Carrying Cadorna\'s treasure, the watch takes it here (and at (11,2)): the reward waits with the clerk.'),
         ('9', 'place', 'Inns (4,12)-(4,13), (6,12)-(6,13), (0,14)-(2,14)',
          '1 platinum to rest (one member pays): the safe place to heal and memorize. Camping in the open street can bring "the City Watch roust you": '
          + tag('hint', 'answer GO') + ', STAY is a fight.'),
@@ -69,10 +67,10 @@ SPEC = dict(
               ['Tempus guard: 7th Lvl Cleric', '12', '7', '8', '42'], ['Tempus guard: 4th Lvl Fighter', '20', '4', '8', '30'],
               ['Tempus guard: 8th Lvl Fighter', '20', '8', '6', '87']],
         widths=[132, 24, 24, 24, 0],
-        caption='Lvl, AC (descending), HP as stored in the game files (MON3CHA).'),
+        caption='Lvl, AC (descending), HP as the game stores them.'),
     boxes=[
         '<b>HEAL</b> Tyr (11,3), (8,4), (8,6), Sune (1,1), (3,1), (1,3), Tempus (0,12), (2,12).  <b>REST</b> any inn, 1 pp, safe.  '
         '<b>TRAIN</b> the Training Hall.  <b>QUESTS</b> the City Hall clerk: finish a commission, report back, collect.',
-        '<b>AFTER DARK</b> many doors are locked (red on the map): the script asks "break in?" and yes brings the watch. Answer no and come back by day.',
+        '<b>AFTER DARK</b> many doors are locked (red on the map): the game asks "break in?" and yes brings the watch. Answer no and come back by day.',
     ],
 )

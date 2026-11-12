@@ -6,8 +6,6 @@ SPEC = dict(
     name='nomad-camp',
     title='NOMAD CAMP',
     subtitle=("Hassad Ahwal's tribe, north shore wilderness", 'Pool of Radiance (SSI, DOS)  |  annotated area map  |  SPOILERS'),
-    source_note=('Read from the game files: area map GEO7 block 17, event script ECL7 block 17,',
-                 'monsters MON7CHA, loot ITEM7. Grid: (column,row) from 0, top left, north up.'),
     geo=('GEO7', 17),
     start=(14, 1),
     exits=[(0, 3, 'N'), (15, 3, 'S'), (8, 0, 'W')],
@@ -21,9 +19,9 @@ SPEC = dict(
     markers=[
         ('1', 8, 3, 'hint'), ('3', 9, 9, 'place', dict(dy=-3)), ('2', 12, 10, 'place'), ('4', 7, 13, 'fight'),
     ],
-    glance=('<b>ARRIVE</b> at (1,14), facing east, by choosing ENTER at the nomad camp on the north-shore world map (12,11). '
+    glance=('<b>ARRIVE</b> at (1,14), facing east, by choosing ENTER at the Nomad Camp on the North Shore map (12,11). '
             '<b>LEAVE</b> by stepping off the north, south or west edge and answering yes, or by fleeing. The camp is open ground: '
-            'the only script triggers are the <b>sentry ring</b> (red hatch) and the clock. The tribe: chief <b>Hassad Ahwal</b> '
+            'the only triggers are the <b>sentry ring</b> (red hatch) and the clock. The tribe: chief <b>Hassad Ahwal</b> '
             '(level 6), a shaman, 5 fourth-level guards, about 50 nomads. <b>Befriend them</b> (feast, kobold raid): 3000 gp + 5000 gp + '
             'Two-Handed Sword +2 + a Wand. <b>Or kill them all</b>: 5000 gp. Either way leaving counts for City Hall: 6 gems + 2 jewelry.'),
     entries=[
@@ -40,7 +38,7 @@ SPEC = dict(
         ('3', 'place', 'Games and the feast (central clearing (9,9))',
          'You are led to the clearing (the next morning if you arrived late in the day): contests, then the night feast. Chief, tongue loosened by drink, gives you <b>journal entry 55</b> '
          '(dangers of the region) and begs you to stay: a large kobold band is near. After a night in the hut, at the next morning (clock hour 0 or 1; '
-         'inferred: rest through midnight) he asks again: <b>STAY AND FIGHT</b> or LEAVE (wished luck; the raid still comes if you return after 18).'),
+         'rest through midnight, not confirmed) he asks again: <b>STAY AND FIGHT</b> or LEAVE (wished luck; the raid still comes if you return after 18).'),
         ('4', 'fight', 'Kobold raid (after you agreed, from clock hour 18)',
          'About 1 step in 4, anywhere (in the outskirts the kobolds come alone, no nomad help). Three raids in turn ("kobolds attacking the camp", then kobolds in melee with nomads; nomads fight beside you, '
          'a scaled number of Kobolds). The fourth: a huge horde; the chief asks "finish this together?" <b>DESTROY THE KOBOLDS</b>: Hassad + 2 guards + '
@@ -51,20 +49,20 @@ SPEC = dict(
          + tag('fight', '5 fighters + 49 Nomads') + ', loot ' + tag('loot', '5000 gp') + '. Night: kobolds join and the tribe attacks too: shaman, chief, fighters + 49 Kobolds, '
          + tag('loot', '8000 gp') + '. Once the tribe is dead kobold raids still come at night (3000 gp for the horde).'),
         ('L', 'hint', 'Leaving and City Hall',
-         'Leave after accepting the feast, or after wiping the tribe out: the script sets quest flag [4AB7]. The clerk (ECL3/8) then pays '
+         'Leave after accepting the feast, or after wiping the tribe out: the quest counts as done. The City Hall clerk then pays '
          + tag('loot', '6 gems + 2 jewelry') + ' ("FIND THE NOMADS AND STOP THEM"). Walking off an edge asks "back into the wilderness?"; fleeing in the west half moves you back '
          'to a fixed cell of your 4x4 block ((4,4) (7,4) (11,4) (4,6) (8,7) (13,6) (4,10) (8,10) (13,9) (4,12) (8,11) (10,11)).'),
     ],
     table=dict(
-        rows=[['Monster (MON7CHA)', 'Lvl', 'AC', 'HP', 'Where'],
+        rows=[['Monster', 'Lvl', 'AC', 'HP', 'Where'],
               ['Nomad', '1', '6', '6', 'tribe, 49-50'], ['4th Lvl Fighter', '4', '8', '30', 'guards, 5'],
               ['Hassad (headman)', '6', '2', '45', '1'], ['Shaman', '5', '9', '20', '1'], ['Kobold', '0', '7', '3', 'raids, 53']],
         widths=[84, 20, 20, 24, 0],
         caption='Lvl, AC (descending), HP as stored in the game files. Counts marked scaled depend on party strength.'),
     boxes=[
-        '<b>TIME</b> the script reads the game clock hour [49C9]: 14+ is "tomorrow" and the dark palette, 18+ is the kobold hour. That these are evening hours is an inference. '
+        '<b>TIME</b> the game reads the clock hour: from 14 on counts as "tomorrow" (dark palette), from 18 it is the kobold hour. That these are evening hours is not confirmed. '
         '<b>NO SECRETS</b> no passwords, traps, locked doors or search spots; wall segments with amber bars are open gaps, thick black walls (palisade) are solid.',
-        '<b>NOT TRACED</b> exactly how party strength sets group sizes (script: party value against 56); how nomad allies are flagged in the raid (marked computer-run, '
-        'inferred); the world-map symbol that changes at (12,11) after the camp is resolved. If your party harms its nomad allies the script turns the tribe hostile (inferred).',
+        '<b>NOT CONFIRMED</b> exactly how party strength sets group sizes; how nomad allies are handled in the raid (computer-run, probably); the North Shore symbol that changes at (12,11) after the camp is resolved. '
+        'If your party harms its nomad allies the tribe probably turns hostile.',
     ],
 )

@@ -6,8 +6,6 @@ SPEC = dict(
     name='kovel-mansion',
     title='KOVEL MANSION',
     subtitle=('The thieves\' hideout: traps, caskets, ambushes', 'Pool of Radiance (SSI, DOS)  |  annotated area map  |  SPOILERS'),
-    source_note=('Read from the game files: area map GEO3 block 14, scripts ECL3 blocks 14 and 8,',
-                 'monsters MON3CHA, loot ITEM3. Grid: (column,row) from 0, top left, north up.'),
     geo=('GEO3', 14),
     start=(0, 4),
     exits=[(0, 4, 'N'), (0, 11, 'N'), (4, 15, 'E'), (11, 15, 'E'), (15, 4, 'S'), (15, 11, 'S')],
@@ -22,17 +20,17 @@ SPEC = dict(
         ('8', 4, 3, 'fight'), ('9', 5, 6, 'fight'), ('A', 13, 8, 'fight'), ('A', 14, 7, 'fight'), ('J', 12, 10, 'fight'),
         ('F', 14, 8, 'hint'), ('F', 14, 5, 'hint'), ('F', 5, 4, 'hint'),
     ],
-    glance=('<b>ARRIVE</b> in the grounds: south edge ((4,15), (11,15), from ECL1 block 24) or north and east edges ((4,0), (11,0), (15,4), (15,11), from the wilderness map ECL7 block 26); '
-            'walk off those doors to leave (nothing on the west). <b>GET IN</b> by the double front door on the north face, (9,1)-(9,2) and (10,1)-(10,2) (locked). '
-            'The west annex (1,7)-(2,13) has three outer doors, no way into the house and no script. '
+    glance=('<b>ARRIVE</b> in the grounds from the North Shore map (Old Phlan\'s north gate, CITY, or east gate, NORTH) at the north and east edges ((4,0), (11,0), (15,4), (15,11)), '
+            'or from the Orc Mansion at the south edge ((4,15), (11,15)). <b>LEAVE</b> by the same gaps: south gates to the Orc Mansion, the rest to the North Shore map (nothing on the west). <b>GET IN</b> by the double front door on the north face, (9,1)-(9,2) and (10,1)-(10,2) (locked). '
+            'The west annex (1,7)-(2,13) has three outer doors, no way into the house, nothing to find. '
             '<b>JOB</b> (City Hall): "a large group of thieves operates out of the old Kovel mansion": kill <b>21 thieves</b> (a running tally, see below) and the clerk pays <b>80 pp + 3 gems</b>. '
             '<b>TAKE</b> 1500 sp, 1800 gp, 35 gems, 1 jewelry and many items (tapestries, scrolls, +1 arms, a Leather Armor +4). '
             '<b>DANGER</b> traps, ambushes, and no safe camping until the guild is broken.'),
     entries=[
-        ('1', 'place', 'Front doors ((9,2), (10,2), north face)', 'Locked (red cross). Inside, rooms open with plain locks and doors. All events below are on the cells shown.'),
+        ('1', 'place', 'Front doors ((9,2), (10,2), north face)', 'Locked (red cross). Inside, rooms open with plain locks and doors. Everything below happens on the cells shown.'),
         ('2', 'fight', 'Thief ambush rooms (red hatch)',
-         'Cells (7,3) (8,3) (13,6) (12,7) (4,9) (6,9) (6,11) (10,11) (11,11) (12,11) (5,12) (12,12) (5,13) (event 1) and (11,2) (5,3) (6,3) (12,3) (4,6) (3,8) (4,8) (8,12) (event 2): while the guild stands and under 21 are dead, '
-         '"A THIEF WITH A SWORD COMES OUT OF NOWHERE" (never twice in a row from the same event number, per visit). 3 times in 10 he <b>backstabs</b> a member (2d8, 3d8 after 12 kills) and vanishes; '
+         'Cells (7,3) (8,3) (13,6) (12,7) (4,9) (6,9) (6,11) (10,11) (11,11) (12,11) (5,12) (12,12) (5,13) (first group) and (11,2) (5,3) (6,3) (12,3) (4,6) (3,8) (4,8) (8,12) (second group): while the guild stands and under 21 are dead, '
+         '"A THIEF WITH A SWORD COMES OUT OF NOWHERE" (never twice in a row from the same group of cells, per visit). 3 times in 10 he <b>backstabs</b> a member (2d8, 3d8 after 12 kills) and vanishes; '
          'else you hold him: ATTACK (one thief: <b>1st lvl</b>, a <b>6th lvl</b> after 18 kills) or LET HIM GO. Each kill adds 1 to the tally. Fleeing sets you back a step.'),
         ('T', 'secret', 'Trap rooms (11,10), (13,11), (12,13), (3,11), (4,12), (5,6), (4,3)',
          'Once per trap per visit (traps re-arm when you re-land). The party may notice it: "YOUR PARTY DETECTS A TRAP!" (a roll against the best thief skill in the party) or "YOUR MAGIC DETECTS A TRAP!" '
@@ -64,12 +62,12 @@ SPEC = dict(
     table=dict(
         rows=[['Monster', 'Lvl', 'AC', 'HP'], ['1st lvl Thief', '1', '10', '4'], ['6th lvl Thief', '7', '10', '28']],
         widths=[70, 22, 22, 0],
-        caption='Lvl, AC (descending), HP as stored in the game files (MON3CHA).'),
+        caption='Lvl, AC (descending), HP as the game stores them.'),
     boxes=[
         '<b>LOCKS</b> (cabinets, caskets): PICK by the chosen member\'s thief skill, one try per lock ever (a failure is permanent); BREAK always works; CAST KNOCK spends a memorized Knock. '
-        '<b>TALLY</b> [4A45]: +1 per ambush kill, +5 weapons room, +1 guild master, +15 hall A; at 21 the quest flag [4AB2] = 254, the ambush rooms stop and camping turns safe.',
+        '<b>TALLY</b>: +1 per ambush kill, +5 weapons room, +1 guild master, +15 hall A; at 21 the quest is done, the ambush rooms stop and camping turns safe.',
         '<b>CAMPING</b> before that: a check at every 5 minutes of rest, 99%: "THREE THIEVES WITH SLINGS" hit 3 times for 1d4+1 and run. '
-        '<b>STAYS</b> done: all loot, jail, papers, the tally. <b>RESETS</b> each visit: traps, the chase, hall A, the chain rule of the ambush rooms.',
+        '<b>STAYS</b> done: all loot, jail, papers, the tally. <b>RESETS</b> each visit: traps, the chase, hall A, the no-twice-in-a-row rule of the ambush rooms.',
         '<b>LOOKS LIKE the order:</b> front door; loot and papers first (3, 4, 5, F); ambush rooms and the weapons room to build the tally; hall A (A) is the big fight; the clerk for the reward.',
         '<b>TEXT ONLY</b> every other cell, including the whole west annex (1,7)-(2,13).',
     ],

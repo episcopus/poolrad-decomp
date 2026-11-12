@@ -6,7 +6,7 @@ text, markers and room labels come from the spec of the area (sokal_keep.py, phl
 Needs reportlab (not a project dependency): `uv run --with reportlab python tools/maps/build.py`.
 
 Spec keys (all optional unless marked):
-  name*, title*, subtitle (two lines), source_note (two lines), geo*=(file, block),
+  name*, title*, subtitle (two lines), source_note (two lines, optional: the standard player wording is used when absent), geo*=(file, block),
   start*=(row, col)   the cell the party arrives in (reachability is computed from it),
   exits               list of (row, col, side) edges drawn with a green arrow,
   hatch_events        {event id: fill hex} cells shaded for a roaming encounter,
@@ -72,6 +72,11 @@ BOX = HexColor('#efe6cf')
 BOXLINE = HexColor('#b9aa86')
 TYPECOL = {'fight': RED, 'hint': BLUE, 'loot': AMBER, 'secret': PURPLE, 'place': HexColor('#4a5560')}
 TYPEHEX = {'fight': '#b3261e', 'hint': '#1f5fa8', 'loot': '#b7791f', 'secret': '#6b3fa0', 'place': '#4a5560'}
+
+
+# the page's source line: player wording, no file or script names (a spec may still override it)
+STANDARD_NOTE = ('Read from the original game data: the area map, its events and monsters.',
+                 'Grid: (column,row) from 0, top left, north up.')
 
 
 def lab(r, c):
@@ -145,7 +150,7 @@ def render(spec, out, fs):
     c.drawString(M + tw + 14, H - M - 8, sub[0])
     c.drawString(M + tw + 14, H - M - 20, sub[1])
     c.setFont(FONTI, 6.6)
-    note = spec.get('source_note', ('', ''))
+    note = spec.get('source_note', STANDARD_NOTE)
     c.drawRightString(W - M, H - M - 8, note[0])
     c.drawRightString(W - M, H - M - 17, note[1])
     left = M + tw + 14 + max(stringWidth(sub[0], FONT, 9), stringWidth(sub[1], FONT, 9))

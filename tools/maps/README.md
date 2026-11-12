@@ -42,22 +42,33 @@ from the City Hall clerk's text where it names the place; the others are descrip
 | `docs/maps/lizardman-tunnels.pdf` | LIZARD MAN TUNNELS | `GEO8` block 30 | `areas/lizardman_tunnels.py` |
 | `docs/maps/hidden-catacombs.pdf` | HIDDEN CATACOMBS | `GEO8` block 32 | `areas/hidden_catacombs.py` |
 
+## Player wording (no internal names on the pages)
+
+The pages are player aids, so every drawn string uses friendly names: places by their in-game names (Castle Yard, North
+Shore, Old Phlan's east gate), transitions by what the player does ("North Shore map, east gate (13,27), answer SOUTH"),
+and no file, block, script or variable names. `mapkit.py` prints one standard source line on every page
+(`STANDARD_NOTE`); a spec should not set `source_note`. Developer notes (block numbers, script addresses) belong in a
+spec's module docstring, which is not drawn. To check the finished PDFs:
+`for f in docs/maps/*.pdf; do pdftotext $f - | grep -n -E "ECL[0-9]|GEO[0-9]|block [0-9]|script"; done` should print nothing.
+
 ## The world map
 
 `docs/maps/world-map.pdf` is one more US Letter landscape page, written by `tools/maps/world.py` (`make maps` runs it, or
-`uv run --with reportlab python tools/maps/build.py world`): how the 29 area maps connect. It shows New Phlan and the old
-city as a grid of district thumbnails, the North Shore world map as a hub with everything that hangs off it, and the west
-and east wilderness strips with their entrances and world squares. Thumbnails are the real 16x16 plans (from `geoq.py`,
-with each area spec's arrival cells for the reachable shading) and each box links to its area page when the PDFs sit
-together. The layout is a schematic: only the drawn lines are connections.
+`uv run --with reportlab python tools/maps/build.py world`): a route guide for how the 29 area maps connect. It starts at
+the New Phlan harbor master and gives the words he offers (SOKAL, WEST, BAY, EAST) on the boat lines; the North Shore
+section has one card per square that asks a question (the three gates of Old Phlan, the boat landing, the rowboat, the
+nomad camp) with each answer and where it leads; the west and east wilderness list their entrances with the game's own
+words. Old Phlan's districts are a grid of thumbnails joined edge to edge. Thumbnails are the real 16x16 plans (from
+`geoq.py`, with each area spec's arrival cells for the reachable shading) and each box links to its area page when the
+PDFs sit together. The layout is a schematic: only the drawn lines are connections.
 
 Every link comes from an area script's `NEWECL` (opcode 32): the operand is the next script block, `[6E12]` the tile set,
 and the script stores the arrival cell (`[C04B]`, `[C04C]`, `[C04D]`) or the world square (`[49C3]` column, `[49C4]` row)
-first. `python3 tools/maps/ecldis.py ECL<n> <block>` prints them; the docstring of `world.py` lists the exit table of each
-script that was read. Three results worth knowing: Stojanow Gate's north edge goes to the castle yard and its south edge to
-Podal Plaza; the Temple of Bane and the Orc Mansion are two maps of one script (`ECL1/24`, picked by `[49C5]`); the three
-wilderness strips are `ECL6/25` (west), `ECL7/26` (North Shore) and `ECL8/27` (east), joined at their x = 2 and x = 15 edges.
-From the Adventurer's Journal (not from the script, which picks the map from `[49C5]`, whose writer is not read): the Orc Mansion lies south of Kovel Mansion and the Temple of Bane west of the Orc Mansion. Not traced: the conditions behind a few edge rows of the strips.
+first. `python3 tools/maps/ecldis.py ECL<n> <block>` prints them; the docstring of `world.py` lists the exit table and menu
+words of each script that was read (the harbor master's menu is `MENU [4AC4]`: SOKAL, EAST, WEST, BAY, NONE).
+From the Adventurer's Journal (not from the script, which picks the map from `[49C5]`, whose writer is not read): the Orc
+Mansion lies south of Kovel Mansion and the Temple of Bane west of the Orc Mansion. Not traced: the conditions behind a
+few edge rows of the strips.
 
 Three script blocks have no map data and so no page: the City Hall interior (`ECL3` block 8), the Training Hall
 interior (`ECL3` block 11) and Diogenes' cave (`ECL6` block 19) run as menu scenes. Some GEO blocks are not the area

@@ -5,9 +5,7 @@ from mapkit import tag
 SPEC = dict(
     name='sokal-keep',
     title='SOKAL KEEP',
-    subtitle=('Thorn Island, by boat from Phlan harbor', 'Pool of Radiance (SSI, DOS)  |  annotated area map  |  SPOILERS'),
-    source_note=('Read from the game files: area map GEO4 block 21, event script ECL4 block 21,',
-                 'monsters MON4CHA, loot ITEM4. Grid: (column,row) from 0, top left, north up.'),
+    subtitle=('Thorn Island, by boat from New Phlan harbor', 'Pool of Radiance (SSI, DOS)  |  annotated area map  |  SPOILERS'),
     geo=('GEO4', 21),
     start=(14, 8),
     exits=[(15, 7, 'S'), (15, 8, 'S')],
@@ -30,10 +28,10 @@ SPEC = dict(
         ('11', 10, 7.5, 'fight', dict(dy=-4, rad=7.4)), ('P', 11, 5, 'fight'),
     ],
     diamonds=[('a', 6, 15, 'loot'), ('b', 4, 4, 'loot')],
-    glance=('<b>BOAT:</b> Phlan harbor master, end of the pier, 1 pp round trip. Until the keep is cleared it is the only boat out of Phlan. '
+    glance=('<b>BOAT:</b> New Phlan harbor master, end of the pier, 1 pp round trip. Until the keep is cleared it is the only boat out of New Phlan. '
             '<b>LEAVE:</b> walk off the south edge at the dock (7,15)-(8,15). '
             '<b>REWARD:</b> once Ferran is dealt with, the City Hall clerk pays <b>250 platinum + 3 jewelry</b> and the other boat routes open. '
-            '<b>NO</b> traps and no locked doors here; every fight is a scripted encounter.'),
+            '<b>NO</b> traps and no locked doors here; every fight happens at a fixed spot.'),
     entries=[
         ('P', 'fight', 'Undead patrol (red hatch: all open ground)  ' + tag('fight', 'FIGHT') + '  ' + tag('hint', 'PASSWORD'),
          'Each step on hatched ground has a 1 in 6 chance of "a pack of undead": 6 Skeletons + 6 Zombies '
@@ -42,7 +40,7 @@ SPEC = dict(
          '<b>SAMOSUD</b> after. Once said, later patrols just ask "give the password?".'),
         ('1', 'hint', 'Dead elf (6,13)',
          'Hidden by reeds, west of the gate. ' + tag('secret', 'SEARCH') + ' (or S key) for a crumbling scroll of runes: the two '
-         'passwords below (the rune pairs spell SAMOSUD and SHESTNI by letter pattern). '
+         'passwords below (the runes spell SAMOSUD and SHESTNI). '
          + tag('fight', 'Never pick ATTACK') + ': "you hack the body to bits" and the scroll is gone for this visit.'),
         ('2', 'hint', 'Gate (7,13)-(8,13)',
          'Rotting gates. You land just south at (8,14). Before Ferran is freed you hear "echoing footsteps within the keep".'),
@@ -69,7 +67,7 @@ SPEC = dict(
         ('11', 'fight', 'Ferran Martinez (7,10)-(8,10)',
          'A pale undead guardian. ' + tag('hint', 'PARLAY at once, type LUX, then TELL THE TRUTH.') + ' He recounts the fall of Phlan '
          '(Tyranthraxus, Edranka, Torath; Mendor\'s library lost), points you to the illusionary wall if you have not taken the vault gear, and gives '
-         'SAMOSUD. That frees the keep (Phlan counts it cleared). A wrong word: he fades until you re-land. LIE: fades for now, '
+         'SAMOSUD. That frees the keep (New Phlan counts it cleared). A wrong word: he fades until you re-land. LIE: fades for now, '
          'returns on your next step. Or fight him: same result, no story.'),
     ],
     table=dict(
@@ -79,7 +77,7 @@ SPEC = dict(
               ['Hobgoblin', '15', '2', '5', '6', '9 hall'], ['Orc Leader', '4', '1', '5', '8', '9 hall'],
               ['Orc', '31', '1', '6', '5', '9 hall'], ['Ferran Martinez', '1', '8', '2', '38', '11 crypt']],
         widths=[86, 22, 22, 22, 24, 0],
-        caption='Lvl, AC (descending), HP as stored in the game files. Frogs and scorpions poison; skeletons, zombies and Ferran are undead.'),
+        caption='Lvl, AC (descending), HP as the game stores them. Frogs and scorpions poison; skeletons, zombies and Ferran are undead.'),
     boxes=[
         '<b>PASSWORDS</b>  <b>LUX</b>: barracks ghosts (8) and Ferran (11), typed at the prompt.  '
         '<b>SHESTNI</b>: undead patrol before Ferran is freed.  <b>SAMOSUD</b>: patrol after.<br/>'
@@ -88,7 +86,7 @@ SPEC = dict(
         '<b>SUGGESTED ORDER</b>  1 Elf scroll (SEARCH).  2 East side: armory, illusionary wall, vault gear.  '
         '3 Smithy frogs and hammer.  4 West side: insects, barracks (LUX, gems).  '
         '5 Heal, then the great hall (50 foes).  6 Chapel, Ferran (LUX, truth).  '
-        '7 Boat to Phlan, City Hall for the reward.',
+        '7 Boat to New Phlan, City Hall for the reward.',
         '<b>TEXT ONLY</b> (no fight, no loot): fungus room (2,8)-(3,9), stable front (13,10) (its door is sealed), the empty room north of the hall, the chapel. '
         'Grey pockets on the map cannot be entered on foot.',
     ],

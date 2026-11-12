@@ -6,8 +6,6 @@ SPEC = dict(
     name='kobold-caves',
     title='KOBOLD CAVES',
     subtitle=('Warren of the ancient kobold king', 'Pool of Radiance (DOS)  |  area map  |  SPOILERS'),
-    source_note=('Game files: GEO8 block 13, ECL8 block 13, MON8CHA, ITEM8.',
-                 'Grid: (column,row) from 0, top left, north up. Title is descriptive.'),
     geo=('GEO8', 13),
     start=(15, 10),
     arrivals=[(15, 6)],
@@ -22,22 +20,22 @@ SPEC = dict(
         ('11', 1, 10, 'hint'), ('27', 1, 13, 'loot'), ('12', 0, 12, 'loot'), ('14', 3, 1, 'hint'), ('15', 0, 0, 'place'),
         ('13', 3, 2.5, 'hint'),
     ],
-    glance=('<b>ARRIVE</b> from the wilderness (ECL8 block 27): the <b>large cave</b> puts you at (10,15), the hidden <b>small cave</b> at (6,15) '
+    glance=('<b>ARRIVE</b> from the East Wilderness map (square (6,15): LARGE / SMALL / EXIT): the <b>large cave</b> puts you at (10,15), the hidden <b>small cave</b> at (6,15) '
             '(its north door is locked: Bash, Pick or Knock). <b>LEAVE</b> by stepping back onto (6,15) or (10,15) and answering YES. '
             '<b>QUEST</b> (City Hall commission "kobolds being recruited by the enemy"): break the king in three stages (9, 20, 11); the clerk pays '
             '<b>25 gems</b> and the hoard (27) holds the rest. Fights of the throne room come back to back without a rest. '
-            'Random fights: none from the large cave until the wyvern is dead; from the small cave they start at once.'),
+            'Random fights: none from the large cave until the wyvern is dead; from the small cave they start at once. Map numbers match the entries.'),
     entries=[
         ('P', 'fight', 'Roaming kobolds (all plain cave cells)',
          'Chance per step 1 in 61 (1 in 21 when searching) until the first throne fight is won; 1 in 161 (1 in 121) after. Pack: 15 Kobolds + 3 Kobold Leaders. '
-         'Resting can be interrupted by kobolds throwing rocks. Fleeing a scripted fight drops you at (0,12), (6,12), (1,14), (9,11), (7,10) or (6,11) (random).'),
-        ('1', 'fight', 'Pit trap (6,13)', 'Press S: each member rolls a skill byte (looks like find traps) against d100. Unfound: the selected member falls in a pool and loses 20% of money and items. Once a visit.'),
+         'Resting can be interrupted by kobolds throwing rocks. Fleeing a story fight drops you at (0,12), (6,12), (1,14), (9,11), (7,10) or (6,11) (random).'),
+        ('1', 'fight', 'Pit trap (6,13)', 'Press S: each member makes a hidden roll against d100 (looks like find traps; not confirmed in play). Unfound: the selected member falls in a pool and loses 20% of money and items. Once a visit.'),
         ('2', 'hint', 'Mine tailings (6,11)', 'Press S: a kobold\'s crude drawing, journal entry 42 (the paragraph is in the printed journal).'),
         ('3', 'fight', 'White flag kobold (8,12)',
          '"We will pay for a truce." AGREE then FOLLOW: he guides you around the traps (9,12), (9,11), (7,11), (7,9), (10,9), (11,9), (12,9) to the slope (16). '
          'REFUSE or KILL IT: the roof collapses (2d6 to the whole party, a saving throw applies) and 20 Kobolds attack. Walking back in later (if you followed) is a plain deadfall trap.'),
         ('4', 'fight', 'Net trap (10,9) and spike trap (11,9)',
-         '(10,9): unfound, a net and 20 Kobolds; (11,9): spikes, 2d4 to one member (save). Detect with S (roll as in 1); the escorts in 3 and 6 skip them.'),
+         '(10,9): unfound, a net and 20 Kobolds; (11,9): spikes, 2d4 to one member (save). Detect with S (same roll as in 1); the escorts in 3 and 6 skip them.'),
         ('6', 'hint', 'Drunken kobold (12,9)',
          'Only while the king is untouched and you came by the large cave. SLIP PAST, WAKE IT (offers an escort to "the king": you end at (7,5), then walk on) '
          'or KILL IT (random fights then start). A boulder wall east of (12,9) is walkable.'),
@@ -47,11 +45,11 @@ SPEC = dict(
          '1 Wyvern ((11,8), AC3, HP42), once. After it, ' + tag('loot', 'nest (14,6): 1000 sp, 500 ep, 1000 gp, 2 gems, 2 jewelry, 2 treasure rolls') + '.'),
         ('18', 'hint', 'Crippled kobold (15,3)', 'Press S: it croaks for water. GIVE IT WATER: its tale is journal entry 20; then let it leave or kill it. Once only.'),
         ('9', 'fight', 'Throne room (4,3)-(6,3)',
-         'Three fights in a row. (1) 4 Trolls, 35 Kobolds, 11 Leaders. (2) "use the secret weapons": ballista, 7 bolts of 2d6, then 5 boars (kind 120), 45 Kobolds, 8 Leaders. '
+         'Three fights in a row. (1) 4 Trolls, 35 Kobolds, 11 Leaders. (2) "use the secret weapons": ballista, 7 bolts of 2d6, then 5 boars, 45 Kobolds, 8 Leaders. '
          '(3) the two Envoys ((11,5), AC2, HP45): 2 Envoys, 2 Trolls, 2 boars, 8 Kobolds. Then "the king has escaped". Fleeing offers SURRENDER (prison: see 14, 15) or FIGHT. '
          'The ballista ports (3,4), (3,5), (7,3)-(9,3) and the north side of (4,2), (6,2) are barred until this scene has started.'),
         ('10', 'secret', 'Secret door ((5,1), face north)',
-         'Press S facing north: each member finds it 1 in 6 (elf or half-elf 2 in 6). The wall is walkable either way (map data).'),
+         'Press S facing north: each member finds it 1 in 6 (elf or half-elf 2 in 6). The wall can be walked through either way.'),
         ('20', 'fight', "King's quarters (7,0), (7,2)", 'After the Envoys: 3 Trolls, 3 boars, 20 Kobolds, 4 Leaders.'),
         ('11', 'hint', 'Spiked pit (10,1)', 'After the guards: the king falls into his own pit and dies. ' + tag('hint', 'City Hall will pay (25 gems)') + '.'),
         ('27', 'loot', 'Kobold hoard (13,1)', 'After the king: ' + tag('loot', '50000 cp, 6 gems, 2 jewelry') + ' and curios (2 MU scrolls +1, boots, saddles, brooch, tapestries, mirror, brazier, rugs, bone chains).'),
@@ -68,9 +66,9 @@ SPEC = dict(
     table=dict(
         rows=[['Monster', 'Lvl', 'AC', 'HP', 'Monster', 'Lvl', 'AC', 'HP'],
               ['Kobold', '0', '7', '3', 'Envoy', '6', '2', '45'], ['Kobold Leader', '0', '7', '4', 'Wyvern', '9', '3', '42'],
-              ['Troll', '7', '4', '36', 'Efreeti', '10', '2', '55'], ['Boar (kind 120)', '4', '7', '18', 'Fatima', '4', '10', '33']],
+              ['Troll', '7', '4', '36', 'Efreeti', '10', '2', '55'], ['Boar', '4', '7', '18', 'Fatima', '4', '10', '33']],
         widths=[62, 18, 18, 18, 62, 18, 18, 0],
-        caption='Lvl, AC (descending), HP as stored in the game files (MON8CHA).'),
+        caption='Lvl, AC (descending), HP as listed in the game.'),
     boxes=[
         '<b>ORDER</b> large cave (no random fights): drunk kobold (6) escort or the slope; kill the Wyvern (17) and take the nest; the throne room fights (9); '
         'guards (20); the pit (11); the hoard (27). Meet Fatima (14) first for an ally. '

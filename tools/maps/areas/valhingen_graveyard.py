@@ -6,7 +6,6 @@ SPEC = dict(
     name='valhingen-graveyard',
     title='VALHINGEN GRAVEYARD',
     subtitle=('Old Phlan, a graveyard turned upside down', 'Pool of Radiance (DOS)  |  area map  |  SPOILERS'),
-    source_note=('GEO4 block 10, ECL4 block 10, MON4CHA, ITEM4.', 'Grid: (column,row) from 0, top left, north up.'),
     geo=('GEO4', 10),
     start=(4, 0),
     exits=[(4, 0, 'W')],
@@ -24,14 +23,14 @@ SPEC = dict(
         ('15', 0, 15, 'fight'), ('15', 0, 14, 'fight', dict(dx=-3)),
     ],
     diamonds=[('a', 7, 7, 'loot', dict(dx=5, dy=5)), ('b', 0, 14, 'loot', dict(dx=6, dy=6))],
-    glance=('<b>ARRIVE</b> at (0,4) facing east, from the overland map ("north edge of the city": CITY or GRAVEYARD). <b>LEAVE</b> by the west gate (0,4). '
+    glance=('<b>ARRIVE</b> at (0,4) facing east, from the North Shore map (Old Phlan\'s north gate, (12,26) or (13,26), answer GRAVEYARD). <b>LEAVE</b> by the west gate (0,4). '
             '<b>QUEST</b>: Diogenes the silver dragon sends you for a silver bottle (kobold caves); its efreeti is for the vampire (15). '
             '<b>REWARD</b>: City Hall pays for undead killed (per kill, see the box) and a special prize of <b>15 gems + 25 jewelry</b> once the vampire is destroyed. '
-            '<b>WARNING</b>: once the vampire is dead (state 255) <b>every cell event here switches off</b>: take the chests and gifts first. No shops. Resting is interrupted by ghouls until then.'),
+            '<b>WARNING</b>: once the vampire is dead <b>every cell event here switches off</b>: take the chests and gifts first. No shops. Resting is interrupted by ghouls until then.'),
     entries=[
         ('SK', 'fight', 'Roaming packs (hatched)  ' + tag('fight', 'FIGHT'),
          'Per step: <b>SK</b> skeleton ground 1 in 5; <b>ZO</b> zombie ground 4 in 5 (3 in 5 when searching with S); <b>WI</b> wight ground 1 in 5 (2 in 5 searching). '
-         'The pack is the whole remaining quota at once (see the box). Each wight brings 4 Zombies, and a pack also gets 2 Juju Zombies, 2 Ghouls or a Mummy. '
+         'The pack is the whole remaining quota (see the box). Each wight brings 4 Zombies, and a pack also gets 2 Juju Zombies, 2 Ghouls or a Mummy. '
          'You may be ambushed or surprise them. Fleeing puts you back at (1,6), (1,9), (7,4), (14,6) or (14,9).'),
         ('1', 'fight', 'Claws in the soil (6,4)', 'Once a visit while skeletons remain: a forced fight with a skeleton pack.'),
         ('2', 'fight', 'Enclave (5,6)', '"Guarded by a skeleton army": <b>15 Skeletons</b>, once ever, on (5,6) (door on the east side of (4,6); not if the giant skeleton, 3, came first). The way on to the alcove is (6,6), then its east door.'),
@@ -60,10 +59,10 @@ SPEC = dict(
          '(15,6): "spirits of those who fought the dragons: leave or die" (LEAVE puts you at (14,6)). Staying, or stepping on (15,7): <b>4 Wights + 16 Zombies</b> (+ extras), once ever. '
          'Then (14,7), (14,8) and the east door to (15,8): strip the body ' + tag('loot', '(Sling +2, Hammer +3, a Potion, a Clerical Scroll, a 3-spell scroll)') + '. A <b>Wraith</b> guards it only if the wights were never fought.'),
         ('14', 'secret', 'Black marble crypt (12,4)',
-         'Enter from (12,2). A dust-filled coffin and a scroll (journal entry 43). EXAMINE and OVERTURN do nothing; <b>SANCTIFY</b> (the script checks no item) is the trick. '
+         'Enter from (12,2). A dust-filled coffin and a scroll (journal entry 43). EXAMINE and OVERTURN do nothing; <b>SANCTIFY</b> (no item needed) is the trick. '
          'Once the vampire has been driven off (15) he rises here: alone and weak (15 HP) if sanctified, else with 15 Wolves.'),
         ('15', 'fight', 'Vampire lair (15,0), (14,0), (15,1)  ' + tag('fight', 'VAMPIRE') + '  ' + tag('loot', 'b: SEARCH'),
-         'Reach (15,1) from (14,1); its north wall (same id as the walls beside it) hides a door to <b>(15,0)</b>, "wooden stairs lead into a pit": go down to (14,0). <b>Vampire + 50 Wolves</b> (+ an Efreeti if you carry the silver bottle, looks like your ally); '
+         'Reach (15,1) from (14,1); its north wall looks like the walls beside it but hides a door to <b>(15,0)</b>, "wooden stairs lead into a pit": go down to (14,0). <b>Vampire + 50 Wolves</b> (+ an Efreeti if you carry the silver bottle); '
          'he turns to vapor and flees to the crypt (14). ' + tag('loot', 'b: SEARCH at (14,0) afterwards: 9000 gp, 12 gems, 4 clerical scrolls, Shield +1, Scroll of Restoring Levels, 3 Potions, a Wand') + '.'),
     ],
     table=dict(
@@ -72,12 +71,12 @@ SPEC = dict(
               ['Ghoul', '2', '6', '10', 'Mummy', '7', '3', '33'], ['Juju Zombie', '4', '6', '24', 'Vampire', '9', '1', '43 (15)'],
               ['Wight', '5', '5', '23', 'Wolf', '3', '7', '18'], ['Giant Skeleton', '5', '2', '28', 'Efreeti', '10', '2', '55']],
         widths=[62, 18, 18, 36, 50, 18, 18, 0],
-        caption='Lvl, AC (descending), HP as stored in the game files. The mystic is a level 6 magic-user (AC 9, HP 23).'),
+        caption='Lvl, AC (descending), HP as the game stores them. The mystic is a level 6 magic-user (AC 9, HP 23).'),
     boxes=[
-        '<b>QUOTAS</b> (party strength P from hit points, armor, bonuses and levels): skeletons P/2, zombies P/4, wights P/8 (at most 4), each minus the ones you have already killed, recomputed on every landing; '
-        'the roaming pack is exactly what is left. The three makers (5, 6, 9) appear only while their quota is open. '
-        '<b>CITY HALL</b> pays new kills (per kill, by the script: 1 gp per skeleton, 1 pp per zombie, 1 gem per wight or giant skeleton, 1 jewelry per boss credit or wraith).',
-        '<b>STAYS</b>: kill counts, once-ever fights (2, 3, 6, 7, 13), chests, gifts, mystic and vampire states. <b>RESETS</b> on re-landing: the visit flags (1, 4, 8, 9, 10 and the makers). '
+        '<b>QUOTAS</b> (party strength P from hit points, armor, bonuses and levels): skeletons P/2, zombies P/4, wights P/8 (at most 4), each minus the ones you have already killed; '
+        'the roaming pack is what is left. The three makers (5, 6, 9) appear only while their quota is open. '
+        '<b>CITY HALL</b> pays new kills (per kill: 1 gp per skeleton, 1 pp per zombie, 1 gem per wight or giant skeleton, 1 jewelry per boss credit or wraith).',
+        '<b>STAYS</b>: kill counts, once-ever fights (2, 3, 6, 7, 13), chests, gifts, mystic and vampire states. <b>RESETS</b> on re-landing: once-a-visit fights (1, 4, 8, 9, 10, makers). '
         '<b>LOCKED</b>: only the door between (15,3) and (15,4) (an empty closet). The amber ticks between graves are doors you can walk through.',
     ],
 )

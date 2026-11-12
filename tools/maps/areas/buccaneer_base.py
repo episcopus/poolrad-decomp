@@ -5,9 +5,7 @@ from mapkit import tag
 SPEC = dict(
     name='buccaneer-base',
     title='BUCCANEER BASE',
-    subtitle=('Rescue the boy from the slave pen (ECL6/1)', 'Pool of Radiance (SSI, DOS)  |  annotated area map  |  SPOILERS'),
-    source_note=('Game files: map GEO6 block 1, script ECL6 block 1, monsters MON6CHA,',
-                 'loot ITEM6, reward ECL3 block 8. Grid: (column,row) from 0, top left, north up.'),
+    subtitle=('Rescue the boy from the slave pen', 'Pool of Radiance (SSI, DOS)  |  annotated area map  |  SPOILERS'),
     geo=('GEO6', 1),
     start=(0, 8),
     exits=[(0, 7, 'N'), (0, 8, 'N')],
@@ -24,8 +22,8 @@ SPEC = dict(
         ('6', 11, 7, 'fight'), ('7', 12, 7, 'hint', dict(dy=3)), ('8', 11, 2, 'loot'), ('9', 6, 11, 'secret'), ('T', 3, 2, 'fight'), ('T', 3, 13, 'fight'),
         ('B', 2, 5.5, 'fight'),
     ],
-    glance=('<b>QUEST</b> (City Hall council, ECL3/8): save the heir of House Bivant, a boy with a heart-shaped birthmark on his left shoulder, held in a slave pen here. '
-            'The wilderness (ECL6/25) offers the base only while that quest is open and the boy is not yet saved. <b>ARRIVE</b> at the main gate (8,0): you are escorted south '
+    glance=('<b>QUEST</b> (City Hall council): save the heir of House Bivant, a boy with a heart-shaped birthmark on his left shoulder, held in a slave pen here. '
+            'The West Wilderness offers the base (square (12,31), ENTER / LEAVE) only while that quest is open and the boy is not yet saved. <b>ARRIVE</b> at the main gate (8,0): you are escorted south '
             'to the merchants\' camp (8,10) on every visit. <b>LEAVE</b> by walking off the north edge (7,0), (8,0). <b>THREE WAYS</b>: buy the boy from the Captain (7: 75% of everyone\'s money, no fight); '
             'free him by force or stealth and run for the gate (waves of buccaneers); or wipe out the fort. <b>REWARD</b> (City Hall clerk, boy saved): <b>25 gems, 5 jewelry, 4 Clerical Scrolls '
             '(2 spells) and a Two-Handed Sword +1 (+3 vs undead)</b>. Locks are red-crossed; everything else is open.'),
@@ -33,7 +31,7 @@ SPEC = dict(
         ('1', 'hint', 'Main gate (7,0), (8,0)',
          'First step each visit: the escort south. Later: "some buccaneers stand guard" (text). Once you took the boy by force (not bought), 8 Buccaneers rush the gate, once per visit '
          '(flee: back to the camp). Walking off the edge ends the visit; a bought boy is then counted as saved.'),
-        ('2', 'place', "Merchants' camp (6,10)-(9,11)", 'The place to rest: elsewhere the pre-camp script sets other camp-risk values (5/100 against 0/1: looks like risky) and a guard comes by: "go to the merchants area". With the boy taken by force, an interrupted camp is a raid.'),
+        ('2', 'place', "Merchants' camp (6,10)-(9,11)", 'The place to rest: elsewhere camping looks riskier (not confirmed) and a guard comes by: "go to the merchants area". With the boy taken by force, an interrupted camp is a raid.'),
         ('3', 'hint', 'Slave pen fence (face the pen wall from (6,6), (5,7), (5,8), (8,7), (8,8), (6,9) or (7,9)), once per visit',
          'The boy; a fat merchant: "that boy will bring a good price at Zhentil Keep, I shall buy him". PUNCH MERCHANT (6 Buccaneers; flee: back to the camp), '
          'AGREE, SAY NOTHING (no effect), or <b>RESCUE BOY</b>: SNEAK INTO PEN puts you at the pen gate (7,6); ATTACK GUARDS fights its 4 guards now; or later.'),
@@ -42,9 +40,9 @@ SPEC = dict(
          'No guards at all while the animals run (9).'),
         ('5', 'loot', 'In the pen (6,7)-(7,8)', 'GET HIM takes the boy: the quest counts as saved and the slaves run out; you are put back at (7,6). <b>Raiders attack from now on (W).</b>'),
         ('6', 'fight', "Captain's door (7,11)",
-         'Two large guards: "do you have a pass?" SHOW PASS (an item of type Pass: buy one at 8), BRIBE (refused), ATTACK or LEAVE. ATTACK: <b>2 fighters (4th level)</b>, then the whole base comes (W). '
+         'Two large guards: "do you have a pass?" SHOW PASS (a Pass: buy one at 8), BRIBE (refused), ATTACK or LEAVE. ATTACK: <b>2 fighters (4th level)</b>, then the whole base comes (W). '
          'Once the boy is saved they sound the alarm at once.'),
-        ('7', 'hint', "Captain's room ((7,12); the inner room (7,13)-(8,14) has no script)",
+        ('7', 'hint', "Captain's room ((7,12); nothing happens in the inner room (7,13)-(8,14))",
          'Four chain-mail guards bring the <b>Captain</b>. <b>MENTION YOUNG BOY, then BUY THE BOY</b>: <b>75% of every member\'s money</b> (items may go too), then the boy is yours: '
          'no fight, no raids; walk out of the gate. ATTACK: Captain + 4 fighters (4th level); win: he stays dead this visit; flee: the waves start (W).'),
         ('8', 'loot', 'Pass seller (2,11), until you buy',
@@ -66,10 +64,10 @@ SPEC = dict(
               ['Buccaneer', '0', '10', '4', '4th Lvl Fighter', '4', '8', '30'], ['3rd Lvl Fighter', '3', '8', '18', 'Captain', '10', '10', '110'],
               ['5th Lvl Fighter', '5', '10', '39', '', '', '', '']],
         widths=[62, 18, 18, 18, 62, 18, 18, 0],
-        caption='Lvl, AC (descending), HP as stored in the game files (MON6CHA); gear may change AC.'),
+        caption='Lvl, AC (descending), HP as stored in the game files; gear may change AC.'),
     boxes=[
         '<b>LOCKS</b> Bash, Pick (thief) or Knock (spell): pen gate (7,6), the south and middle barracks (4,9), (4,11), (11,9), (11,11), (8,7), (10,7), the east door of the west building (4,7) and the Captain\'s inner room (7,12)-(7,13). '
-        '<b>PERSIST</b> (never reset): boy saved or failed, fort captured; <b>RESET</b> on every landing: the diversion, killed guards, bought pass, raids. '
+        '<b>PERSIST</b> (never reset): boy saved or failed, fort captured; <b>RESET</b> on every visit: the diversion, killed guards, bought pass, raids. '
         '<b>FAIL</b> by SURRENDER or two flees: the council says "your bungling the Bivant rescue has cost us" and the base cannot be entered again.',
         '<b>TEXT ONLY</b> the two empty west buildings (1,6)-(2,8) (open door (0,7)) and (3,6)-(4,8) (locked door (4,7)), the Captain\'s inner room, and the animal pens (their perimeter only reads "a densely packed animal pen").',
     ],

@@ -5,8 +5,7 @@ from mapkit import tag
 SPEC = dict(
     name='cadorna-textile-house',
     title='CADORNA TEXTILE HOUSE',
-    subtitle=('Hobgoblin compound south of Podol Plaza', 'Pool of Radiance (DOS)  |  area map  |  SPOILERS'),
-    source_note=('GEO4 block 2, ECL4 block 2, MON4CHA, ITEM4.', 'Grid: (column,row) from 0, top left, north up.'),
+    subtitle=('Hobgoblin compound south of Podal Plaza', 'Pool of Radiance (DOS)  |  area map  |  SPOILERS'),
     geo=('GEO4', 2),
     start=(4, 0),
     exits=[(4, 0, 'W'), (11, 0, 'W'), (4, 15, 'E'), (11, 15, 'E'), (0, 4, 'N'), (0, 11, 'N')],
@@ -28,8 +27,8 @@ SPEC = dict(
     ],
     diamonds=[('d', 3, 3, 'loot'), ('d', 6, 3, 'loot'), ('d', 6, 7, 'loot'), ('d', 6, 10, 'loot'),
               ('d', 8, 1, 'loot'), ('d', 8, 15, 'loot'), ('d', 13, 0, 'loot')],
-    glance=('<b>ARRIVE</b> at (0,4) facing west from the city\'s west entrance (south route). <b>LEAVE:</b> west gates (0,4) and (0,11) (back to the overland map), '
-            'north gates (4,0) and (11,0) (Podol Plaza), east gates (15,4) and (15,11) (an overgrown garden and old library), and a hidden gate at (15,3) (east). '
+    glance=('<b>ARRIVE</b> at (0,4) facing west from Old Phlan\'s west gate on the North Shore map (answer SOUTH). <b>LEAVE:</b> west gates (0,4) and (0,11) (back to the North Shore map), '
+            'north gates (4,0) and (11,0) (Podal Plaza), east gates (15,4) and (15,11) (the Library), and a hidden gate at (15,3) (east). '
             '<b>QUEST:</b> City Hall\'s Councilman Cadorna wants his family treasure from "the western building of the textile complex"; his servant never came back. '
             '<b>REWARD:</b> the City Hall clerk pays <b>250 gold + 200 platinum</b> once the house is cleared (see CLEARING below). '
             '<b>NO</b> shops and no search-only treasure; the only trap is the well\'s fall. Everything else is a fight or a line of text; the yard is hobgoblin land until the chief dies.'),
@@ -63,7 +62,7 @@ SPEC = dict(
          '<b>TAKE IT UNOPENED</b> (the city watch confiscates it later, the clerk pays <b>20 gems</b>) or <b>OPEN IT</b> (Cadorna is angry, no gems): '
          + tag('loot', '450 cp, 20 sp, 400 pp, 8 gems, 4 jewelry, Gauntlets of Ogre Power, Gold Banded Wand, Jewel Studded Bowl, Jewelled Dragon Statuette, a Ring') + '. Asked once only.'),
         ('9', 'secret', 'Secret door (east wall of (11,14))',
-         'Drawn as a door here, but in the game a wall (id 4, like the outer wall); the hint is Skullcrusher\'s, who says it when he is with you. Another hidden gate: the east edge at (15,3).'),
+         'Drawn as a door here, but in the game a plain wall like the outer wall; the hint is Skullcrusher\'s, who says it when he is with you. Another hidden gate: the east edge at (15,3).'),
         ('K', 'hint', 'Dead hobgoblin (9,9)', '"SKULLCRUSHER WAS HERE" in blood (a dark object is seen from (11,9)). SEARCH and DESTROY find nothing.'),
         ('d', 'loot', 'Diary page (3,3), (3,6), (7,6), (10,6), (1,8), (15,8), (0,13)', 'Any one of these cells gives the same page, journal entry 11 (once a visit). (3,6) is behind a locked door.'),
     ],
@@ -74,7 +73,7 @@ SPEC = dict(
               ['Poisonous Frog', '8', '1', '8', '4', 'street'], ['Large / Huge Scorpion', '3+1', '3/5', '5/4', '10/20', 'street'],
               ['Wight / Ghoul', '1 / 5', '5/2', '5/6', '23/10', 'street'], ['Skeleton / Zombie', '10 / 8', '1/2', '7/8', '5/10', 'street']],
         widths=[84, 28, 22, 22, 28, 0],
-        caption='Lvl, AC (descending), HP as stored in the game files. Group sizes here are fixed, not scaled to the party.'),
+        caption='Lvl, AC (descending), HP as listed in the game. Group sizes here are fixed, not scaled to the party.'),
     boxes=[
         '<b>CLEARING</b>  Kill the chief (8), then walk on: the 10th random roll marks the house cleared and the City Hall clerk pays <b>250 gp + 200 pp</b>. '
         '<b>STAYS</b> done: courtyard, barracks, graffiti room, Grishnak, prisoner, chief and box choice, the fight count. '

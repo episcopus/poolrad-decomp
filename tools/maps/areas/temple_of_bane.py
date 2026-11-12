@@ -8,8 +8,6 @@ SPEC = dict(
     name='temple-of-bane',
     title='TEMPLE OF BANE',
     subtitle=('Orc-held temple across the river', 'Pool of Radiance (SSI, DOS)  |  annotated map  |  SPOILERS'),
-    source_note=('Game files: GEO1 block 24, script ECL1 block 24, MON1CHA, ITEM1;',
-                 'quest text ECL3 blocks 0, 8. Grid: (column,row) from 0, top left, north up.'),
     geo=('GEO1', 24),
     start=(4, 15),
     exits=[(4, 15, 'E'), (11, 15, 'E')],
@@ -20,12 +18,12 @@ SPEC = dict(
         ('1', 7.5, 2, 'fight'), ('2', 7.5, 3, 'place'), ('3', 7.5, 14, 'fight'), ('P', 1.5, 9, 'fight'),
     ],
     diamonds=[('a', 5, 5, 'loot'), ('b', 12, 9, 'loot'), ('c', 9, 12, 'loot')],
-    glance=('<b>ARRIVE</b> on (15,4) facing west (the south entrance of the city\'s east edge, ECL7 block 26); from the east gaps of ECL3 block 14 you land on (0,4) or (0,11). '
-            '<b>EXITS:</b> only the two east gaps (15,4), (15,11), which lead into the orc mansion map ((0,4), (0,11) there); the way back to the city is through it. '
+    glance=('<b>ARRIVE</b> on (15,4) facing west, from the east gate of Old Phlan on the North Shore map (square (13,27), answer SOUTH). '
+            '<b>EXITS:</b> only the two east gaps (15,4), (15,11), which lead into the Orc Mansion ((0,4), (0,11) there; it lies east of this temple); the way back to the city is through it. '
             '<b>QUEST:</b> Bishop Braccio sends you with Dirten, priest of Ilmater, to retake the temple "desecrated to Bane"; the City Hall clerk says you may keep '
-            'all you found in it. Kill <b>High Priest Mace</b> and his horde (M). No passwords, no locked doors. The same script runs the mansion map, so flags are shared.'),
+            'all you found in it. Kill <b>High Priest Mace</b> and his horde (M). No passwords, no locked doors. This map and the Orc Mansion share their quest progress.'),
     entries=[
-        ('P', 'fight', 'Outside the temple (red hatch, event 0)',
+        ('P', 'fight', 'Outside the temple (red hatch)',
          'Each step: 3 in 60 (10 in 60 when searching, S key) meets a pack, unless Mace is dead <i>and</i> the mansion ambush is won. '
          '4 in 10 a <b>black-hand patrol</b> (below), 2 in 10 other orcs, 2 in 10 goblins, 1 in 10 hobgoblins, 1 in 10 ogres; size scales with your party; surprise is rolled. '
          'PARLEY: attitude (ABUSIVE 60; HAUGHTY, SLY, NICE 30; MEEK 5) + d30 + your charisma bonus + pack bonus (goblins 20, orcs and hobgoblins 10, ogres 0): '
@@ -33,14 +31,14 @@ SPEC = dict(
          'Mace is dead and the mansion ambush is won.'),
         ('O', 'fight', 'The black-hand patrol',
          'Four Orcs "whose shields bear a black hand on a red field". Never forced: FLEE or PARLEY (any attitude; threats work too) end it peacefully; so does beating it. Any of the three marks you as '
-         '"let through" (the gate guards step aside; the mansion ambush grows from 10 to 20 Orcs). COMBAT: ' + tag('loot', 'victory brings 6 Leather Holy Symbols of Bane') +
-         ' (item type 74), the pass the gate guards check for.'),
+         '"let through" (the gate guards step aside; the ambush in the Orc Mansion grows from 10 to 20 Orcs). COMBAT: ' + tag('loot', 'victory brings 6 Leather Holy Symbols of Bane') +
+         ', the pass the gate guards check for.'),
         ('1', 'fight', 'Temple doors and guards (2,7)-(2,8)',
-         'First step here, Mace alive: "an old blind decrepit orc stands outside with eight orc guards". If you have met a patrol (flag): "as you approach they move, allowing you entrance". '
+         'First step here, Mace alive: "an old blind decrepit orc stands outside with eight orc guards". If you have met a patrol: "as you approach they move, allowing you entrance". '
          'Else LET HIM TOUCH YOU: with a holy symbol "Welcome to the Temple of Bane"; without: "Guards, in the name of Bane, kill these unbelievers!" '
          'BACK OFF first (then LET HIM CHECK, BACK OFF AGAIN = attack, ATTACK). The fight is 8 Orcs, no loot; win it and you may enter.'),
         ('2', 'place', 'Inside the nave ((3,7)-(3,8) and the cross-shaped hall)',
-         'Stepping on (3,7) or (3,8) marks you "inside"; coming back out onto (2,7) or (2,8) while Mace lives triggers his horde (M). The nave has no script and no random encounters. '
+         'Stepping on (3,7) or (3,8) marks you "inside"; coming back out onto (2,7) or (2,8) while Mace lives triggers his horde (M). Nothing else happens in the nave and there are no random encounters. '
          'Grey cells are pillars.'),
         ('3', 'fight', 'Altar (14,7)-(14,8)',
          '"An altar smeared with blood and covered with crude black hand prints": DESTROY ALTAR or LEAVE IT. With Mace alive: "the temple doors fly open and a screaming horde of orcs led by a half-orc cleric attack" (M). '
@@ -51,7 +49,7 @@ SPEC = dict(
          'Fleeing puts you back on your previous cell. Win: a paper on Mace\'s body (journal entry 25); if Dirten is in the party he thanks you "for helping us regain our temple" '
          'and stays.'),
         ('T', 'loot', 'Trapdoors in the nave (search spots, S key only)',
-         'Each step in search mode every active member rolls: 1 in 6, elves and half-elves 2 in 6 (race field, inferred), to find it. OPEN TRAPDOOR gives '
+         'Each step in search mode every active member rolls: 1 in 6, elves and half-elves 2 in 6 (as far as we can tell), to find it. OPEN TRAPDOOR gives '
          + tag('loot', 'a (5,5): a Magic User scroll and 2 Clerical scrolls; b (9,12): a Woods Holy Symbol, a 7 Gold Statuette lot, Dust, a Wand, 3 Potions; c (12,9): 8 weapons, all +1') +
          ' (short sword, spear, scimitar, morning star, mace, hammer, dagger, hand axe).'),
     ],
@@ -60,12 +58,12 @@ SPEC = dict(
               ['Goblin Guard', '0', '7', '4', 'Hobgoblin', '2', '5', '6'], ['Goblin Leader', '0', '5', '7', 'Ogre', '5', '5', '21'],
               ['Orc', '1', '6', '5', 'Ogre Leader', '7', '3', '32'], ['Orc Leader', '1', '5', '8', 'MACE', '5', '10', '25']],
         widths=[62, 18, 18, 18, 62, 18, 18, 0],
-        caption='Lvl, AC (descending), HP as stored in the game files (MON1CHA).'),
+        caption='Lvl, AC (descending), HP as the game stores them.'),
     boxes=[
         '<b>PASSWORDS</b> none. <b>LOCKS</b> none. <b>SEARCH SPOTS</b> a (5,5), b (9,12), c (12,9) (press S before stepping on them). '
-        '<b>FLAGS</b> kept between visits: the gate-guard pass, which trapdoors you opened, Mace dead; things like "inside" reset when you re-land.',
+        '<b>KEPT</b> between visits: the gate-guard pass, which trapdoors you opened, Mace dead; being "inside" the temple resets when you re-land.',
         '<b>ORDER</b> Get a Bane holy symbol first (kill a black-hand patrol outside, or the recruiter in Podal Plaza) or fight the 8 gate guards; '
         'take Dirten in; kill Mace on your terms (altar) before opening the third trapdoor, then search a, b, c at leisure; '
-        'only the orc mansion (next map east) has the hay beds, cell and the rest of the orcs.',
+        'only the Orc Mansion (next map east) has the hay beds, cell and the rest of the orcs.',
     ],
 )

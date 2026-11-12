@@ -6,8 +6,6 @@ SPEC = dict(
     name='slums',
     title='THE SLUMS',
     subtitle=('Monster-crawling streets west of New Phlan', 'Pool of Radiance (SSI, DOS)  |  annotated area map  |  SPOILERS'),
-    source_note=('Read from the game files: area map GEO2 block 20, event script ECL2 block 20,',
-                 'monsters MON2CHA, loot ITEM2. Grid: (column,row) from 0, top left, north up.'),
     geo=('GEO2', 20),
     start=(4, 15),
     exits=[(4, 15, 'E'), (4, 0, 'W'), (11, 0, 'W')],
@@ -26,10 +24,10 @@ SPEC = dict(
         ('19', 12, 15, 'hint'), ('20', 14, 0, 'fight'), ('P', 5, 8, 'fight'), ('R', 14, 4, 'fight'),
     ],
     diamonds=[('a', 2, 5, 'loot', dict(dx=4, dy=5)), ('b', 3, 0, 'loot', dict(dx=3)), ('c', 10, 5, 'loot', dict(dx=3, dy=-5))],
-    glance=('<b>ARRIVE</b> at (15,4) from Phlan\'s west gate. <b>EXITS:</b> the east edge (15,4) returns to Phlan; the two west doors (0,4), (0,11) lead on to '
-            'Kuto\'s Well. <b>CLEARING:</b> every won fight, scripted or random, counts; at 25 the slums are cleared, the streets go quiet and the '
+    glance=('<b>ARRIVE</b> at (15,4) from New Phlan\'s west gate. <b>EXITS:</b> the east edge (15,4) returns to New Phlan; the two west doors (0,4), (0,11) lead on to '
+            'Kuto\'s Well. <b>CLEARING:</b> every won fight, set-piece or random, counts; at 25 the slums are cleared, the streets go quiet and the '
             'City Hall clerk pays <b>250 gold + 50 platinum + 1 jewelry</b>. Orange doors are locked. '
-            'Group sizes scale with your party; the figures below are the scripted ones.'),
+            'Group sizes scale with your party; the figures below are the fixed ones.'),
     entries=[
         ('P', 'fight', 'Street encounters (red hatch)',
          'Each step on street ground: about 1 chance in 14 of a pack of kobolds, goblins or orcs with 3-4 leaders (a bugbear too if you are strong). '
@@ -70,12 +68,12 @@ SPEC = dict(
               ['Goblin Guard', '0', '7', '4', 'Bugbear', '4', '5', '16'], ['Goblin Leader', '0', '5', '7', 'Ogre', '5', '5', '21'],
               ['Orc', '1', '6', '5', 'Troll', '7', '4', '36'], ['Orc Leader', '1', '5', '8', 'Level 3 MU', '3', '9', '9']],
         widths=[62, 18, 18, 18, 62, 18, 18, 0],
-        caption='Lvl, AC (descending), HP as stored in the game files (MON2CHA).'),
+        caption='Lvl, AC (descending), HP as listed in the game.'),
     boxes=[
         '<b>PASSWORD</b> <b>OHLO</b> at the booth (19). <b>LOCKS</b> B bash, P pick (thieves), K knock (spell). '
         '<b>SEARCH SPOTS</b> a stable bag (5), b hobgoblin gold (10, after the fight), c floorboard chest (16): press S to search.',
-        '<b>ORDER</b> Ohlo (4) first for the commission; kill the scripted packs one by one (each counts toward 25); loot a, b, c; '
+        '<b>ORDER</b> Ohlo (4) first for the commission; kill the set-piece packs one by one (each counts toward 25); loot a, b, c; '
         'rumor 7 and the locked door lead to the NW treasure room (12); then the booth (19) and back to Ohlo; report to City Hall.',
-        '<b>TEXT ONLY</b> dirty room (5,3)-(6,4), storage room (3,1), "just north of the Rope Guild entry" (6,10). Other unmarked rooms (NW, centre) have no script.',
+        '<b>TEXT ONLY</b> dirty room (5,3)-(6,4), storage room (3,1), "just north of the Rope Guild entry" (6,10). Other unmarked rooms (NW, centre) have nothing.',
     ],
 )

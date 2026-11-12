@@ -5,9 +5,7 @@ from mapkit import tag
 SPEC = dict(
     name='north-shore',
     title='NORTH SHORE',
-    subtitle=("Wilderness north of Old Phlan, and the lizard men's grove", 'Pool of Radiance (SSI, DOS)  |  annotated area map  |  SPOILERS'),
-    source_note=('Read from the game files: wilderness script ECL7 block 26, grove plan GEO7 block 26,',
-                 'monsters MON7CHA. Grid: (column,row) from 0, top left, north up (grove plan only).'),
+    subtitle=("World map; the plan is the lizard men's grove, a random find", 'Pool of Radiance (SSI, DOS)  |  annotated area map  |  SPOILERS'),
     geo=('GEO7', 26),
     start=(3, 2),
     extra_starts=[(13, 10), (6, 13)],
@@ -19,26 +17,26 @@ SPEC = dict(
         ('6', 11, 2, 'fight'), ('7', 15, 2, 'fight'), ('8', 3, 13, 'fight'), ('8', 5, 10, 'fight'), ('8', 5, 12, 'fight'),
         ('a', 13, 10, 'place'), ('a', 6, 13, 'place'),
     ],
-    glance=('The script of this block runs the <b>world map</b> of the north shore (the shared wilderness map, squares (x,y); not a 16x16 plan). '
-            'The plan on this page is only the <b>lizard men\'s grove</b>, a rare random discovery. Special squares: <b>nomad camp</b> (12,11); '
-            '<b>Old Phlan</b> edges (12-13,26), (13,27), (11,28); <b>pyramid</b> (6,16) by rowboat from (6,14); <b>boat to New Phlan</b> (7,29). '
-            'Arrivals: New Phlan\'s boats put you at (7,29) or (13,27); the old Podol Plaza exit at (11,28).'),
+    glance=('The North Shore is an open <b>world map</b> of squares (x,y), not a 16x16 plan. The plan drawn on this page is only the <b>lizard men\'s grove</b>, '
+            'a rare random find while walking. Special squares: <b>Nomad Camp</b> (12,11); <b>Old Phlan\'s gates</b> (12-13,26), (13,27), (11,28); '
+            '<b>pyramid</b> (6,16) by rowboat from (6,14); <b>boat to New Phlan</b> (7,29). '
+            'Arrivals: the New Phlan harbor master\'s WEST passage lands you at (7,29), BAY at (13,27); coming out of Podal Plaza puts you at (11,28).'),
     entries=[
         ('R', 'fight', 'Random encounters (world map)',
-         'About 1 step in 20, never on a special square. One in 21 of those is the grove instead (below). Groups, in 18 equal slots: Kobolds 4 (+Kobold Leaders), Displacer Beasts 2, '
+         'About 1 step in 20, never on a special square. One in 21 of those is the lizard men\'s grove instead (below). Groups, in 18 equal slots: Kobolds 4 (+Kobold Leaders), Displacer Beasts 2, '
          'Driders 1, Stirges 3, Lizard men 3, Bandits 1, Nomads 2, Merchants 2 (Bandits, Nomads, Merchants come with Aides); sizes scale with your party. '
          'Displacer Beasts and Stirges always attack; Nomads and Merchants greet you and leave; for the rest parley: attitude (HAUGHTY 30, SLY 30, NICE 30, MEEK 5, ABUSIVE 60) + d30 + '
-         'charisma bonus (+ one value not traced): 140 or more they wander off, 100 or more you talk your way out, else they attack.'),
+         'charisma bonus (+ one further bonus not confirmed): 140 or more they wander off, 100 or more you talk your way out, else they attack.'),
         ('W', 'place', 'Where the city choices lead',
-         'North edge: CITY ECL3/14, GRAVEYARD ECL4/10 (Valhingen Graveyard). East edge: NORTH ECL3/14, SOUTH ECL1/24 (Temple of Bane), BOAT the New Phlan dock (ECL3/0). '
-         'West edge: NORTH ECL1/18 (Podol Plaza), SOUTH ECL4/2 (Cadorna Textile House). ECL3/14 is a thieves\' mansion with traps and files '
-         '(Kovel Mansion is an inference).'),
+         'North gate (12,26), (13,26): CITY = Kovel Mansion, GRAVEYARD = Valhingen Graveyard. East gate (13,27): NORTH = Kovel Mansion, SOUTH = Temple of Bane, BOAT = New Phlan. '
+         'West gate (11,28): NORTH = Podal Plaza, SOUTH = Cadorna Textile House. Kovel Mansion is a thieves\' mansion with traps and files.'),
         ('Q', 'hint', 'The pyramid and the pollution',
          'Entering the pyramid: take the rowboat at (6,14) (YES), then at (6,16) ENTER (secret door; GO BACK returns you to the boat). Once the lab is dealt with '
-         '(Yarash dead or his equipment wrecked) flag [4AB3] reaches 254: 12 of the 28 blocked terrain codes open up (inferred reading), and leaving the pyramid shows '
-         '"the land is already beginning to recover" (once). City Hall pays <b>250 platinum + 15 jewelry</b>. The map edges: x=2 west leads to ECL6/25, x=15 east to ECL8/27, y 2 or less is closed.'),
-        ('G', 'place', 'The grove (plan)',
-         'Random find, "a small wooded grove" (start (2,3)) or "some ruined huts" (start (10,13)) or a grove start at (13,6) (the two a marks). Walking onto the rim cells asks "leave this area?". '
+         '(Yarash dead or his equipment wrecked) part of the blocked terrain on this map opens up (not confirmed in play), and leaving the pyramid shows '
+         '"the land is already beginning to recover" (once). City Hall pays <b>250 platinum + 15 jewelry</b>. Map edges: walking off the west side (x=2) enters the West Wilderness, '
+         'off the east side (x=15) the East Wilderness; the north (y 2 or less) is closed.'),
+        ('G', 'place', 'The lizard men\'s grove (the plan)',
+         'Random find: "a small wooded grove" (arrive at (2,3)) or "some ruined huts" (arrive at (10,13)), or a third start at (13,6) (the two a marks). Walking onto the rim cells asks "leave this area?". '
          'Fights are flagged per visit (leaving and returning resets them). No treasure anywhere: only fights.'),
         ('1', 'fight', 'Pool (4,3), (3,4), (5,4), (4,5)', '"Someone or thing is splashing": approach, and 6 Lizardmen swimming attack.'),
         ('2', 'fight', 'Ambush (2,6)', 'Two Displacer Beasts ambush you in the trees.'),
@@ -47,25 +45,25 @@ SPEC = dict(
         ('4', 'hint', 'Stench (7,11)', '"An awful stench is coming from the west." Text only.'),
         ('5', 'fight', 'Hut of filth (9,11)', 'Two horribly mutated lizard men (2 Mutant Liz-men).'),
         ('6', 'fight', 'Hut (2,11)', 'Four Lizardmen attack at once.'),
-        ('7', 'fight', 'Room of "large" lizard men (2,15)', 'Four Lizardmen ("KILL"). Stepping here also wipes the other fight flags of the visit (the script ANDs them with 32), so the other fights can recur.'),
+        ('7', 'fight', 'Room of "large" lizard men (2,15)', 'Four Lizardmen ("KILL"). Stepping here also resets the other fights of the visit, so they can recur.'),
         ('8', 'fight', 'Stirge swarm (13,3), (10,5), (12,5)',
          '6 Stirges swoop; then the next three steps onto those cells are quiet.'),
     ],
     table=dict(
         rows=[['World map (x,y)', 'Place', 'It asks'],
-              ['(12,11)', 'Nomad camp', 'ENTER (ECL7/17) / LEAVE'],
+              ['(12,11)', 'Nomad Camp', 'ENTER / LEAVE'],
               ['six squares round it', 'Abandoned camp', 'text only, once per visit'],
-              ['(12,26) (13,26)', 'City, north edge', 'CITY / GRAVEYARD / LEAVE'],
-              ['(13,27)', 'City, east edge', 'NORTH / SOUTH / BOAT / LEAVE'],
-              ['(11,28)', 'City, west edge', 'NORTH / SOUTH / LEAVE'],
-              ['(6,14)', 'Rowboat in the reeds', 'to the pyramid? YES: (6,16)'],
-              ['(6,16)', 'Pyramid', 'ENTER (ECL7/22) / GO BACK'],
-              ['(7,29)', 'Boat', 'TAKE BOAT (New Phlan dock) / STAY']],
+              ['(12,26) (13,26)', 'Old Phlan, north gate', 'CITY / GRAVEYARD / LEAVE'],
+              ['(13,27)', 'Old Phlan, east gate', 'NORTH / SOUTH / BOAT / LEAVE'],
+              ['(11,28)', 'Old Phlan, west gate', 'NORTH / SOUTH / LEAVE'],
+              ['(6,14)', 'Rowboat in the reeds', 'to the pyramid? YES / NO'],
+              ['(6,16)', 'Pyramid', 'ENTER / GO BACK'],
+              ['(7,29)', 'Boat', 'TAKE BOAT (to New Phlan) / STAY']],
         widths=[84, 82, 0],
-        caption='Coordinates are the script\'s party variables [49C3], [49C4] (x, y); the exits are listed in W.'),
+        caption='Coordinates are world squares (x,y); where each answer leads is listed in W.'),
     boxes=[
-        '<b>MONSTERS</b> (MON7CHA, level / AC / HP) Lizardman 3/4/11, Mutant Liz-Man 4/3/18, Displacer Beast 6/2/30, Stirge 2/8/5, Drider 7/3/36, Kobold 0/7/3, Bandit 0/6/6, '
-        'Nomad 1/6/6, Merchant 0/6/6, Aides 3/8/18.  <b>NO PASSWORDS, no locked doors, no loot</b> in this block.',
-        '<b>NOT TRACED</b> which terrain the blocked block codes are (and which 12 open); whether the city at (12-13,26-28) is Old Phlan (a name taken from the Valhingen map, inferred); the nomad-camp square on the world map changes after the camp is resolved.',
+        '<b>MONSTERS</b> (level / AC / HP) Lizardman 3/4/11, Mutant Liz-Man 4/3/18, Displacer Beast 6/2/30, Stirge 2/8/5, Drider 7/3/36, Kobold 0/7/3, Bandit 0/6/6, '
+        'Nomad 1/6/6, Merchant 0/6/6, Aides 3/8/18.  <b>NO PASSWORDS, no locked doors, no loot</b> on this map.',
+        '<b>NOT CONFIRMED</b> which terrain squares open up once the pyramid lab is dealt with; the Nomad Camp square changes after the camp is resolved.',
     ],
 )

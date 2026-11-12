@@ -9,8 +9,6 @@ SPEC = dict(
     name='castle-nw',
     title='CASTLE NW',
     subtitle=("Tyranthraxus' walled city quarter, held by giants", 'Pool of Radiance (SSI, DOS)  |  annotated area map  |  SPOILERS'),
-    source_note=('Read from the game files: area map GEO5 block 3, event scripts ECL5 blocks 3 and 5,',
-                 'monsters MON5CHA, loot ITEM5. Grid: (column,row) from 0, top left, north up.'),
     geo=('GEO5', 3),
     start=(15, 3),
     extra_starts=[(15, 4), (15, 11), (3, 15), (4, 15), (11, 15)],
@@ -30,57 +28,57 @@ SPEC = dict(
         ('8', 11, 12, 'fight', dict(dy=-5)),
     ],
     diamonds=[('a', 2, 0, 'loot'), ('b', 14, 2, 'loot')],
-    glance=('<b>ARRIVE</b> at (3,15), (4,15) or (11,15) from the SW quarter (ECL5 block 6), or at (15,3), (15,4), (15,11) from the NE quarter (ECL5 block 4). '
-            '<b>EXITS</b> are those same six door gaps ((15,11) and its block are reached from the NE quarter); the north and west edges are solid. <b>ONE CASTLE, FOUR MAPS:</b> NW = GEO5/3 (this page), NE = /4, '
-            'SE = /5, SW = /6; this script (ECL5/3) runs the NW and SE maps. Nothing roams until an <b>alarm</b> rings (P). '
+    glance=('<b>ARRIVE</b> at (3,15), (4,15) or (11,15) from the Castle Yard (south-west quarter), or at (15,3), (15,4), (15,11) from the North-East quarter. '
+            '<b>EXITS</b> are those same six door gaps; the north and west edges are solid. <b>ONE CASTLE, FOUR MAPS:</b> North-West (this page), North-East, '
+            'South-East (the maze) and the Castle Yard. Inside the gate (7) the maze rules apply: hedges, tower, throne (M). Nothing roams until an <b>alarm</b> rings (P). '
             'Three words matter: <b>HARASH</b> (today\'s password), <b>TYRANTHRAXUS</b> ("on whose authority"), <b>RHODIA</b> (the gate, 7).'),
     entries=[
         ('P', 'fight', 'Alarm and patrols',
-         'No random encounters at all until an alarm starts: a scripted fight, a door slammed on you, running from a fight, a failed bluff. '
+         'No random encounters at all until an alarm starts: a set-piece fight, a door slammed on you, running from a fight, a failed bluff. '
          'It then lasts one game hour (until the clock shows the same minute an hour later). While it rings each step meets a patrol with 1 chance in 21 '
          '(1 in 3 when searching; quiet cells halve that, safe cells never): <b>1 Fighter + 5 Hill Giants</b>. In disguise (the clothes the woman gives you in the '
-         'SW quarter) they ask "what are you doing here?": ' + tag('hint', 'HAUGHTY or ABUSIVE') + ' = "on whose authority?" (type <b>TYRANTHRAXUS</b>); '
-         + tag('hint', 'MEEK') + ' = "today\'s password?" (type <b>HARASH</b>); SLY or NICE = they attack. Success: "you are left alone". Undisguised, or if you robbed the SW '
-         'temple, they just attack ("THAT\'S THEM!"). Running from any scripted fight rings the alarm, strips the disguise and pushes you back a cell.'),
+         'Castle Yard laundry) they ask "what are you doing here?": ' + tag('hint', 'HAUGHTY or ABUSIVE') + ' = "on whose authority?" (type <b>TYRANTHRAXUS</b>); '
+         + tag('hint', 'MEEK') + ' = "today\'s password?" (type <b>HARASH</b>); SLY or NICE = they attack. Success: "you are left alone". Undisguised, or if you robbed the Temple of Bane '
+         'in the Castle Yard, they just attack ("THAT\'S THEM!"). Running from any set-piece fight rings the alarm, strips the disguise and pushes you back a cell.'),
         ('1', 'fight', 'The guardroom (5,0)-(6,1) and its street door (5,2)-(5,4)',
          '(5,2), (5,3) and (5,4) (inside the hidden room (4,4)-(5,6), door (5,4)|(6,4)) trigger on every step until a fight has happened this visit. Alarm up or no disguise: "the door of the building slams" and the alarm rings. '
          'In disguise: a fighter steps out; parley as above (SLY or NICE: he flees yelling and rings the alarm), failing sends you to STAY AND FIGHT (1 Fighter, then a '
-         'patrol rounds the corner) or RUN. <b>(5,1)</b>: "an armed man immediately attacks" (1 Fighter, rings the alarm; the same once-per-visit flag). No loot.'),
+         'patrol rounds the corner) or RUN. <b>(5,1)</b>: "an armed man immediately attacks" (1 Fighter, rings the alarm; the same once-per-visit trigger). No loot.'),
         ('2', 'place', 'Hall (7,0)-(10,1)', 'Long tables, a hearth, rats picking at garbage. Text only, once.'),
         ('3', 'fight', 'Apartment (0,2)-(1,3)',
-         'First step on <b>(1,3)</b>: two Hill Giants lumber up. Parley works with <i>any</i> attitude ("OH... OKAY", they leave); fighting gives no loot. Flag shared with (13,15), (14,15). '
+         'First step on <b>(1,3)</b>: two Hill Giants lumber up. Parley works with <i>any</i> attitude ("OH... OKAY", they leave); fighting gives no loot. Shared with (13,15), (14,15). '
          + tag('loot', 'a: SEARCH at (0,2)') + ' (S key): a loose stone hides <b>200 gold + a Potion of Speed</b>, one yes/no prompt, once.'),
         ('4', 'place', 'Latrine (0,5)-(1,5)', '"The lack of bad smell gives you a general idea of the sanitation." Text only.'),
         ('5', 'fight', 'Dormitory (0,6)-(1,8)',
          'A bucket of sand is propped over the door: 1d4 to one member (searching, S key, you spot it and kick it down harmlessly). Sleeping giants: if you surprise them, '
          'SNEAK OUT or ATTACK AS THEY SLEEP; otherwise they charge. <b>4 Fire Giants</b> before hour 14, 2 after. ' + tag('loot', 'Loot 300 gold') +
-         '. Once (flag shared with (12,11)).'),
+         '. Once (shared with (12,11)).'),
         ('6', 'fight', 'Room (2,13)-(2,14)',
          '<b>(2,13)</b>, only before hour 14: 8 Hill Giants "putting on their armor" or "struggling out of bed" (if you surprise them). Once, no loot. '
          + tag('loot', 'b: SEARCH at (2,14)') + ': <b>11 gold</b>, once.'),
         ('7', 'hint', 'Gate ((3,7)-(3,8) | (4,7)-(4,8)), locked',
          'Facing east on (3,7) or (3,8): "A DEEP VOICE: WHAT IS THE PASSWORD?" GIVE THE PASSWORD (type <b>RHODIA</b>; a wrong word costs nothing) or FORCE THE GATE: alarm, '
-         + tag('fight', '12 boulders of 2d6') + ' on random members (about 80 HP in all), and from then on <b>this side of the gate answers only with boulders</b> (flag, permanent). '
-         'If you stole from the SW temple, boulders at once. If Cadorna travels with you (SE quarter) he hands you the slip with the gate word. '
-         'Beyond, (4,7)-(4,8) hands you to the maze script (ECL5/5).'),
+         + tag('fight', '12 boulders of 2d6') + ' on random members (about 80 HP in all), and from then on <b>this side of the gate answers only with boulders</b> (permanent). '
+         'If you stole from the Temple of Bane, boulders at once. If Cadorna travels with you (South-East quarter) he hands you the slip with the gate word. '
+         'Beyond, (4,7)-(4,8) puts you inside: the maze rules apply (see M).'),
         ('8', 'fight', 'East block ((11,9)-(15,15), entered at (15,11))',
-         'Same events as the west: <b>(12,11)</b> is the bucket door of the giants room below it (the dormitory fight and its 300 gold, one shared flag: only one of the two can ever happen), '
-         '<b>(13,15), (14,15)</b> the apartment (two Hill Giants, same flag as (1,3)).'),
-        ('M', 'hint', 'Beyond the gate: the maze script (ECL5 block 5)',
-         'Stepping on (4,7) or (4,8) switches scripts. Walls with id 7 or 9 (green) are hedges: facing one asks CUT THROUGH? and one random member must save or take 201 damage (poisonous thorns). '
-         'Roaming packs become 4 Giant Snakes. Cells change meaning: (5,2)-(5,4) a captured mage (notes: journal entry 30), (7,0)-(10,1) 3 Hill Giants (only SLY, NICE or MEEK plus <b>TYRANTHRAXUS</b> '
-         'gets past them), (0,5)-(1,5) a ruined tower with 8 Trolls, <b>(12,11)</b> a teleport pad; an event-4 cell (1,3), (13,15), (14,15) facing east is the stairs up (ECL5/7). Stepping on (3,7) or (3,8) hands you back to this script. The SE page covers the rest.'),
+         'Same events as the west: <b>(12,11)</b> is the bucket door of the giants room below it (the dormitory fight and its 300 gold: only one of the two can ever happen), '
+         '<b>(13,15), (14,15)</b> the apartment (two Hill Giants, shared with (1,3)).'),
+        ('M', 'hint', 'Beyond the gate: the maze rules',
+         'Stepping on (4,7) or (4,8) takes you inside the maze. Green hedge walls: facing one asks CUT THROUGH? and one random member must save or take 201 damage (poisonous thorns). '
+         'Roaming packs become 4 Giant Snakes. Squares change meaning: (5,2)-(5,4) a captured mage (notes: journal entry 30), (7,0)-(10,1) 3 Hill Giants (only SLY, NICE or MEEK plus <b>TYRANTHRAXUS</b> '
+         'gets past them), (0,5)-(1,5) a ruined tower with 8 Trolls, <b>(12,11)</b> a teleport pad; facing east on (1,3), (13,15) or (14,15) is the stairs up to Tyranthraxus\' Tower. Stepping on (3,7) or (3,8) takes you back outside, where the normal rules return. The South-East page covers the rest.'),
     ],
     table=dict(
         rows=[['Monster', 'Lvl', 'AC', 'HP', 'Monster', 'Lvl', 'AC', 'HP'],
               ['Hill Giant', '9', '4', '41', 'Fire Giant', '12', '3', '59'],
               ['6th Lvl Fighter', '6', '2', '45', '', '', '', '']],
         widths=[62, 18, 18, 18, 62, 18, 18, 0],
-        caption='Lvl, AC (descending), HP as stored in the game files (MON5CHA). Group sizes may scale; these are the scripted counts.'),
+        caption='Lvl, AC (descending), HP as stored in the game files. Group sizes may scale; these are the set-fight counts.'),
     boxes=[
-        '<b>PASSWORDS</b> <b>HARASH</b> (guards\' "today\'s password"), <b>TYRANTHRAXUS</b> (their "authority"), <b>RHODIA</b> (the gates). Learned from the paper in the NE barracks or on the '
-        'barracks floor, the slave freed in the NE kitchen, or Cadorna (SE quarter). The rune tiles on those papers match HARASH and RHODIA in length and letter pattern (inferred; those are the words the script compares with).',
-        '<b>CLOCK AND FLAGS</b> The script tests the clock hour against 14 (giants, number of fire giants). Alarm, passwords and quest flags persist; "once per visit" flags reset when you re-enter. '
+        '<b>PASSWORDS</b> <b>HARASH</b> (guards\' "today\'s password"), <b>TYRANTHRAXUS</b> (their "authority"), <b>RHODIA</b> (the gates). Learned from the paper in the North-East barracks or on the '
+        'barracks floor, the slave freed in the North-East kitchen, or Cadorna (South-East quarter). The runes on those papers match HARASH and RHODIA in length and letter pattern (inferred, not confirmed in play).',
+        '<b>CLOCK AND PROGRESS</b> The game checks the clock against hour 14 (giants, number of fire giants). Alarm, passwords and quest progress persist; "once per visit" events reset when you re-enter. '
         'Grey cells (4,10), (5,6), (15,15) have no way in on foot.',
     ],
 )

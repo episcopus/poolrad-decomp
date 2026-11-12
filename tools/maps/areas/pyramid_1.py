@@ -6,8 +6,6 @@ SPEC = dict(
     name='pyramid-1',
     title='PYRAMID: MAZE LEVEL',
     subtitle=("The pyramid on the north shore (first level)", 'Pool of Radiance (SSI, DOS)  |  annotated area map  |  SPOILERS'),
-    source_note=('Read from the game files: area map GEO7 block 22, event script ECL7 block 22,',
-                 'monsters MON7CHA. Grid: (column,row) from 0, top left, north up.'),
     geo=('GEO7', 22),
     start=(0, 15),
     # every cell a teleport of this level or the next one can drop you on (so the maze is not shaded as unreachable)
@@ -23,19 +21,19 @@ SPEC = dict(
         ('4', 9, 14, 'secret'), ('4', 1, 6, 'secret'),
     ],
     diamonds=[('j', 4, 13, 'hint')],
-    glance=('<b>ARRIVE</b> at (15,0) facing south, after ENTER at the pyramid (world map (6,16)), a rowboat trip from the reeds (6,14). '
+    glance=('<b>ARRIVE</b> at (15,0) facing south, after ENTER at the pyramid (North Shore map square (6,16)), a rowboat trip from the reeds (6,14). '
             'The east corridor (column 15) is safe; the maze west of it is shut by <b>secret doors</b> and reached by <b>teleports</b>. '
             '<b>LEAVE</b> by the secret doors at the north wall of (15,0) or the south wall of (15,15), or through the priest\'s hole at (13,15). '
-            '<b>DEEPER</b>: the rock room (14,7) and the flash cell (6,1) lead to Yarash\'s laboratory (next map). No treasure and no locked door on this level; '
+            '<b>DEEPER</b>: the rock room (14,7) and the flash cell (6,1) lead to Yarash\'s Lab (next page). No treasure and no locked door on this level; '
             'the maze is only random fights and the way on.'),
     entries=[
         ('1', 'hint', 'Secret exits ((15,0) north, (15,15) south)',
          'Both walls are secret doors: stand on the cell and search (S key); each party member has about 1 chance in 6 per step (2 in 6 with S, plus 1 in 6 for an elf '
-         'or half-elf). "A SECRET DOOR IS FOUND ... IN FRONT OF YOU" and the way out to the world map opens for good. Until then walking into them is blocked.'),
+         'or half-elf). "A SECRET DOOR IS FOUND ... IN FRONT OF YOU" and the way out to the North Shore map opens for good. Until then walking into them is blocked.'),
         ('2', 'hint', 'The priest (13,15)',
          '"YOU SEE A HUMAN PRIEST" (2nd Lvl Cleric). Parley: HAUGHTY, SLY or ABUSIVE and he only blesses you ("peace brother"). '
          + tag('hint', 'Be NICE or MEEK') + ': 1 try in 3 he confesses he has chiseled almost through the south wall: say YES and you break through, '
-         'he leaves by the hole, and from then on (13,15) offers "go through it?" (out to the world map). Attack and he is just a level 2 cleric. Flee puts you at (12,15).'),
+         'he leaves by the hole, and from then on (13,15) offers "go through it?" (out to the North Shore map). Attack and he is just a level 2 cleric. Flee puts you at (12,15).'),
         ('3', 'secret', 'Rock room ((14,7), door from (15,7))',
          'Rocks on the flagstones. Step in: a flash throws you to the next level (4,15) the first time, to (5,11) here the second, and so on. '
          'Search (S) first and you feel "a strange tingle near a bare area"; then you get GO BACK (to (15,7)) / MOVE ON / THROW A ROCK '
@@ -59,11 +57,11 @@ SPEC = dict(
               ['S', '7th Lvl Dwarf Fighters', '7', '4', '50', 'friendly look'], ['S', 'Lizardmen', '3', '4', '11', 'hungry'],
               ['S', 'Driders', '7', '3', '36', 'hungry'], ['S', '7th Lvl Thieves', '7', '10', '28', 'friendly look']],
         widths=[22, 108, 18, 18, 20, 0],
-        caption='Lvl, AC (descending), HP as stored in the game files (MON7CHA).'),
+        caption='Lvl, AC (descending), HP as stored in the game files.'),
     boxes=[
         '<b>SECRET DOORS</b> (cell: wall) (15,0) N, (15,15) S (both exits); (1,12) S = (1,13) N; (4,10) E = (5,10) W; (12,8) E (opens from the (12,8) side only); (11,9) E = (12,9) W; (13,14) E = (14,14) W; hole (13,15) S. '
         'Each is found from either of its cells; found doors stay found. <b>TEXT</b> the doors between corridor pockets are plain doors (amber).',
-        '<b>NOT TRACED</b> the monster pictures, group XP and sizes of the loot-free fights; (2,6)-(4,7) and (5,14) are walled pockets with no door and no scripted way in '
-        '(looks unused). That the pyramid is Yarash\'s base and its pollution the Stojonow river\'s: see the next map.',
+        '<b>NOT CONFIRMED</b> group sizes of the fights (none carries loot); (2,6)-(4,7) and (5,14) are walled pockets with no door and no way in '
+        '(they look unused). That the pyramid is Yarash\'s base and its pollution the Stojonow river\'s: see the next page.',
     ],
 )
