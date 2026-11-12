@@ -29,13 +29,13 @@ def pas_s(text):
 
 def credits_lines():
     """The credits screen's block of lines 34 to 43 of ovl01.c (the PC's version line, then the first programming block) as it is here: the port's
-    line replaces the version line, in two rows (the 40 column screen has 36 cells of text: the whole line is 43), and the programming block, which
+    line replaces the version line, in two rows (the 40 column screen has 36 cells of text: the whole line is 42), and the programming block, which
     follows, moves one row down into the empty row that separated it from the next block. COCO 3 PORT: is light green like the other labels of this
     block ("game created by:"), what follows light cyan like the names."""
     v = version()
     return [
         (2, 6, "LightGreen_OVL01", "coco 3 port:"),
-        (15, 6, "LightCyan_OVL01", "unofficial - v%s" % v),
+        (15, 6, "LightCyan_OVL01", "episcopus - v%s" % v),
         (15, 7, "LightCyan_OVL01", "from pc v%s" % PC_VERSION),
         (2, 8, "Yellow_OVL01", "programming:"),
         (0x14, 8, "Yellow_OVL01", "original"),
