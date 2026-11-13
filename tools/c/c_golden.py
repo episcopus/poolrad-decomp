@@ -9,6 +9,10 @@ For each `tests/sessions/NAME.keys` this exports the oracle's run of the origina
 runs `build/cmake/poolrad_replay` on it: every read of the outside world must be the one the original made, the
 screen must equal the original's at every checkpoint, and the files written and the number of Random calls must
 match. Exit status 1 when any session differs.
+
+The translation is of src/ with the fixes of the original (fixes/series), so a fix that corrects what the player sees
+changes a recorded screen: fixes/expected.toml lists those checkpoints, passed to the replay as `--expect` (the screen
+must differ there, the rest of the state must not).
 """
 from __future__ import annotations
 
@@ -25,6 +29,20 @@ sys.path.insert(0, str(ROOT / "tools/c"))
 REPLAY = ROOT / "build/cmake/poolrad_replay"
 OUT = ROOT / "build/c/replay"
 SESSIONS = ROOT / "tests/sessions"
+EXPECTED = ROOT / "fixes/expected.toml"
+
+
+def expected() -> dict[str, list[str]]:
+    """session name -> checkpoint labels whose screen a fix in fixes/series changes on purpose (fixes/expected.toml)."""
+    import tomllib
+    sys.path.insert(0, str(ROOT / "fixes"))
+    import apply as fixes
+    active = {f.name for f in fixes.series()}
+    out: dict[str, list[str]] = {}
+    for e in tomllib.loads(EXPECTED.read_text()).get("screen", []):
+        if e["fix"] in active:
+            out.setdefault(e["session"], []).append(e["checkpoint"])
+    return out
 
 
 def stale(rpl: Path, name: str) -> bool:
@@ -46,6 +64,11 @@ def main(argv=None) -> int:
         print("build the replay tool first: make c-build", file=sys.stderr)
         return 2
     names = a.session or sorted(p.stem for p in SESSIONS.glob("*.keys"))
+    expect = expected()
+    unknown = sorted(set(expect) - {p.stem for p in SESSIONS.glob("*.keys")})
+    if unknown:
+        print("fixes/expected.toml names sessions that do not exist: %s" % ", ".join(unknown), file=sys.stderr)
+        return 2
     rc = 0
     for n in names:
         rpl = OUT / (n + ".rpl")
@@ -59,10 +82,12 @@ def main(argv=None) -> int:
                 continue
             print("[%s] exported in %.0fs" % (n, time.time() - t))
         t = time.time()
-        p = subprocess.run([str(REPLAY), "--data", str(ROOT / "poolrad"), "--save", str(ROOT / "build/c/save"), str(rpl)],
-                           capture_output=True, text=True)
+        cmd = [str(REPLAY), "--data", str(ROOT / "poolrad"), "--save", str(ROOT / "build/c/save")]
+        for label in expect.get(n, []):
+            cmd += ["--expect", label]
+        p = subprocess.run(cmd + [str(rpl)], capture_output=True, text=True)
         lines = [l for l in p.stdout.splitlines() if l.strip()]
-        print("\n".join(lines[-3:]) + "  (%.1fs)" % (time.time() - t))
+        print("\n".join(lines[-(4 if n in expect else 3):]) + "  (%.1fs)" % (time.time() - t))
         if p.returncode != 0:
             rc = 1
             if not a.keep_going:

@@ -1,0 +1,35 @@
+# fixes/expected.toml: the session checkpoints whose screen a fix of the original changes on purpose (fixes/README.md).
+#
+# The recorded sessions (tests/sessions) are the original's runs, bugs included, so a fix that corrects what the player
+# sees makes a recorded screen differ. Each entry names one such checkpoint: `make c-golden` (tools/c/c_golden.py) passes it
+# to the replay as `--expect`, and there the screen must differ from the original's while DGROUP and the heap still equal
+# it. Any other difference still fails, and so does an entry whose screen no longer differs. Only fixes named in
+# fixes/series count: an entry of a fix taken out of the series is ignored.
+
+# stale-location-line.patch: saved game A starts on the Slums' east edge; these sessions step through the gate into New
+# Phlan, where the original still shows the Slums' "15,4 E" and the fix shows the arrival cell "0,4 E" (the time differs
+# by session). The next turn or step redraws the line in both, so every later checkpoint is equal.
+[[screen]]
+fix = "stale-location-line.patch"
+session = "character-menu"
+checkpoint = "key15"
+
+[[screen]]
+fix = "stale-location-line.patch"
+session = "council-guards"
+checkpoint = "key15"
+
+[[screen]]
+fix = "stale-location-line.patch"
+session = "shop-buy"
+checkpoint = "key15"
+
+[[screen]]
+fix = "stale-location-line.patch"
+session = "temple-cast"
+checkpoint = "key13"
+
+[[screen]]
+fix = "stale-location-line.patch"
+session = "temple-heal"
+checkpoint = "key46"

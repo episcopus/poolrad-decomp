@@ -1,0 +1,26 @@
+--- a/OVL03.PAS
++++ b/OVL03.PAS
+@@ -2243,7 +2243,11 @@
+   EclSearchEntry run, and the step repeats while a script block was started (ScriptBlockStarted, StartEclBlock).
+   SelectedCharacter
+   is saved and restored around the entries. Called from the area loop RunWilderness (ovl03:32F8). Purpose unknown
+-  in parts: what the entries and word VarMapEdgeHit do. }
++  in parts: what the entries and word VarMapEdgeHit do.
++  Fix of the original (fixes/stale-location-line.patch): the original draws the area here but not the location line
++  (DrawLocationLine), and the key loop (HandleWildernessKeys) draws it only after a key, so after a script moved the
++  party to another map (walking through a gate, the boat) the line kept the old map's position, facing and time until
++  the first turn or step. The line is now drawn with the area, as ECL command 45 (EngineActionCommand) does. }
+ procedure RunAreaStep;
+ var
+   Saved: PCharacter;            { SelectedCharacter, restored after the second entry }
+@@ -2280,7 +2284,10 @@
+       DrawWindow(3, 3, $D, $D, 0, $A, '');
+     if ((((PreviousAreaViewKind > 1) or (AreaViewKind = 1)) and (AreaRedrawArmed <> 0)) or ((PreviousAreaViewKind = 1)
+       and (AreaViewKind = 1))) then
++    begin
+       ShowAreaView;
++      DrawLocationLine;
++    end;
+     ScriptBlockStarted := 0;
+     RunScriptFrom(EclStepEntry);
+     if ScriptBlockStarted = 0 then

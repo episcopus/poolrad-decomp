@@ -1727,15 +1727,22 @@ void DamageTargetInCell(u8 CellX, u8 CellY, u8 Damage, u8 SaveKind_, u8 (*Blocke
 /* ovl22:295B. The line-beam helper of the line spells: it draws the beam of the Lightning Bolt handler
      CastLightningBolt and of the monster beams (CastMonsterBeam, the dragon breath MonsterBreath) and damages every combatant it
      passes. It starts at the aim cell SpellAimX/SpellAimY (playing the zap animation DrawCombatIcon($13)) and
-     walks a line away from the caster for Range * 2 steps (a TLineState filled by SetupLine and advanced
-     by StepLine); it draws each step through WalkCombatLine and deals Damage (electrical, SavingThrow kind
+     walks a line away from the caster with a budget of Range * 2 (a TLineState filled by SetupLine and
+     advanced by StepLine, whose First counter grows by 2 for a straight step and 3 for a diagonal one, so
+     the budget is in half squares); it draws each step through WalkCombatLine and deals Damage (electrical, SavingThrow kind
      SaveKind) through DamageTargetInCell. The walk stops at the end of the line, when the line leaves the
      map (Tile 0), at a tile whose CombatTiles cost is above MaxPassableCost, or when the occupant of the
      cell changes (a fresh combatant, so the beam does not pass through bodies). When Blocked (the tile
-     refused the beam) and Bounce is set, it moves the aim cell to the bounce point and walks a second
-     line back to the caster, turning the beam around once (DirSign flips and Bounce clears). Sets SpellAppliedToArea.
-     Parameters: Range the spell's reach (the line walks Range * 2 cells); Damage the damage dealt per
-     cell; SaveKind the SavingThrow kind; Bounce nonzero lets the beam reflect off a wall once. Globals:
+     refused the beam), it moves the aim cell to the wall and turns the beam around (DirSign flips): this
+     happens at every wall, whatever Bounce says. Bounce only matters at the first wall: when it is set
+     and that wall is close to the caster (a line from the wall back to the caster ends with First at most
+     8), the beam loses 8 half squares of its budget (Inc(Line.First, 8)); then Bounce clears. The budget
+     also loses Line.First after every stop, and First counts from the start of the line, so a stop on a
+     body charges the distance walked so far again. Sets SpellAppliedToArea.
+     Parameters: Range the spell's reach (a budget of Range * 2 half squares); Damage the damage dealt per
+     cell; SaveKind the SavingThrow kind; Bounce nonzero shortens the beam when the first wall it meets is
+     near the caster. Earlier notes read this flag as "bounce once"; the turn (ovl22:2B71) is outside
+     its test. Globals:
      SpellAimX/SpellAimY (the aim cell, moved to the bounce point), SpellAppliedToArea, SelectedCharacter and CombatTiles.
      Called by CastLightningBolt (Lightning Bolt), CastMonsterBeam and MonsterBreath (the dragon breath). */
 void CastLineBeam(u8 Range, u8 Damage, u8 SaveKind_, u8 Bounce)
@@ -1828,8 +1835,9 @@ L_exit:
 /* ovl22:2BB7 (e50). Cast handler of spell 51, Lightning Bolt: it rolls one d6 per caster level
      (SpellCasterLevel(CastingSpell), RollDice) as the damage, deals it to the combatant on the aim cell
      SpellAimX/SpellAimY (DamageTargetInCell, electrical, save kind 4) and then runs the beam CastLineBeam
-     with reach 8, the same damage and save kind and the bounce flag 1, so the bolt reflects off a wall
-     once. Reads CastingSpell. Called through SpellHandlers[51] (InitSpellHandlers). */
+     with reach 8, the same damage and save kind and the bounce flag 1. The beam turns around at every
+     wall; the flag only shortens it when the first wall is near the caster (see CastLineBeam). Reads
+     CastingSpell. Called through SpellHandlers[51] (InitSpellHandlers). */
 void CastLightningBolt(void)
 {
   POOL_TRACE("CastLightningBolt");
@@ -1837,7 +1845,7 @@ void CastLightningBolt(void)
   u8 Blocked = 0;
   Damage = RollDice(SpellCasterLevel(CastingSpell), CastLightningBolt_LevelDiceSides);
   DamageTargetInCell(SpellAimX, SpellAimY, Damage, SaveKindSpell, &Blocked);
-  CastLineBeam(CastLightningBolt_BeamReach, Damage, SaveKindSpell, CastLightningBolt_BounceOnce);
+  CastLineBeam(CastLightningBolt_BeamReach, Damage, SaveKindSpell, CastLightningBolt_BounceFlag);
 }
 
 /* ovl22:2C09 (e51). Cast handler of spell 55, Slow: hands the opposite side of the selected character
@@ -1964,8 +1972,8 @@ void CastMonsterStrength(void)
 /* ovl22:2F4D. Cast handler of spell 60, a monster-only spell: SpellNames[60] is empty, and the
      InitSpellHandlers table points element 60 of SpellHandlers at this stub. It strikes the combatant on the aim
      cell SpellAimX/SpellAimY for 1d6 + 20 points (DamageTargetInCell: the spell's saving throw kind 4, half
-     damage on a save, and the zap animation) and then runs a short beam CastLineBeam(3, 20, 4, 0): six
-     cells of 20 points away from the caster, no bounce. */
+     damage on a save, and the zap animation) and then runs a short beam CastLineBeam(3, 20, 4, 0): a budget
+     of six half squares at 20 points, away from the caster; with the flag 0 a wall still turns it around. */
 void CastMonsterBeam(void)
 {
   POOL_TRACE("CastMonsterBeam");

@@ -26,7 +26,9 @@ The comparison is the project's replay method (tools/oracle/replay.py), which do
 A checkpoint is the game state (DGROUP's data with the overlay manager's own variables masked, the Turbo Pascal
 heap, the video planes; offsets from the port's link map, so a patch that moves a global needs a comparison by
 name first), the screen, the number of Random calls and of timer interrupts. The stack and the overlay buffer
-are left out (stale frames; the overlay code itself, which the port's patches change). At the end also:
+are left out (stale frames; the overlay code itself, which the port's patches change). Where a fix of the original
+(fixes/) corrects what the player sees, fixes/expected.toml names the checkpoint: there the screen must differ from
+the original's and the rest of the state must not. At the end also:
 
   random     every Random call: kind, range and result; the caller too, except the draw of the code wheel
              routine (ovl02), which the port makes at another offset of a shorter routine
@@ -69,6 +71,18 @@ SESSIONS = ROOT / "tests/sessions"
 WHEEL_UNIT = "ovl02"            # the code wheel routine's overlay (CheckCodeWheel)
 OWN_FILES = ("\\POOLRAD\\GAME.OVR",)
 MASKED = (0, 0)                 # DS offsets [lo, hi) of the overlay manager's variables (main sets it)
+EXPECTED = ROOT / "fixes/expected.toml"
+EXPECT: dict[str, str] = {}     # during the port's replay: label -> the original's screen digest where a fix changes it
+EXPECT_SEEN: set[str] = set()   # those labels whose screen differed, as expected
+
+
+def expected_labels(session: str) -> list[str]:
+    """The checkpoints of `session` whose screen a fix of fixes/series changes on purpose (fixes/expected.toml)."""
+    sys.path.insert(0, str(ROOT / "fixes"))
+    import apply as fixes
+    active = {f.name for f in fixes.series()}
+    return [e["checkpoint"] for e in tomllib.loads(EXPECTED.read_text()).get("screen", [])
+            if e["session"] == session and e["fix"] in active]
 
 
 def overlay_vars() -> tuple[int, int]:
@@ -77,7 +91,8 @@ def overlay_vars() -> tuple[int, int]:
     return pubs["OVRRESULT"][1], pubs["HEAPORG"][1]
 
 
-def game_state(m) -> str:
+def game_state(m, screen: str | None = None) -> str:
+    """The digest of the game state; `screen` stands for the screen's digest where a fix changes the screen (EXPECT)."""
     ds = state.dgroup_seg()
     end = min(0x10000, max(0, (m.get("ss") - ds) << 4))       # the data segment ends where the stack begins
     data = bytearray(m.read(ds, 0, end))
@@ -85,13 +100,25 @@ def game_state(m) -> str:
     data[lo:hi] = bytes(hi - lo)
     h = hashlib.sha256(bytes(data))
     h.update(b"heap" + state.heap_bytes(m, ds))
-    h.update(m.ega.planes_digest().encode())
+    h.update((screen or m.ega.planes_digest()).encode())
     return h.hexdigest()
 
 
 def checkpoint(m, label: str) -> dict:
-    """replay.checkpoint for this comparison: the game state instead of the whole memory."""
-    return {"label": label, "state": game_state(m), "screen": m.ega.planes_digest(),
+    """replay.checkpoint for this comparison: the game state instead of the whole memory. At a checkpoint of EXPECT
+    the screen must differ from the original's and the rest of the state must not: the state is taken with the
+    original's screen digest, and a screen that differs is reported as the original's."""
+    screen = m.ega.planes_digest()
+    if label in EXPECT:
+        original = EXPECT[label]
+        if screen != original:
+            EXPECT_SEEN.add(label)
+            screen = original
+        else:
+            screen = "equal to the original's, which fixes/expected.toml says a fix changes"
+        return {"label": label, "state": game_state(m, original), "screen": screen,
+                "random_calls": len(m.random_log), "irq0": m.irq0_raised}
+    return {"label": label, "state": game_state(m), "screen": screen,
             "random_calls": len(m.random_log), "irq0": m.irq0_raised}
 
 
@@ -316,10 +343,23 @@ def main(argv=None) -> int:
             m.vfs.layer.update(cfg)               # the sound device the script set (oracle.run.build_machine)
             m.sound_calls = log_sound_calls(m, sound_entries(True))
 
+        labels = expected_labels(name)
+        EXPECT.clear()
+        EXPECT.update({w["label"]: w["screen"] for ws in prec.checkpoints.values() for w in ws if w["label"] in labels})
+        EXPECT_SEEN.clear()
         layout.use(port)
-        ps, player = replay.replay(prec, prepare=prepare, max_insns=golden.session_limit(text))
+        try:
+            ps, player = replay.replay(prec, prepare=prepare, max_insns=golden.session_limit(text))
+        finally:
+            EXPECT.clear()
         pm = ps.pop("_machine")
         diffs, notes = compare(os_, om, ps, pm, player, prec)
+        for label in labels:
+            if label not in EXPECT_SEEN and not player.first_difference:
+                diffs.append("checkpoint %s: fixes/expected.toml says a fix changes its screen; it did not" % label)
+        if labels:
+            notes.append("%d of %d screens differ as a fix of the original intends (fixes/expected.toml)" % (
+                len(EXPECT_SEEN), len(labels)))
         notes.insert(0, "wheel: %d reads cut after read %d" % (n, first - 1) if n else "no wheel")
         print("[%s] %s (%.0f s): %s" % (name, "ok" if not diffs else "DIFFERS", time.time() - t0, "; ".join(notes)),
               flush=True)

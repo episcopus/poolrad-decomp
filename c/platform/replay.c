@@ -1,7 +1,10 @@
 /* replay.c: the headless platform: plays a recording of the original game (tools/c/export_replay.py) against the
  * C translation and compares the screen with the original's at every recorded checkpoint.
  *
- *   poolrad_replay --data DIR [--save DIR] [--dump PREFIX] [--screens4 FILE] SESSION.rpl
+ *   poolrad_replay --data DIR [--save DIR] [--dump PREFIX] [--screens4 FILE] [--expect LABEL ...] SESSION.rpl
+ *
+ * --expect names a checkpoint whose screen a fix of the original (fixes/) changes on purpose: there the screen must
+ * differ and everything else must still be the original's (fixes/expected.toml, tools/c/c_golden.py).
  *
  * Each read of the outside world (key, clock, PIT, retrace) is answered with the value the original read at the
  * same point of its run. The game takes the same path only if the translation behaves like the original, so a
@@ -78,6 +81,12 @@ static int screens_ok, screens_bad, state_ok, state_bad, skipped_cps;
 static char first_problem[512];
 static int failed;
 static int g_screens_only;
+/* --expect LABEL (repeatable): a checkpoint whose screen a fix of the original changes on purpose (fixes/expected.toml,
+ * read by tools/c/c_golden.py). There the screen must differ from the original's, and the rest of the state (DGROUP and
+ * the heap) must still equal it: the state digest is taken with the original's screen digest in place of ours. */
+#define MAX_EXPECT 32
+static const char *g_expect[MAX_EXPECT];
+static int g_nexpect, g_expect_seen[MAX_EXPECT], screens_expected;
 static const char *session_name = "?";
 
 /* ---- the recording ----------------------------------------------------------------------------------------- */
@@ -166,8 +175,9 @@ static void screen_digest(char out[65])
   sha256_hex(d, out);
 }
 
-/* The game's state: DGROUP without the masked ranges, the allocated heap, the screen digest (export_replay.py: masked_digest). */
-static void canon_digest(char out[65])
+/* The game's state: DGROUP without the masked ranges, the allocated heap, the screen digest (export_replay.py: masked_digest).
+ * With `screen` set, that screen digest stands for ours (an expected difference: the state without the screen). */
+static void canon_digest_with(char out[65], const char *screen)
 {
   static u8 ds[0x10000];
   Sha256 c;
@@ -188,10 +198,31 @@ static void canon_digest(char out[65])
   if (org > 0 && org <= ptr && ptr <= 0xA0000) {
     sha256_update(&c, pool_arena + org, ptr - org);
   }
-  screen_digest(scr);
+  if (screen) {
+    memcpy(scr, screen, 65);
+  } else {
+    screen_digest(scr);
+  }
   sha256_update(&c, scr, 64);
   sha256_final(&c, d);
   sha256_hex(d, out);
+}
+
+static void canon_digest(char out[65])
+{
+  canon_digest_with(out, NULL);
+}
+
+static int expected_at(const char *label)
+{
+  int i;
+  for (i = 0; i < g_nexpect; i++) {
+    if (strcmp(g_expect[i], label) == 0) {
+      g_expect_seen[i] = 1;
+      return 1;
+    }
+  }
+  return 0;
 }
 
 static void problem(const char *fmt, const char *a, long n)
@@ -388,7 +419,30 @@ static void check_cps(long at)
     if (g_dump && getenv("POOL_DUMPALL")) {
       dump_screen(c->label);                      /* debugging: every checkpoint's screen, not only the ones that differ */
     }
-    if (strcmp(scr, c->screen) == 0) {
+    if (expected_at(c->label)) {
+      if (strcmp(scr, c->screen) == 0) {
+        screens_bad++;
+        if (!failed) {
+          snprintf(first_problem, sizeof first_problem, "checkpoint %s should differ (fixes/expected.toml) but equals the original's",
+                   c->label);
+        }
+        failed = 1;
+      } else {
+        screens_expected++;
+        dump_screen(c->label);
+      }
+      canon_digest_with(can, c->screen);
+      if (strcmp(can, c->canon) == 0) {
+        state_ok++;
+      } else {
+        state_bad++;
+        if (!failed) {
+          snprintf(first_problem, sizeof first_problem, "game state other than the screen differs at checkpoint %s (after read %ld)",
+                   c->label, c->at);
+        }
+        failed = 1;
+      }
+    } else if (strcmp(scr, c->screen) == 0) {
       screens_ok++;
       record_screen4(c->label);
     } else {
@@ -399,8 +453,9 @@ static void check_cps(long at)
       dump_screen(c->label);
       failed = 1;
     }
-    canon_digest(can);
-    if (strcmp(can, c->canon) == 0) {
+    if (expected_at(c->label)) {
+      /* compared above, without the screen */
+    } else if (canon_digest(can), strcmp(can, c->canon) == 0) {
       state_ok++;
     } else {
       state_bad++;
@@ -512,6 +567,16 @@ static void finish(const char *why)
              (int)nwritten, w.seen);
     failed = 1;
   }
+  {
+    int i;
+    for (i = 0; i < g_nexpect; i++) {
+      if (!g_expect_seen[i] && !failed) {
+        snprintf(first_problem, sizeof first_problem, "expected difference at checkpoint %s (fixes/expected.toml): no such checkpoint",
+                 g_expect[i]);
+        failed = 1;
+      }
+    }
+  }
   if (rtl_random_calls() != expect_random && !failed) {
     snprintf(first_problem, sizeof first_problem, "Random called %u times, the original %u", rtl_random_calls(),
              expect_random);
@@ -520,6 +585,10 @@ static void finish(const char *why)
   printf("[%s] %s after %ld of %ld reads: screens %d ok, %d differ; state %d equal, %d differ; %d checkpoints on reads "
          "only the original makes; %d files written\n",
          session_name, why, idx, total_reads, screens_ok, screens_bad, state_ok, state_bad, skipped_cps, w.seen);
+  if (g_nexpect) {
+    printf("[%s] %d of %d screens differ as a fix of the original intends (fixes/expected.toml)\n", session_name, screens_expected,
+           g_nexpect);
+  }
   printf("[%s] video mode %02Xh, %u video operations, %u Random calls\n", session_name, ega.mode, ega.dirty,
          rtl_random_calls());
   if (failed) {
@@ -692,6 +761,13 @@ int main(int argc, char **argv)
     else if (strcmp(argv[i], "--dump") == 0 && i + 1 < argc) g_dump = argv[++i];
     else if (strcmp(argv[i], "--screens4") == 0 && i + 1 < argc) g_screens4 = fopen(argv[++i], "w");
     else if (strcmp(argv[i], "--screens-only") == 0) g_screens_only = 1;
+    else if (strcmp(argv[i], "--expect") == 0 && i + 1 < argc) {
+      if (g_nexpect == MAX_EXPECT) {
+        fprintf(stderr, "replay: too many --expect\n");
+        return 2;
+      }
+      g_expect[g_nexpect++] = argv[++i];
+    }
     else if (strcmp(argv[i], "--sound") == 0 && i + 1 < argc) g_sound = argv[++i];
     else if (strcmp(argv[i], "--trace-calls") == 0 && i + 2 < argc) {
       g_trace_lo = atol(argv[++i]);
@@ -702,7 +778,7 @@ int main(int argc, char **argv)
     else rpl = argv[i];
   }
   if (!rpl) {
-    fprintf(stderr, "usage: poolrad_replay --data DIR [--save DIR] [--dump PREFIX] [--sound FILE] SESSION.rpl\n");
+    fprintf(stderr, "usage: poolrad_replay --data DIR [--save DIR] [--dump PREFIX] [--sound FILE] [--expect LABEL ...] SESSION.rpl\n");
     return 2;
   }
   {
