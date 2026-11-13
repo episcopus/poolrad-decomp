@@ -1,0 +1,16 @@
+{
+ "pass": "por-tandy-1",
+ "sounds": {
+  "2": {"name": "SoundSpellDefault", "pick": "designed", "note": ""},
+  "3": {"name": "SoundDamageMessage (spell damage)", "pick": "fixed", "note": ""},
+  "4": {"name": "SoundAffectMessage (an effect takes hold)", "pick": "designed", "note": ""},
+  "5": {"name": "SoundCombatantDies", "pick": "designed", "note": ""},
+  "6": {"name": "SoundAttackLeaves", "pick": "designed", "note": ""},
+  "7": {"name": "SoundNoAction (a blow lands)", "pick": "designed", "note": ""},
+  "8": {"name": "SoundLightningBolt", "pick": "designed", "note": ""},
+  "9": {"name": "SoundAttackMissed", "pick": "fixed", "note": ""},
+  "10": {"name": "SoundStep", "pick": "designed", "note": ""},
+  "11": {"name": "SoundFireball", "pick": "fixed", "note": ""},
+  "12": {"name": "SoundAttackArrives", "pick": "designed", "note": ""}
+ }
+}

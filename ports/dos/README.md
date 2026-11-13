@@ -45,6 +45,8 @@ add the name to `patches/series`. A speed patch lives in `patches/speed/` and mu
 |---|---|---|
 | `no-code-wheel.patch` | `CheckCodeWheel` (ovl02) asks nothing: the title screens go straight to the character menu. It still draws the one `Random(13)` the original's first question draws, so the random stream after it is the original's (and a session recorded on the original replays on the port). | ovl02 only |
 | `fixes/quick-combat-hang.patch` (repository root) | A bug of the original that every port fixes (`fixes/README.md`; `tools/build.py` applies `fixes/series` before this series): a quick character whose readied weapon is darts hung the game when an enemy stood next to it and its remembered target was out of reach. Now it throws the darts, and a computer turn ends after 50 `AiTurn` passes. The game changes only where the original would hang | ovl09 |
+| `tandy-sound.patch` | The Tandy sound of the listening pass (`sound/`, README there; `sound/port.py` writes this patch from `sound/designs.py` and `sound/picks.json`). The driver (`RES03.ASM`) writes the noise control only when it changes: the original wrote it every tick and every write restarts the chip's noise register (a 237 Hz buzz in fast noise, near silence in slow noise). And it plays a register script instead of the voices for each tune the pass picked as designed: one frame every second timer tick (118.3 Hz), 2,925 bytes of scripts for 8 sounds. `sound/check.py` proves in the oracle that every tune writes what the page played. | res03 |
+| `tandy-strike.patch` | `SoundAttackArrives` is silenced at once by the `SetSoundDriverIdle(10)` after it (`src/OVL13.PAS:1497`); with the strike designed, a Tandy game waits `WaitHundredths(10)` first so it sounds. The only change of timing | ovl13 |
 | `speed/unpack-rle.patch` | `UnpackRle` (res05), through which every DAX block passes, in assembler: a literal run is one `REP MOVSW`, a repeat run one `REP STOSB` | res05 |
 | `speed/tandy-glyph.patch` | `DrawGlyph`'s Tandy branch (res06), all text: a new `DrawTandyGlyph` shifts each font row out two bits at a time into the four banks, where the Pascal tested every bit with the font pointer reloaded | res06 |
 | `speed/tandy-blit.patch` | the Tandy row loop of `DrawPictureItem` and `DrawPictureItemClipped` (res07): the 3D view's tiles, sprites, icons. `TandyRows` does the trackers, the save-under and the copy (the masked one in an AND pass and an OR pass) each over all rows, with the original's quirks (the masked loop's `ShortInt` count, `SharedLoopIndex`), and falls back to the exact row-by-row order when rows could overlap | res07 |
@@ -55,7 +57,7 @@ add the name to `patches/series`. A speed patch lives in `patches/speed/` and mu
 | `speed/sort-table.patch` | `SortTable` (ovl30), the exchange sort of every target scan, in assembler, same order and same test | ovl30 |
 
 The speed patches change resident code, so every segment after res05 moves (the build lists every unit as different:
-their far calls point elsewhere). DGROUP's layout does not change: no patch adds a global or a typed constant.
+their far calls point elsewhere). DGROUP's layout does not change: no patch adds a global or a typed constant (the sound patch's variables and scripts live in res03's code segment, beside the driver's own).
 
 The original has its own way past the wheel, `START STING`, but it also skips the title screens and arms
 developer keys (Ctrl-D debug mode, Ctrl-C quits: whitepaper, `ReadGameKey`). The patch changes only the wheel.
@@ -73,10 +75,11 @@ reference's behaviour exactly? `make func`, which does not care how fast either 
 | `make func` | the speed patches change nothing the game does: the suite on both builds, compared (below) | about 2 min |
 | `make tandy` | DOSBox-X `machine=tandy`, headless, POOL.CFG `T`/`T`: the game shows every title screen of the original pixel for pixel, then the original's character menu (the original's `STING` run), and never the wheel question | 80 s |
 | `make tandy-deep` | DOSBox-X `machine=tandy` again, the reference and the game typing the same keys (`AUTOTYPE`): saved game A, the 3D view turning, a character sheet, the area map. No dice are drawn, so every screen the reference holds for 2 s must appear in the game's video pixel for pixel (12 screens): the speed patches on a real Tandy BIOS, DOS and video emulation | 2.5 min |
-| `make sessions` | every session of `tests/sessions`, by the replay method of `tools/oracle/replay.py`: the original plays the key script and every read of the outside world is recorded; the wheel's reads are cut out; the reference replays the rest and must ask for the same reads in the same order and match the original's game state, screen and random count at every key read, every shot and every 20,000 reads; then the same random draws, the same files written, the same sound requests | about 15 min |
+| `make sound-check` | the Tandy driver of the game plays what the listening page played (`sound/check.py`): every tune captured in the oracle; a designed one writes its script byte for byte, a frame every second tick, then quiet; every other one the original's writes with the noise fix, tick for tick | 10 s |
+| `make sessions` | every session of `tests/sessions`, by the replay method of `tools/oracle/replay.py`: the original plays the key script and every read of the outside world is recorded; the wheel's reads are cut out; the reference replays the rest and must ask for the same reads in the same order and match the original's game state, screen and random count at every key read, every shot and every 20,000 reads; then the same random draws, the same files written, the same sound requests. The reference it replays leaves out the two sound patches, which the method cannot follow: `tandy-sound` grows res03 by 3.1 KB, which moves DGROUP and so every pointer in the state, and `tandy-strike` waits a tenth of a second, which changes the clock readings (the five sessions with missile attacks part at their first strike). `sound-check` and `func` cover them | about 15 min |
 | `make prof` | not a test: the 8088 profile of both builds and the gain, per session (below) | about 5 min |
 
-`make test` runs faithful, game, ref, func and tandy.
+`make test` runs faithful, game, ref, func, sound-check and tandy.
 
 ### `make func`: behaviour without timing (`tools/func.py`)
 

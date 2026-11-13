@@ -2,6 +2,8 @@
 # original that every port takes (fixes/series at the repository root).
 # `make FAITHFUL=1` applies none and must link the original program.
 no-code-wheel.patch   # no code wheel question (ovl02 CheckCodeWheel); the random draw of its first question is kept
+tandy-sound.patch     # res03 Tandy sound: the noise fix and the designed sounds of the listening pass (sound/port.py writes it)
+tandy-strike.patch    # ovl13: the designed missile strike sounds before the driver goes idle (sound/port.py writes it)
 # speed patches (patches/speed/): the same game, faster on an 8088; tools/func.py shows the behaviour is the reference's
 speed/unpack-rle.patch    # res05 UnpackRle in assembler: every DAX block the game loads
 speed/tandy-glyph.patch   # res06 DrawGlyph's Tandy branch in assembler: all text

@@ -3,12 +3,16 @@
 Pool of Radiance's sounds on the Tandy 1000's SN76489: what the game's own driver (`src/RES03.ASM`) plays, the same
 tunes with one driver fault fixed, and new sounds designed for the chip from what each is for. The method follows the
 Eye of the Beholder study (eob-decomp `ports/dos/sound/`), whose listening passes kept the designed sounds for 110 of
-117 clips. Nothing here is in the DOS build yet: this is the listening page the port changes would come from.
+117 clips. The first listening pass (`picks.json`) is in the DOS build: `port.py` turns it into the port's
+`patches/tandy-sound.patch` and `patches/tandy-strike.patch` (below).
 
 ```bash
 .venv/bin/python ports/dos/sound/capture.py      # the original's 20 tunes, Tandy and speaker (oracle, 3 s)
 cc -O2 -o ports/dos/build/sound/snrender ports/dos/sound/snrender.c -lm
 python3 ports/dos/sound/build.py                 # render, encode (lame), write ports/dos/build/sound/index.html
+python3 ports/dos/sound/port.py                  # the port's patches from picks.json; then make -C ports/dos game
+.venv/bin/python ports/dos/sound/capture.py --build ports/dos/build/link --out port.json
+python3 ports/dos/sound/check.py                 # every tune of the port's build against what the page played
 ```
 
 | File | What |
@@ -18,6 +22,9 @@ python3 ports/dos/sound/build.py                 # render, encode (lame), write 
 | `designs.py` | The 11 designs, register scripts at 118.3 Hz (every second tick of the driver's 236.7 Hz timer), each with its use cited from `src/` and the time the game gives it. |
 | `build.py` | Renders the original (cut at 0.1 s where the game cuts it), the original with the noise fix, the design and the speaker original; writes the page. |
 | `page.html` | The page template: three lanes per sound with spectrograms, a pick and a note per sound, the picks as JSON. |
+| `picks.json` | The listening pass the page exported: per sound `designed`, `fixed` or `now`. |
+| `port.py` | Writes the port's two patches from the picks: the driver's noise fix and script player with the designed scripts, and the strike's wait. |
+| `check.py` | The port's capture against the expectation: a designed tune writes its script byte for byte, a frame every second tick, then quiet; every other tune writes the original's bytes with the noise fix, tick for tick. |
 
 ## What the capture showed
 
@@ -35,7 +42,22 @@ python3 ports/dos/sound/build.py                 # render, encode (lame), write 
 - `SoundNoAction` (7) is the hit sound: `ResolveCombatantAttacks` plays it for every attack roll that hits
   (`src/OVL13.PAS:880`), besides the helpless target and the refused move in the 3D view.
 
-## Toward the port
+## In the port (pass por-tandy-1)
+
+Designed: the spell cast (2), an effect (4), a death (5), the missile's flight (6) and strike (12), a blow (7),
+Lightning Bolt (8), the step (10). The original with the noise fix: spell damage (3), the miss (9), Fireball (11).
+
+1. The noise fix in `TandyStep`: the noise control is written when its low three bits change (`LastNoise`,
+   forgotten by `SetTandyTune`). It covers every tune that is not designed, the unused ones too.
+2. The script player: `SetTandyTune` takes the tune's script from `DesignTunes` (0: the voices as before);
+   `ScriptStep` plays a frame every second tick (n bytes for port C0h, or a run of empty frames, or the end, after
+   which the chip is quiet). 2,925 bytes of scripts; the driver grows from 5,721 to 8,825 bytes, resident.
+3. The strike: `SetSoundDriverIdle(10)` right after `PlaySound(SoundAttackArrives)` silenced it at once; a Tandy
+   game now waits `WaitHundredths(10)` (the script's length) in between. It is the one change of timing.
+
+`check.py` passes on every tune (oracle). Not heard on a real EX yet.
+
+## Toward the port (the options this study weighed)
 
 1. The noise fix: `TandyStep` keeps the last noise byte and skips an unchanged write. Small, resident, every tune
    kept.
@@ -45,4 +67,3 @@ python3 ports/dos/sound/build.py                 # render, encode (lame), write 
 3. Optional, a timing change: run the timer for good so short sounds finish (the strike would be heard, and the
    0.1 s wait at every step would go). The designs fit 0.1 s either way.
 
-Not done: nobody has listened yet; the picks on the page are the first pass's input.

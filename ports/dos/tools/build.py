@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """build.py: the DOS port's game, from the decompiled Pascal of src/ plus this port's patch series.
 
-  .venv/bin/python ports/dos/tools/build.py [--faithful] [--only NAME ...]
+  .venv/bin/python ports/dos/tools/build.py [--faithful] [--ref] [--only NAME ...] [--without NAME ...]
   make -C ports/dos game [FAITHFUL=1]
 
 src/ is never edited: its units are copied to build/stage, the fixes of the original that every port takes
@@ -19,6 +19,8 @@ overlay file as poolrad/start-unpack.exe and GAME.OVR), which proves this pipeli
 
 --ref links the series without its speed patches (those under patches/speed/) into build/ref (staged in
 build/ref-stage), and publishes nothing: the game whose behaviour the speed patches must keep (tools/func.py).
+--only and --without pick from the series (with --ref too): `make sessions` replays a reference without the sound
+patches.
 Exit status 0 when built (and, with --faithful, identical), 1 otherwise.
 """
 from __future__ import annotations
@@ -196,8 +198,21 @@ def main(argv=None) -> int:
     ap.add_argument("--faithful", action="store_true", help="no patch: must link the original program")
     ap.add_argument("--only", action="append", metavar="NAME", help="apply only these patches of the series")
     ap.add_argument("--ref", action="store_true", help="the series without speed patches, into build/ref only")
+    ap.add_argument("--without", action="append", metavar="NAME", help="leave these patches of the series out")
     a = ap.parse_args(argv)
     patches = [] if a.faithful else series()
+    if a.only:
+        unknown = set(a.only) - set(patches)
+        if unknown:
+            print("build: not in patches/series: %s" % ", ".join(sorted(unknown)))
+            return 1
+        patches = [p for p in patches if p in a.only]
+    if a.without:
+        unknown = set(a.without) - set(patches)
+        if unknown:
+            print("build: not in patches/series: %s" % ", ".join(sorted(unknown)))
+            return 1
+        patches = [p for p in patches if p not in a.without]
     if a.ref:
         use_dirs(BUILD / "ref-stage", BUILD / "ref")
         try:
@@ -208,12 +223,6 @@ def main(argv=None) -> int:
             return 1
         print("build: reference (no speed patch) in %s" % LINK.relative_to(ROOT))
         return 0
-    if a.only:
-        unknown = set(a.only) - set(patches)
-        if unknown:
-            print("build: not in patches/series: %s" % ", ".join(sorted(unknown)))
-            return 1
-        patches = [p for p in patches if p in a.only]
     try:
         stage(patches)
         log = link()

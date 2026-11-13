@@ -6,7 +6,7 @@
 ROOT := ../..
 PY := $(if $(wildcard $(ROOT)/.venv/bin/python),$(ROOT)/.venv/bin/python,python3)
 
-.PHONY: help game faithful ref func prof sessions tandy tandy-deep test play dist clean
+.PHONY: help game faithful ref func prof sessions sound-patches sound-check tandy tandy-deep test play dist clean
 .DEFAULT_GOAL := help
 
 help:
@@ -17,9 +17,11 @@ help:
 	@echo "  make func          the gate for speed patches: the suite (sessions/suite.txt) on ref and game in Tandy video and sound, compared (SESSION=name), about 2 min"
 	@echo "  make prof          the 8088 profile of the game, and its gain over ref, per session (SESSION=name, ACTIONS=1 for what each key costs)"
 	@echo "  make sessions      replay every session of tests/sessions on ref against the original in the oracle (SESSION=name, SOUND=T|P|S): the behaviour patches, about 15 min"
+	@echo "  make sound-patches patches/tandy-sound.patch and tandy-strike.patch from sound/designs.py and sound/picks.json"
+	@echo "  make sound-check   every tune of the game's Tandy driver in the oracle against what the listening page played (10 s)"
 	@echo "  make tandy         Tandy 1000 check in DOSBox-X, headless: titles, then the menu, never the wheel"
 	@echo "  make tandy-deep    DOSBox-X again, ref against game past the titles: a saved game, the 3D view, a character sheet, the area map (2.5 min)"
-	@echo "  make test          faithful, game, ref, func and tandy (about 4 min)"
+	@echo "  make test          faithful, game, ref, func, sound-check and tandy (about 4 min)"
 	@echo "  make play          the port's game in a DOSBox-X window (Tandy machine, about 1000 EX speed); opens a window"
 	@echo "  make dist          build/dist: the two files to copy onto the machine, with INSTALL.TXT"
 	@echo "  make clean"
@@ -42,8 +44,22 @@ prof: game ref
 	$(PY) tools/prof.py --diff ref game $(if $(SESSION),--session $(SESSION))
 	$(if $(ACTIONS),$(PY) tools/prof.py --build game --actions --in-order --detail 5 $(if $(SESSION),--session $(SESSION)))
 
-sessions: ref
+# the replay cannot follow the sound patches (tandy-sound grows res03, which moves DGROUP and every pointer in it;
+# tandy-strike adds a wait, which changes the clock readings): the reference it replays leaves them out, and
+# sound-check proves the driver instead
+SOUND_PATCHES := tandy-sound.patch tandy-strike.patch
+
+sessions:
+	$(PY) tools/build.py --ref $(foreach p,$(SOUND_PATCHES),--without $(p))
 	$(PY) tools/sessions.py $(if $(SESSION),--session $(SESSION)) $(if $(SOUND),--sound $(SOUND))
+
+sound-patches:
+	$(PY) sound/port.py
+
+sound-check: game
+	$(PY) sound/capture.py
+	$(PY) sound/capture.py --build build/link --out port.json
+	$(PY) sound/check.py
 
 tandy:
 	$(PY) tools/tandy.py
@@ -52,9 +68,9 @@ tandy-deep: game ref
 	$(PY) tools/tandy.py --deep
 
 # the faithful build first (it proves the pipeline), then the game, the speed patches' behaviour against the
-# reference (func), and the game on the Tandy machine. `make sessions` (the reference against the original, 15 min)
+# reference (func), the Tandy driver (sound-check), and the game on the Tandy machine. `make sessions` (the reference against the original, 15 min)
 # is for changes to the behaviour patches.
-test: faithful game ref func tandy
+test: faithful game ref func sound-check tandy
 
 play:
 	$(PY) tools/tandy.py --play

@@ -1,0 +1,11 @@
+--- a/OVL13.PAS
++++ b/OVL13.PAS
+@@ -1494,6 +1494,8 @@
+   WalkCombatLine(CombatantX(Who), CombatantY(Who), CombatantX(Target), CombatantY(Target),
+     Frames, Mode);
+   PlaySound(SoundAttackArrives);
++  if SoundMode = 0 then
++    WaitHundredths(10);   { port: the designed strike sounds on the Tandy chip before the driver goes idle }
+   SetSoundDriverIdle(SoundIdleDefault);
+ end;
+ { ovl13:2879. Works out the monster side's remaining hit points as a percentage and stores it in the

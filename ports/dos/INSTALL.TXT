@@ -1,4 +1,4 @@
-POOL OF RADIANCE (PC), REBUILT FROM ITS DECOMPILED SOURCE: NO CODE WHEEL, FASTER
+POOL OF RADIANCE (PC), REBUILT: NO CODE WHEEL, FASTER, NEW TANDY SOUND
 
 This is the PC game (version 1.3) linked again from its decompiled Turbo
 Pascal source, with these changes:
@@ -16,6 +16,15 @@ Pascal source, with these changes:
   for a step in the 3D view, a third for a combat turn, a fifth for a menu
   key. The game plays exactly as before: same screens, same dice, same saved
   games (checked on every key of 12 recorded sessions).
+- The Tandy sound is new (POOL.CFG sound T). Eight of the game's sounds
+  were made again for the Tandy chip: a step, a blow landing, a missile in
+  flight and its strike, a spell being cast, an effect taking hold, a death,
+  Lightning Bolt. The other three (spell damage, a miss, Fireball) are the
+  original's, with a fault of its sound driver fixed: it restarted the
+  chip's noise on every tick, which turned noise into a buzz or near silence
+  (Fireball was almost inaudible). The original cut the missile's strike off
+  at once; the game now waits a tenth of a second for it to sound. The PC
+  speaker's sounds are unchanged.
 
 Everything else is the original program: same graphics modes (EGA, CGA,
 Tandy), same sound devices, same saved games.
@@ -48,6 +57,6 @@ original program.
 SIZES
 
 START.EXE is not compressed (the original is packed with EXEPACK), so it is
-about 6 KB larger on disk; GAME.OVR is about 1 KB smaller. The game needs
-about 0.5 KB more memory to run (the faster code). SHA256.TXT lists the
+about 9 KB larger on disk; GAME.OVR is about 1 KB smaller. The game needs
+about 3.5 KB more memory to run (the faster code and the new sounds). SHA256.TXT lists the
 checksums of both files.

@@ -12,7 +12,10 @@ and keeps every write to port C0h (the Tandy chip) and to PIT channel 2 with the
 time in seconds (the oracle runs 1,000,000 instructions a virtual second and raises the timer interrupt at the
 rate the driver programs, 236.7 Hz). Writes build/sound/capture.json.
 
-  .venv/bin/python ports/dos/sound/capture.py [--seconds 4]
+  .venv/bin/python ports/dos/sound/capture.py [--seconds 4] [--build ports/dos/build/link --out port.json]
+
+--build runs a rebuilt program instead (a folder with POOL.EXE, POOL.OVR, POOL.MAP: the DOS port's build/link), whose
+capture check.py compares with what the page played.
 """
 from __future__ import annotations
 
@@ -24,6 +27,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "tools"))
 
+from oracle import layout  # noqa: E402
 from oracle.soundprobe import Probe, SECOND, TUNES, soundmode_offset  # noqa: E402
 from oracle.state import dgroup_seg  # noqa: E402
 
@@ -61,10 +65,14 @@ def capture(seconds: float) -> dict:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--seconds", type=float, default=4.0)
+    ap.add_argument("--build", type=Path, help="a rebuilt program's folder (POOL.EXE, POOL.OVR, POOL.MAP)")
+    ap.add_argument("--out", default="capture.json", help="file name in ports/dos/build/sound")
     a = ap.parse_args(argv)
+    if a.build:
+        layout.use(layout.rebuilt(a.build.resolve()))
     OUT.mkdir(parents=True, exist_ok=True)
     data = capture(a.seconds)
-    (OUT / "capture.json").write_text(json.dumps(data))
+    (OUT / a.out).write_text(json.dumps(data))
     for k, r in data["tunes"].items():
         print("tune %2s: %5d Tandy writes, %4d speaker events" % (k, len(r["tandy"]), len(r["speaker"])))
     return 0

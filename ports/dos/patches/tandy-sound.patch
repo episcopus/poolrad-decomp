@@ -1,0 +1,349 @@
+--- a/RES03.ASM
++++ b/RES03.ASM
+@@ -1902,7 +1902,13 @@
+ TandyStep:
+         mov bx, word ptr [CurrentTune]
+         cmp bx, 0
+-        je TandyQuiet
++        jne TandyTune                       ; port: TandyQuiet is out of a short jump's reach now
++        jmp TandyQuiet
++TandyTune:
++        cmp word ptr [ScriptPtr], 0         ; port: a designed tune plays its script, not its voices
++        je TandyVoicesStep
++        jmp ScriptStep
++TandyVoicesStep:
+         mov byte ptr [VoicesLeft], 4
+         mov si, TandyNotes
+         mov word ptr [NoteTable], si
+@@ -1931,10 +1937,20 @@
+         shr al, 1
+         shr al, 1
+         xor al, dl
++        cmp dl, 0E0h
++        je TandyNoise
+         out 0C0h, al
+-        cmp dl, 0E0h
++        mov al, ah
++        out 0C0h, al
++        jmp short L1546
++
++; port: the noise control only when it changes (every write of it resets the chip's shift register)
++TandyNoise:
++        mov ah, al
++        and ah, 7
++        cmp ah, byte ptr [LastNoise]
+         je L1546
+-        mov al, ah
++        mov byte ptr [LastNoise], ah
+         out 0C0h, al
+ L1546:
+         mov ax, 0FFFFh
+@@ -1963,6 +1979,43 @@
+         out 0C0h, al
+         mov al, 0FFh
+         out 0C0h, al
++        ret
++
++; port: ScriptStep, a frame of the current tune's script every second tick (ports/dos/sound/port.py). Uses ax and
++; si only (the handler saves ax, bx, dx, ds, si).
++ScriptStep:
++        cmp byte ptr [OutputOn], 0
++        je TandyQuiet
++        mov al, byte ptr [ScriptPhase]
++        xor byte ptr [ScriptPhase], 1
++        cmp al, 0
++        jne ScriptDone
++        cmp byte ptr [ScriptWait], 0
++        je ScriptFrame
++        dec byte ptr [ScriptWait]
++        ret
++ScriptFrame:
++        mov si, word ptr [ScriptPtr]
++        mov al, byte ptr [si]
++        cmp al, 0FEh
++        je TandyQuiet
++        inc si
++        cmp al, 80h
++        jb ScriptWrites
++        sub al, 80h
++        mov byte ptr [ScriptWait], al
++        mov word ptr [ScriptPtr], si
++        ret
++ScriptWrites:
++        mov ah, al
++ScriptOut:
++        mov al, byte ptr [si]
++        inc si
++        out 0C0h, al
++        dec ah
++        jne ScriptOut
++        mov word ptr [ScriptPtr], si
++ScriptDone:
+         ret
+ 
+ ; StepVoice: one tick of the voice at si: level and pitch slopes, vibrato, output period, release delay,
+@@ -2265,6 +2318,13 @@
+         add si, si
+         add si, si
+         mov byte ptr [InService], 1
++        mov bx, word ptr [CurrentTune]      ; port: the tune's script (0: none), from its first frame
++        add bx, bx
++        mov ax, word ptr [bx + DesignTunes]
++        mov word ptr [ScriptPtr], ax
++        mov byte ptr [ScriptPhase], 0
++        mov byte ptr [ScriptWait], 0
++        mov byte ptr [LastNoise], 0FFh
+         mov byte ptr [VoicesLeft], 4
+         mov di, TandyVoices
+ TanLoadVoice:
+@@ -2312,3 +2372,250 @@
+         pop bp
+         retf 2
+ 
++; ---- the port's sound data (ports/dos/sound/port.py, from designs.py and picks.json) ----
++; the script of the tune playing, 0 for the voices [port]
++ScriptPtr:
++        dw      0
++; 0 on the ticks that play a frame, 1 on the others
++ScriptPhase:
++        db      0
++; frames left to skip
++ScriptWait:
++        db      0
++; the low three bits of the last noise control written, 0FFh none since the tune started
++LastNoise:
++        db      0FFh
++; per tune 0..20 (PlaySound n plays tune n - 1), its script or 0
++DesignTunes:
++        dw      0
++        dw      Design02
++        dw      0
++        dw      Design04
++        dw      Design05
++        dw      Design06
++        dw      Design07
++        dw      Design08
++        dw      0
++        dw      Design10
++        dw      0
++        dw      Design12
++        dw      0
++        dw      0
++        dw      0
++        dw      0
++        dw      0
++        dw      0
++        dw      0
++        dw      0
++        dw      0
++
++; PlaySound(2), SoundSpellDefault: a spell cast: a quick rising run of three notes that sparkles and rings on with vibrato (293 bytes)
++Design02:
++        db      005h, 08Ah, 00Ah, 0CDh, 002h, 0E7h, 003h, 0CCh, 002h, 092h, 003h, 0CBh, 002h, 090h, 080h, 002h
++        db      0CAh, 002h, 080h, 003h, 0C9h, 002h, 0FDh, 003h, 0C8h, 002h, 0FCh, 003h, 081h, 007h, 0FAh, 003h
++        db      0C7h, 002h, 0F9h, 001h, 0F8h, 004h, 0AAh, 00Ah, 0C6h, 002h, 001h, 0B5h, 002h, 0C5h, 002h, 002h
++        db      0C4h, 002h, 003h, 085h, 005h, 0F9h, 002h, 0C3h, 002h, 080h, 004h, 0A1h, 007h, 0C2h, 002h, 080h
++        db      002h, 0C1h, 002h, 080h, 002h, 0C0h, 002h, 080h, 002h, 0CFh, 001h, 002h, 0A5h, 005h, 001h, 0FAh
++        db      002h, 0CEh, 001h, 080h, 002h, 0CDh, 001h, 080h, 002h, 0CCh, 001h, 081h, 002h, 0CBh, 001h, 080h
++        db      002h, 0CAh, 001h, 001h, 0FBh, 080h, 002h, 0C9h, 001h, 080h, 001h, 091h, 002h, 0C8h, 001h, 080h
++        db      002h, 0C7h, 001h, 081h, 002h, 0C6h, 001h, 001h, 0FCh, 081h, 002h, 084h, 005h, 002h, 092h, 0B6h
++        db      002h, 0A4h, 005h, 083h, 001h, 0FDh, 004h, 085h, 005h, 0A5h, 005h, 081h, 004h, 086h, 005h, 0A6h
++        db      005h, 002h, 093h, 0B7h, 082h, 002h, 0A5h, 005h, 002h, 085h, 005h, 003h, 0A4h, 005h, 0FEh, 002h
++        db      084h, 005h, 082h, 002h, 094h, 0B8h, 080h, 002h, 0A5h, 005h, 081h, 004h, 085h, 005h, 0A6h, 005h
++        db      001h, 0FFh, 002h, 086h, 005h, 081h, 004h, 0A5h, 005h, 095h, 0B9h, 080h, 002h, 0A4h, 005h, 002h
++        db      085h, 005h, 081h, 002h, 084h, 005h, 081h, 002h, 0A5h, 005h, 080h, 002h, 096h, 0BAh, 002h, 0A6h
++        db      005h, 080h, 002h, 085h, 005h, 081h, 004h, 086h, 005h, 0A5h, 005h, 080h, 002h, 0A4h, 005h, 081h
++        db      002h, 097h, 0BBh, 002h, 085h, 005h, 081h, 004h, 084h, 005h, 0A5h, 005h, 081h, 002h, 0A6h, 005h
++        db      082h, 002h, 098h, 0BCh, 004h, 085h, 005h, 0A5h, 005h, 080h, 002h, 0A4h, 005h, 002h, 086h, 005h
++        db      084h, 006h, 085h, 005h, 0A5h, 005h, 099h, 0BDh, 080h, 002h, 0A6h, 005h, 002h, 084h, 005h, 083h
++        db      002h, 0A5h, 005h, 080h, 002h, 0A4h, 005h, 004h, 085h, 005h, 09Ah, 0BEh, 080h, 002h, 086h, 005h
++        db      080h, 002h, 09Fh, 0BFh, 0FEh
++
++; PlaySound(4), SoundAffectMessage (an effect takes hold): magic settling on someone: three soft struck notes, a suspended chord that rings and fades (284 bytes)
++Design04:
++        db      002h, 08Fh, 00Bh, 001h, 092h, 001h, 090h, 085h, 001h, 091h, 081h, 002h, 0AFh, 008h, 001h, 0B2h
++        db      086h, 001h, 0B3h, 081h, 004h, 0CFh, 007h, 092h, 0DEh, 001h, 0D3h, 002h, 08Eh, 00Bh, 085h, 001h
++        db      0D4h, 081h, 003h, 08Fh, 00Bh, 0B4h, 081h, 001h, 093h, 002h, 0AEh, 008h, 002h, 080h, 00Ch, 081h
++        db      004h, 08Fh, 00Bh, 0AFh, 008h, 082h, 003h, 08Eh, 00Bh, 0D5h, 081h, 003h, 08Dh, 00Bh, 0B5h, 080h
++        db      001h, 094h, 081h, 004h, 08Eh, 00Bh, 0AEh, 008h, 081h, 004h, 08Fh, 00Bh, 0C0h, 008h, 081h, 001h
++        db      0D6h, 004h, 080h, 00Ch, 0CFh, 007h, 080h, 003h, 0AFh, 008h, 0B6h, 080h, 002h, 0CEh, 007h, 001h
++        db      095h, 004h, 08Fh, 00Bh, 0A0h, 009h, 080h, 002h, 0CFh, 007h, 004h, 08Eh, 00Bh, 0AFh, 008h, 080h
++        db      002h, 0C0h, 008h, 002h, 08Dh, 00Bh, 002h, 0AEh, 008h, 001h, 0D7h, 081h, 005h, 08Eh, 00Bh, 0CFh
++        db      007h, 0B7h, 081h, 003h, 08Fh, 00Bh, 096h, 002h, 0CEh, 007h, 002h, 0AFh, 008h, 002h, 080h, 00Ch
++        db      080h, 004h, 0A0h, 009h, 0CFh, 007h, 081h, 002h, 0C0h, 008h, 005h, 08Fh, 00Bh, 0AFh, 008h, 0D8h
++        db      081h, 003h, 08Eh, 00Bh, 0B8h, 002h, 0AEh, 008h, 002h, 0CFh, 007h, 001h, 097h, 002h, 08Dh, 00Bh
++        db      080h, 002h, 0CEh, 007h, 080h, 002h, 08Eh, 00Bh, 002h, 0AFh, 008h, 002h, 0CFh, 007h, 080h, 003h
++        db      08Fh, 00Bh, 0D9h, 004h, 0A0h, 009h, 0C0h, 008h, 080h, 003h, 080h, 00Ch, 0B9h, 080h, 002h, 0AFh
++        db      008h, 001h, 098h, 002h, 0CFh, 007h, 002h, 0AEh, 008h, 002h, 08Fh, 00Bh, 080h, 002h, 0CEh, 007h
++        db      002h, 08Eh, 00Bh, 081h, 005h, 08Dh, 00Bh, 0CFh, 007h, 0DAh, 080h, 003h, 0AFh, 008h, 0BAh, 002h
++        db      0C0h, 008h, 080h, 003h, 08Eh, 00Bh, 099h, 002h, 0A0h, 009h, 081h, 004h, 08Fh, 00Bh, 0CFh, 007h
++        db      002h, 0AFh, 008h, 080h, 004h, 080h, 00Ch, 0CEh, 007h, 002h, 0AEh, 008h, 001h, 0DBh, 081h, 003h
++        db      0CFh, 007h, 0BBh, 002h, 08Fh, 00Bh, 080h, 003h, 09Fh, 0BFh, 0DFh, 0FEh
++
++; PlaySound(5), SoundCombatantDies: a death: a falling groan over a low growl, and the body's thud as it drops (802 bytes)
++Design05:
++        db      005h, 08Ch, 01Fh, 0CBh, 006h, 0E3h, 003h, 080h, 020h, 09Eh, 007h, 084h, 020h, 0A0h, 01Eh, 0CCh
++        db      006h, 09Ch, 008h, 088h, 020h, 0A2h, 01Eh, 0CDh, 006h, 09Ah, 0FDh, 008h, 08Ch, 020h, 0A6h, 01Eh
++        db      0CEh, 006h, 098h, 0FCh, 008h, 080h, 021h, 0AAh, 01Eh, 0CFh, 006h, 095h, 0FAh, 007h, 085h, 021h
++        db      0ADh, 01Eh, 093h, 0BEh, 0F8h, 009h, 089h, 021h, 0A1h, 01Fh, 0C0h, 007h, 091h, 0BDh, 0F7h, 008h
++        db      08Dh, 021h, 0A5h, 01Fh, 0C1h, 007h, 0BBh, 0F5h, 008h, 081h, 022h, 0A9h, 01Fh, 0C2h, 007h, 0B9h
++        db      0F4h, 008h, 085h, 022h, 0ADh, 01Fh, 0C3h, 007h, 0B8h, 0F3h, 007h, 08Ah, 022h, 0A1h, 020h, 0C4h
++        db      007h, 0B6h, 005h, 08Eh, 022h, 0A5h, 020h, 0B5h, 006h, 082h, 023h, 0A9h, 020h, 0C5h, 007h, 006h
++        db      087h, 023h, 0ADh, 020h, 0C6h, 007h, 006h, 08Bh, 023h, 0A1h, 021h, 0C7h, 007h, 006h, 08Fh, 023h
++        db      0A5h, 021h, 0C8h, 007h, 006h, 082h, 024h, 0A9h, 021h, 0C9h, 007h, 006h, 085h, 024h, 0ADh, 021h
++        db      0CAh, 007h, 006h, 088h, 024h, 0A1h, 022h, 0CBh, 007h, 004h, 08Ch, 024h, 0A6h, 022h, 006h, 080h
++        db      025h, 0AAh, 022h, 0CCh, 007h, 006h, 084h, 025h, 0AEh, 022h, 0CDh, 007h, 007h, 089h, 025h, 0A3h
++        db      023h, 0CEh, 007h, 092h, 006h, 08Fh, 025h, 0A7h, 023h, 0CFh, 007h, 006h, 086h, 026h, 0ABh, 023h
++        db      0C0h, 008h, 007h, 08Dh, 026h, 0A0h, 024h, 0C1h, 008h, 0B6h, 006h, 086h, 027h, 0A4h, 024h, 0C2h
++        db      008h, 006h, 08Eh, 027h, 0A9h, 024h, 0C3h, 008h, 006h, 087h, 028h, 0ADh, 024h, 0C4h, 008h, 006h
++        db      08Eh, 028h, 0A2h, 025h, 0C5h, 008h, 006h, 085h, 029h, 0A6h, 025h, 0C6h, 008h, 007h, 08Ah, 029h
++        db      0ABh, 025h, 0C7h, 008h, 0F4h, 007h, 08Fh, 029h, 0A0h, 026h, 0C8h, 008h, 093h, 006h, 082h, 02Ah
++        db      0A4h, 026h, 0C9h, 008h, 007h, 085h, 02Ah, 0A9h, 026h, 0CAh, 008h, 0B7h, 006h, 087h, 02Ah, 0AEh
++        db      026h, 0CBh, 008h, 006h, 088h, 02Ah, 0A3h, 027h, 0CCh, 008h, 006h, 089h, 02Ah, 0A8h, 027h, 0CDh
++        db      008h, 006h, 08Bh, 02Ah, 0ADh, 027h, 0CEh, 008h, 006h, 08Ch, 02Ah, 0A2h, 028h, 0CFh, 008h, 006h
++        db      08Eh, 02Ah, 0A7h, 028h, 0C0h, 009h, 006h, 081h, 02Bh, 0ACh, 028h, 0C1h, 009h, 007h, 085h, 02Bh
++        db      0A1h, 029h, 0C2h, 009h, 094h, 006h, 08Ah, 02Bh, 0A6h, 029h, 0C3h, 009h, 007h, 080h, 02Ch, 0ABh
++        db      029h, 0C4h, 009h, 0B8h, 007h, 088h, 02Ch, 0A0h, 02Ah, 0C6h, 009h, 0F5h, 006h, 080h, 02Dh, 0A5h
++        db      02Ah, 0C7h, 009h, 006h, 089h, 02Dh, 0AAh, 02Ah, 0C8h, 009h, 006h, 083h, 02Eh, 0A0h, 02Bh, 0C9h
++        db      009h, 006h, 08Eh, 02Eh, 0A5h, 02Bh, 0CAh, 009h, 006h, 088h, 02Fh, 0AAh, 02Bh, 0CBh, 009h, 006h
++        db      082h, 030h, 0A0h, 02Ch, 0CCh, 009h, 007h, 08Bh, 030h, 0A5h, 02Ch, 0CDh, 009h, 095h, 006h, 084h
++        db      031h, 0ABh, 02Ch, 0CFh, 009h, 007h, 08Ch, 031h, 0A0h, 02Dh, 0C0h, 00Ah, 0B9h, 006h, 082h, 032h
++        db      0A6h, 02Dh, 0C1h, 00Ah, 006h, 087h, 032h, 0ACh, 02Dh, 0C2h, 00Ah, 006h, 08Bh, 032h, 0A1h, 02Eh
++        db      0C3h, 00Ah, 006h, 08Eh, 032h, 0A7h, 02Eh, 0C5h, 00Ah, 006h, 080h, 033h, 0ADh, 02Eh, 0C6h, 00Ah
++        db      007h, 081h, 033h, 0A3h, 02Fh, 0C7h, 00Ah, 0F6h, 006h, 083h, 033h, 0A8h, 02Fh, 0C8h, 00Ah, 007h
++        db      084h, 033h, 0AEh, 02Fh, 0CAh, 00Ah, 096h, 006h, 086h, 033h, 0A4h, 030h, 0CBh, 00Ah, 007h, 089h
++        db      033h, 0AAh, 030h, 0CCh, 00Ah, 0BAh, 006h, 08Dh, 033h, 0A0h, 031h, 0CDh, 00Ah, 006h, 082h, 034h
++        db      0A6h, 031h, 0CFh, 00Ah, 006h, 088h, 034h, 0ACh, 031h, 0C0h, 00Bh, 006h, 080h, 035h, 0A3h, 032h
++        db      0C1h, 00Bh, 006h, 08Ah, 035h, 0A9h, 032h, 0C3h, 00Bh, 006h, 084h, 036h, 0AFh, 032h, 0C4h, 00Bh
++        db      007h, 080h, 037h, 0A5h, 033h, 0C5h, 00Bh, 097h, 006h, 08Ch, 037h, 0ACh, 033h, 0C7h, 00Bh, 006h
++        db      088h, 038h, 0A2h, 034h, 0C8h, 00Bh, 007h, 084h, 039h, 0A9h, 034h, 0C9h, 00Bh, 0BBh, 007h, 080h
++        db      03Ah, 0AFh, 034h, 0CBh, 00Bh, 0F7h, 006h, 08Bh, 03Ah, 0A6h, 035h, 0CCh, 00Bh, 006h, 085h, 03Bh
++        db      0ACh, 035h, 0CDh, 00Bh, 006h, 08Eh, 03Bh, 0A3h, 036h, 0CFh, 00Bh, 006h, 085h, 03Ch, 0AAh, 036h
++        db      0C0h, 00Ch, 006h, 08Bh, 03Ch, 0A1h, 037h, 0C2h, 00Ch, 007h, 08Fh, 03Ch, 0A7h, 037h, 0C3h, 00Ch
++        db      098h, 005h, 081h, 03Dh, 0AEh, 037h, 0FFh, 004h, 08Bh, 03Ch, 0A5h, 038h, 008h, 08Bh, 02Bh, 0ACh
++        db      038h, 0E6h, 092h, 0BCh, 0F0h, 004h, 088h, 031h, 0AEh, 038h, 003h, 08Ch, 034h, 093h, 006h, 084h
++        db      037h, 0C1h, 009h, 0E3h, 0F1h, 005h, 087h, 039h, 0C9h, 009h, 0BFh, 006h, 087h, 03Bh, 0CFh, 009h
++        db      094h, 0F2h, 004h, 085h, 03Dh, 0C4h, 00Ah, 005h, 081h, 03Fh, 0C8h, 00Ah, 095h, 004h, 089h, 03Fh
++        db      0CCh, 00Ah, 002h, 0CFh, 00Ah, 004h, 0C3h, 00Bh, 096h, 0F3h, 002h, 0C6h, 00Bh, 002h, 0C9h, 00Bh
++        db      003h, 0CCh, 00Bh, 097h, 003h, 0CFh, 00Bh, 0F4h, 003h, 0C2h, 00Ch, 098h, 002h, 0C5h, 00Ch, 002h
++        db      0C8h, 00Ch, 004h, 0CAh, 00Ch, 099h, 0F5h, 002h, 0CDh, 00Ch, 003h, 0CFh, 00Ch, 09Ah, 002h, 0C2h
++        db      00Dh, 003h, 0C4h, 00Dh, 0F6h, 003h, 0C7h, 00Dh, 09Bh, 002h, 0C9h, 00Dh, 002h, 0CBh, 00Dh, 003h
++        db      0CEh, 00Dh, 09Ch, 003h, 0C0h, 00Eh, 0F7h, 003h, 0C2h, 00Eh, 09Dh, 002h, 0C5h, 00Eh, 002h, 0C7h
++        db      00Eh, 004h, 0C9h, 00Eh, 09Eh, 0F8h, 002h, 0CBh, 00Eh, 003h, 0CEh, 00Eh, 09Fh, 002h, 0C0h, 00Fh
++        db      003h, 0C2h, 00Fh, 0F9h, 002h, 0C4h, 00Fh, 002h, 0C6h, 00Fh, 002h, 0C8h, 00Fh, 002h, 0C9h, 00Fh
++        db      001h, 0FAh, 082h, 001h, 0FBh, 082h, 001h, 0FCh, 083h, 001h, 0FDh, 082h, 001h, 0FEh, 082h, 001h
++        db      0FFh, 0FEh
++
++; PlaySound(6), SoundAttackLeaves: a missile let fly: a bowstring's twang, then a thin whistle of air that carries the flight (391 bytes)
++Design06:
++        db      008h, 083h, 015h, 0A9h, 00Ah, 0E4h, 090h, 0B4h, 0F2h, 005h, 085h, 018h, 0A5h, 00Ch, 0B5h, 006h
++        db      088h, 019h, 0A2h, 00Dh, 091h, 0FFh, 005h, 08Ah, 01Ah, 0ACh, 00Dh, 0B6h, 005h, 08Dh, 01Ch, 0A5h
++        db      00Eh, 092h, 005h, 087h, 01Dh, 0AEh, 00Eh, 0B7h, 004h, 08Fh, 01Ch, 0A6h, 00Fh, 009h, 08Dh, 01Dh
++        db      0ADh, 00Fh, 0CBh, 002h, 0E7h, 093h, 0B8h, 006h, 081h, 020h, 0A4h, 010h, 0CAh, 002h, 005h, 080h
++        db      021h, 0ABh, 010h, 0B9h, 007h, 084h, 020h, 0A2h, 011h, 0C9h, 002h, 094h, 007h, 088h, 020h, 0A8h
++        db      011h, 0C8h, 002h, 0BAh, 005h, 08Ah, 022h, 0ADh, 011h, 095h, 003h, 081h, 024h, 0BBh, 006h, 085h
++        db      023h, 0C7h, 002h, 0BFh, 0FEh, 004h, 087h, 022h, 096h, 0FDh, 003h, 08Bh, 023h, 0FCh, 003h, 08Fh
++        db      024h, 0FBh, 004h, 08Dh, 023h, 097h, 0F9h, 002h, 09Fh, 0F8h, 001h, 0F7h, 003h, 0C8h, 002h, 0F6h
++        db      080h, 002h, 0C9h, 002h, 080h, 002h, 0CAh, 002h, 080h, 002h, 0CBh, 002h, 002h, 0CCh, 002h, 002h
++        db      0CDh, 002h, 080h, 002h, 0CEh, 002h, 080h, 002h, 0CFh, 002h, 080h, 002h, 0C0h, 003h, 082h, 002h
++        db      0CFh, 002h, 081h, 002h, 0CEh, 002h, 002h, 0CDh, 002h, 080h, 002h, 0CCh, 002h, 002h, 0CBh, 002h
++        db      080h, 002h, 0CAh, 002h, 002h, 0C9h, 002h, 080h, 002h, 0C8h, 002h, 080h, 002h, 0C7h, 002h, 086h
++        db      002h, 0C8h, 002h, 001h, 0F7h, 002h, 0C9h, 002h, 080h, 002h, 0CAh, 002h, 002h, 0CBh, 002h, 002h
++        db      0CCh, 002h, 080h, 002h, 0CDh, 002h, 002h, 0CEh, 002h, 080h, 002h, 0CFh, 002h, 081h, 002h, 0C0h
++        db      003h, 080h, 001h, 0F8h, 080h, 002h, 0CFh, 002h, 080h, 002h, 0CEh, 002h, 080h, 002h, 0CDh, 002h
++        db      002h, 0CCh, 002h, 080h, 002h, 0CBh, 002h, 002h, 0CAh, 002h, 080h, 002h, 0C9h, 002h, 002h, 0C8h
++        db      002h, 080h, 001h, 0F9h, 002h, 0C7h, 002h, 085h, 002h, 0C8h, 002h, 080h, 002h, 0C9h, 002h, 080h
++        db      002h, 0CAh, 002h, 002h, 0CBh, 002h, 080h, 003h, 0CCh, 002h, 0FAh, 002h, 0CDh, 002h, 080h, 002h
++        db      0CEh, 002h, 080h, 002h, 0CFh, 002h, 080h, 002h, 0C0h, 003h, 082h, 002h, 0CFh, 002h, 081h, 002h
++        db      0CEh, 002h, 003h, 0CDh, 002h, 0FBh, 080h, 002h, 0CCh, 002h, 002h, 0CBh, 002h, 080h, 002h, 0CAh
++        db      002h, 002h, 0C9h, 002h, 080h, 002h, 0C8h, 002h, 080h, 002h, 0C7h, 002h, 082h, 001h, 0FCh, 082h
++        db      002h, 0C8h, 002h, 080h, 002h, 0C9h, 002h, 002h, 0CAh, 002h, 080h, 002h, 0CBh, 002h, 002h, 0CCh
++        db      002h, 080h, 002h, 0CDh, 002h, 002h, 0CEh, 002h, 080h, 003h, 0CFh, 002h, 0FDh, 081h, 002h, 0C0h
++        db      003h, 081h, 002h, 0CFh, 002h, 081h, 002h, 0CEh, 002h, 080h, 002h, 0CDh, 002h, 002h, 0CCh, 002h
++        db      080h, 002h, 0CBh, 002h, 001h, 0FFh, 0FEh
++
++; PlaySound(7), SoundNoAction (a blow lands): a blow landing: a sharp crack, a punch of low noise and a falling thump (83 bytes)
++Design07:
++        db      008h, 082h, 01Dh, 0A9h, 00Eh, 0E4h, 091h, 0B5h, 0F0h, 00Ah, 082h, 028h, 0AEh, 014h, 0C3h, 003h
++        db      0E7h, 092h, 0B6h, 0F1h, 008h, 08Eh, 02Dh, 0A3h, 018h, 0CDh, 003h, 0B7h, 0F2h, 008h, 08Ch, 032h
++        db      0A2h, 01Bh, 0C9h, 004h, 093h, 0B8h, 008h, 085h, 037h, 0ADh, 01Dh, 0C7h, 005h, 094h, 0F3h, 008h
++        db      08Bh, 03Bh, 0ACh, 01Fh, 0C8h, 006h, 0B9h, 0F4h, 007h, 089h, 03Fh, 0CCh, 007h, 095h, 0BFh, 0F5h
++        db      002h, 0C5h, 009h, 004h, 0C2h, 00Bh, 096h, 0F6h, 004h, 0C5h, 00Dh, 09Fh, 0F7h, 002h, 0C0h, 00Eh
++        db      001h, 0FFh, 0FEh
++
++; PlaySound(8), SoundLightningBolt: a lightning bolt: a crackling arc that spits and buzzes, a high zap jumping about, thunder under it (973 bytes)
++Design08:
++        db      00Ah, 089h, 006h, 0ACh, 035h, 0C3h, 003h, 0E7h, 095h, 0B5h, 0F0h, 003h, 0C6h, 001h, 0B6h, 002h
++        db      084h, 002h, 005h, 0ADh, 02Ch, 090h, 0B7h, 0F7h, 003h, 08Bh, 004h, 0F0h, 001h, 0B6h, 009h, 086h
++        db      003h, 0AFh, 036h, 0C3h, 003h, 095h, 0B7h, 0F7h, 005h, 0C6h, 001h, 090h, 0B8h, 0F0h, 005h, 083h
++        db      002h, 0C3h, 003h, 0B6h, 004h, 0A8h, 032h, 0B5h, 0F7h, 005h, 087h, 002h, 0C6h, 001h, 0B8h, 080h
++        db      008h, 08Dh, 005h, 0AEh, 02Ah, 0C3h, 003h, 0B6h, 0F0h, 080h, 007h, 082h, 003h, 0C6h, 001h, 091h
++        db      0B7h, 0F8h, 080h, 006h, 087h, 004h, 0A1h, 02Dh, 0B8h, 0F1h, 080h, 008h, 08Bh, 005h, 0A0h, 02Fh
++        db      0C3h, 003h, 0B6h, 0F8h, 003h, 096h, 0B7h, 0F1h, 005h, 083h, 007h, 0C6h, 001h, 0B8h, 003h, 0A7h
++        db      034h, 091h, 005h, 08Ah, 004h, 0C3h, 003h, 0B7h, 001h, 0F8h, 009h, 08Bh, 007h, 0A8h, 02Dh, 0C6h
++        db      001h, 096h, 0B8h, 0F1h, 001h, 091h, 004h, 081h, 002h, 096h, 0B6h, 005h, 0A6h, 02Fh, 0C3h, 003h
++        db      091h, 003h, 087h, 004h, 0B9h, 003h, 0C6h, 001h, 0B8h, 080h, 006h, 087h, 002h, 0A2h, 030h, 096h
++        db      0F8h, 003h, 08Ah, 005h, 0B7h, 005h, 0A1h, 02Dh, 091h, 0B8h, 0F1h, 004h, 084h, 003h, 096h, 0B7h
++        db      004h, 0C3h, 003h, 091h, 0B6h, 005h, 080h, 002h, 0A0h, 036h, 0B8h, 003h, 0C6h, 001h, 096h, 004h
++        db      08Dh, 003h, 091h, 0F8h, 003h, 0A6h, 034h, 0F1h, 007h, 08Bh, 005h, 0C3h, 003h, 092h, 0B6h, 0F2h
++        db      001h, 0B7h, 007h, 08Dh, 003h, 0A8h, 02Ch, 0C6h, 001h, 0B9h, 001h, 0B7h, 005h, 08Fh, 006h, 0C3h
++        db      003h, 0B8h, 004h, 0A5h, 033h, 097h, 0B7h, 006h, 08Ah, 003h, 0C6h, 001h, 092h, 0B9h, 080h, 005h
++        db      08Fh, 001h, 0ABh, 02Fh, 0B8h, 080h, 005h, 086h, 007h, 0C3h, 003h, 097h, 006h, 0AEh, 02Ah, 0C6h
++        db      001h, 0B6h, 0F9h, 004h, 085h, 007h, 092h, 0B7h, 001h, 0F2h, 007h, 085h, 005h, 0ACh, 033h, 0C3h
++        db      003h, 0B8h, 005h, 0C6h, 001h, 097h, 0B7h, 0F9h, 005h, 08Ch, 002h, 092h, 0B9h, 0F2h, 005h, 0A5h
++        db      02Bh, 0C3h, 003h, 0B7h, 006h, 08Fh, 006h, 0C6h, 001h, 097h, 0B9h, 081h, 009h, 08Ah, 004h, 0A8h
++        db      035h, 0C3h, 003h, 092h, 0B7h, 0F9h, 004h, 08Ch, 003h, 0B9h, 0F2h, 080h, 008h, 08Fh, 002h, 0A7h
++        db      02Ch, 0C6h, 001h, 0B8h, 0F9h, 003h, 0C3h, 003h, 0B9h, 007h, 08Ah, 005h, 0A0h, 02Fh, 093h, 0B7h
++        db      0F3h, 002h, 0B8h, 0FAh, 005h, 089h, 004h, 098h, 0B9h, 0F3h, 004h, 0A2h, 02Eh, 093h, 0BAh, 004h
++        db      087h, 002h, 0B8h, 0FAh, 003h, 0C6h, 001h, 0F3h, 004h, 089h, 003h, 0A4h, 02Ch, 003h, 0C3h, 003h
++        db      0B9h, 005h, 081h, 007h, 0C6h, 001h, 0B7h, 005h, 0A9h, 032h, 0C3h, 003h, 0FAh, 003h, 08Ch, 004h
++        db      098h, 004h, 0C6h, 001h, 093h, 0B9h, 006h, 08Ch, 006h, 0A0h, 02Dh, 0C3h, 003h, 003h, 0C6h, 001h
++        db      0B8h, 004h, 08Dh, 004h, 098h, 0B7h, 004h, 0ADh, 02Bh, 093h, 0F3h, 004h, 084h, 003h, 0B8h, 0FAh
++        db      002h, 0B7h, 0F3h, 008h, 086h, 007h, 0A6h, 033h, 0C3h, 003h, 098h, 0B8h, 003h, 0C6h, 001h, 0B9h
++        db      007h, 080h, 006h, 0C3h, 003h, 093h, 0BAh, 0FAh, 003h, 0AEh, 035h, 0B8h, 004h, 08Ch, 001h, 0C6h
++        db      001h, 004h, 0C3h, 003h, 0B7h, 0F3h, 006h, 089h, 002h, 0A1h, 02Bh, 098h, 0BAh, 003h, 0C6h, 001h
++        db      0B9h, 005h, 088h, 007h, 093h, 0B8h, 0FAh, 006h, 0A5h, 034h, 0C3h, 003h, 094h, 0FBh, 003h, 089h
++        db      007h, 0B9h, 005h, 0C6h, 001h, 099h, 0BAh, 0F4h, 007h, 084h, 004h, 0A9h, 030h, 094h, 0B9h, 0FBh
++        db      004h, 0C3h, 003h, 0B8h, 0F4h, 005h, 081h, 006h, 0C6h, 001h, 0FBh, 005h, 0A2h, 034h, 0C3h, 003h
++        db      0F4h, 003h, 08Ch, 004h, 0BAh, 003h, 099h, 0B9h, 0FBh, 006h, 08Fh, 003h, 0AFh, 02Eh, 094h, 0B8h
++        db      004h, 0C6h, 001h, 099h, 0F4h, 006h, 089h, 002h, 0C3h, 003h, 094h, 0BAh, 004h, 0ACh, 032h, 099h
++        db      0B9h, 004h, 0C6h, 001h, 094h, 0B8h, 003h, 0C3h, 003h, 0BAh, 006h, 083h, 002h, 0AFh, 02Eh, 0B9h
++        db      0FBh, 004h, 0C6h, 001h, 0B8h, 0F4h, 005h, 08Ch, 006h, 099h, 0B9h, 0FBh, 004h, 0AAh, 036h, 0BAh
++        db      0F4h, 003h, 083h, 003h, 094h, 003h, 0C3h, 003h, 0FBh, 008h, 089h, 002h, 0A3h, 032h, 0C6h, 001h
++        db      0B8h, 0F4h, 002h, 0BBh, 0FBh, 004h, 08Dh, 001h, 099h, 0BAh, 006h, 0A1h, 037h, 0C3h, 003h, 094h
++        db      0F4h, 004h, 081h, 004h, 0C6h, 001h, 002h, 095h, 0F5h, 080h, 008h, 08Fh, 001h, 0A8h, 02Bh, 0C3h
++        db      003h, 0B8h, 0FCh, 004h, 084h, 002h, 0C6h, 001h, 080h, 007h, 08Ch, 001h, 0ADh, 02Bh, 09Ah, 0BAh
++        db      0F5h, 002h, 0C3h, 003h, 080h, 009h, 084h, 003h, 0A7h, 02Eh, 0C6h, 001h, 095h, 0B8h, 0FCh, 006h
++        db      082h, 005h, 0C3h, 003h, 0BAh, 0F5h, 005h, 0A9h, 02Eh, 09Ah, 0B9h, 0FCh, 005h, 080h, 006h, 0C6h
++        db      001h, 0F5h, 080h, 006h, 086h, 003h, 0A9h, 032h, 095h, 0BAh, 002h, 09Ah, 0FCh, 007h, 084h, 005h
++        db      0C3h, 003h, 095h, 0BBh, 0F5h, 003h, 0A3h, 034h, 0B9h, 003h, 088h, 006h, 0BBh, 001h, 09Ah, 007h
++        db      08Fh, 006h, 0ABh, 035h, 0C6h, 001h, 0B9h, 003h, 0C3h, 003h, 0BBh, 005h, 083h, 002h, 0C6h, 001h
++        db      095h, 006h, 0ACh, 02Dh, 0C3h, 003h, 0B9h, 0FCh, 003h, 086h, 002h, 09Ah, 002h, 0BBh, 0F5h, 006h
++        db      08Bh, 007h, 0A9h, 02Dh, 095h, 0BCh, 003h, 096h, 0B9h, 0F6h, 006h, 080h, 004h, 0C6h, 001h, 0BAh
++        db      0FDh, 006h, 0ADh, 036h, 0C3h, 003h, 0BCh, 0F6h, 003h, 085h, 002h, 0B9h, 002h, 09Bh, 0BAh, 007h
++        db      086h, 005h, 0A7h, 036h, 096h, 0BBh, 0FDh, 003h, 0C6h, 001h, 0F6h, 004h, 089h, 005h, 09Bh, 0FDh
++        db      006h, 0A3h, 034h, 0C3h, 003h, 0B9h, 0F6h, 007h, 081h, 004h, 0C6h, 001h, 096h, 0BBh, 0FDh, 001h
++        db      0F6h, 009h, 082h, 007h, 0ABh, 02Ah, 0C3h, 003h, 09Bh, 0B9h, 0FDh, 003h, 096h, 0BBh, 0F6h, 003h
++        db      08Ch, 006h, 0FDh, 005h, 0AEh, 032h, 09Bh, 0B9h, 0F6h, 006h, 088h, 002h, 0C6h, 001h, 096h, 0BAh
++        db      080h, 004h, 08Ah, 002h, 0A6h, 034h, 004h, 0C3h, 003h, 0BBh, 0FDh, 006h, 08Bh, 002h, 0C6h, 001h
++        db      09Bh, 0BAh, 003h, 0ABh, 02Dh, 096h, 006h, 089h, 007h, 0C3h, 003h, 0BBh, 0F6h, 004h, 0C6h, 001h
++        db      0BCh, 0FDh, 008h, 08Ah, 006h, 0A2h, 032h, 0C3h, 003h, 0BAh, 0F6h, 001h, 0FDh, 006h, 086h, 003h
++        db      0C6h, 001h, 0BBh, 0F6h, 007h, 0A9h, 02Fh, 0C3h, 003h, 09Ch, 0BCh, 0F7h, 004h, 089h, 002h, 0BAh
++        db      0FEh, 002h, 097h, 0F7h, 008h, 088h, 004h, 0A3h, 031h, 0C6h, 001h, 0BBh, 0FEh, 002h, 0BCh, 0F7h
++        db      004h, 08Bh, 001h, 0BBh, 0FEh, 004h, 0ACh, 032h, 09Ch, 0F7h, 003h, 080h, 007h, 097h, 003h, 09Ch
++        db      0BCh, 0FEh, 003h, 08Fh, 003h, 0BAh, 001h, 097h, 003h, 087h, 006h, 0F7h, 003h, 0AAh, 033h, 0BBh
++        db      003h, 088h, 005h, 0BCh, 004h, 0C3h, 003h, 09Ch, 0FEh, 008h, 08Fh, 005h, 0A9h, 035h, 0C6h, 001h
++        db      097h, 0F7h, 080h, 004h, 087h, 005h, 09Ch, 0BAh, 003h, 09Fh, 0BFh, 0FFh, 0FEh
++
++; PlaySound(10), SoundStep: a soft footfall: a dull tap, a low thump under it, gone in 80 ms (52 bytes)
++Design10:
++        db      005h, 08Ah, 02Eh, 0E6h, 096h, 0F3h, 007h, 08Ah, 032h, 0CBh, 006h, 0E3h, 097h, 0F4h, 006h, 08Fh
++        db      036h, 0C3h, 007h, 098h, 0F5h, 004h, 08Bh, 03Bh, 0CCh, 007h, 006h, 087h, 03Eh, 0C5h, 008h, 099h
++        db      0F6h, 004h, 0C0h, 009h, 09Ah, 0F7h, 003h, 0CBh, 009h, 09Bh, 004h, 0C6h, 00Ah, 09Fh, 0F8h, 001h
++        db      0F9h, 001h, 0FFh, 0FEh
++
++; PlaySound(12), SoundAttackArrives: the missile strikes: a short wooden thock (47 bytes)
++Design12:
++        db      008h, 080h, 00Ah, 0AFh, 005h, 0E5h, 091h, 0B5h, 0F1h, 005h, 082h, 00Dh, 092h, 0B6h, 0FFh, 004h
++        db      08Ah, 00Eh, 093h, 0B7h, 004h, 080h, 010h, 094h, 0B8h, 004h, 08Ah, 010h, 095h, 0B9h, 002h, 096h
++        db      0BAh, 002h, 097h, 0BCh, 002h, 098h, 0BFh, 080h, 001h, 099h, 001h, 09Ah, 001h, 09Fh, 0FEh
