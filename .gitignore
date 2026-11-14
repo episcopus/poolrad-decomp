@@ -1,5 +1,6 @@
 # generated
 build/
+out/
 .venv/
 __pycache__/
 *.pyc
