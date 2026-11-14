@@ -7,7 +7,7 @@
 | `process/` | Playbooks for each agent role, the worker and orchestrator, safety rules, readability rules |
 | `setup/` | Setting up the tools on macOS; pinning the Turbo Pascal 6.0 compiler |
 | `reference/` | `prior-art.md`: other projects on the Gold Box games, their licences and how we use them |
-| `maps/` | Where `make maps` writes the player maps of every area, built from your game files (not tracked here) |
+| `maps/` | The player maps of every area as PDFs, one page each, plus the world map; `make maps` rebuilds them from your game files |
 | `coco/` | The CoCo 3 port's baseline: porting guide, hardware and toolchain research, probes |
 
 The working repository also keeps a reference library gathered from elsewhere (other decompilation projects' docs, articles, books on x86 and DOS). It is not republished here; these are the sources it came from:

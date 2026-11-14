@@ -18,4 +18,3 @@ tools/setup/env.local.sh
 poolrad/*
 !poolrad/README.md
 video/
-docs/maps/*.pdf
