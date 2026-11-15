@@ -13,7 +13,7 @@ Learn more at [anonymousformula.com/poolrad](https://anonymousformula.com/poolra
 | `AGENTS.md` | The operating manual the AI agents work from (Claude Code, Cursor, OpenCode) |
 | `src/` | The decompiled program, one Turbo Pascal unit per original unit |
 | `c/` | The C translation and its SDL host |
-| `ports/coco3/`, `ports/dos/` | The CoCo 3 port; the DOS build with fixes and speed patches |
+| `ports/coco3/`, `ports/dos/` | The CoCo 3 port (what changed in each version: `ports/coco3/CHANGELOG.md`); the DOS build with fixes and speed patches |
 | `work/status.md` | Where the project stands |
 | `make maps` | Player maps of every area, built from your game files (`tools/maps/`) |
 
