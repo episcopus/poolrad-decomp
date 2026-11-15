@@ -1,0 +1,126 @@
+--- a/OVL30.PAS
++++ b/OVL30.PAS
+@@ -193,6 +193,8 @@
+ var
+   X, Y, X2, Y2, LDX, LDY, D1, D2, D3, SX, SY, Limit, B, MapOfs: Integer;
+   First, Gate: Byte;
++  N, MajOfs, MinOfs: Integer;     { walk-line-regs: the major steps, the map offset of a major and of a minor step }
++  LimitB, XMajor: Byte;           { walk-line-regs: Limit capped at 255 (First is a Byte), X is the major axis }
+ asm
+   les   di, StepCount
+   mov   ax, es:[di]
+@@ -282,6 +284,114 @@
+   mov   al, byte ptr WalkTileTable[si]
+   xor   ah, ah
+   mov   B, ax                  { its BoundY }
++  { ports/dos speed patch (walk-line-regs): the same walk with the line in registers when it is at most 84 steps long
++    (First, a Byte, then never passes 252): the cell is a map offset moved by the step's offset (X by 1, Y by 50, the
++    Pascal's Y * 50 + X + 7 modulo 64 KB, as the IMUL below gives it), the arrival test counts the major steps (the
++    major coordinate reaches its end after exactly that many), and on a stop X and Y are rebuilt from the steps:
++    First = 2 * major steps + minor steps. Longer lines take the loop at @Walk. }
++  mov   ax, LDX
++  cmp   ax, LDY
++  jle   @FYMajor
++  mov   N, ax
++  mov   ax, SX
++  mov   MajOfs, ax
++  mov   ax, SY
++  mov   cx, 50
++  imul  cx
++  mov   MinOfs, ax
++  mov   XMajor, 1
++  jmp   @FSet
++@FYMajor:
++  mov   ax, LDY
++  mov   N, ax
++  mov   ax, SY
++  mov   cx, 50
++  imul  cx
++  mov   MajOfs, ax
++  mov   ax, SX
++  mov   MinOfs, ax
++  mov   XMajor, 0
++@FSet:
++  cmp   N, 84
++  jbe   @Fast
++  jmp   @Walk
++@Fast:
++  mov   ax, Limit
++  cmp   ax, 255
++  jbe   @LimitOk
++  mov   ax, 255
++@LimitOk:
++  mov   LimitB, al
++  mov   ax, Y
++  mov   cx, 50
++  imul  cx
++  add   ax, X
++  add   ax, 7
++  add   ax, MapOfs
++  mov   si, ax                 { the start cell's offset }
++  mov   dx, D1
++  xor   cl, cl                 { First }
++  mov   ch, byte ptr B
++  mov   di, N                  { the major steps left }
++@FLoop:
++  cmp   Gate, 0
++  jne   @FNoGate
++  mov   bl, es:[si]
++  xor   bh, bh
++  shl   bx, 1
++  shl   bx, 1
++  cmp   byte ptr WalkTileTable[bx+1], ch
++  ja    @FStop                 { BlockY > Bound.Y }
++@FNoGate:
++  cmp   cl, LimitB
++  ja    @FStop                 { First > Limit }
++  or    di, di
++  jz    @FArrive               { on the end point }
++  dec   di
++  or    dx, dx
++  jl    @FNoMinor
++  add   si, MinOfs
++  add   dx, D2
++  add   cl, 3
++  jmp   @FMajor
++@FNoMinor:
++  add   dx, D3
++  add   cl, 2
++@FMajor:
++  add   si, MajOfs
++  jmp   @FLoop
++@FStop:
++  mov   ax, N
++  sub   ax, di                 { the major steps taken }
++  mov   bl, cl
++  xor   bh, bh
++  sub   bx, ax
++  sub   bx, ax                 { the minor steps: First - 2 * major }
++  push  cx
++  mov   cx, ax
++  cmp   XMajor, 0
++  je    @FStopY
++  mov   ax, SX
++  imul  cx
++  add   X, ax
++  mov   ax, SY
++  imul  bx
++  add   Y, ax
++  jmp   @FStopped
++@FStopY:
++  mov   ax, SY
++  imul  cx
++  add   Y, ax
++  mov   ax, SX
++  imul  bx
++  add   X, ax
++@FStopped:
++  pop   cx
++  mov   First, cl
++  jmp   @Stopped
++@FArrive:
++  mov   First, cl
++  jmp   @Arrived
+ @Walk:
+   cmp   Gate, 0
+   jne   @NoGate

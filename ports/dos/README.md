@@ -55,6 +55,13 @@ add the name to `patches/series`. A speed patch lives in `patches/speed/` and mu
 | `speed/tandy-show.patch` | `ShowPicture`'s Tandy branch (res07), pictures straight to the screen: `TandyShowRows` copies the rows by words | res07 |
 | `speed/walk-line.patch` | `WalkLine` (ovl30), the line-of-sight walk of combat targeting and the AI, in assembler: the `Bound` line it stepped beside the real one never moves in Y (its D1 starts at -N and D3 is 0), so its height is the start tile's for the whole walk; the walked line is `SetupLine`'s and `StepLine`'s arithmetic inline | ovl30 |
 | `speed/sort-table.patch` | `SortTable` (ovl30), the exchange sort of every target scan, in assembler, same order and same test | ovl30 |
+| `speed/scan-targets.patch` | `ScanTargets` (ovl30), the combat scan behind every AI target search, in assembler, with `FootprintCell` read inline. With the omni direction every caller passes, `InDirArc` is only "both points on the map", tested once per cell; `WalkLine` is not called for a pair it must refuse on its step limit (its step count ends at exactly 2 max(\|DX\|, \|DY\|) + min(\|DX\|, \|DY\|) and never decreases: checked for every displacement on the map), so a range-1 scan walks only the neighbours; a hit's direction (the first `InDirArc` that holds from 0) comes from a closed form of the displacement, checked against `InDirArc` for all 1,562,500 pairs of map cells | ovl30 |
+| `speed/in-dir-arc.patch` | `InDirArc` (ovl30), the arc test of facing and aiming, in assembler (a Dir of 9 to 254, which the Pascal leaves unassigned, is False; no caller reaches it on the map) | ovl30 |
+| `speed/walk-line-regs.patch` | `WalkLine`'s walk in registers for lines up to 84 steps: the map cell is an offset moved by 1 or 50 a step instead of a multiply, the end found by counting the major steps, the stop point rebuilt from the step count | ovl30 |
+| `speed/sort-table-regs.patch` | `SortTable` with record I's key and value held in registers across the inner loop | ovl30 |
+| `speed/mirror-xlat.patch` | `TandyMirrorRows` (res07): each sprite facing left is mirrored a word at a time through a 256-byte nibble-swap table in res07's code (XLAT), when source and destination do not overlap; a picture mirrored onto itself keeps the byte loop | res07 |
+| `speed/masked-rows.patch` | `TandyRows` (res07): 24-pixel rows (the combat map's ground and icons) unrolled, and the per-row change trackers in a register loop with the dirty flags set by one `REP STOSB` | res07 |
+| `speed/combatant-index.patch` | `CombatantIndex` (ovl31), the search behind `CombatantX`, `CombatantY` and `CombatantKind`, as a `REPNE SCASW` over the table (the count-0 quirk keeps the loop) | ovl31 |
 
 The speed patches change resident code, so every segment after res05 moves (the build lists every unit as different:
 their far calls point elsewhere). DGROUP's layout does not change: no patch adds a global or a typed constant (the sound patch's variables and scripts live in res03's code segment, beside the driver's own).
@@ -72,7 +79,7 @@ reference's behaviour exactly? `make func`, which does not care how fast either 
 |---|---|---|
 | `make faithful` | with no patch, the pipeline links the original program (load image, relocations, overlay file) | 2 s |
 | `make game`, `make ref` | the game, and the reference without speed patches; `game` lists the units whose code differs from the original | 2 s |
-| `make func` | the speed patches change nothing the game does: the suite on both builds, compared (below) | about 2 min |
+| `make func` | the speed patches change nothing the game does: the suite on both builds, compared (below) | about 3 min |
 | `make tandy` | DOSBox-X `machine=tandy`, headless, POOL.CFG `T`/`T`: the game shows every title screen of the original pixel for pixel, then the original's character menu (the original's `STING` run), and never the wheel question | 80 s |
 | `make tandy-deep` | DOSBox-X `machine=tandy` again, the reference and the game typing the same keys (`AUTOTYPE`): saved game A, the 3D view turning, a character sheet, the area map. No dice are drawn, so every screen the reference holds for 2 s must appear in the game's video pixel for pixel (12 screens): the speed patches on a real Tandy BIOS, DOS and video emulation | 2.5 min |
 | `make sound-check` | the Tandy driver of the game plays what the listening page played (`sound/check.py`): every tune captured in the oracle; a designed one writes its script byte for byte, a frame every second tick, then quiet; every other one the original's writes with the noise fix, tick for tick | 10 s |
@@ -120,8 +127,11 @@ copy), which hung `council-guards`.
 The suite is the scripts of `tests/sessions` that still reach what they were written for in Tandy video (their dice
 differ: the EGA title screen draws about 33,000 random numbers for its palette flicker, Tandy's draws one), plus
 `sessions/maze-battle.keys`, written for the port: the 3D view walking the city, an ambush, a battle won with quick
-combat, the treasure, a character sheet, a flight. `tools/sheet.py build/func/ref/<session>` lays the shots of a
-`func.py --shots` run side by side, to see what a script does.
+combat, the treasure, a character sheet, a flight; and `sessions/bane-battle.keys`, the big battle: a player's saved
+game (slot F, in `sessions/saves/`, which `func.py` serves as the game's `SAVE` files) in the Temple of Bane, the third
+trapdoor opened and its treasure taken, then High Priest Mace and 55 orcs against the party with quick combat. A
+session may run 3 billion instructions (the reference needs 1.5 billion for this one). `tools/sheet.py
+build/func/ref/<session>` lays the shots of a `func.py --shots` run side by side, to see what a script does.
 
 `make play` opens a DOSBox-X window with the same Tandy machine at about the EX's speed, for trying the game by
 hand. It is the only target that opens a window.
@@ -140,7 +150,10 @@ byte of instruction and data, `REP` string instructions per repetition. It is a 
 queue state, branches half taken): it ranks routines and shows what a change saves; the machine gives the verdict.
 Waiting is kept apart from work (a stretch between two polls or clock reads that is short and draws nothing, and
 Crt's `Delay`), and the work is cut per key: what each key press costs until the game reads the next key. Routines
-are named from the build's link map (helpers of the patches are in the units' interfaces so they get their own row).
+are named from the build's link map (helpers of the patches are in the units' interfaces so they get their own row),
+with the number of calls (blocks run at a routine's public address). `--stacks` also walks the BP frame chain every
+4,000 cycles, and `--callers NAME` then prints the routines by inclusive time and NAME's callers and callees (a
+routine without a frame hides its direct caller; on the reference every Pascal routine has one).
 
 **Where the time went** (the reference over the suite): `System.Move` 25 % (TP 6 copies a byte at a time),
 `DrawPictureItemClipped` 20 % (a masked byte took two far-pointer loads), `DrawGlyph` 14 %, Crt's `Delay` 10 %
@@ -158,20 +171,46 @@ tile, about 250 tiles a step) and the status text; a combat turn the text panels
 | turn | 0.7 to 1.0 s | 0.27 to 0.39 s | 2.6x |
 | the first round of a battle (`maze-battle`, goblins) | 21.2 s | 8.6 s | 2.5x |
 | combat, a quick turn (with the monsters' moves) | 2.5 to 10.3 s | 0.8 to 3.7 s | 2.8 to 3.2x |
-| the City Hall guards' battle (`council-guards`: the key that starts it, all their turns) | 95.9 s | 34.5 s | 2.8x |
+| the City Hall guards' battle (`council-guards`: the key that starts it, all their turns) | 95.4 s | 24.5 s | 3.9x |
+| the Temple of Bane horde (`bane-battle`: Mace and 55 orcs, ten quick party turns with every enemy turn between) | 1,792 s | 403 s | 4.4x |
+| the same, one round of the horde's turns (the heaviest key) | 327 s | 73 s | 4.5x |
 | character sheet | 1.6 s | 0.4 s | 3.9x |
 | a menu key (median: `character-menu`, `create-character`) | 0.5 s | 0.11 s | 5x |
 | a key in the shop, the temple (median) | 0.9 to 1.0 s | 0.4 s | 2.4x |
 
-Over whole sessions the work falls by 52 to 70 % (`make prof`). The rest of a screen that animates while it waits
+Over whole sessions the work falls by 52 to 76 % (`make prof`; `bane-battle` 1,931 s to 469 s). The rest of a screen that animates while it waits
 (the camp fire, a portrait, the treasure) is redrawn on every pass of its wait loop; that is faster too, which makes
 the animation smoother and the key reach the game sooner, but it is not time the player waits for.
 
-**Next candidates** (from the current profile): in combat, `ScanTargets` and `InDirArc` (ovl30) and `FootprintCell`
-(ovl31), the window clears and text panels (already at bus speed: fewer of them would mean changing what is drawn
-in between, which the game shows); in the 3D view, the per-call overhead of the tile path (`DrawCellPicture` and
-`DrawPictureItem`'s Pascal set-up, about 250 calls a step) and the string copies of the status text; loading. MAME's `t1000hx` (same CPU, clock and video as the EX;
-needs a ROM dump of the HX) would give real timings headless, the way the CoCo port's tests drive MAME.
+**The big battle** (`bane-battle`, 2026-11-14). With 56 enemies the reference spent its time in two places. The
+view: at the start of each combatant's turn and along each missile's flight the view re-centres
+(`MoveCombatCursor`), which redraws the 49 ground cells and every sprite in view (each one facing left mirrored into
+a new picture first) and flushes the window: 40 % of the battle. And the AI's target scans (`ScanTargets`, from
+`CollectEnemiesInRange` and `DistanceToTarget`): every scan walks a line of sight to each of the 63 combatants, its
+own side included, and sorts them all: 27 %. The earlier patches had made the drawing about 3x faster; this round
+took the scans' cost out of reach-limited scans (no walk past the step limit), the per-step multiply out of the
+walk, and the call overhead out of the arc tests and the combatant search, and unrolled the 24-pixel rows of the
+combat map. The battle went from 641 s to 403 s on the model (the reference: 1,792 s).
+
+**Next candidates** (from the current profile of `bane-battle`, 469 s): the screen flush (`TandyFlushRows`, 45 s,
+at bus speed except about 10 s of per-row set-up), the masked sprite blit's two passes (the temporary mirrored
+picture and its mask are separate heap blocks, often more than 64 KB apart, so one pass cannot address both), the
+mirrors (39 s), `ScanTargets`' per-combatant loop (41 s for 2,238 scans of 63 combatants), `CombatantIndex` (23 s:
+its callers search the whole table), the window clears and text panels (already at bus speed: fewer of them would
+mean changing what is drawn in between, which the game shows). Drawing less (skipping a sprite redraw the next
+redraw covers) would change the heap bytes func.py compares (the mirrored copies stay in freed blocks) and what the
+player sees between keys. In the 3D view, the per-call overhead of the tile path (`DrawCellPicture` and
+`DrawPictureItem`'s Pascal set-up, about 250 calls a step) and the string copies of the status text; loading.
+MAME's `t1000hx` (same CPU, clock and video as the EX; needs a ROM dump of the HX) would give real timings headless,
+the way the CoCo port's tests drive MAME.
+
+**Checking a speed patch beyond the suite.** A routine with no side effects can be compared with the Pascal it
+replaces on many more inputs than the suite reaches: compile both into one test program with the pinned compiler
+(`make tpc`) and run it in the oracle (`oracle.machine.Machine` on the program, the exit code and `m.dos.console`
+give the verdict). This round did that for `InDirArc` (2.79 million inputs, every direction), `ScanTargets`
+(6,000 random tables, maps and ranges), `WalkLine` (20,000 random walks, off-map and long ones included),
+`SortTable` (4,000 sorts with many ties) and `CombatantIndex` (20,000 searches with duplicate pointers and every
+count); the closed forms were checked exhaustively in Python first. The programs are not kept in the repository.
 
 **Disk and memory.** The rebuilt `START.EXE` is not EXEPACK packed (about 5.5 KB larger on disk). A packer (the
 inverse of `tools/re/unexepack.py`) is a small task if disk space on the EX's floppies matters.

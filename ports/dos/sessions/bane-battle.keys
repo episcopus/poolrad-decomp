@@ -1,0 +1,59 @@
+# bane-battle (Tandy, the port's functional suite and its big-battle benchmark): the user's saved game F
+# (sessions/saves/, served to the oracle by tools/func.py) stands in the nave of the Temple of Bane at (11,9) facing
+# east, in search mode, two trapdoors already opened. One step east is the third trapdoor (12,9): the clock below makes
+# the party find it (the find is a dice roll per member; 12:00:16.58 misses it). Opening it and taking a hand axe
+# brings High Priest Mace and his horde: 56 enemies (tools/maps/areas/temple_of_bane.py). Quick combat for ten party
+# turns, with all the enemy turns between them; the party does not last much longer (the game ends at its death).
+clock 12:00:18.33
+wheel
+wait 20
+key L
+wait 20
+key F
+wait 300
+key UP
+wait 20
+shot trapdoor
+key O
+wait 60
+shot opened
+key ENTER
+wait 60
+shot treasure
+key T
+wait 60
+shot loot
+key T
+wait 60
+shot took
+key E
+wait 60
+key E
+wait 100
+shot treasure-left
+key N
+wait 100
+shot attack
+key Q
+wait 30
+key Q
+wait 30
+key Q
+wait 30
+key Q
+wait 30
+key Q
+wait 30
+shot q5
+key Q
+wait 30
+key Q
+wait 30
+key Q
+wait 30
+key Q
+wait 30
+key Q
+wait 30
+shot q10
+quit

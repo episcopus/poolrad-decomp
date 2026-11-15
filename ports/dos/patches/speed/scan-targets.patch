@@ -1,0 +1,433 @@
+--- a/OVL30.PAS
++++ b/OVL30.PAS
+@@ -421,80 +421,357 @@
+   and stores the record index, the step count and the working direction (the requested Dir, or
+   the first working one when Dir is 8). Called from combat and item aiming (CastFireball) and from
+   ovl09, ovl13, ovl24 and res12. }
+-procedure ScanTargets(FromX, FromY: ShortInt; MaxSteps: Word; Dir, Base: Byte; Map: Pointer);
++procedure ScanTargets(FromX, FromY: ShortInt; MaxSteps: Word; Dir, Base: Byte; Map: Pointer); assembler;
++{ ports/dos speed patch (scan-targets): the same scan in the built-in assembler. The table, the order of the pairs
++  (K then J), the strict "fewer steps" test, the stored Head, Key and Val and the final SortTable are the Pascal's;
++  FootprintCell is read inline (Footprints[Kind, Index], valid when DX >= 0, as in ovl31). Two shortcuts that
++  change no result:
++  - with Dir 8 or $FF (every caller passes $FF) InDirArc is True exactly when both points are on the map (X 0..49,
++    Y 0..24), so that test is inline (once per candidate and per target cell); any other Dir calls InDirArc;
++  - WalkLine is not called when it must fail on its step limit: its line's First grows by 2 or 3 a step and ends at
++    2 * max(|DX|, |DY|) + min(|DX|, |DY|) on the end point (checked for every displacement on the 50 by 25 map),
++    and the walk fails once First > 2 * MaxSteps + 1. WalkLine changes nothing outside its own var parameters,
++    which are locals here. A range-1 scan (the AI's adjacent-enemy test) now walks only the neighbours.
++  The working direction of a hit (Dir 8 or $FF) is InDirArc's first True direction from 0, worked out from the
++  displacement (below); another Dir of 8 or more still calls InDirArc with 0, 1, ... }
+ var
+-  I: Byte;                            { the table index, 1 to the entry-0 count }
+-  L2: Byte;                           { the retry direction stored in Val }
+-  J: Byte;                            { the base neighbour index, 0 to 3 }
+-  K: Byte;                            { the record neighbour index, 0 to 3 }
+-  BestJ: Byte;                        { the neighbour index of the best hit }
+-  BestK: Byte;                        { the record index of the best hit }
+-  Found: Boolean;                     { a walked line hit this record }
+-  Ex, Ey: ShortInt;                   { the walk endpoint WalkLine updates }
+-  LocX, LocY: ShortInt;               { the FootprintCell neighbour offsets }
+-  CandX, CandY: array[0..3] of ShortInt;  { the base neighbours (X is -1 when invalid) }
+-  TargX, TargY: array[0..3] of ShortInt;  { the record neighbours (X is -1 when invalid) }
+-  StepCount: Word;                    { the walk steps WalkLine reports }
+-  Best: Word;                         { the fewest steps so far }
+-begin
+-  for J := 0 to 3 do
+-    if FootprintCell(Base, J, LocX, LocY) then
+-    begin
+-      CandX[J] := FromX + LocX;
+-      CandY[J] := FromY + LocY;
+-    end
+-    else
+-      CandX[J] := -1;
+-  SortEntries[0].Val := 0;
+-  for I := 1 to CombatantTable[0].Kind do
+-    if CombatantTable[I].Kind > 0 then
+-    begin
+-      Found := False;
+-      Best := $FF;
+-      for K := 0 to 3 do
+-        if FootprintCell(CombatantTable[I].Kind, K, LocX, LocY) then
+-        begin
+-          TargX[K] := CombatantTable[I].X + LocX;
+-          TargY[K] := CombatantTable[I].Y + LocY;
+-        end
+-        else
+-          TargX[K] := -1;
+-      for K := 0 to 3 do
+-        if TargX[K] >= 0 then
+-          for J := 0 to 3 do
+-            if CandX[J] >= 0 then
+-              if InDirArc(CandX[J], CandY[J], TargX[K], TargY[K], Dir) then
+-              begin
+-                Ex := TargX[K];
+-                Ey := TargY[K];
+-                StepCount := MaxSteps;
+-                if WalkLine(CandX[J], CandY[J], Ex, Ey, StepCount, Map) then
+-                begin
+-                  Found := True;
+-                  if StepCount < Best then
+-                  begin
+-                    Best := StepCount;
+-                    BestJ := J;
+-                    BestK := K;
+-                  end;
+-                end;
+-              end;
+-      if Found then
+-      begin
+-        Inc(SortEntries[0].Val);
+-        SortEntries[SortEntries[0].Val].Head := I;
+-        SortEntries[SortEntries[0].Val].Key := Best;
+-        L2 := 0;
+-        if Dir < 8 then
+-          L2 := Dir
+-        else
+-          while not InDirArc(CandX[BestJ], CandY[BestJ], TargX[BestK], TargY[BestK], L2) do
+-            Inc(L2);
+-        SortEntries[SortEntries[0].Val].Val := L2;
+-      end;
+-    end;
+-  SortTable;
++  CandX, CandY, TargX, TargY: array[0..3] of ShortInt;
++  I, Count, Found, BestJ, BestK, L2, Omni: Byte;
++  Best, StepCount, Limit: Word;
++  Ex, Ey: ShortInt;
++asm
++  mov   ax, MaxSteps
++  shl   ax, 1
++  inc   ax
++  mov   Limit, ax              { WalkLine's Limit, the same Word arithmetic }
++  mov   Omni, 0
++  mov   al, Dir
++  cmp   al, 8
++  je    @IsOmni
++  cmp   al, $FF
++  jne   @CandStart
++@IsOmni:
++  mov   Omni, 1
++@CandStart:
++  { the base neighbours: CandX[J] := FromX + DX (-1 when FootprintCell(Base, J) is False) }
++  xor   si, si
++@Cand:
++  mov   byte ptr CandX[si], -1
++  mov   bl, Base
++  or    bl, bl
++  jz    @CandNext              { FootprintCell: kind 0 is False }
++  xor   bh, bh
++  shl   bx, 1
++  shl   bx, 1
++  shl   bx, 1
++  add   bx, si
++  add   bx, si                 { Kind * 8 + Index * 2 }
++  mov   ax, word ptr Footprints[bx]
++  or    al, al
++  js    @CandNext              { DX < 0: False }
++  add   al, FromX
++  add   ah, FromY
++  mov   byte ptr CandX[si], al
++  mov   byte ptr CandY[si], ah
++  cmp   Omni, 0
++  je    @CandNext
++  { with Dir 8 a candidate off the map never passes InDirArc: drop it like an invalid one }
++  cmp   al, 49
++  jg    @CandOff
++  or    ah, ah
++  js    @CandOff
++  cmp   ah, 24
++  jle   @CandNext
++@CandOff:
++  mov   byte ptr CandX[si], -1
++@CandNext:
++  inc   si
++  cmp   si, 4
++  jb    @Cand
++  mov   byte ptr SortEntries[2], 0   { SortEntries[0].Val := 0 }
++  mov   al, byte ptr CombatantTable[3]
++  mov   Count, al              { the for loop's limit, read once }
++  or    al, al
++  jnz   @First
++  jmp   @Sort
++@First:
++  mov   I, 1
++@Entry:
++  mov   bl, I
++  xor   bh, bh
++  shl   bx, 1
++  shl   bx, 1                  { I * 4 }
++  mov   al, byte ptr CombatantTable[bx+3]
++  or    al, al
++  jnz   @Live
++  jmp   @NextEntry             { Kind 0: not on the map }
++@Live:
++  mov   Found, 0
++  mov   Best, $FF
++  mov   dx, word ptr CombatantTable[bx]   { DL = X, DH = Y }
++  xor   ah, ah
++  shl   ax, 1
++  shl   ax, 1
++  shl   ax, 1
++  mov   cx, ax                 { Kind * 8 }
++  xor   si, si
++@Targ:
++  mov   byte ptr TargX[si], -1
++  mov   bx, cx
++  add   bx, si
++  add   bx, si
++  mov   ax, word ptr Footprints[bx]
++  or    al, al
++  js    @TargNext
++  add   al, dl
++  add   ah, dh
++  mov   byte ptr TargX[si], al
++  mov   byte ptr TargY[si], ah
++@TargNext:
++  inc   si
++  cmp   si, 4
++  jb    @Targ
++  xor   si, si                 { K }
++@K:
++  mov   al, byte ptr TargX[si]
++  or    al, al
++  jns   @KValid
++  jmp   @KNext
++@KValid:
++  cmp   Omni, 0
++  je    @KOnMap
++  cmp   al, 49                 { with Dir 8 the target must be on the map too }
++  jg    @KOff
++  mov   al, byte ptr TargY[si]
++  or    al, al
++  js    @KOff
++  cmp   al, 24
++  jle   @KOnMap
++@KOff:
++  jmp   @KNext
++@KOnMap:
++  xor   di, di                 { J }
++@J:
++  mov   al, byte ptr CandX[di]
++  or    al, al
++  jns   @JValid
++  jmp   @JNext
++@JValid:
++  cmp   Omni, 0
++  jne   @Reach                 { InDirArc with Dir 8: both points are on the map (checked above) }
++@CallArc:
++  push  si
++  push  di
++  mov   al, byte ptr CandX[di]
++  push  ax
++  mov   al, byte ptr CandY[di]
++  push  ax
++  mov   al, byte ptr TargX[si]
++  push  ax
++  mov   al, byte ptr TargY[si]
++  push  ax
++  mov   al, Dir
++  push  ax
++  call  InDirArc
++  pop   di
++  pop   si
++  or    al, al
++  jz    @JNext
++@Reach:
++  { 2 * max + min of |TargX - CandX| and |TargY - CandY| against Limit: past it WalkLine fails }
++  mov   al, byte ptr TargX[si]
++  sub   al, byte ptr CandX[di]
++  cbw
++  or    ax, ax
++  jns   @AbsX
++  neg   ax
++@AbsX:
++  mov   bx, ax
++  mov   al, byte ptr TargY[si]
++  sub   al, byte ptr CandY[di]
++  cbw
++  or    ax, ax
++  jns   @AbsY
++  neg   ax
++@AbsY:
++  cmp   ax, bx
++  jbe   @Ordered
++  xchg  ax, bx                 { BX the larger }
++@Ordered:
++  shl   bx, 1
++  add   ax, bx
++  cmp   ax, Limit
++  ja    @JNext
++  mov   al, byte ptr TargX[si]
++  mov   Ex, al
++  mov   al, byte ptr TargY[si]
++  mov   Ey, al
++  mov   ax, MaxSteps
++  mov   StepCount, ax
++  push  si
++  push  di
++  mov   al, byte ptr CandX[di]
++  push  ax
++  mov   al, byte ptr CandY[di]
++  push  ax
++  push  ss
++  lea   ax, Ex
++  push  ax
++  push  ss
++  lea   ax, Ey
++  push  ax
++  push  ss
++  lea   ax, StepCount
++  push  ax
++  push  word ptr Map[2]
++  push  word ptr Map
++  call  WalkLine
++  pop   di
++  pop   si
++  or    al, al
++  jz    @JNext
++  mov   Found, 1
++  mov   ax, StepCount
++  cmp   ax, Best
++  jae   @JNext
++  mov   Best, ax
++  mov   ax, di
++  mov   BestJ, al
++  mov   ax, si
++  mov   BestK, al
++@JNext:
++  inc   di
++  cmp   di, 4
++  jae   @KNext
++  jmp   @J
++@KNext:
++  inc   si
++  cmp   si, 4
++  jae   @Pairs
++  jmp   @K
++@Pairs:
++  cmp   Found, 0
++  je    @NextEntry
++  inc   byte ptr SortEntries[2]
++  mov   bl, byte ptr SortEntries[2]
++  xor   bh, bh
++  mov   ax, bx
++  shl   bx, 1
++  add   bx, ax                 { the new record's offset, Val * 3 }
++  mov   al, I
++  mov   byte ptr SortEntries[bx], al          { Head }
++  mov   al, byte ptr Best
++  mov   byte ptr SortEntries[bx+1], al        { Key }
++  mov   L2, 0
++  mov   al, Dir
++  cmp   al, 8
++  jae   @DirFromArc
++  mov   L2, al
++  jmp   @StoreDir
++@DirFromArc:
++  cmp   Omni, 0
++  jne   @DirDirect
++  jmp   @FindDir
++@DirDirect:
++  { the first L2 from 0 with InDirArc True, from the displacement (both points on the map; checked against InDirArc
++    for every pair of map cells): north of the candidate (DY < 0, A = -DY): 1 when DX >= A, 0 when DX > -A, 7 when
++    DX = -A, else 6; on its row: 6 west, 0 on it, 2 east; south: 2 when DX > DY, 3 when DX >= 1, 4 when DX > -DY,
++    else 5 }
++  push  bx
++  mov   bl, BestJ
++  xor   bh, bh
++  mov   di, bx
++  mov   bl, BestK
++  mov   si, bx
++  pop   bx
++  mov   al, byte ptr TargX[si]
++  sub   al, byte ptr CandX[di]
++  cbw
++  mov   cx, ax                 { DX }
++  mov   al, byte ptr TargY[si]
++  sub   al, byte ptr CandY[di]
++  cbw                          { DY }
++  or    ax, ax
++  jz    @DirRow
++  jg    @DirSouth
++  neg   ax                     { A }
++  cmp   cx, ax
++  jl    @DirN0
++  mov   L2, 1
++  jmp   @StoreDir
++@DirN0:
++  neg   ax                     { -A }
++  cmp   cx, ax
++  jle   @DirN7
++  mov   L2, 0
++  jmp   @StoreDir
++@DirN7:
++  jl    @DirN6
++  mov   L2, 7
++  jmp   @StoreDir
++@DirN6:
++  mov   L2, 6
++  jmp   @StoreDir
++@DirRow:
++  or    cx, cx
++  jz    @StoreDir              { 0 }
++  mov   L2, 2
++  jg    @StoreDir
++  mov   L2, 6
++  jmp   @StoreDir
++@DirSouth:
++  cmp   cx, ax
++  jle   @DirS3
++  mov   L2, 2
++  jmp   @StoreDir
++@DirS3:
++  cmp   cx, 1
++  jl    @DirS4
++  mov   L2, 3
++  jmp   @StoreDir
++@DirS4:
++  neg   ax
++  cmp   cx, ax
++  jle   @DirS5
++  mov   L2, 4
++  jmp   @StoreDir
++@DirS5:
++  mov   L2, 5
++  jmp   @StoreDir
++@FindDir:
++  push  bx
++  mov   bl, BestJ
++  xor   bh, bh
++  mov   di, bx
++  mov   bl, BestK
++  mov   si, bx
++  mov   al, byte ptr CandX[di]
++  push  ax
++  mov   al, byte ptr CandY[di]
++  push  ax
++  mov   al, byte ptr TargX[si]
++  push  ax
++  mov   al, byte ptr TargY[si]
++  push  ax
++  mov   al, L2
++  push  ax
++  call  InDirArc
++  pop   bx
++  or    al, al
++  jnz   @StoreDir
++  inc   L2
++  jmp   @FindDir
++@StoreDir:
++  mov   al, L2
++  mov   byte ptr SortEntries[bx+2], al        { Val }
++@NextEntry:
++  mov   al, I
++  cmp   al, Count
++  je    @Sort
++  inc   I
++  jmp   @Entry
++@Sort:
++  call  SortTable
+ end;
+-
+ begin
+ end.

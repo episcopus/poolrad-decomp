@@ -218,23 +218,31 @@ class Costs:
         if offs:
             j = bisect.bisect_right(offs, off) - 1
             if j >= 0:
+                self.last_entry = offs[j] == off
                 return "%s.%s" % (unit, self.publics[unit][j][1])
         return "%s+%04X" % (unit, off)
 
-    def block(self, addr: int, size: int) -> tuple[str, int]:
+    def block(self, addr: int, size: int) -> tuple[str, int, bool]:
+        """(routine, cycles, whether the block starts at the routine's public address: a call)"""
         hit = self.resident.get(addr) or self.overlay.get(addr)
         if hit is not None and hit[2] == size:
-            return hit[0], hit[1]
+            return hit[0], hit[1], hit[3]
+        self.last_entry = False
         name, in_ovl = self.routine(addr)
+        entry = self.last_entry
         code = bytes(self.m.uc.mem_read(addr, size))
         cyc = 0
         for insn in self.md.disasm(code, addr & 0xFFFF):
             cyc += insn_cost(insn)
-        (self.overlay if in_ovl else self.resident)[addr] = (name, cyc, size)
-        return name, cyc
+        (self.overlay if in_ovl else self.resident)[addr] = (name, cyc, size, entry)
+        return name, cyc, entry
 
 
-def profile(build: str, session: str) -> dict:
+STACK_SAMPLE = 4000        # --stacks: cycles between two walks of the BP frame chain
+STACK_DEPTH = 14
+
+
+def profile(build: str, session: str, stacks: bool = False) -> dict:
     from unicorn import UC_HOOK_BLOCK
     from oracle.machine import Stop
     m, script, pubs, segs, _ds = func.setup(build, session)
@@ -247,9 +255,42 @@ def profile(build: str, session: str) -> dict:
     actions = []                               # (label, cycles of work, cycles of waiting)
     mark = {"cyc": 0, "wait": 0, "label": "start"}
 
+    calls = defaultdict(int)                   # routine -> blocks run at its entry (calls, and loops back to it)
+    incl = defaultdict(int)                    # --stacks: routine -> cycles with it on the stack (inclusive)
+    edges = defaultdict(int)                   # --stacks: (caller, callee) -> cycles below that call
+    since = [0]
+
+    def walk(name, cyc):
+        """Charge cyc to the routines on the BP chain: the current one, then each frame's far return address
+        (TP 6 code with F+; a routine without a frame hides its direct caller)."""
+        chain = [name]
+        ss, bp = m.get("ss"), m.get("bp")
+        for _ in range(STACK_DEPTH):
+            if bp == 0:
+                break
+            ip, cs = m.rw(ss, bp + 2), m.rw(ss, bp + 4)
+            nxt = m.rw(ss, bp)
+            caller = costs.routine(cs * 16 + ip)[0]
+            if caller != chain[-1]:
+                chain.append(caller)
+            if nxt <= bp:
+                break
+            bp = nxt
+        for n in set(chain):
+            incl[n] += cyc
+        for i in range(len(chain) - 1):
+            edges[(chain[i + 1], chain[i])] += cyc
+
     def on_block(uc, addr, size, _ud):
-        name, cyc = costs.block(addr, size)
+        name, cyc, entry = costs.block(addr, size)
         state["cyc"] += cyc
+        if entry:
+            calls[name] += 1
+        if stacks:
+            since[0] += cyc
+            if since[0] >= STACK_SAMPLE:
+                walk(name, since[0])
+                since[0] = 0
         if name in WAIT_ROUTINES:
             state["wait"] += cyc
             per[name][1] += cyc
@@ -299,7 +340,8 @@ def profile(build: str, session: str) -> dict:
     close("end")
     res = {"build": build, "session": session, "reason": reason, "cycles": state["cyc"], "wait": state["wait"],
            "routines": {k: tuple(v) for k, v in per.items()}, "actions": actions, "seconds": time.time() - t0,
-           "insns": m.insns}
+           "insns": m.insns, "inclusive": dict(incl), "edges": dict(edges),
+           "calls": dict(calls)}
     out = OUT / build / (session + ".pkl")
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_bytes(pickle.dumps(res))
@@ -325,6 +367,7 @@ def secs(cyc: int) -> float:
 
 def report(build: str, sessions: list[str], top: int) -> None:
     tot = defaultdict(int)
+    ncalls = defaultdict(int)
     work_all = 0
     for s in sessions:
         r = load(build, s)
@@ -333,9 +376,13 @@ def report(build: str, sessions: list[str], top: int) -> None:
         print("%-18s work %8.1f s  wait %8.1f s  (8088 at %.2f MHz)" % (s, secs(work), secs(r["wait"]), MHZ))
         for name, (cyc, _w) in r["routines"].items():
             tot[name] += cyc
+        for name, n in r.get("calls", {}).items():
+            ncalls[name] += n
     print("\nroutines by work, all sessions above (%.1f s of work):" % secs(work_all))
     for name, cyc in sorted(tot.items(), key=lambda kv: -kv[1])[:top]:
-        print("  %6.2f %%  %8.1f s  %s" % (100 * cyc / work_all, secs(cyc), name))
+        n = ncalls.get(name)
+        print("  %6.2f %%  %8.1f s  %s%s" % (100 * cyc / work_all, secs(cyc), name,
+                                            "  (%d calls)" % n if n else ""))
 
 
 def actions(build: str, session: str, top: int, detail: int = 0, in_order: bool = False) -> None:
@@ -355,9 +402,30 @@ def diff(a: str, b: str, sessions: list[str]) -> None:
         print("%-18s work %8.1f s -> %8.1f s  (%+.1f %%)" % (s, secs(wa), secs(wb), 100 * (wb - wa) / max(1, wa)))
 
 
+def stacks_report(build: str, session: str, top: int, focus: str | None) -> None:
+    r = load(build, session)
+    if not r.get("inclusive"):
+        print("%s: no stack samples (run with --stacks)" % session)
+        return
+    work = r["cycles"] - r["wait"]
+    print("%s: routines by inclusive cycles (on the stack; waits included)" % session)
+    for name, cyc in sorted(r["inclusive"].items(), key=lambda kv: -kv[1])[:top]:
+        print("  %6.2f %%  %8.1f s  %s" % (100 * cyc / work, secs(cyc), name))
+    if focus:
+        f = focus.upper()
+        print("\ncallers of %s:" % f)
+        for (a, b), cyc in sorted(r["edges"].items(), key=lambda kv: -kv[1]):
+            if b.upper().endswith(f):
+                print("  %8.1f s  %s" % (secs(cyc), a))
+        print("callees of %s:" % f)
+        for (a, b), cyc in sorted(r["edges"].items(), key=lambda kv: -kv[1]):
+            if a.upper().endswith(f):
+                print("  %8.1f s  %s" % (secs(cyc), b))
+
+
 def _job(args):
-    build, session = args
-    r = profile(build, session)
+    build, session, stacks = args
+    r = profile(build, session, stacks)
     return session, r["seconds"], r["cycles"], r["wait"]
 
 
@@ -372,6 +440,9 @@ def main(argv=None) -> int:
     ap.add_argument("--top", type=int, default=40)
     ap.add_argument("--detail", type=int, default=0, help="--actions: the N costliest routines of each action")
     ap.add_argument("--in-order", action="store_true", help="--actions: in the session's order, not by cost")
+    ap.add_argument("--stacks", action="store_true", help="also sample the BP frame chain (inclusive cycles, callers)")
+    ap.add_argument("--callers", metavar="ROUTINE", nargs="?", const="", default=None,
+                    help="report inclusive cycles of a --stacks run, with the callers and callees of ROUTINE")
     a = ap.parse_args(argv)
     sessions = a.session or func.suite()
     if a.report:
@@ -384,8 +455,12 @@ def main(argv=None) -> int:
     if a.diff:
         diff(a.diff[0], a.diff[1], sessions)
         return 0
+    if a.callers is not None:
+        for s in sessions:
+            stacks_report(a.build, s, a.top, a.callers or None)
+        return 0
     with ProcessPoolExecutor(max_workers=a.jobs) as ex:
-        for s, t, cyc, wait in ex.map(_job, [(a.build, s) for s in sessions]):
+        for s, t, cyc, wait in ex.map(_job, [(a.build, s, a.stacks) for s in sessions]):
             print("  %-18s %6.0f s host; work %7.1f s, wait %7.1f s on the 8088" % (s, t, secs(cyc - wait), secs(wait)),
                   flush=True)
     return 0

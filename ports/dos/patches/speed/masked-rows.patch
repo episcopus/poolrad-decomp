@@ -1,0 +1,177 @@
+--- a/RES07.PAS
++++ b/RES07.PAS
+@@ -399,6 +399,48 @@
+   xor   al, al                 { the ShortInt limit is below 1: no byte }
+ @Counted:
+   mov   Count, ax
++  { ports/dos speed patch (masked-rows): the same tracker values in a register loop. Row R's first changed byte is
++    DestOfs + LeftCol + R * (LeftCol + Count + RightRoom) and its last Count - 1 further on, all modulo 64 KB as the
++    loop below adds them; the dirty flags are set first by one REP STOSB (other bytes than the offsets). }
++  mov   cx, Rows
++  jcxz  @OldTrack              { (the loop below would run 65536 times: keep its exact behaviour) }
++  push  es
++  push  ds
++  pop   es
++  mov   di, offset RowDirtyFlags
++  add   di, FirstRow
++  mov   al, 1
++  rep   stosb
++  pop   es
++  mov   bx, FirstRow
++  shl   bx, 1
++  mov   cx, Rows
++  mov   dx, LeftBytes
++  mov   si, Count
++  dec   si                     { from a row's first byte to its last }
++  mov   di, LeftCol
++  add   di, Count
++  add   di, RightRoom          { from one row's first byte to the next's }
++  mov   ax, DestOfs
++  add   ax, LeftCol
++@FastTrack:
++  cmp   ax, word ptr RowFirstChangedOfs[bx]
++  jae   @FastFirst
++  mov   word ptr RowFirstChangedCol[bx], dx
++  mov   word ptr RowFirstChangedOfs[bx], ax
++@FastFirst:
++  add   ax, si
++  cmp   ax, word ptr RowLastChangedOfs[bx]
++  jbe   @FastLast
++  mov   word ptr RowLastChangedOfs[bx], ax
++@FastLast:
++  sub   ax, si
++  add   ax, di
++  inc   bx
++  inc   bx
++  loop  @FastTrack
++  jmp   @Tracked
++@OldTrack:
+   { the trackers, row by row as the Pascal: AX is DestOfs }
+   mov   si, FirstRow
+   mov   bx, si
+@@ -426,6 +468,7 @@
+   inc   bx
+   inc   bx
+   loop  @Track
++@Tracked:
+   cmp   HasMask, 0
+   je    @SaveRows
+   cmp   Count, 0
+@@ -472,6 +515,8 @@
+   add   si, LeftCut
+   cmp   Count, 4
+   je    @Copy4
++  cmp   Count, 12
++  je    @Copy12
+   mov   dx, Rows
+ @CopyRow:
+   mov   cx, Count
+@@ -485,6 +530,22 @@
+   jnz   @CopyRow
+   pop   ds
+   jmp   @Done
++@Copy12:                       { ports/dos speed patch (masked-rows): a 24-pixel row (the combat map's ground) as six MOVSW }
++  mov   dx, SrcSkip
++  mov   bx, DestSkip
++  mov   cx, Rows
++@CopyRow12:
++  movsw
++  movsw
++  movsw
++  movsw
++  movsw
++  movsw
++  add   si, dx
++  add   di, bx
++  loop  @CopyRow12
++  pop   ds
++  jmp   @Done
+ @Copy4:
+   mov   dx, SrcSkip
+   mov   bx, DestSkip
+@@ -499,7 +560,13 @@
+   jmp   @Done
+ @Masked:
+   cmp   Count, 0
+-  je    @MaskedDone
++  jne   @MaskedAny
++  jmp   @MaskedDone
++@MaskedAny:
++  cmp   Count, 12
++  jne   @NotMasked12
++  jmp   @Masked12
++@NotMasked12:
+   cmp   Count, 4
+   je    @Masked4
+   lds   si, Source
+@@ -592,6 +659,70 @@
+   add   si, dx
+   add   di, bx
+   loop  @OrRow4
++  pop   ds
++  jmp   @Done
++
++@Masked12:                     { ports/dos speed patch (masked-rows): a 24-pixel row (the combat icons) as six words, the
++                                 two passes of @Masked unrolled }
++  lds   si, Source
++  lds   si, [si+$13]           { Source^.Pixels }
++  add   si, SrcOfs
++  add   si, LeftCut
++  mov   dx, SrcSkip
++  mov   ax, DestSkip
++  mov   cx, Rows
++  push  bx
++  mov   bx, ax
++@AndRow12:
++  lodsw
++  and   ax, es:[di]
++  stosw
++  lodsw
++  and   ax, es:[di]
++  stosw
++  lodsw
++  and   ax, es:[di]
++  stosw
++  lodsw
++  and   ax, es:[di]
++  stosw
++  lodsw
++  and   ax, es:[di]
++  stosw
++  lodsw
++  and   ax, es:[di]
++  stosw
++  add   si, dx
++  add   di, bx
++  loop  @AndRow12
++  pop   di
++  lds   si, Source
++  add   si, $17
++  add   si, SrcOfs
++  add   si, LeftCut
++  mov   cx, Rows
++@OrRow12:
++  lodsw
++  or    ax, es:[di]
++  stosw
++  lodsw
++  or    ax, es:[di]
++  stosw
++  lodsw
++  or    ax, es:[di]
++  stosw
++  lodsw
++  or    ax, es:[di]
++  stosw
++  lodsw
++  or    ax, es:[di]
++  stosw
++  lodsw
++  or    ax, es:[di]
++  stosw
++  add   si, dx
++  add   di, bx
++  loop  @OrRow12
+   pop   ds
+   jmp   @Done
+ 

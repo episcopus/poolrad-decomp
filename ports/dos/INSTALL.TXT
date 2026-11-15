@@ -11,11 +11,13 @@ Pascal source, with these changes:
   character now throws its darts and the battle goes on.
 - The game is faster. On Tandy video (POOL.CFG video T) the drawing: text,
   the 3D view, sprites, pictures, window clears. On every machine: loading
-  and the line-of-sight work of combat. An emulated 8088 at 7.16 MHz with
-  Tandy video needs about half the time or less
-  for a step in the 3D view, a third for a combat turn, a fifth for a menu
-  key. The game plays exactly as before: same screens, same dice, same saved
-  games (checked on every key of 12 recorded sessions).
+  and the computer's work in combat (who can see and reach whom, which way to
+  face, the target lists). An emulated 8088 at 7.16 MHz with Tandy video
+  needs about half the time or less for a step in the 3D view, a third for a
+  combat turn, a fifth for a menu key, and about a quarter for the monsters'
+  turns of a big battle (Mace and his 55 orcs in the Temple of Bane). The
+  game plays exactly as before: same screens, same dice, same saved games
+  (checked on every key of 13 recorded sessions).
 - The Tandy sound is new (POOL.CFG sound T). Eight of the game's sounds
   were made again for the Tandy chip: a step, a blow landing, a missile in
   flight and its strike, a spell being cast, an effect taking hold, a death,
@@ -57,6 +59,6 @@ original program.
 SIZES
 
 START.EXE is not compressed (the original is packed with EXEPACK), so it is
-about 9 KB larger on disk; GAME.OVR is about 1 KB smaller. The game needs
-about 3.5 KB more memory to run (the faster code and the new sounds). SHA256.TXT lists the
+about 10 KB larger on disk; GAME.OVR is about 1 KB smaller. The game needs
+about 4 KB more memory to run (the faster code and the new sounds). SHA256.TXT lists the
 checksums of both files.

@@ -13,3 +13,10 @@ speed/tandy-fill.patch    # res06/res07/res09 window clears, the screen flush an
 speed/tandy-show.patch    # res07 ShowPicture's Tandy branch: pictures straight to the screen (portraits, title, symbols)
 speed/walk-line.patch     # ovl30 WalkLine in assembler: the line of sight walks of combat targeting and the AI
 speed/sort-table.patch    # ovl30 SortTable in assembler: the target list of every combat scan
+speed/scan-targets.patch  # ovl30 ScanTargets in assembler, no line walk past the step limit: the AI's target scans
+speed/in-dir-arc.patch    # ovl30 InDirArc in assembler: the facing and arc tests of combat
+speed/walk-line-regs.patch # ovl30 WalkLine's walk in registers, the cell found by offset steps (no multiply a step)
+speed/sort-table-regs.patch # ovl30 SortTable with record I in registers
+speed/mirror-xlat.patch   # res07 TandyMirrorRows by words through a nibble-swap table: every sprite facing left
+speed/masked-rows.patch   # res07 TandyRows: 24-pixel rows unrolled (the combat map's ground and icons), the row trackers in registers
+speed/combatant-index.patch # ovl31 CombatantIndex in assembler: the combatant search behind CombatantX, CombatantY, CombatantKind

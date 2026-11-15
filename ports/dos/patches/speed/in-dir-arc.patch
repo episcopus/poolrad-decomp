@@ -1,0 +1,287 @@
+--- a/OVL30.PAS
++++ b/OVL30.PAS
+@@ -377,40 +377,250 @@
+   Dir (DirStepX, DirStepY) and the case body checks the two half-planes of that direction's wedge
+   (each shared with the neighbouring direction). Returns True when the point is in the arc.
+   Called by BearingTo, CastChosenSpell (which loops Dir upward to aim at a point) and ScanTargets. }
+-function InDirArc(FromX, FromY, ToX, ToY: ShortInt; Dir: Byte): Boolean;
+-var
+-  BaseX, BaseY: ShortInt;         { the from point stepped once towards Dir }
+-begin
+-  if (FromX < 0) or (FromX > 49) or (FromY < 0) or (FromY > 24) or
+-     (ToX < 0) or (ToX > 49) or (ToY < 0) or (ToY > 24) then
+-    InDirArc := False
+-  else begin
+-    if Dir = $FF then
+-      Dir := 8;
+-    BaseX := FromX + DirStepX[Dir];
+-    BaseY := FromY + DirStepY[Dir];
+-    if ((FromX = ToX) and (FromY = ToY)) or ((BaseX = ToX) and (BaseY = ToY)) then
+-      InDirArc := True
+-    else case Dir of
+-      0: InDirArc := ((ToX >= BaseX) and (ToY <= BaseX - ToX + BaseY)) or
+-                      ((ToX <= BaseX) and (ToY <= ToX - BaseX + BaseY));
+-      1: InDirArc := ((ToX >= BaseX) and (ToY <= BaseX - ToX + BaseY)) or
+-                      ((ToX >= BaseX + BaseY - ToY) and (ToY <= BaseY));
+-      2: InDirArc := ((ToX >= BaseX + BaseY - ToY) and (ToY <= BaseY)) or
+-                      ((ToX >= BaseX + ToY - BaseY) and (ToY >= BaseY));
+-      3: InDirArc := ((ToX >= BaseX + ToY - BaseY) and (ToY >= BaseY)) or
+-                      ((ToX >= BaseX) and (ToY >= ToX - BaseX + BaseY));
+-      4: InDirArc := ((ToX >= BaseX) and (ToY >= ToX - BaseX + BaseY)) or
+-                      ((ToX <= BaseX) and (ToY >= BaseX - ToX + BaseY));
+-      5: InDirArc := ((ToX <= BaseX) and (ToY >= BaseX - ToX + BaseY)) or
+-                      ((ToX <= BaseX + BaseY - ToY) and (ToY >= BaseY));
+-      6: InDirArc := ((ToX <= BaseX + BaseY - ToY) and (ToY >= BaseY)) or
+-                      ((ToX <= BaseX + ToY - BaseY) and (ToY <= BaseY));
+-      7: InDirArc := ((ToX <= BaseX + ToY - BaseY) and (ToY <= BaseY)) or
+-                      ((ToX <= BaseX) and (ToY <= ToX - BaseX + BaseY));
+-      8: InDirArc := True;
+-    end;
+-  end;
++function InDirArc(FromX, FromY, ToX, ToY: ShortInt; Dir: Byte): Boolean; assembler;
++{ ports/dos speed patch (in-dir-arc): the same test in the built-in assembler, the half-planes of each direction in
++  the Pascal's order on 16-bit signed values (BaseX and BaseY are the ShortInt sums, as stored). A Dir of 9 to 254,
++  which the Pascal's case leaves unassigned, gives False: every caller walks Dir up from 0 and Dir 8 is True on the
++  map; off the map every Dir is False, the Pascal's loops then run on past 8 forever either way (the result slot
++  still holds the False of the call before). BaseX and BaseY were locals. }
++asm
++  mov   al, FromX
++  or    al, al
++  jl    @False
++  cmp   al, 49
++  jg    @False
++  mov   al, FromY
++  or    al, al
++  jl    @False
++  cmp   al, 24
++  jg    @False
++  mov   al, ToX
++  or    al, al
++  jl    @False
++  cmp   al, 49
++  jg    @False
++  mov   al, ToY
++  or    al, al
++  jl    @False
++  cmp   al, 24
++  jg    @False
++  mov   bl, Dir
++  cmp   bl, $FF
++  jne   @Base
++  mov   bl, 8
++@Base:
++  xor   bh, bh
++  mov   al, FromX
++  add   al, byte ptr DirStepX[bx]
++  cbw
++  mov   si, ax                 { BaseX }
++  mov   al, FromY
++  add   al, byte ptr DirStepY[bx]
++  cbw
++  mov   di, ax                 { BaseY }
++  mov   al, ToX
++  cbw
++  mov   cx, ax
++  mov   al, ToY
++  cbw
++  mov   dx, ax
++  mov   al, FromX
++  cmp   al, ToX
++  jne   @NotFrom
++  mov   al, FromY
++  cmp   al, ToY
++  je    @True
++@NotFrom:
++  cmp   si, cx
++  jne   @Case
++  cmp   di, dx
++  je    @True
++@Case:
++  cmp   bl, 8
++  je    @True
++  ja    @False
++  cmp   bl, 0
++  jne   @N0
++  jmp   @Dir0
++@N0:
++  cmp   bl, 1
++  jne   @N1
++  jmp   @Dir1
++@N1:
++  cmp   bl, 2
++  jne   @N2
++  jmp   @Dir2
++@N2:
++  cmp   bl, 3
++  jne   @N3
++  jmp   @Dir3
++@N3:
++  cmp   bl, 4
++  jne   @N4
++  jmp   @Dir4
++@N4:
++  cmp   bl, 5
++  jne   @N5
++  jmp   @Dir5
++@N5:
++  cmp   bl, 6
++  jne   @N6
++  jmp   @Dir6
++@N6:
++  cmp   bl, 7
++  jne   @N7
++  jmp   @Dir7
++@N7:
++@Dir0:
++  cmp   cx, si
++  jl    @F0
++  mov   ax, si
++  sub   ax, cx
++  add   ax, di
++  cmp   dx, ax
++  jle   @True
++@F0:
++  cmp   cx, si
++  jg    @F1
++  mov   ax, cx
++  sub   ax, si
++  add   ax, di
++  cmp   dx, ax
++  jle   @True
++@F1:
++  jmp   @False
++@Dir1:
++  cmp   cx, si
++  jl    @F2
++  mov   ax, si
++  sub   ax, cx
++  add   ax, di
++  cmp   dx, ax
++  jle   @True
++@F2:
++  mov   ax, si
++  add   ax, di
++  sub   ax, dx
++  cmp   cx, ax
++  jl    @F3
++  cmp   dx, di
++  jle   @True
++@F3:
++  jmp   @False
++@Dir2:
++  mov   ax, si
++  add   ax, di
++  sub   ax, dx
++  cmp   cx, ax
++  jl    @F4
++  cmp   dx, di
++  jle   @True
++@F4:
++  mov   ax, si
++  add   ax, dx
++  sub   ax, di
++  cmp   cx, ax
++  jl    @F5
++  cmp   dx, di
++  jge   @True
++@F5:
++  jmp   @False
++@Dir3:
++  mov   ax, si
++  add   ax, dx
++  sub   ax, di
++  cmp   cx, ax
++  jl    @F6
++  cmp   dx, di
++  jge   @True
++@F6:
++  cmp   cx, si
++  jl    @F7
++  mov   ax, cx
++  sub   ax, si
++  add   ax, di
++  cmp   dx, ax
++  jge   @True
++@F7:
++  jmp   @False
++@Dir4:
++  cmp   cx, si
++  jl    @F8
++  mov   ax, cx
++  sub   ax, si
++  add   ax, di
++  cmp   dx, ax
++  jge   @True
++@F8:
++  cmp   cx, si
++  jg    @F9
++  mov   ax, si
++  sub   ax, cx
++  add   ax, di
++  cmp   dx, ax
++  jge   @True
++@F9:
++  jmp   @False
++@Dir5:
++  cmp   cx, si
++  jg    @F10
++  mov   ax, si
++  sub   ax, cx
++  add   ax, di
++  cmp   dx, ax
++  jge   @True
++@F10:
++  mov   ax, si
++  add   ax, di
++  sub   ax, dx
++  cmp   cx, ax
++  jg    @F11
++  cmp   dx, di
++  jge   @True
++@F11:
++  jmp   @False
++@Dir6:
++  mov   ax, si
++  add   ax, di
++  sub   ax, dx
++  cmp   cx, ax
++  jg    @F12
++  cmp   dx, di
++  jge   @True
++@F12:
++  mov   ax, si
++  add   ax, dx
++  sub   ax, di
++  cmp   cx, ax
++  jg    @F13
++  cmp   dx, di
++  jle   @True
++@F13:
++  jmp   @False
++@Dir7:
++  mov   ax, si
++  add   ax, dx
++  sub   ax, di
++  cmp   cx, ax
++  jg    @F14
++  cmp   dx, di
++  jle   @True
++@F14:
++  cmp   cx, si
++  jg    @F15
++  mov   ax, cx
++  sub   ax, si
++  add   ax, di
++  cmp   dx, ax
++  jle   @True
++@F15:
++  jmp   @False
++@False:
++  xor   al, al
++  jmp   @Out
++@True:
++  mov   al, 1
++@Out:
+ end;
+ { ovl30:0909. Scans the DS:5F27 map entity table for records reachable from (FromX, FromY) and
+   appends one sort record per hit, then sorts the table. MaxSteps budgets the line walk, Dir is

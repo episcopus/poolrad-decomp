@@ -1,0 +1,87 @@
+--- a/OVL31.PAS
++++ b/OVL31.PAS
+@@ -396,19 +396,71 @@
+ { ovl31:0C5F. The combatant number of character record Who: the I (1..count) with
+   CombatantRecord[I] = Who, or 0 when it is not among them. QUIRK ovl31:0C71: with a count of 0
+   the loop still looks at entry 1 and then runs on until I wraps round to 0. }
+-function CombatantIndex(Who: PCharacter): Byte;
+-var
+-  Found: Boolean;
+-  I: Byte;
+-begin
+-  Found := False;
+-  CombatantIndex := 0;
+-  I := 0;
+-  repeat
+-    Inc(I);
+-    if CombatantRecord[I] = Who then Found := True;
+-  until Found or (I = CombatantTable[0].Kind);
+-  if Found then CombatantIndex := I;
++function CombatantIndex(Who: PCharacter): Byte; assembler;
++{ ports/dos speed patch (combatant-index): the same search in the built-in assembler. With a count of 1 or more the
++  table is scanned a word at a time (REPNE SCASW) for Who's offset; a hit on an offset word whose segment word follows
++  equal is the first I with CombatantRecord[I] = Who, as the Pascal's loop finds it (the count does not change while
++  it looks). The direction flag is kept as it was. With a count of 0 the quirk: the walk goes on over entries
++  2..255 (past the array, as the Pascal reads them) and entry 0 before I comes round to 0. Found and I were locals. }
++asm
++  mov   ax, word ptr Who
++  mov   dx, word ptr Who+2
++  mov   cl, byte ptr CombatantTable[3]
++  or    cl, cl
++  jz    @Quirk
++  xor   ch, ch
++  shl   cx, 1                  { the words of entries 1..count }
++  pushf
++  cld
++  push  ds
++  pop   es
++  mov   di, offset CombatantRecord
++@Scan:
++  repne scasw
++  jne   @ScanMiss              { no word left equal to the offset }
++  mov   bx, di
++  sub   bx, offset CombatantRecord + 2   { the word's place in the table }
++  test  bx, 2
++  jnz   @ScanOn                { a segment word }
++  cmp   [di], dx
++  je    @ScanHit
++@ScanOn:
++  jcxz  @ScanMiss
++  jmp   @Scan
++@ScanHit:
++  popf
++  shr   bx, 1
++  shr   bx, 1
++  inc   bx
++  mov   al, bl
++  jmp   @Done
++@ScanMiss:
++  popf
++  xor   al, al
++  jmp   @Done
++@Quirk:
++  mov   bx, offset CombatantRecord
++  xor   cl, cl                 { I }
++@Loop:
++  inc   cl
++  jnz   @Look
++  mov   bx, offset CombatantRecord - 4   { I wrapped to 0: entry 0 }
++@Look:
++  cmp   word ptr [bx], ax
++  jne   @Next
++  cmp   word ptr [bx+2], dx
++  je    @Found
++@Next:
++  cmp   cl, byte ptr CombatantTable[3]
++  je    @NotFound
++  add   bx, 4
++  jmp   @Loop
++@Found:
++  mov   al, cl
++  jmp   @Done
++@NotFound:
++  xor   al, al
++@Done:
+ end;
+ 
+ { ovl31:0CB9. Looks at the cells combatant Who's footprint would cover after one step in direction

@@ -1,0 +1,83 @@
+--- a/OVL30.PAS
++++ b/OVL30.PAS
+@@ -35,55 +35,52 @@
+ { ports/dos speed patch (sort-table): the same exchange sort in the built-in assembler, records swapped in place in
+   the same order (I from 1 to Count - 1, J from I + 1 to Count; Count read once, as the for loops do), with the
+   same test: Key[J] < Key[I], or equal keys with Val[J] < Val[I] and Val[J] mod 2 <= Val[I] mod 2. The loop
+-  variables and the swap buffer were locals. }
++  variables and the swap buffer were locals. (sort-table-regs: record I's Key and Val are held in AH and CH and
++  read again after each swap; the offsets of I, J and the last record are in BX, SI and DI.) }
+ asm
+   mov   cl, byte ptr SortEntries[2]   { entry 0's Val: the count }
+   cmp   cl, 1
+   jbe   @Done
+-  mov   dl, 1                  { I }
+-  mov   bx, 3                  { the offset of entry I }
++  xor   ch, ch
++  mov   di, cx
++  shl   di, 1
++  add   di, cx                 { the offset of the last record, Count * 3 }
++  mov   bx, 3                  { the offset of record I }
+ @Outer:
+-  mov   dh, dl
+-  inc   dh                     { J }
++  mov   ah, byte ptr SortEntries[bx+1]   { Key[I] }
++  mov   ch, byte ptr SortEntries[bx+2]   { Val[I] }
+   mov   si, bx
+-  add   si, 3                  { the offset of entry J }
++  add   si, 3                  { the offset of record J }
+ @Inner:
+   mov   al, byte ptr SortEntries[si+1]
+-  mov   ah, byte ptr SortEntries[bx+1]
+   cmp   al, ah
+   jb    @Swap                  { Key[J] < Key[I] }
+   jne   @NoSwap
+   mov   al, byte ptr SortEntries[si+2]
+-  mov   ah, byte ptr SortEntries[bx+2]
+-  cmp   al, ah
++  cmp   al, ch
+   jae   @NoSwap                { Val[J] < Val[I] }
+-  and   al, 1
+-  and   ah, 1
+-  cmp   al, ah
+-  ja    @NoSwap                { Val[J] mod 2 <= Val[I] mod 2 }
++  test  al, 1
++  jz    @Swap                  { Val[J] even: its mod 2 is not above Val[I]'s }
++  test  ch, 1
++  jz    @NoSwap                { Val[J] odd, Val[I] even }
+ @Swap:
+   mov   ax, word ptr SortEntries[bx]
+-  mov   di, word ptr SortEntries[si]
+-  mov   word ptr SortEntries[bx], di
++  mov   dx, word ptr SortEntries[si]
++  mov   word ptr SortEntries[bx], dx
+   mov   word ptr SortEntries[si], ax
+   mov   al, byte ptr SortEntries[bx+2]
+-  mov   ah, byte ptr SortEntries[si+2]
+-  mov   byte ptr SortEntries[bx+2], ah
++  mov   dl, byte ptr SortEntries[si+2]
++  mov   byte ptr SortEntries[bx+2], dl
+   mov   byte ptr SortEntries[si+2], al
++  mov   ah, byte ptr SortEntries[bx+1]
++  mov   ch, dl
+ @NoSwap:
+-  cmp   dh, cl
+-  je    @NextI
+-  inc   dh
+   add   si, 3
+-  jmp   @Inner
+-@NextI:
+-  mov   al, cl
+-  dec   al
+-  cmp   dl, al
+-  je    @Done
+-  inc   dl
++  cmp   si, di
++  jbe   @Inner
+   add   bx, 3
+-  jmp   @Outer
++  cmp   bx, di
++  jb    @Outer
+ @Done:
+ end;
+ { ovl30:01A0. Sets up the line drawing state Line from its two endpoints: it clears the stepped

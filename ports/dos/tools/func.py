@@ -301,6 +301,8 @@ def setup(build: str, session: str, video: bytes = b"T"):
     script = Script.parse(session_file(session).read_text())
     m = Machine(lay.exe, ROOT / "poolrad", strict=True)
     m.vfs.alias("GAME.OVR", lay.overlay_file)
+    for f in sorted((PORT_SESSIONS / "saves").glob("*")):   # the port's saved games (bane-battle: slot F)
+        m.vfs.alias("SAVE\\" + f.name, f)
     lines = (ROOT / "poolrad/POOL.CFG").read_bytes().split(b"\r\n")
     lines[0], lines[1] = video, b"T"                      # Tandy video, Tandy sound: the target machine
     m.vfs.layer["\\POOLRAD\\POOL.CFG"] = bytearray(b"\r\n".join(lines))
@@ -312,7 +314,7 @@ def setup(build: str, session: str, video: bytes = b"T"):
     return m, script, pubs, segs, state.dgroup_seg()
 
 
-def run_one(build: str, session: str, shots: bool = False, max_insns: int = 1_000_000_000) -> dict:
+def run_one(build: str, session: str, shots: bool = False, max_insns: int = 3_000_000_000) -> dict:
     """Play one session on one build; returns (and pickles) what func.py compares."""
     from oracle.machine import LOAD_SEG, Stop
 

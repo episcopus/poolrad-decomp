@@ -14,3 +14,4 @@ shop-buy            # a shop
 temple-cast         # the temple's menu, camp magic
 council-guards      # the 3D view, a scripted battle with quick combat until the party falls
 maze-battle         # the 3D view walking the city, an ambush, a won battle, treasure, a character sheet, flee
+bane-battle         # the user's save F: the Temple of Bane's third trapdoor, Mace and 55 orcs, quick combat (the big-battle benchmark)
