@@ -5,6 +5,8 @@ on:
   push:
     branches: [main, "p7-*"]
   pull_request:
+permissions:
+  contents: read
 jobs:
   build:
     strategy:

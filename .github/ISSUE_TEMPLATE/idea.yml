@@ -1,0 +1,10 @@
+name: Idea or question
+description: A suggestion, or a question about how something works.
+labels: [question]
+body:
+  - type: textarea
+    id: text
+    attributes:
+      label: Your idea or question
+    validations:
+      required: true
