@@ -4,6 +4,8 @@ A matching decompilation of SSI's Pool of Radiance for DOS, version 1.3 (the ver
 
 This repository is the public companion to a series of videos and articles about the project. It holds the source, the tools, the process the agents follow and what was learned about the game. It does not hold the game.
 
+Learn more at [anonymousformula.com/poolrad](https://anonymousformula.com/poolrad/), where the articles and the story of the project are published.
+
 | Start here | |
 |---|---|
 | `docs/design/WHITEPAPER.md` | How the game works: engine, data formats, scripts, combat, the quirks of the original |
