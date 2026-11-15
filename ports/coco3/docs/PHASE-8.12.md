@@ -74,6 +74,15 @@ LOADM"POOL/BIN:200":EXEC
 
 (HDB-DOS names a drive after a colon, `filename/ext:drive`, and drives 4 to 255 are always the card.) The splash screen with its progress bar comes up; the bar moves as the engine reads the card; the game starts as in `make play`. A save goes to the card (and is kept there: switch off, switch on, load).
 
+**Adding a saved game to the card** (2026-11-14). An update keeps the card's saved games and drops the build's own, so a saved game from the PC (a SAVE folder's `SAVGAMx.DAT` and `CHRDATx*.*`) is put in with `--add-slot x`: its files get rooms in the save area's directory the way the game gives them, next to the card's saves. A slot the card already has is refused unless `--replace-slot` (the card's files of that slot are lost); the same files again are left alone. `--saves-from DIR` takes them from another SAVE folder than the game folder's (`poolrad/SAVE`). `saves` lists a save area, on the card or in a card file, read only:
+
+```bash
+sudo python3 tools/ide_card.py saves /dev/rdisk4                  # read only: the saved games on the card and the free room
+sudo python3 tools/ide_card.py write /dev/rdisk4 --add-slot F --yes
+```
+
+Checked on a file of the card's size (an older build with a player's saves A and C, then the update: A and C byte for byte as before, the 19 files of F equal to the SAVE folder's, 100 of 512 units left; a different F refused without `--replace-slot`), and the IDE build in MAME (`MB_IDEFILE`) loaded F from that save area. A saved game takes up to 130 units (60 for the `.DAT`, 10 for each character), and the area has 512.
+
 If something is wrong the engine says what (section 3). What to send back: the three lines of the error screen, or what `DIR 200` printed.
 
 ## 6. Open

@@ -4,6 +4,9 @@
     ide_card.py map DEVICE              read only: which of the 256 HDB-DOS virtual drives hold something, and which run of free drives to give `make ide IDE_DRIVE=`
     ide_card.py check DEVICE            read only: is this the card, and is the place for the game free?
     ide_card.py write DEVICE [FILE]     the same checks, then write FILE (default build/ide/POOLIDE.IMG) and read it back; needs --yes
+    ide_card.py saves DEVICE|FILE       read only: the files of the game's save area (on the card, or in a card file) and its free room
+    ... write DEVICE --add-slot F       also put saved game F (SAVGAMF.DAT and CHRDATF*.* of --saves-from, default the game folder's SAVE)
+                                        into the save area, next to the card's own saves; --replace-slot if the card already has an F
 
 DEVICE is the card as the computer sees it, whole (macOS /dev/rdiskN after `diskutil unmountDisk /dev/diskN`, Linux /dev/sdX; a file of the size of the card works
 too, for a try). The card is a run of 512 byte sectors. HDB-DOS keeps its virtual floppy disks, 630 sectors each, in a run that starts at the HDB-DOS offset of the card
@@ -15,6 +18,10 @@ data, which only the game's own driver reads.
 A card that already has a previous build of the game at the place (drive 200 is a disk with POOL/BIN and the next drive starts with the image's "PIM2") is an UPDATE: `write` replaces
 the old build without --force, and **keeps the saved games of the card** (the 512 save sectors of the old image are copied into the new one; --fresh-saves takes the build's own
 seeded saves instead). Only a run of drives that starts at the old game's boot drive counts as the old game: a drive after a free one that holds something is somebody else's.
+
+Adding a saved game (--add-slot X): the save area is a directory of up to 127 files, each with a room of 256 byte units (src/game/rtl_file.c). The slot's files get rooms
+the way the game gives them (60 units for a .DAT, 5 for .ITM, 3 for .SPC, 2 for .SAV, or what the file needs if more), each in the smallest free run, after the card's
+saves have been carried over; a slot the card already has is refused (its files would be lost) unless --replace-slot, which first erases the card's files of that slot.
 
 What `check` looks at, and what `write` refuses without --force:
   * the size of the card, against offset + 256 * 630 (a card that is not that size has another HDB-DOS offset: say it with --hdb-offset);
@@ -166,9 +173,179 @@ def load_env(path):
     return env
 
 
+SAVE_UNITS = 512                                   # the save area: 512 units of 256 bytes (src/game/rtl_file.c)
+DIR_ENTRIES = 127
+DIR_HEAD = 16
+
+
+class SaveArea:
+    """The save area of a card file (bytes, from its first card sector) whose save unit 0 is at card sector `first`: one unit in the first half of each card sector."""
+
+    def __init__(self, content, first):
+        self.b = bytearray(content)
+        self.first = first
+
+    def unit(self, u):
+        o = (self.first + u) * SEC
+        return self.b[o:o + 256]
+
+    def put(self, u, data):
+        o = (self.first + u) * SEC
+        self.b[o:o + 256] = bytes(data).ljust(256, b"\0")
+
+    def read(self, off, n):
+        out = bytearray()
+        while n > 0:
+            u, r = divmod(off, 256)
+            k = min(n, 256 - r)
+            out += self.unit(u)[r:r + k]
+            off += k
+            n -= k
+        return bytes(out)
+
+    def write(self, off, data):
+        data = bytes(data)
+        while data:
+            u, r = divmod(off, 256)
+            k = min(len(data), 256 - r)
+            cur = bytearray(self.unit(u))
+            cur[r:r + k] = data[:k]
+            self.put(u, cur)
+            off += k
+            data = data[k:]
+
+    def entries(self):
+        """[(index, name 'BASE.EXT', start unit, room in units, size in bytes)] of the live entries"""
+        if self.read(0, 4) != b"PSAV":
+            return []
+        out = []
+        for i in range(DIR_ENTRIES):
+            e = self.read(DIR_HEAD + 16 * i, 16)
+            if e[0] == 0:
+                continue
+            name = e[:8].decode("latin-1").rstrip() + "." + e[8:11].decode("latin-1").rstrip()
+            out.append((i, name, int.from_bytes(e[11:13], "big"), e[13], int.from_bytes(e[14:16], "big")))
+        return out
+
+    def file(self, ent):
+        return self.read(ent[2] * 256, ent[4])
+
+    def free_units(self):
+        used = set(range(8))
+        for _i, _n, start, cap, _sz in self.entries():
+            used.update(range(start, min(start + cap, SAVE_UNITS)))
+        return SAVE_UNITS - len(used)
+
+    def find_room(self, cap):
+        """the start of the smallest run of at least cap free units (rtl_file.c find_room), or None"""
+        used = [False] * SAVE_UNITS
+        for u in range(8):
+            used[u] = True
+        for _i, _n, start, c, _sz in self.entries():
+            for u in range(start, min(start + c, SAVE_UNITS)):
+                used[u] = True
+        best, bestlen, run, start = None, None, 0, 0
+        for u in range(SAVE_UNITS + 1):
+            if u < SAVE_UNITS and not used[u]:
+                if run == 0:
+                    start = u
+                run += 1
+            else:
+                if run >= cap and (bestlen is None or run < bestlen):
+                    best, bestlen = start, run
+                run = 0
+        return best
+
+    def erase(self, index):
+        self.write(DIR_HEAD + 16 * index, b"\0")
+
+    def add(self, name, data):
+        """a new file with the game's room for its kind (open_write in rtl_file.c), or more if it needs more"""
+        base, _, ext = name.upper().partition(".")
+        key = (base.ljust(8)[:8] + ext.ljust(3)[:3]).encode("ascii")
+        cap = 16
+        if key[8:11] == b"DAT":
+            cap = 60
+        elif key[8:11] == b"TXT":
+            cap = 12
+        elif key[8:10] == b"IT":
+            cap = 5
+        elif key[8:10] == b"SP":
+            cap = 3
+        elif key[8:9] in (b"S", b"C"):
+            cap = 2
+        cap = max(cap, -(-len(data) // 256))
+        if self.read(0, 4) != b"PSAV":
+            self.write(0, b"PSAV" + (8).to_bytes(2, "big") + bytes(2))
+        free = [i for i in range(DIR_ENTRIES) if self.read(DIR_HEAD + 16 * i, 1) == b"\0"]
+        if not free:
+            raise SystemExit("save area: no free directory entry for %s" % name)
+        start = self.find_room(cap)
+        if start is None:
+            raise SystemExit("save area: no run of %d free units for %s (%d units free in all)" % (cap, name, self.free_units()))
+        self.write(DIR_HEAD + 16 * free[0], key + start.to_bytes(2, "big") + bytes([cap]) + len(data).to_bytes(2, "big"))
+        self.write(start * 256, data)
+        nxt = int.from_bytes(self.read(4, 2), "big")
+        if start + cap > nxt:
+            self.write(4, (start + cap).to_bytes(2, "big"))
+
+
+def slot_files(folder, slot):
+    """SAVGAM<slot>.DAT and CHRDAT<slot>*.* of a SAVE folder: [(name, bytes)]"""
+    slot = slot.upper()
+    out = []
+    for f in sorted(os.listdir(folder)):
+        u = f.upper()
+        if u == "SAVGAM%s.DAT" % slot or (u.startswith("CHRDAT%s" % slot) and len(u.partition(".")[0]) == 8):
+            out.append((u, open(os.path.join(folder, f), "rb").read()))
+    if not any(n.startswith("SAVGAM") for n, _ in out):
+        raise SystemExit("%s has no SAVGAM%s.DAT" % (folder, slot))
+    return out
+
+
+def slot_of(name):
+    """the slot letter of a saved game's file (SAVGAMx.DAT, CHRDATxn.*), or None"""
+    if name.startswith("SAVGAM") and name.endswith(".DAT") and len(name) == 11:
+        return name[6]
+    if name.startswith("CHRDAT") and len(name.partition(".")[0]) == 8:
+        return name[6]
+    return None
+
+
+def add_slot(area, slot, files, replace):
+    """put a saved game's files into the save area; returns lines that say what was done"""
+    slot = slot.upper()
+    have = [e for e in area.entries() if slot_of(e[1]) == slot]
+    lines = []
+    if have:
+        same = sorted((n, area.file(e)) for e in have for n in [e[1]]) == sorted(files)
+        if same:
+            return ["saved game %s: already in the save area, the same files" % slot]
+        if not replace:
+            raise SystemExit("saved game %s is already in the card's save area (%s): say --replace-slot to replace it (those files are lost)" % (
+                slot, ", ".join(e[1] for e in have)))
+        for e in have:
+            area.erase(e[0])
+        lines.append("saved game %s: the save area's %d files of it erased (--replace-slot)" % (slot, len(have)))
+    for name, data in files:
+        area.add(name, data)
+    lines.append("saved game %s: %d files added (%d bytes); %d of %d units of the save area free" % (
+        slot, len(files), sum(len(d) for _, d in files), area.free_units(), SAVE_UNITS))
+    return lines
+
+
+def list_saves(area):
+    ents = area.entries()
+    slots = sorted({slot_of(e[1]) for e in ents if slot_of(e[1]) and e[1].startswith("SAVGAM")})
+    print("save area: %d files, saved games %s; %d of %d units free" % (len(ents), " ".join(slots) or "none", area.free_units(), SAVE_UNITS))
+    for _i, name, start, cap, size in sorted(ents, key=lambda e: e[1]):
+        print("  %-12s %6d bytes   units %3d..%3d" % (name, size, start, start + cap - 1))
+
+
+
 def main(argv):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("cmd", choices=["map", "check", "write"])
+    ap.add_argument("cmd", choices=["map", "check", "write", "saves"])
     ap.add_argument("device")
     ap.add_argument("file", nargs="?", default="build/ide/POOLIDE.IMG")
     ap.add_argument("--hdb-offset", type=int, default=None, help="the card's HDB-DOS offset in sectors (default: the build's, in ide.env next to the file; $052DDC = 339420 is the 256 MB card's)")
@@ -178,6 +355,10 @@ def main(argv):
     ap.add_argument("--yes", action="store_true", help="write: really write")
     ap.add_argument("--force", action="store_true", help="write although a check says no (the data of the drives is lost)")
     ap.add_argument("--fresh-saves", action="store_true", help="update: take the build's own saved games and not the ones of the card (they are lost)")
+    ap.add_argument("--add-slot", metavar="X", help="write: also put saved game X (a letter) into the save area, from --saves-from")
+    ap.add_argument("--saves-from", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "poolrad", "SAVE"),
+                    help="the SAVE folder --add-slot takes the files from (default: the game folder's, poolrad/SAVE)")
+    ap.add_argument("--replace-slot", action="store_true", help="--add-slot: replace the slot when the card already has it (its files there are lost)")
     a = ap.parse_args(argv)
     env = load_env(os.path.join(os.path.dirname(os.path.abspath(a.file)), "ide.env"))
     for opt, key, default in (("drive", "IDE_DRIVE", 200), ("hdb_offset", "IDE_HDB_OFFSET", 339420)):
@@ -194,6 +375,23 @@ def main(argv):
     if a.cmd == "write" and content is None:
         sys.exit("write: %s is not there (make ide)" % a.file)
     fd = os.open(a.device, os.O_RDONLY)
+    if a.cmd == "saves":
+        lba0 = a.hdb_offset + a.drive * DRIVE_SECS
+        h = read(fd, DRIVE_SECS, 1)
+        if h[:4] == b"PIM2" and size_of(fd) <= 64 * DRIVE_SECS:       # a card file (build/ide/POOLIDE.IMG): the image starts at its second drive
+            data = os.pread(fd, size_of(fd) * SEC, 0)
+            area = SaveArea(data, saves_at(DRIVE_SECS, int.from_bytes(h[16:20], "big")))
+            print("%s: a card file" % a.device)
+        else:
+            old = previous_build(fd, lba0)
+            if old is None:
+                sys.exit("saves: no build of the game at drive %d of %s" % (a.drive, a.device))
+            first = saves_at(lba0 + DRIVE_SECS, old[0])
+            area = SaveArea(os.pread(fd, (first + old[1]) * SEC, 0), first)
+            print("%s: the game at drive %d" % (a.device, a.drive))
+        os.close(fd)
+        list_saves(area)
+        return 0
     if a.cmd == "map":
         total = size_of(fd)
         nd = min(256, (total - a.hdb_offset) // DRIVE_SECS) if total else 256
@@ -265,6 +463,12 @@ def main(argv):
         old_saves = read(fd2 := os.open(a.device, os.O_RDONLY), src, n)
         os.close(fd2)
         content = content[:dst * SEC] + old_saves + content[(dst + n) * SEC:]
+    if a.add_slot:
+        new_lsn = int.from_bytes(content[DRIVE_SECS * SEC + 16:DRIVE_SECS * SEC + 20], "big")
+        area = SaveArea(content, saves_at(DRIVE_SECS, new_lsn))
+        for line in add_slot(area, a.add_slot, slot_files(a.saves_from, a.add_slot), a.replace_slot):
+            print(line)
+        content = bytes(area.b)
     if not a.yes:
         print("would write %s (%d sectors) at card sector %d of %s: say --yes" % (a.file, len(content) // SEC, lba0, a.device))
         return 2
