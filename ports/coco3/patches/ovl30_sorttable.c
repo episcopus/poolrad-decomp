@@ -4,24 +4,23 @@ void SortTable(void)
   TSortRec *base = SortEntries;          /* (step 8.9e: pointers into the table, and the keys of the record I kept in locals; the exchanges are the original's) */
   TSortRec *pi;
   TSortRec *pj;
-  u8 I = 0;
-  u8 J = 0;
+  TSortRec *last;
   u8 n = 0;
   u8 ki = 0;
   u8 vi = 0;
   u8 kj = 0;
   u8 vj = 0;
   u8 t;
+  /* (big-battle round 2026-11-14: I and J walk as pointers, from record 1 to the count, as the for loops did: no record address computed from an index) */
   n = base[0].Val_;
   if (n <= 1) {
     return;
   }
-  for (I = 1; I <= (u8)(n - 1); I++) {
-    pi = &base[I];
+  last = base + n;
+  for (pi = base + 1; pi != last; pi++) {
     ki = pi->Key;
     vi = pi->Val_;
-    for (J = (u8)(I + 1); J <= n; J++) {
-      pj = &base[J];
+    for (pj = pi + 1; ; pj++) {
       kj = pj->Key;
       if (kj < ki || (kj == ki && (vj = pj->Val_) < vi && (u8)(vj & 1) <= (u8)(vi & 1))) {
         t = pi->Head; pi->Head = pj->Head; pj->Head = t;
@@ -30,6 +29,8 @@ void SortTable(void)
         ki = pi->Key;
         vi = pi->Val_;
       }
+      if (pj == last)
+        break;
     }
   }
 }

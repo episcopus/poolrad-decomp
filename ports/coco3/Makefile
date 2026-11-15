@@ -213,7 +213,7 @@ eng-test: eng-data data
 # ---------------------------------------------------------------- the game (step 8.5)
 # step 8.13, the quality of life changes (tools/qol.py: no code wheel, the port's credits line, BASIC for DOS): on by default; QOL=0 builds the PC's game, which the sessions' goldens are
 # (they type the wheel's answer and compare the PC's screens). Every target that plays a session builds that one, unless QOL is given.
-QOL_OFF_GOALS := first-light combat exploration baseline game-run game-view game-wav game-state stress perf-run perf-all floppy-run floppy-check ide-run ide-check sdc-run io-budget
+QOL_OFF_GOALS := first-light combat exploration baseline game-run game-view game-wav game-state stress perf-run perf-all step-check floppy-run floppy-check ide-run ide-check sdc-run io-budget
 QOL ?= $(if $(filter $(QOL_OFF_GOALS),$(MAKECMDGOALS)),0,1)
 export QOL
 # the fixes of the original's bugs (fixes/README.md at the repository root): with the quality of life changes by default; FIXES=1 with QOL=0 plays the sessions on a fixed game

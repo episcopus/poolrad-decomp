@@ -203,7 +203,8 @@ PATCHES = {
     "ovl30": [("fn", "SetupLine", (PATCHDIR / "ovl30_setupline.c").read_text()), ("fn", "StepLine", (PATCHDIR / "ovl30_stepline.c").read_text()),
               ("fn", "WalkLine", (PATCHDIR / "ovl30_walkline.c").read_text()), ("fn", "ScanTargets", (PATCHDIR / "ovl30_scantargets.c").read_text()),
               ("fn", "SortTable", (PATCHDIR / "ovl30_sorttable.c").read_text())],
-    "ovl31": [("fn", "CombatantIndex", (PATCHDIR / "ovl31_combatantindex.c").read_text()), ("fn", "ScrollViewTo", (PATCHDIR / "ovl31_scrollviewto.c").read_text())],
+    "ovl31": [("fn", "CombatantIndex", (PATCHDIR / "ovl31_combatantindex.c").read_text()), ("fn", "ScrollViewTo", (PATCHDIR / "ovl31_scrollviewto.c").read_text()),
+              ("fn", "FootprintCell", (PATCHDIR / "ovl31_footprintcell.c").read_text())],   # (big-battle round 2026-11-14)
     "ovl13": [("between", "ShowAttackAnimation", "  PixelBytes = (*FPB(TPictureHeader *, CombatAnimationPicture)).ByteSize;\n",
                "    PixelBytes = ((u16)PixelBytes / 4);\n  }\n", ""),
               # CMOC 0.1.100 -O2 crashes (segmentation fault) compiling ResolveCombatantAttacks once its Attacker is a 16 bit handle (tools/narrow.py): the store through
