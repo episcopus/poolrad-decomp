@@ -20,6 +20,7 @@ You are working on a **matching decompilation of SSI's Pool of Radiance (DOS) in
 - `re/symbols.toml` boundaries are approximate until a routine matches: a size is the gap to the next entry (so it includes the next routine's literal pool), and the map can merge or invent routines. `make match WRITE=1` writes the compiler's boundaries into the registry (sizes, entries inside matched code removed, missing routines added); there is no mapper role.
 - **External object files.** Code the original linked from an `.OBJ` (`{$L}`, placed after the unit's initialisation part) is not Pascal: `re/units.toml` names it (`external_from`), the registry flags its routines `external = true`, the matcher keeps it as the original's bytes and the unit can still be complete (res03's sound driver). Its source is `src/RES03.ASM`, assembled by `tools/re/asm86.py` and linked by `make rebuild`.
 - Our build differs from the 1988 build other projects analysed (38 overlays, `TPOV`). Their addresses never apply to us; their findings are leads to re-prove.
+- **The CoCo 3 port has a version and a changelog for players** (`ports/coco3/docs/VERSIONING.md`, semantic versioning). A change a player of its distribution would notice adds one line under `## Unreleased` in `ports/coco3/CHANGELOG.md` in the same commit (`Breaking`, `Added`, `Changed`, `Fixed` or `Internal`). Never edit `ports/coco3/VERSION` or date a release by hand: `make dist` releases what waits under Unreleased, picks the level from those sections and builds with the new number.
 
 ## Ground rules
 

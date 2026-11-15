@@ -36,6 +36,8 @@ Step 8.13 (quality of life, `docs/PHASE-8.13.md`): the default game has no code 
 
 The fixes of the original's bugs (`fixes/README.md` at the repository root: the quick-combat hang with darts) are in the default game too; `QOL=0` leaves them out with the other changes (`scripts/game_build.sh` passes `--faithful` to the translator); `FIXES=1` keeps them in a `QOL=0` game, so the sessions play on a fixed game (`make combat FIXES=1`).
 
+Versions (`docs/VERSIONING.md`): `VERSION` and `CHANGELOG.md` (for players, semantic versioning). A change a player would notice adds its line under `## Unreleased`; `make dist` turns those lines into the next version (the level from their sections), writes `VERSION` and builds every distribution with it; `make release-dry` says what the next one would be, `make changelog-check` checks both files.
+
 ## Quick start
 
 ```sh

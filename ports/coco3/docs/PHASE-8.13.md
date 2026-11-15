@@ -15,7 +15,8 @@ The storage lines are not engine code (the engine of the floppy and SDC builds h
 
 ## 2. The version
 
-`ports/coco3/VERSION` (now `1.0`) is the one place; `tools/qol.py` puts it on the credits screen when the game is built.
+`ports/coco3/VERSION` is the one place; `tools/qol.py` puts it on the credits screen when the game is built. It was `1.0` here; since 2026-11-15 it has three parts and is
+written only by `make dist` from `CHANGELOG.md` (`docs/VERSIONING.md`).
 
 ## 3. Tests: the goldens are the PC's screens
 

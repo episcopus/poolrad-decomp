@@ -18,7 +18,7 @@ LINKLIBS := -L$(CMOCLIB) -lcmoc-crt-void -lcmoc-std-void
 ENGINE_OBJ := build/obj/boot.o build/obj/mailbox.o
 P ?= byte-arith
 
-.PHONY: ide ide-run ide-check ide-card floppy80 floppy-xroar80 routine-profile code-profile rebank io-budget floppy-xroar sdc sdc-run floppy-check floppy floppy-model floppy-traces floppy-layout floppy-run perf-run perf-all step-check bank-groups play snd-check snd-wav game-wav stress game help doctor toolchain eng-data eng-test eng-tests gfx-ref data data-verify vol-test vol-tests sizes heap-stats prof coco-host place-host golden4 golden4-record demo test-demo run-demo probe probes asm-probe bench test clean risk-scan baseline
+.PHONY: dist dist-build changelog-check release-dry ide ide-run ide-check ide-card floppy80 floppy-xroar80 routine-profile code-profile rebank io-budget floppy-xroar sdc sdc-run floppy-check floppy floppy-model floppy-traces floppy-layout floppy-run perf-run perf-all step-check bank-groups play snd-check snd-wav game-wav stress game help doctor toolchain eng-data eng-test eng-tests gfx-ref data data-verify vol-test vol-tests sizes heap-stats prof coco-host place-host golden4 golden4-record demo test-demo run-demo probe probes asm-probe bench test clean risk-scan baseline
 .DEFAULT_GOAL := help
 
 help:
@@ -36,6 +36,8 @@ help:
 	@echo "  make eng-tests      every engine test"
 	@echo "  make snd-check      8.8: the CoCo's sound driver on the host against the oracle's golden (clang, no emulator)"
 	@echo "  make snd-wav        8.8: the twenty tunes as WAV files, the host model's and the emulated CoCo's (needs MAME)"
+	@echo "  make dist           every distribution in build/dist, released first: what waits under Unreleased in CHANGELOG.md becomes the next version (docs/VERSIONING.md)"
+	@echo "  make release-dry    the version the next make dist would make, and why; make changelog-check checks CHANGELOG.md and VERSION"
 	@echo "  make QOL=0 game     8.13: the PC original's game (the code wheel, version line and DOS prompts); the default game has the quality of life changes (tools/qol.py)"
 	@echo "  make game-wav S=x   8.8: a session of the game with its sound as a WAV (build/run/game-x.wav)"
 	@echo "  make gfx-ref        rerun the Phase 7 C engine on the t_gfx script and compare with goldens/engine (WRITE=1 rewrites)"
@@ -351,8 +353,19 @@ ide-mame-pack: ide-xroar-build
 
 # The distribution folder (docs/DISTRIBUTION.md): every build of the CoCo 3 port in build/dist, each in its own folder with end-user instructions, and a README at the top. It builds them all
 # (about ten minutes). It holds the game's data: for testers, not for a public repository or release.
-dist: floppy floppy80 sdc ide ide-xroar-pack ide-mame-pack
+# Every distribution is a release (docs/VERSIONING.md): tools/changelog.py first turns what waits under Unreleased in CHANGELOG.md into the next version (the level from its
+# sections) and writes VERSION, which the game's credits show; then dist-build makes the builds with that number, and scripts/dist.sh puts the version and the changelog in every folder.
+dist:
+	@python3 -I tools/changelog.py check
+	@python3 -I tools/changelog.py release
+	@$(MAKE) dist-build
+dist-build: floppy floppy80 sdc ide ide-xroar-pack ide-mame-pack
 	@scripts/dist.sh
+# the changelog follows docs/VERSIONING.md and VERSION is its newest release; release-dry: the version the next make dist would make, and why
+changelog-check:
+	@python3 -I tools/changelog.py check
+release-dry:
+	@python3 -I tools/changelog.py next
 
 ide-xroar: ide-xroar-build
 	cp build/ide-xroar/POOLIDE.IMG build/ide-xroar/run.img
