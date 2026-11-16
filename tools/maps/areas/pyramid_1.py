@@ -21,7 +21,7 @@ SPEC = dict(
         ('4', 9, 14, 'secret'), ('4', 1, 6, 'secret'),
     ],
     diamonds=[('j', 4, 13, 'hint')],
-    glance=('<b>ARRIVE</b> at (15,0) facing south, after ENTER at the pyramid (North Shore map square (6,16)), a rowboat trip from the reeds (6,14). '
+    glance=('<b>ARRIVE</b> at (15,0) facing south, after ENTER at the pyramid (North Shore map square (19,16)), a rowboat trip from the reeds (19,14). '
             'The east corridor (column 15) is safe; the maze west of it is shut by <b>secret doors</b> and reached by <b>teleports</b>. '
             '<b>LEAVE</b> by the secret doors at the north wall of (15,0) or the south wall of (15,15), or through the priest\'s hole at (13,15). '
             '<b>DEEPER</b>: the rock room (14,7) and the flash cell (6,1) lead to Yarash\'s Lab (next page). No treasure and no locked door on this level; '

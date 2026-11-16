@@ -18,7 +18,7 @@ SPEC = dict(
         ('1', 7.5, 2, 'fight'), ('2', 7.5, 3, 'place'), ('3', 7.5, 14, 'fight'), ('P', 1.5, 9, 'fight'),
     ],
     diamonds=[('a', 5, 5, 'loot'), ('b', 12, 9, 'loot'), ('c', 9, 12, 'loot')],
-    glance=('<b>ARRIVE</b> on (15,4) facing west, from the east gate of Old Phlan on the North Shore map (square (13,27), answer SOUTH). '
+    glance=('<b>ARRIVE</b> on (15,4) facing west, from the east gate of Old Phlan on the North Shore map (square (26,27), answer SOUTH). '
             '<b>EXITS:</b> only the two east gaps (15,4), (15,11), which lead into the Orc Mansion ((0,4), (0,11) there; it lies east of this temple); the way back to the city is through it. '
             '<b>QUEST:</b> Bishop Braccio sends you with Dirten, priest of Ilmater, to retake the temple "desecrated to Bane"; the City Hall clerk says you may keep '
             'all you found in it. Kill <b>High Priest Mace</b> and his horde (M). No passwords, no locked doors. This map and the Orc Mansion share their quest progress.'),

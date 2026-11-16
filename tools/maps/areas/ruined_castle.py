@@ -19,7 +19,7 @@ SPEC = dict(
         ('a', 7, 3, 'secret'), ('b', 4, 10, 'secret'), ('c', 12, 5, 'secret'),
         ('d', 6, 6, 'secret'), ('e', 6, 9, 'secret'), ('f', 9, 7, 'secret'), ('T', 8, 3, 'loot', dict(dy=-2)),
     ],
-    glance=('<b>ARRIVE</b> from the East Wilderness map (castle at square (11,8): "Will you enter?") at (8,14) facing north: '
+    glance=('<b>ARRIVE</b> from the East Wilderness map (castle at square (37,8): "Will you enter?") at (8,14) facing north: '
             '"You sense an anti-magic shell around you" (the game says no more; spells may fail here). <b>LEAVE</b> south over the bridge at (8,15). '
             '<b>QUEST</b> (City Hall: "a tribe of lizardmen is preparing to join the enemy"): paid <b>50 gp, 15 gems, 5 jewelry</b> once you win the duel for the old lizardman (Q) '
             'or have killed 40 or more lizardmen when you leave. Every event here happens once only; there are no random fights. '

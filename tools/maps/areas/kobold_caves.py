@@ -20,7 +20,7 @@ SPEC = dict(
         ('11', 1, 10, 'hint'), ('27', 1, 13, 'loot'), ('12', 0, 12, 'loot'), ('14', 3, 1, 'hint'), ('15', 0, 0, 'place'),
         ('13', 3, 2.5, 'hint'),
     ],
-    glance=('<b>ARRIVE</b> from the East Wilderness map (square (6,15): LARGE / SMALL / EXIT): the <b>large cave</b> puts you at (10,15), the hidden <b>small cave</b> at (6,15) '
+    glance=('<b>ARRIVE</b> from the East Wilderness map (square (32,15): LARGE / SMALL / EXIT): the <b>large cave</b> puts you at (10,15), the hidden <b>small cave</b> at (6,15) '
             '(its north door is locked: Bash, Pick or Knock). <b>LEAVE</b> by stepping back onto (6,15) or (10,15) and answering YES. '
             '<b>QUEST</b> (City Hall commission "kobolds being recruited by the enemy"): break the king in three stages (9, 20, 11); the clerk pays '
             '<b>25 gems</b> and the hoard (27) holds the rest. Fights of the throne room come back to back without a rest. '

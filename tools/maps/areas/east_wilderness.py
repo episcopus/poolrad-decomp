@@ -19,17 +19,17 @@ SPEC = dict(
         ('13', 14, 9, 'fight'), ('14', 7, 14, 'fight'), ('12', 10, 15, 'place'),
     ],
     glance=('<b>THE PLAN</b> The East Wilderness is an overland map; the plan drawn here is only a random "small dark cave" you can stumble into on it. '
-            'World squares are (column, row) from 0. <b>GETTING HERE</b> New Phlan harbor master, boat EAST (1 pp round trip): you land at square (9, 29), where the boat waits to take you back to New Phlan. '
-            'Walking west off the map (column 2) leads back to the North Shore map. <b>LANDMARKS</b> (stepping on them offers entry): '
-            'Ruined Castle (11, 8), see the Ruined Castle page; two caves (6, 15), large and small, see the Kobold Caves page. '
+            'World squares are (column, row) as on the Overworld page. <b>GETTING HERE</b> New Phlan harbor master, boat EAST (1 pp round trip): you land at square (35, 29), where the boat waits to take you back to New Phlan. '
+            'Walking west past column 28 leads back to the North Shore map. <b>The terrain and routes are on the East Wilderness outdoor map page.</b> <b>LANDMARKS</b> (stepping on them offers entry): '
+            'Ruined Castle (37, 8), see the Ruined Castle page; two caves (32, 15), large and small, see the Kobold Caves page. '
             '<b>RANDOM</b> 1 step in 20 meets a pack; 1 in 21 of those is a "small, dark cave" (this plan). '
             'The cave is four sealed 8x8 quarters; you enter one of the four S cells at random and leave by the same S cell.'),
     entries=[
-        ('B', 'place', 'Boat (9, 29)', '"A boat docked here will return you to the civilized section of Phlan." TAKE BOAT lands you at New Phlan\'s east pier (15,1).'),
-        ('C', 'place', 'Ruined Castle (11, 8)', '"A ruined castle surrounded by quicksand. An old worn drawbridge is the only safe way across." ENTER goes to the Ruined Castle.'),
-        ('K', 'fight', 'Two caves (6, 15)',
-         'First visit: kobolds are seen slipping into the small cave. LARGE (to the Kobold Caves at (10,15), no random fights there until the wyvern is dead), SMALL (hidden, at (6,15)) or EXIT. '
-         'While the kobold king lives, stepping on the six cells around the caves ((6,14) (7,14) (5,15) (7,15) (6,16) (7,16)) starts '
+        ('B', 'place', 'Boat (35, 29)', '"A boat docked here will return you to the civilized section of Phlan." TAKE BOAT lands you at New Phlan\'s east pier (15,1).'),
+        ('C', 'place', 'Ruined Castle (37, 8)', '"A ruined castle surrounded by quicksand. An old worn drawbridge is the only safe way across." ENTER goes to the Ruined Castle.'),
+        ('K', 'fight', 'Two caves (32, 15)',
+         'First visit: kobolds are seen slipping into the small cave. LARGE (to the Kobold Caves at (10,15), no random fights there until the wyvern is dead), SMALL (hidden, at (6,15) inside) or EXIT. '
+         'While the kobold king lives, stepping on the six squares around the caves ((32,14) (33,14) (31,15) (33,15) (32,16) (33,16)) starts '
          + tag('fight', '25 Kobolds + 5 Kobold Leaders') + ' (once per visit).'),
         ('R', 'fight', 'Random packs (1 step in 20)',
          'By d20: Kobolds 4, Gnolls 3, Lizard men 3, Giant Lizards 2, Hippogriffs 2, Wyvern 1, Trolls 2, Phase Spiders 1, Minotaurs 2 (in 20), sized from your party strength. '
@@ -48,7 +48,7 @@ SPEC = dict(
          '13 (9,14) and 14 (14,7): 12 Gnolls + 4 Trolls ((11,6), AC4, HP36), once for both. Hatched cells: 1 in 8 per step a pack of 4 to 34 Gnolls. 12 (15,10): remains of elves.'),
         ('K', 'fight', 'NE quarter (entry (11,0)): mad kobolds',
          'Only hatched cells: 1 in 8 per step a pack of 10 to 50 Kobolds (3 Kobold Leaders too from 40). No treasure.'),
-        ('W', 'hint', 'West edge', 'Walking west off the map at column 2 (on some kinds of terrain) takes you to the North Shore map, arriving at column 14: the map the New Phlan WEST and BAY boats land on.'),
+        ('W', 'hint', 'West edge', 'Walking west past column 28 (on some kinds of terrain) takes you to the North Shore map, arriving at column 27: the map the New Phlan WEST and BAY boats land on.'),
     ],
     table=dict(
         rows=[['Monster', 'Lvl', 'AC', 'HP', 'Monster', 'Lvl', 'AC', 'HP'],

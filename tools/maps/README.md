@@ -53,7 +53,7 @@ spec's module docstring, which is not drawn. To check the finished PDFs:
 
 ## The world map
 
-`docs/maps/world-map.pdf` is one more US Letter landscape page, written by `tools/maps/world.py` (`make maps` runs it, or
+`docs/maps/world-map.pdf` is one more US Letter landscape page (a route guide; the terrain is on the outdoor maps above), written by `tools/maps/world.py` (`make maps` runs it, or
 `uv run --with reportlab python tools/maps/build.py world`): a route guide for how the 29 area maps connect. It starts at
 the New Phlan harbor master and gives the words he offers (SOKAL, WEST, BAY, EAST) on the boat lines; the North Shore
 section has one card per square that asks a question (the three gates of Old Phlan, the boat landing, the rowboat, the
@@ -69,6 +69,29 @@ words of each script that was read (the harbor master's menu is `MENU [4AC4]`: S
 From the Adventurer's Journal (not from the script, which picks the map from `[49C5]`, whose writer is not read): the Orc
 Mansion lies south of Kovel Mansion and the Temple of Bane west of the Orc Mansion. Not traced: the conditions behind a
 few edge rows of the strips.
+
+## The outdoor maps
+
+`tools/maps/wilderness.py` writes four more US Letter landscape pages from the game's own overworld, so the player can see the
+terrain between the places the menus lead to: `docs/maps/overworld.pdf` (the whole 44 x 36 block map with every place and
+boat landing) and `outdoor-west.pdf`, `outdoor-north-shore.pdf`, `outdoor-east.pdf` (one 16-column map each, squares numbered
+as the game does, with the prompts and answers, walking routes from the boat landings and a "where this is" inset).
+`make maps` builds them; alone: `uv run --with reportlab --with pillow python tools/maps/build.py wilderness` (Pillow
+decodes the terrain tiles). How it was read, so it can be re-checked:
+
+- Squares on every outdoor page are printed in overworld columns (0 to 43), as the game numbers them: a square (x, y) of the North
+  Shore strip is column x + 13, of the East strip x + 26 (the West strip is unchanged). The scripts themselves use the strip numbers.
+- The overworld is `AreaMap` (DGROUP `0x3648`, file offset `0x10808` of `poolrad/start-unpack.exe`): 36 rows x 44 columns of
+  bytes. A byte minus 1 is a picture code in `SQRPACI.DAX` (block 1 for codes below 128, block 2 for the rest), each a 24x24 pixel
+  tile (`src/OVL27.PAS`, `src/OVL32.PAS`). The three wilderness scripts see strips of 16 columns whose base is 0, 13 and 26
+  (`MapBaseX`), so square (x, y) of a strip is `AreaMap[y][base + x]`. The special icons sit exactly on the squares the scripts
+  test (Ruined Castle (11,8) is icon `$FF`, Zhentil (3,32) is `$FE`), which confirmed the mapping.
+- Walking is `CheckMapCell` (`src/OVL14.PAS`): sea, shore pieces, the pyramid and the city's middle block a step; 17 river
+  squares answer "The river's stench drives you back" until game word 418 is set. The North Shore script sets it once
+  Yarash's Lab (`ECL7/23`) has stored 254 in `[4AB3]`. Routes on the pages are Dijkstra paths over those rules.
+- Result that matters to a player: the WEST boat lands at North Shore square (20,29), 4 squares west and 1 south of Old Phlan's
+  west gate (24,28); nothing on the pages said so before, and the gate's menu (NORTH = Podal Plaza, SOUTH = Cadorna Textile House)
+  never names the places it leads to.
 
 Three script blocks have no map data and so no page: the City Hall interior (`ECL3` block 8), the Training Hall
 interior (`ECL3` block 11) and Diogenes' cave (`ECL6` block 19) run as menu scenes. Some GEO blocks are not the area

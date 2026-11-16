@@ -5,7 +5,8 @@ what the game asks you to answer to get from one to the next.
   uv run --with reportlab python tools/maps/world.py [out.pdf]     # default docs/maps/world-map.pdf
   uv run --with reportlab python tools/maps/build.py world         # the same, through build.py (make maps does it too)
 
-The page itself uses only player wording (place names, the words of the game's menus, world-map squares). The links
+The page itself uses only player wording (world squares are printed in overworld columns: a North Shore square (x,y) of the
+scripts below prints as (x+13,y), an East one as (x+26,y); the table here keeps the scripts' own numbers) (place names, the words of the game's menus, world-map squares). The links
 come from the area scripts and are documented here for developers: every script leaves through `NEWECL` (opcode 32;
 `python3 tools/maps/ecldis.py ECL<n> <block>` prints them). The operand is the next script block and `[6E12]` the tile
 set it is loaded from; the script first stores the arrival cell (`[C04B]` column, `[C04C]` row, `[C04D]` facing) or,
@@ -452,11 +453,11 @@ def render(specs, out):
     header_bar(c, WX0 + 5, BODY_TOP - 31, WX1 - WX0 - 10, 26, 'WEST WILDERNESS', 'outdoor map: mountains')
     header_bar(c, EX0 + 5, BODY_TOP - 31, EX1 - EX0 - 10, 26, 'EAST WILDERNESS', 'outdoor map')
     textbox(c, WX0 + 7, BODY_TOP - 36, WX1 - WX0 - 14,
-            'Reached by walking west to the west edge of the North Shore map (column 2); you land at column 14. '
+            'Reached by walking west past column 15 of the North Shore map: you land at column 14. '
             'Walk east off its east edge to come back.', size=5.8, color=MUTED)
     textbox(c, EX0 + 7, BODY_TOP - 36, EX1 - EX0 - 14,
-            'Reached by the EAST boat from New Phlan, or by walking east to the east edge of the North Shore map '
-            '(column 15). Walk west off its west edge to come back.', size=5.8, color=MUTED)
+            'Reached by the EAST boat from New Phlan, or by walking east off the North Shore map '
+            '(past column 28). Walk west past column 28 to come back.', size=5.8, color=MUTED)
 
     # ---- nodes
     for node in n.values():
@@ -510,9 +511,9 @@ def render(specs, out):
     c.setFont(FONT, 5.4)
     c.drawString(hx0 + 5, hy_top - 17, '"What passage can I sell you?" Then walk to the end of the pier (15,1) to board.')
     rows = [('SOKAL', 'Sokal Keep. The only one offered until Sokal Keep is cleared.'),
-            ('WEST', 'North Shore, south coast: boat landing (7,29).'),
-            ('BAY', 'North Shore, east gate of Old Phlan (13,27): Kovel Mansion, Temple of Bane.'),
-            ('EAST', 'East Wilderness: boat landing (9,29).')]
+            ('WEST', 'North Shore: landing (20,29); walk 1 north, 4 east to the west gate.'),
+            ('BAY', "North Shore: Old Phlan's east gate (26,27): Kovel Mansion, Temple of Bane."),
+            ('EAST', 'East Wilderness: boat landing (35,29).')]
     yy = hy_top - 26
     for word, rest in rows:
         answer_line(c, hx0 + 5, yy, word, rest, size=5.4)
@@ -526,12 +527,12 @@ def render(specs, out):
     # ---- the cards: squares of the North Shore map
     CW = 68
     cardinfo = [
-        ('WEST GATE', '(11,28)', [('NORTH', 'Podal Plaza'), ('SOUTH', 'Textile House'), ('LEAVE', 'stay outside')]),
-        ('NORTH GATE', '(12-13,26)', [('CITY', 'Kovel Mansion'), ('GRAVEYARD', 'Valhingen'), ('LEAVE', 'stay outside')]),
-        ('EAST GATE', '(13,27)', [('NORTH', 'Kovel Mansion'), ('SOUTH', 'Temple of Bane'), ('BOAT', 'New Phlan')]),
-        ('BOAT LANDING', '(7,29)', [('TAKE BOAT', 'New Phlan'), ('STAY', 'stay ashore')]),
-        ('ROWBOAT', '(6,14)', [('YES', 'row to the pyramid'), ('then at (6,16)', ''), ('ENTER', 'the pyramid')]),
-        ('NOMAD CAMP', '(12,11)', [('ENTER', 'the camp'), ('LEAVE', 'walk on')]),
+        ('WEST GATE', '(24,28)', [('NORTH', 'Podal Plaza'), ('SOUTH', 'Textile House'), ('LEAVE', 'stay outside')]),
+        ('NORTH GATE', '(25-26,26)', [('CITY', 'Kovel Mansion'), ('GRAVEYARD', 'Valhingen'), ('LEAVE', 'stay outside')]),
+        ('EAST GATE', '(26,27)', [('NORTH', 'Kovel Mansion'), ('SOUTH', 'Temple of Bane'), ('BOAT', 'New Phlan')]),
+        ('BOAT LANDING', '(20,29)', [('TAKE BOAT', 'New Phlan'), ('STAY', 'stay ashore'), ('WALK', '1 N, 4 E: west gate')]),
+        ('ROWBOAT', '(19,14)', [('YES', 'row to the pyramid'), ('then at (19,16)', ''), ('ENTER', 'the pyramid')]),
+        ('NOMAD CAMP', '(25,11)', [('ENTER', 'the camp'), ('LEAVE', 'walk on')]),
     ]
     for cx, (title, coord, ans) in zip(HX, cardinfo):
         card(c, cx, CARD_TOP, CW, CARD_H, title, coord, ans)
@@ -566,7 +567,7 @@ def render(specs, out):
     textbox(c, HX[0] - CW / 2 + 2, KID1 - 8, CW - 2,
             'Each green card is a square of the North Shore map. The capital words are the answers the game '
             'offers; the place after them is where you end up.\nThe Orc Mansion is south of Kovel Mansion and '
-            'the Temple of Bane is west of the Orc Mansion.\nBoats cost 1 platinum, round trip.',
+            'the Temple of Bane is west of the Orc Mansion.\nBoats cost 1 platinum, round trip. The terrain between squares is on the outdoor map pages.',
             size=4.9, color=MUTED)
 
     # ---- the west and east wilderness: a spine with a tick to each place
@@ -582,7 +583,7 @@ def render(specs, out):
             pill(c, (x_spine + end) / 2, node.mid + 6, lab, GREENDK if kind_ == 'world' else AMBER, size=5.0, back=STRIP)
 
     spine(WX0 + 10, ['dio', 'bucc', 'zhent', 'wcave'], ['(10,9)', '(12,31)', '(3,32)', 'random'], 'W')
-    spine(EX1 - 10, ['ruin', 'kobold', 'ecave'], ['(11,8)', '(6,15)', 'random'], 'E')
+    spine(EX1 - 10, ['ruin', 'kobold', 'ecave'], ['(37,8)', '(32,15)', 'random'], 'E')
     link(c, 'vert', [n['ruin'].B(), n['lizard'].T()])
 
     def note(x, node, words, text, width):
@@ -612,7 +613,7 @@ def render(specs, out):
     note2(EX0 + 8, n['lizard'], 'search rubble and swamp',
           'Search rubble and swamp in the ruins, or take the old stairs (9,8).',
           EX1 - EX0 - 36)
-    note2(EX0 + 8, n['kobold'], 'LARGE, SMALL or EXIT', 'Two caves at (6,15): the small one is hidden. Leave by the same cell.',
+    note2(EX0 + 8, n['kobold'], 'LARGE, SMALL or EXIT', 'Two caves at (32,15): the small one is hidden. Leave by the same cell.',
           EX1 - EX0 - 36)
     note2(EX0 + 8, n['ecave'], 'ENTER or LEAVE', 'About 1 step in 420; leave by the cell you entered.', EX1 - EX0 - 36)
 
@@ -627,7 +628,7 @@ def render(specs, out):
     c.drawString(EX0 + 11, lc_top - 7.5, 'BOAT LANDING')
     c.setFillColor(MUTED)
     c.setFont(FONT, 4.8)
-    c.drawRightString(EX0 + 109, lc_top - 7.5, '(9,29)')
+    c.drawRightString(EX0 + 109, lc_top - 7.5, '(35,29)')
     answer_line(c, EX0 + 11, lc_top - 15, 'TAKE BOAT', 'New Phlan', size=4.8)
     answer_line(c, EX0 + 11, lc_top - 21.6, 'STAY', 'stay ashore', size=4.8)
 

@@ -19,7 +19,7 @@ SPEC = dict(
         ('8', 11, 8, 'place'), ('9', 12, 8, 'fight'), ('10', 14, 10, 'fight'), ('11', 14, 6, 'place'), ('12', 15, 5, 'hint'),
     ],
     glance=('<b>ARRIVE</b> on (0,4) or (0,11) facing east (walking east off the Temple of Bane map\'s (15,4) or (15,11)), or by Kovel Mansion\'s south gates (this mansion lies south of it). <b>EXITS:</b> west (0,4), (0,11) back to the Temple of Bane; north (4,0), (11,0) to Kovel Mansion; '
-            'east (15,4), (15,11) out to the east gate of Old Phlan on the North Shore map (square (13,27)); the south gaps (4,15), (11,15) lead nowhere (not confirmed in play). This map and the Temple of Bane share their quest progress. '
+            'east (15,4), (15,11) out to the east gate of Old Phlan on the North Shore map (square (26,27)); the south gaps (4,15), (11,15) lead nowhere (not confirmed in play). This map and the Temple of Bane share their quest progress. '
             'No passwords, no locked doors. <b>Quirk:</b> a room\'s text and treasure check run only when the last room you triggered was a <i>different</i> one, '
             'so switch search mode on (S key) <i>before</i> the step that enters the room; to retry, enter another numbered room first.'),
     entries=[

@@ -23,7 +23,7 @@ SPEC = dict(
         ('15', 0, 15, 'fight'), ('15', 0, 14, 'fight', dict(dx=-3)),
     ],
     diamonds=[('a', 7, 7, 'loot', dict(dx=5, dy=5)), ('b', 0, 14, 'loot', dict(dx=6, dy=6))],
-    glance=('<b>ARRIVE</b> at (0,4) facing east, from the North Shore map (Old Phlan\'s north gate, (12,26) or (13,26), answer GRAVEYARD). <b>LEAVE</b> by the west gate (0,4). '
+    glance=('<b>ARRIVE</b> at (0,4) facing east, from the North Shore map (Old Phlan\'s north gate, (25,26) or (26,26), answer GRAVEYARD). <b>LEAVE</b> by the west gate (0,4). '
             '<b>QUEST</b>: Diogenes the silver dragon sends you for a silver bottle (kobold caves); its efreeti is for the vampire (15). '
             '<b>REWARD</b>: City Hall pays for undead killed (per kill, see the box) and a special prize of <b>15 gems + 25 jewelry</b> once the vampire is destroyed. '
             '<b>WARNING</b>: once the vampire is dead <b>every cell event here switches off</b>: take the chests and gifts first. No shops. Resting is interrupted by ghouls until then.'),

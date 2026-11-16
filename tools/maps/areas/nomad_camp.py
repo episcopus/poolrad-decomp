@@ -19,7 +19,7 @@ SPEC = dict(
     markers=[
         ('1', 8, 3, 'hint'), ('3', 9, 9, 'place', dict(dy=-3)), ('2', 12, 10, 'place'), ('4', 7, 13, 'fight'),
     ],
-    glance=('<b>ARRIVE</b> at (1,14), facing east, by choosing ENTER at the Nomad Camp on the North Shore map (12,11). '
+    glance=('<b>ARRIVE</b> at (1,14), facing east, by choosing ENTER at the Nomad Camp on the North Shore map (25,11). '
             '<b>LEAVE</b> by stepping off the north, south or west edge and answering yes, or by fleeing. The camp is open ground: '
             'the only triggers are the <b>sentry ring</b> (red hatch) and the clock. The tribe: chief <b>Hassad Ahwal</b> '
             '(level 6), a shaman, 5 fourth-level guards, about 50 nomads. <b>Befriend them</b> (feast, kobold raid): 3000 gp + 5000 gp + '
@@ -62,7 +62,7 @@ SPEC = dict(
     boxes=[
         '<b>TIME</b> the game reads the clock hour: from 14 on counts as "tomorrow" (dark palette), from 18 it is the kobold hour. That these are evening hours is not confirmed. '
         '<b>NO SECRETS</b> no passwords, traps, locked doors or search spots; wall segments with amber bars are open gaps, thick black walls (palisade) are solid.',
-        '<b>NOT CONFIRMED</b> exactly how party strength sets group sizes; how nomad allies are handled in the raid (computer-run, probably); the North Shore symbol that changes at (12,11) after the camp is resolved. '
+        '<b>NOT CONFIRMED</b> exactly how party strength sets group sizes; how nomad allies are handled in the raid (computer-run, probably); the North Shore symbol that changes at (25,11) after the camp is resolved. '
         'If your party harms its nomad allies the tribe probably turns hostile.',
     ],
 )
