@@ -7,6 +7,9 @@
     ide_card.py saves DEVICE|FILE       read only: the files of the game's save area (on the card, or in a card file) and its free room
     ... write DEVICE --add-slot F       also put saved game F (SAVGAMF.DAT and CHRDATF*.* of --saves-from, default the game folder's SAVE)
                                         into the save area, next to the card's own saves; --replace-slot if the card already has an F
+    ide_card.py pull DEVICE|FILE F      read only on the card: copy saved game F (SAVGAMF.DAT and CHRDATF*.*) out of the save area into --to (default the
+                                        game folder's SAVE), for the PC or the Tandy 1000; --replace-slot if that folder already has a different F
+                                        (its files are moved to build/save-backup/ first)
 
 DEVICE is the card as the computer sees it, whole (macOS /dev/rdiskN after `diskutil unmountDisk /dev/diskN`, Linux /dev/sdX; a file of the size of the card works
 too, for a try). The card is a run of 512 byte sectors. HDB-DOS keeps its virtual floppy disks, 630 sectors each, in a run that starts at the HDB-DOS offset of the card
@@ -14,6 +17,11 @@ too, for a try). The card is a run of 512 byte sectors. HDB-DOS keeps its virtua
 offset + n * 630 and keeps each 256 byte sector in the FIRST half of a card sector (HDB-DOS manual, section 4). The game goes to virtual drives that nobody uses:
 by default 200 to 205 (`make ide IDE_DRIVE=200`; the file says how many it takes). The first one is a disk that HDB-DOS can read (POOL.BIN), the others are the game's
 data, which only the game's own driver reads.
+
+Taking a saved game back to the PC (pull F): the CoCo writes its saves in the PC's byte order (docs/PHASE-8.6.md), so the files of the save area are the files the
+PC game reads, unchanged. The slot's files are written under the names the save area has; a folder that already has the same files is left alone, a folder with other
+files of that slot is refused unless --replace-slot, which first moves them (all of that slot's files, so no stray CHRDATF8 of an older party is left behind) into
+build/save-backup/F-<date and time>/ of the port. Under sudo (a raw disk of macOS needs it) the files are given to the user who ran sudo.
 
 A card that already has a previous build of the game at the place (drive 200 is a disk with POOL/BIN and the next drive starts with the image's "PIM2") is an UPDATE: `write` replaces
 the old build without --force, and **keeps the saved games of the card** (the 512 save sectors of the old image are copied into the new one; --fresh-saves takes the build's own
@@ -33,7 +41,9 @@ card file. This tool reads that file, so it writes where the engine will look; a
 `map` first to see which drives are in use and to pick IDE_DRIVE, build, then `check`, then `write`."""
 import argparse
 import os
+import shutil
 import sys
+import time
 
 SEC = 512
 DRIVE_SECS = 630
@@ -334,6 +344,59 @@ def add_slot(area, slot, files, replace):
     return lines
 
 
+def give(path):
+    """under sudo, give a file or folder this tool made to the user who ran sudo (a raw disk of macOS is read as root)"""
+    if hasattr(os, "geteuid") and os.geteuid() == 0 and "SUDO_UID" in os.environ:
+        os.chown(path, int(os.environ["SUDO_UID"]), int(os.environ.get("SUDO_GID", os.environ["SUDO_UID"])))
+
+
+def pull_slot(area, slot, dest, replace, backup_root):
+    """copy saved game `slot` out of the save area into the folder dest; returns lines that say what was done"""
+    slot = slot.upper()
+    files = sorted((e[1], area.file(e)) for e in area.entries() if slot_of(e[1]) == slot)
+    if not any(n.startswith("SAVGAM") for n, _ in files):
+        have = sorted({slot_of(e[1]) for e in area.entries() if e[1].startswith("SAVGAM")})
+        raise SystemExit("the save area has no saved game %s (it has: %s)" % (slot, " ".join(have) or "none"))
+    if not os.path.isdir(dest):
+        raise SystemExit("%s is not a folder" % dest)
+    old = [f for f in sorted(os.listdir(dest)) if slot_of(f.upper()) == slot]
+    if sorted((f.upper(), open(os.path.join(dest, f), "rb").read()) for f in old) == files:
+        return ["saved game %s: %s already has the same %d files" % (slot, dest, len(files))]
+    lines = []
+    if old:
+        if not replace:
+            raise SystemExit("%s already has a saved game %s (%s) that is not the card's: say --replace-slot to replace it (its files are moved to %s first)" % (
+                dest, slot, ", ".join(old), backup_root))
+        bdir = os.path.join(backup_root, "%s-%s" % (slot, time.strftime("%Y%m%d-%H%M%S")))
+        os.makedirs(bdir)
+        for d in (backup_root, bdir):
+            give(d)
+        for f in old:
+            shutil.move(os.path.join(dest, f), os.path.join(bdir, f))
+        lines.append("saved game %s: the folder's %d files of it moved to %s" % (slot, len(old), bdir))
+    for name, data in files:
+        p = os.path.join(dest, name)
+        with open(p, "wb") as fh:
+            fh.write(data)
+        give(p)
+    lines.append("saved game %s: %d files written to %s (%d bytes): %s" % (slot, len(files), dest, sum(len(d) for _, d in files), " ".join(n for n, _ in files)))
+    return lines
+
+
+def load_area(fd, a):
+    """the save area of DEVICE (a card, the game at --drive) or of a card file (build/ide/POOLIDE.IMG); returns (area, what it is)"""
+    lba0 = a.hdb_offset + a.drive * DRIVE_SECS
+    h = read(fd, DRIVE_SECS, 1)
+    if h[:4] == b"PIM2" and size_of(fd) <= 64 * DRIVE_SECS:       # a card file (build/ide/POOLIDE.IMG): the image starts at its second drive
+        data = os.pread(fd, size_of(fd) * SEC, 0)
+        return SaveArea(data, saves_at(DRIVE_SECS, int.from_bytes(h[16:20], "big"))), "%s: a card file" % a.device
+    old = previous_build(fd, lba0)
+    if old is None:
+        sys.exit("%s: no build of the game at drive %d of %s" % (a.cmd, a.drive, a.device))
+    first = saves_at(lba0 + DRIVE_SECS, old[0])
+    return SaveArea(os.pread(fd, (first + old[1]) * SEC, 0), first), "%s: the game at drive %d" % (a.device, a.drive)
+
+
 def list_saves(area):
     ents = area.entries()
     slots = sorted({slot_of(e[1]) for e in ents if slot_of(e[1]) and e[1].startswith("SAVGAM")})
@@ -345,9 +408,9 @@ def list_saves(area):
 
 def main(argv):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("cmd", choices=["map", "check", "write", "saves"])
+    ap.add_argument("cmd", choices=["map", "check", "write", "saves", "pull"])
     ap.add_argument("device")
-    ap.add_argument("file", nargs="?", default="build/ide/POOLIDE.IMG")
+    ap.add_argument("file", nargs="?", default=None, help="write: the card file (default build/ide/POOLIDE.IMG); pull: the slot letter")
     ap.add_argument("--hdb-offset", type=int, default=None, help="the card's HDB-DOS offset in sectors (default: the build's, in ide.env next to the file; $052DDC = 339420 is the 256 MB card's)")
     ap.add_argument("--drive", type=int, default=None, help="the first HDB-DOS virtual drive the game takes (default: the build's, in ide.env; `make ide IDE_DRIVE=` sets it)")
     ap.add_argument("--drives", type=int, default=6, help="how many (the file says; default 6)")
@@ -358,8 +421,19 @@ def main(argv):
     ap.add_argument("--add-slot", metavar="X", help="write: also put saved game X (a letter) into the save area, from --saves-from")
     ap.add_argument("--saves-from", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "poolrad", "SAVE"),
                     help="the SAVE folder --add-slot takes the files from (default: the game folder's, poolrad/SAVE)")
-    ap.add_argument("--replace-slot", action="store_true", help="--add-slot: replace the slot when the card already has it (its files there are lost)")
+    ap.add_argument("--replace-slot", action="store_true", help="--add-slot: replace the slot when the card already has it (its files there are lost); "
+                    "pull: replace the slot when --to already has a different one (its files are moved to build/save-backup/ first)")
+    ap.add_argument("--to", default=None, help="pull: the SAVE folder the slot goes to (default: the game folder's, poolrad/SAVE)")
+    ap.add_argument("--backup", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "build", "save-backup"),
+                    help="pull --replace-slot: where the folder's old files of the slot go (default the port's build/save-backup)")
     a = ap.parse_args(argv)
+    slot = None
+    if a.cmd == "pull":
+        slot, a.file = a.file, None
+        if not slot or len(slot) != 1 or not slot.isalpha():
+            ap.error("pull: say which saved game, a letter: ide_card.py pull DEVICE F")
+    if a.file is None:
+        a.file = "build/ide/POOLIDE.IMG"
     env = load_env(os.path.join(os.path.dirname(os.path.abspath(a.file)), "ide.env"))
     for opt, key, default in (("drive", "IDE_DRIVE", 200), ("hdb_offset", "IDE_HDB_OFFSET", 339420)):
         given = getattr(a, opt)
@@ -375,22 +449,15 @@ def main(argv):
     if a.cmd == "write" and content is None:
         sys.exit("write: %s is not there (make ide)" % a.file)
     fd = os.open(a.device, os.O_RDONLY)
-    if a.cmd == "saves":
-        lba0 = a.hdb_offset + a.drive * DRIVE_SECS
-        h = read(fd, DRIVE_SECS, 1)
-        if h[:4] == b"PIM2" and size_of(fd) <= 64 * DRIVE_SECS:       # a card file (build/ide/POOLIDE.IMG): the image starts at its second drive
-            data = os.pread(fd, size_of(fd) * SEC, 0)
-            area = SaveArea(data, saves_at(DRIVE_SECS, int.from_bytes(h[16:20], "big")))
-            print("%s: a card file" % a.device)
-        else:
-            old = previous_build(fd, lba0)
-            if old is None:
-                sys.exit("saves: no build of the game at drive %d of %s" % (a.drive, a.device))
-            first = saves_at(lba0 + DRIVE_SECS, old[0])
-            area = SaveArea(os.pread(fd, (first + old[1]) * SEC, 0), first)
-            print("%s: the game at drive %d" % (a.device, a.drive))
+    if a.cmd in ("saves", "pull"):
+        area, what = load_area(fd, a)
         os.close(fd)
-        list_saves(area)
+        print(what)
+        if a.cmd == "saves":
+            list_saves(area)
+            return 0
+        for line in pull_slot(area, slot, os.path.abspath(a.to or a.saves_from), a.replace_slot, os.path.abspath(a.backup)):
+            print(line)
         return 0
     if a.cmd == "map":
         total = size_of(fd)

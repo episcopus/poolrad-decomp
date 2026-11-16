@@ -16,6 +16,13 @@ Putting it on the card (macOS/Linux, with a card reader)
 Updating the card with a newer build
   Put the new POOLIDE.IMG and ide.env in this folder and run the same `write` command again. The tool sees the previous build of the game on the card (drive 200 holds POOL/BIN and the next drive starts with the image), replaces it without any --force, and KEEPS THE SAVED GAMES of the card (`--fresh-saves` takes the build's own seeded ones instead). Anything on the card that is not the game's is still refused.
 
+Saved games between the card and a PC (or a Tandy 1000)
+  The CoCo writes its saved games in the PC's format, so a slot moves either way unchanged. A slot is the SAVGAMx.DAT and CHRDATx*.* files of a PC game's SAVE folder.
+      sudo python3 ide_card.py saves /dev/rdiskN                       (read only: which saved games the card has)
+      sudo python3 ide_card.py pull /dev/rdiskN F --to /path/to/SAVE   (card to PC: copy saved game F into that SAVE folder; the card is only read)
+      sudo python3 ide_card.py write /dev/rdiskN --add-slot F --saves-from /path/to/SAVE --yes   (PC to card)
+  If the other side already has a different F, both commands stop; add --replace-slot to replace it. On a pull, the folder's old F files are first moved to a backup folder (build/save-backup/F-<date> next to this folder), so nothing is lost.
+
 Playing it
   Put the card in the SuperIDE (the multi-pak slot switch on the SuperIDE; it must stay there while you play) and start HDB-DOS from it. Then:
       DIR 200                          (it should list POOL/BIN: that proves the drive)

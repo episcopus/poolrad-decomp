@@ -83,6 +83,12 @@ sudo python3 tools/ide_card.py write /dev/rdisk4 --add-slot F --yes
 
 Checked on a file of the card's size (an older build with a player's saves A and C, then the update: A and C byte for byte as before, the 19 files of F equal to the SAVE folder's, 100 of 512 units left; a different F refused without `--replace-slot`), and the IDE build in MAME (`MB_IDEFILE`) loaded F from that save area. A saved game takes up to 130 units (60 for the `.DAT`, 10 for each character), and the area has 512.
 
+**Taking a saved game back to the PC** (2026-11-15). `pull DEVICE X` is the other direction, and it only reads the card: the files of slot X in the save area (`SAVGAMX.DAT`, `CHRDATX*.*`) are written to `--to DIR` (default `poolrad/SAVE`) unchanged, since the CoCo saves in the PC's byte order (8.6). This is how a game played on the CoCo carries on in the DOS port on the Tandy 1000. A folder that already has the same files is left alone. A folder with other files of that slot is refused unless `--replace-slot`, which first moves all of them (a `CHRDATX8` of a larger old party too) to `build/save-backup/X-<date>-<time>/`. Under sudo the new files are given to the user who ran it. Checked by `tests/unit/test_coco3_ide_pull.py` (a card file and a small card with the game at drive 2) and on the build's own card file (slot A pulled equal to `poolrad/SAVE`'s).
+
+```bash
+sudo python3 tools/ide_card.py pull /dev/rdisk4 F                 # into poolrad/SAVE; --to DIR for another SAVE folder
+```
+
 If something is wrong the engine says what (section 3). What to send back: the three lines of the error screen, or what `DIR 200` printed.
 
 ## 6. Open
