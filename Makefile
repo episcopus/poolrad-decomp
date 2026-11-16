@@ -237,7 +237,7 @@ oracle-run:       ## run the original in the oracle: SCRIPT=tests/sessions/x.key
 oracle-dosbox:    ## compare the oracle's title screens with DOSBox-X frames pixel for pixel (needs dosbox-x, ffmpeg)
 	$(PY) tools/oracle/dosbox_ref.py
 maps:             ## one-page player maps of every area into docs/maps/ (needs uv for reportlab)
-	uv run --with reportlab python tools/maps/build.py
+	uv run --with reportlab --with pillow python tools/maps/build.py
 
 timing-scan:      ## find routines that wait on time or input (static; SESSIONS="boot-title create-character" adds the dynamic pass)
 	$(PY) tools/re/timing_scan.py $(foreach s,$(SESSIONS),--dynamic $(s))
