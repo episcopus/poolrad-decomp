@@ -6,10 +6,12 @@ first goes up when an update makes you start over or change hardware, the second
 
 ## Unreleased
 
+## 1.2.0 - 2026-11-16
+
 ### Added
-- SuperIDE card: `ide_card.py pull` copies a saved game off the card into a PC game's `SAVE` folder, so you can carry on playing on a PC or a
-  Tandy 1000. The card is only read. A different saved game in the same slot of the folder is replaced only when you ask for it
-  (`--replace-slot`), and its old files are kept in a backup folder.
+- SuperIDE card: `ide_card.py pull` copies a saved game off the card into a PC game's `SAVE` folder, so you can carry on playing on a PC or a Tandy
+  1000. The card is only read. A different saved game in the same slot of the folder is replaced only when you ask for it (`--replace-slot`), and its
+  old files are kept in a backup folder.
 
 ## 1.1.0 - 2026-11-15
 
