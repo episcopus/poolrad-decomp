@@ -9,10 +9,13 @@ You need
 
 Playing it
   1. Copy POOL.DSK to the SD card.
-  2. On the CoCo, mount it as drive 0:   DRIVE 0,"POOL.DSK"    (SDC-DOS; or put it in a STARTUP.CFG)
-  3. Type:   LOADM"POOL":EXEC     and press ENTER.
+  2. On the CoCo, mount it as drive 0:   DRIVE 0,"POOL.DSK"
+     To have it mounted at every start instead, put the line   0=POOL.DSK   in a file named STARTUP.CFG at the top of the card. STARTUP.CFG.example in this folder is that
+     file; copy it only if the card has no STARTUP.CFG of its own (it would replace yours), otherwise add its line to yours.
+  3. Start the game. POOL.DSK holds an AUTOEXEC.BAS, so a Disk BASIC that runs one at start-up loads the game by itself. If yours does not, type:
+     LOADM"POOL":EXEC     and press ENTER.
   The game loads in about a minute and plays without disk prompts. Saved games are written into POOL.DSK itself: keep a copy to start over.
 
 Known limits
   The SDC driver was written from the SDC User Guide and proven against a model of the registers in MAME, not (yet) a report from every hardware version. If the game stops on boot with an error text, send the text.
-  VCC simulates the SDC but its command mode is not documented: use the XRoar or MAME builds there.
+  VCC simulates the SDC, but not everything of it, and its command mode is not documented. A report says this build starts on VCC for Android; it is not confirmed on every VCC. If it does not start there, send what the screen says, or use the XRoar or MAME builds.

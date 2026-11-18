@@ -6,6 +6,16 @@ first goes up when an update makes you start over or change hardware, the second
 
 ## Unreleased
 
+### Added
+- CoCo SDC file: the disk at the start of `POOL.DSK` now holds an `AUTOEXEC.BAS`, so where the SDC's Disk BASIC runs it at start-up, mounting the file as
+  drive 0 is enough: the game loads by itself. The folder also holds `STARTUP.CFG.example`, a one-line configuration that mounts `POOL.DSK` as drive 0.
+
+### Fixed
+- Starting the game from a BASIC program (an `AUTOEXEC.BAS`, a menu, an autostart) no longer ends with `?SN ERROR`. The loader put part of the game where the
+  running program's text is; it now loads that part elsewhere and moves it into place once loading is done. Typing `LOADM"POOL":EXEC` at the prompt worked
+  before and works the same. The change is in the game's loader, so every build has it (floppy disks, SDC file, SuperIDE card, XRoar and MAME packs).
+  Thanks to Antonio Caballero, who found that the SDC build would not start on VCC for Android, and sent a working fix.
+
 ## 1.2.0 - 2026-11-16
 
 ### Added

@@ -30,10 +30,62 @@ def strip_low_records(path, splash=False):
     blob = bytes([n >> 8, n & 255]) + bytes(img[:n])
     if 0x7C90 + len(blob) > 0x7E00:
         raise SystemExit("the shared data image (%d bytes) does not fit between $7C90 and $7E00" % len(blob))
-    tail = bytes([0, len(blob) >> 8, len(blob) & 255, 0x7C, 0x90]) + blob + exec_rec
+    tail = bytes([0, len(blob) >> 8, len(blob) & 255, 0x7C, 0x90]) + blob
     if splash:
         body = splash_records() + progress_records(body)
-    path.write_bytes(body + tail)
+        body, tail_stage, exec_rec = stage_program_text(body, exec_rec)
+        tail += tail_stage
+    path.write_bytes(body + tail + exec_rec)
+
+
+# Disk BASIC keeps the text of the BASIC program at $2601 (TXTTAB, read from a MAME dump of the machine). A player who starts the game from a program (an
+# AUTOEXEC.BAS, a menu, HDB-DOS or the SDC's autostart) has that program running while LOADM loads the engine: a record that lands on the program text
+# ends in `?SN ERROR` when BASIC goes on to the :EXEC after the LOADM. So the record bytes of the window below are not loaded where they belong: they are
+# loaded at STAGE_AT (BSS of the engine, which no record touches) as the last records of the file, and the file's EXEC address is a stub that copies them into
+# place and jumps to the engine's own entry. 768 bytes (three sectors) hold a program of a few lines, which is what a launcher is. The engine's image is the
+# same byte for byte once the stub has run (tests/unit/test_coco3_stripbin.py).
+STAGE_LO, STAGE_HI = 0x2500, 0x2800     # the window of the engine that is staged: BASIC's program text ($2601 and on) is inside it
+STAGE_AT = 0x7000                       # where its bytes are loaded; the stub follows them at STAGE_AT + STAGE_HI - STAGE_LO
+
+
+def stage_program_text(body, exec_rec):
+    """Take the bytes of [STAGE_LO, STAGE_HI) out of the records of `body` (their other bytes stay in the same order, each cut in two where the window
+    crosses it) and return (the body, the records that load them at STAGE_AT and hold the stub, the new EXEC record)."""
+    n = STAGE_HI - STAGE_LO
+    win, have = bytearray(n), [False] * n
+    out, i = bytearray(), 0
+    while i < len(body):
+        ln, ad = (body[i + 1] << 8) | body[i + 2], (body[i + 3] << 8) | body[i + 4]
+        data = body[i + 5:i + 5 + ln]
+        lo, hi = max(ad, STAGE_LO), min(ad + ln, STAGE_HI)
+        if lo >= hi:
+            out += body[i:i + 5 + ln]
+        else:
+            win[lo - STAGE_LO:hi - STAGE_LO] = data[lo - ad:hi - ad]
+            have[lo - STAGE_LO:hi - STAGE_LO] = [True] * (hi - lo)
+            if lo > ad:
+                out += record(ad, data[:lo - ad])
+            if hi < ad + ln:
+                out += record(hi, data[hi - ad:])
+        i += 5 + ln
+    if not all(have):
+        raise SystemExit("stripbin: the engine has no bytes at $%04X to $%04X, which must be staged whole" % (STAGE_LO, STAGE_HI))
+    stub_at, entry = STAGE_AT + n, (exec_rec[3] << 8) | exec_rec[4]
+    # every record must stay clear of the staging area and the stub (the ends of the load image are checked by the builds)
+    i = 0
+    while i < len(out):
+        ln, ad = (out[i + 1] << 8) | out[i + 2], (out[i + 3] << 8) | out[i + 4]
+        if ad < stub_at + 19 and ad + ln > STAGE_AT:
+            raise SystemExit("stripbin: a record at $%04X (%d bytes) is in the staging area $%04X to $%04X" % (ad, ln, STAGE_AT, stub_at + 19))
+        i += 5 + ln
+    stub = bytes([0x8E, STAGE_AT >> 8, STAGE_AT & 255,                 # ldx  #STAGE_AT
+                  0x10, 0x8E, STAGE_LO >> 8, STAGE_LO & 255,          # ldy  #STAGE_LO
+                  0xEC, 0x81, 0xED, 0xA1,                             # loop: ldd ,x++ ; std ,y++
+                  0x8C, stub_at >> 8, stub_at & 255,                  # cmpx #stub_at
+                  0x26, 0xF7,                                         # bne  loop
+                  0x7E, entry >> 8, entry & 255])                     # jmp  the engine's entry
+    return (bytes(out), record(STAGE_AT, win) + record(stub_at, stub),
+            bytes([0xFF, 0, 0, stub_at >> 8, stub_at & 255]))
 
 
 SPL = 0x0400                    # the splash screen: BASIC's own 32 by 16 text screen, drawn by the first record of the file (boot.asm)

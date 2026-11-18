@@ -254,6 +254,9 @@ def write_sdc(img, gamedir, out):
     d = decbfs.Disk()
     d.add("POOLSDC", "DAT", b"POOL OF RADIANCE: CoCo SDC image, the game's sectors follow the disk.\n", 1, 0)
     d.add("POOL", "BIN", with_storage(Path(gamedir, "POOL.BIN").read_bytes(), "STORAGE: COCO SDC", "ONE IMAGE FILE ON THE CARD"), 2, 0)
+    # the autostart: an ASCII BASIC program (type 0, flag $FF) that Disk BASIC runs on its own where it does, so the game starts without typing (the one line is
+    # why POOL.BIN stages the engine bytes that land on a BASIC program's text: tools/stripbin.py stage_program_text)
+    d.add("AUTOEXEC", "BAS", b'10 LOADM"POOL.BIN:0":EXEC\r', 0, 255)
     boot = d.image()
     assert len(boot) == 630 * 256
     Path(out).write_bytes(boot + img)
